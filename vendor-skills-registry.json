@@ -1,0 +1,160 @@
+{
+	"providers": [
+		{
+			"id": "asterdex",
+			"repo": "https://github.com/asterdex/aster-skills-hub.git",
+			"commit": null,
+			"notes": "v3 skills only (EIP-712 auth). Our SKILL.md files are hand-written with execution flows; upstream skills are reference material.",
+			"skills": [
+				{
+					"name": "futures-market-data",
+					"upstreamPath": "skills/aster-api-market-data-v3/SKILL.md",
+					"targetPath": "aster/vendor/futures-market-data/SKILL.md"
+				},
+				{
+					"name": "futures-trading",
+					"upstreamPath": "skills/aster-api-trading-v3/SKILL.md",
+					"targetPath": "aster/vendor/futures-trading/SKILL.md"
+				},
+				{
+					"name": "futures-account",
+					"upstreamPath": "skills/aster-api-account-v3/SKILL.md",
+					"targetPath": "aster/vendor/futures-account/SKILL.md"
+				}
+			]
+		},
+		{
+			"id": "pancakeswap",
+			"repo": "https://github.com/pancakeswap/pancakeswap-ai.git",
+			"commit": "7f1d924278f2350fe618774ff7734c94d8a0a268",
+			"skills": [
+				{
+					"name": "swap-planner",
+					"upstreamPath": "packages/plugins/pancakeswap-driver/skills/swap-planner/SKILL.md",
+					"targetPath": "pancake/vendor/swap-planner/SKILL.md"
+				},
+				{
+					"name": "liquidity-planner",
+					"upstreamPath": "packages/plugins/pancakeswap-driver/skills/liquidity-planner/SKILL.md",
+					"targetPath": "pancake/vendor/liquidity-planner/SKILL.md"
+				},
+				{
+					"name": "farming-planner",
+					"upstreamPath": "packages/plugins/pancakeswap-farming/skills/farming-planner/SKILL.md",
+					"targetPath": "pancake/vendor/farming-planner/SKILL.md"
+				}
+			]
+		},
+		{
+			"id": "okx",
+			"repo": "https://github.com/okx/onchainos-skills.git",
+			"commit": null,
+			"notes": "Imported verbatim under okx/vendor as official reference material. Platform routing and execution must still be adapted locally before enabling write flows.",
+			"skills": [
+				{
+					"name": "okx-agentic-wallet",
+					"upstreamPath": "skills/okx-agentic-wallet/SKILL.md",
+					"targetPath": "okx/vendor/okx-agentic-wallet/SKILL.md"
+				},
+				{
+					"name": "okx-audit-log",
+					"upstreamPath": "skills/okx-audit-log/SKILL.md",
+					"targetPath": "okx/vendor/okx-audit-log/SKILL.md"
+				},
+				{
+					"name": "okx-dex-market",
+					"upstreamPath": "skills/okx-dex-market/SKILL.md",
+					"targetPath": "okx/vendor/okx-dex-market/SKILL.md"
+				},
+				{
+					"name": "okx-dex-signal",
+					"upstreamPath": "skills/okx-dex-signal/SKILL.md",
+					"targetPath": "okx/vendor/okx-dex-signal/SKILL.md"
+				},
+				{
+					"name": "okx-dex-swap",
+					"upstreamPath": "skills/okx-dex-swap/SKILL.md",
+					"targetPath": "okx/vendor/okx-dex-swap/SKILL.md"
+				},
+				{
+					"name": "okx-dex-token",
+					"upstreamPath": "skills/okx-dex-token/SKILL.md",
+					"targetPath": "okx/vendor/okx-dex-token/SKILL.md"
+				},
+				{
+					"name": "okx-dex-trenches",
+					"upstreamPath": "skills/okx-dex-trenches/SKILL.md",
+					"targetPath": "okx/vendor/okx-dex-trenches/SKILL.md"
+				},
+				{
+					"name": "okx-onchain-gateway",
+					"upstreamPath": "skills/okx-onchain-gateway/SKILL.md",
+					"targetPath": "okx/vendor/okx-onchain-gateway/SKILL.md"
+				},
+				{
+					"name": "okx-security",
+					"upstreamPath": "skills/okx-security/SKILL.md",
+					"targetPath": "okx/vendor/okx-security/SKILL.md"
+				},
+				{
+					"name": "okx-wallet-portfolio",
+					"upstreamPath": "skills/okx-wallet-portfolio/SKILL.md",
+					"targetPath": "okx/vendor/okx-wallet-portfolio/SKILL.md"
+				},
+				{
+					"name": "okx-x402-payment",
+					"upstreamPath": "skills/okx-x402-payment/SKILL.md",
+					"targetPath": "okx/vendor/okx-x402-payment/SKILL.md"
+				}
+			]
+		},
+		{
+			"id": "morph",
+			"repo": "https://github.com/morph-l2/morph-skill.git",
+			"commit": "e203bc4b981f13a3c358cff68831f8ca68e16648",
+			"notes": "Morph L2 skill — wallet, explorer, DEX, bridge, altfee, EIP-7702, EIP-8004 identity, x402 payment. Reads via vendor morph_api.py; writes via purr CLI or helper scripts under morph/scripts/.",
+			"skills": [
+				{
+					"name": "morph-wallet",
+					"upstreamPath": "skills/morph-wallet/SKILL.md",
+					"targetPath": "morph/vendor/morph-wallet/SKILL.md"
+				},
+				{
+					"name": "morph-explorer",
+					"upstreamPath": "skills/morph-explorer/SKILL.md",
+					"targetPath": "morph/vendor/morph-explorer/SKILL.md"
+				},
+				{
+					"name": "morph-identity",
+					"upstreamPath": "skills/morph-identity/SKILL.md",
+					"targetPath": "morph/vendor/morph-identity/SKILL.md"
+				},
+				{
+					"name": "morph-dex",
+					"upstreamPath": "skills/morph-dex/SKILL.md",
+					"targetPath": "morph/vendor/morph-dex/SKILL.md"
+				},
+				{
+					"name": "morph-bridge",
+					"upstreamPath": "skills/morph-bridge/SKILL.md",
+					"targetPath": "morph/vendor/morph-bridge/SKILL.md"
+				},
+				{
+					"name": "morph-altfee",
+					"upstreamPath": "skills/morph-altfee/SKILL.md",
+					"targetPath": "morph/vendor/morph-altfee/SKILL.md"
+				},
+				{
+					"name": "morph-7702",
+					"upstreamPath": "skills/morph-7702/SKILL.md",
+					"targetPath": "morph/vendor/morph-7702/SKILL.md"
+				},
+				{
+					"name": "morph-x402",
+					"upstreamPath": "skills/morph-x402/SKILL.md",
+					"targetPath": "morph/vendor/morph-x402/SKILL.md"
+				}
+			]
+		}
+	]
+}
