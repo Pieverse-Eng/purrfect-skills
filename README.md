@@ -1,37 +1,52 @@
-# Workspace Skill Organization
+# Pieverse Built-in Skills
 
-This directory is the platform-managed skill catalog copied into each tenant workspace.
+This directory contains the Pieverse built-in skills. Each folder is a skill unit organized by domain or protocol.
 
-## Naming Rules
+# Current Layout
 
-- Use domain/protocol folders, not single-intent folders, when one protocol exposes multiple operations.
-- Keep `name` in frontmatter equal to folder name.
-- Keep routing/orchestrator skills separate from implementation skills.
+### Routers & Runtime
 
-## Current Layout
+| Skill | Description |
+|-------|-------------|
+| `onchain` | Top-level on-chain operations router. Classifies user intent and dispatches requests to the matching sibling skill for execution. |
+| `purrfect-runtime` | Setup and skill store. Use only when the user explicitly asks to configure the runtime or manage plugins/skills. |
 
-- `onchain`: top-level router (chain + intent classification only)
-- `opensea`: OpenSea marketplace implementation (official OpenSea workflow + `purr opensea` execution path)
-- `pancake`: Pancake implementation (swap + LP + farm)
-- `dflow-swap`: Solana swap implementation
-- `lista-vaults`: Lista vault implementation
-- `okx`: OKX domain router — all vendor skills via `onchainos` CLI (token research, market data, portfolio, smart-money, trenches, security, swap, wallet, audit-log, gateway, x402 payment)
-- `gate`: Gate.io domain router — 38 vendor skills via Gate MCP tools covering CEX (spot, futures, TradFi, Alpha, flash swap, earn, staking, dual investment, loans, transfers), DEX (wallet, swaps, market data), Info (coin analysis, trends, risk checks, market overview, address tracking), and News (briefings, event attribution, listings)
-- `rootdata-crypto`: RootData crypto intelligence — project search, investor lookup, funding rounds, trending projects, personnel job changes (read-only, auto-provisions API key)
-- `kraken`: Kraken CEX — spot/xStocks/forex trading, earn/staking, funding
-- `morph`: Morph L2 domain router — wallet, explorer, DEX swap, cross-chain bridge, alt-fee gas, EIP-7702 delegation, EIP-8004 agent identity & reputation, x402 USDC payment via Python scripts (`morph_api.py`)
-- `pieverse-a2a`: Pieverse HTTP 402 A2A payment flow — probe, confirm, authorize through hosted wallet, retry with `X-Pieverse-Payment`
-- `ddg-search`: DuckDuckGo web search — zero config, no API key (fallback for `web_search`)
-- `access-pass`: optional execution utility (inactive)
+### Trading & DeFi
 
-### Staging (`../skills-staging/`)
+| Skill | Description |
+|-------|-------------|
+| `aster` | Aster DEX perpetual futures — market data, trading, and account management. |
+| `binance-connect` | Fiat on-ramp via Binance Connect. Buy crypto with card, Apple Pay, or bank transfer directly to wallet. |
+| `bitget-wallet` | Bitget Wallet integration for multi-chain swaps, RWA stock trading, and market data. |
+| `dflow-swap` | Solana on-chain swap implementation, executed via dflow. |
+| `fourmeme` | four.meme on BSC — token buy, sell, and creation. |
+| `gate` | Gate.io domain router — covers CEX (spot, futures, earn, staking, dual investment, loans, transfers), DEX (wallet, swaps, market data), intelligence (coin analysis, risk checks, market overview), and news. |
+| `kraken` | Kraken exchange — spot / xStocks / forex trading, earn, staking, funding, and paper trading. |
+| `lista-vaults` | Lista DAO lending vaults on BSC — deposit, redeem, and withdraw from ERC-4626 yield vaults. |
+| `morph` | Morph L2 domain router — wallet, explorer, DEX swap, cross-chain bridge, EIP-7702 delegation, EIP-8004 agent identity & reputation, and x402 USDC payments. |
+| `okx` | OKX domain router — token research, market data, portfolio analysis, smart-money signals, meme scanning, security checks, swaps, wallet ops, and x402 payments. |
+| `opensea` | OpenSea entry point — execute NFT buy/sell via `purr opensea`, and route read operations to `opensea-vendor`. |
+| `pancake` | PancakeSwap implementation — swaps, liquidity pools (LP), and farms. |
 
-Candidate skills not yet shipped in the container image. Move them into `workspace-templates/skills/` to promote them to built-in.
+### Data & Intelligence
 
-- `htx`: HTX CEX — spot trading and USDT-M futures via signed REST API
+| Skill | Description |
+|-------|-------------|
+| `blockbeats` | BlockBeats intelligence — 1,500+ sources including AI-driven insights, Hyperliquid on-chain data, and Polymarket analytics. |
+| `bnbchain-mcp` | BNB Chain MCP server — read-only blockchain queries for BNB Chain / opBNB blocks, transactions, contracts, ERC20 / NFTs, balances, and network info. |
+| `ddg-search` | DuckDuckGo web search — zero-config, no API key required. Use as a fallback when `web_search` is unavailable. |
+| `mantle` | Mantle skill bundle — network reference, address lookup, risk evaluation, portfolio analysis, DeFi planning, indexing, debugging, simulation, and smart-contract lifecycle. |
+| `panewslab` | PANewsLab skill bundle — crypto news reading, article publishing, and rendered web viewing. |
+| `rootdata-crypto` | RootData crypto intelligence — project / investor / people search, funding rounds, trending projects, and personnel job changes. |
 
-## When Adding New Features
+### Wallet & Infrastructure
 
-- If the feature belongs to an existing protocol domain, extend that domain skill (example: new Pancake actions go in `pancake`).
-- If the feature is a new protocol domain, create a new skill folder and wire routing in `onchain`.
-- Keep tool contracts and execution checklist in the implementation skill, not in `onchain`.
+| Skill | Description |
+|-------|-------------|
+| `ows` | Open Wallet Standard (OWS) — local wallet custody, policy-gated signing, and API-key access. Manages the `~/.ows/` vault. |
+
+### Payments & Protocols
+
+| Skill | Description |
+|-------|-------------|
+| `pieverse-a2a` | Pieverse HTTP 402 A2A payment flow — probe, confirm, authorize through the hosted wallet, and retry with `X-Pieverse-Payment`. |
