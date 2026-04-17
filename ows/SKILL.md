@@ -17,7 +17,7 @@ Local wallet custody via the `ows` CLI. Keys never leave the pod — encrypted a
 - The vault passphrase used for creating wallet is always empty string since it's agent mode.
 - **Do NOT use `ows wallet export`** — it requires an interactive terminal which is not available.
 - Always pass `--json` to signing commands for structured output.
-- **Chain names:** use specific names (`ethereum`, `base`, `arbitrum`, `optimism`, `polygon`, `bsc`, `avalanche`, `plasma`, `etherlink`) or CAIP-2 (`eip155:8453`). The legacy alias `--chain evm` still works but emits a deprecation warning — prefer `ethereum` explicitly.
+- **Chain names:** use specific names (`ethereum`, `base`, `arbitrum`, `optimism`, `polygon`, `bsc`, `avalanche`, `plasma`, `etherlink`) or CAIP-2 (`eip155:8453`). For Kaia / Kairos, prefer CAIP-2 explicitly: `eip155:8217` (Kaia mainnet) and `eip155:1001` (Kairos). The legacy alias `--chain evm` still works but emits a deprecation warning — prefer an explicit chain or CAIP-2 value.
 
 ## Setup Flow (first-time agent onboarding)
 
@@ -51,11 +51,11 @@ Policies are a **default-deny allowlist**. Without a policy attached, the key CA
 cat > /tmp/policy.json <<'EOF'
 {
   "version": 1,
-  "name": "evm-mainnets",
+  "name": "evm-networks",
   "rules": [
     {
       "type": "allowed_chains",
-      "chain_ids": ["eip155:1", "eip155:56", "eip155:8453", "eip155:42161", "eip155:10", "eip155:137", "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp"]
+      "chain_ids": ["eip155:1", "eip155:56", "eip155:8453", "eip155:42161", "eip155:10", "eip155:137", "eip155:8217", "eip155:1001", "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp"]
     }
   ]
 }
@@ -158,6 +158,13 @@ OWS_PASSPHRASE="ows_key_..." ows sign message \
   --json
 # --encoding hex     (default: utf8)
 # --index <N>        account index (default: 0)
+
+# Kaia mainnet example:
+OWS_PASSPHRASE="ows_key_..." ows sign message \
+  --wallet my-wallet \
+  --chain eip155:8217 \
+  --message "hello kaia" \
+  --json
 ```
 
 ### Sign EIP-712 typed data
@@ -179,7 +186,16 @@ OWS_PASSPHRASE="ows_key_..." ows sign tx \
   --chain ethereum \
   --tx <hex-encoded-unsigned-tx> \
   --json
+
+# Kaia / Kairos: use CAIP-2 or the bare EVM chain ID
+OWS_PASSPHRASE="ows_key_..." ows sign tx \
+  --wallet my-wallet \
+  --chain eip155:8217 \
+  --tx <hex-encoded-unsigned-tx> \
+  --json
 ```
+
+For Kaia / Kairos on native `ows`, prefer **CAIP-2 only**: `eip155:8217` / `eip155:1001`. Do **not** use `--chain kaia` / `--chain kairos`.
 
 ### Sign and broadcast
 
@@ -190,7 +206,20 @@ OWS_PASSPHRASE="ows_key_..." ows sign send-tx \
   --tx <hex-encoded-unsigned-tx> \
   --json
 # --rpc-url <url>    override default RPC
+
+# Kaia mainnet example:
+OWS_PASSPHRASE="ows_key_..." ows sign send-tx \
+  --wallet my-wallet \
+  --chain eip155:8217 \
+  --rpc-url https://public-en.node.kaia.io \
+  --tx <hex-encoded-unsigned-tx> \
+  --json
 ```
+
+For Kaia / Kairos on native `ows sign send-tx`:
+- `--rpc-url` is **required in practice** because OWS 1.2.4 does not ship Kaia / Kairos default RPC entries.
+- Use `--chain eip155:8217` or `--chain eip155:1001`. Do **not** use `--chain kaia`.
+- The tx must be a typed EVM transaction (`0x01` / `0x02`). Legacy untyped EVM txs are rejected.
 
 ## Policy Management
 
@@ -213,7 +242,7 @@ Policy JSON:
   "rules": [
     {
       "type": "allowed_chains",
-      "chain_ids": ["eip155:1", "eip155:56", "eip155:8453"]
+      "chain_ids": ["eip155:1", "eip155:56", "eip155:8453", "eip155:8217", "eip155:1001"]
     }
   ],
   "action": "deny"
@@ -267,7 +296,7 @@ ows mnemonic derive --chain ethereum
 
 **`ows fund balance` has two limitations**: (1) returns **tokens only**, no native gas coin; (2) allowlist is restricted to MoonPay-tracked chains (`ethereum` / `base` / `bsc` / `polygon` / `arbitrum` / `optimism` / `solana`) — non-listed chains like Morph / Tempo / Hyperliquid fail with `UnsupportedChain`.
 
-For **any chain (including Morph) + native coin + token balances in a single call**, use the Bitget Wallet vendor's `batch-v2` as the canonical balance checker:
+For **most chains (including Morph) + native coin + token balances in a single call**, use the Bitget Wallet vendor's `batch-v2` as the canonical balance checker:
 
 ```bash
 python3 skills/bitget-wallet/vendor/bitget-wallet-agent-api.py batch-v2 \
@@ -278,7 +307,23 @@ python3 skills/bitget-wallet/vendor/bitget-wallet-agent-api.py batch-v2 \
 
 Returns JSON `data[0].list` keyed by contract address. Key `""` = native coin (BNB / ETH / SOL / ...); specific addresses = ERC-20 / SPL tokens.
 
-Chain identifiers accepted: `bnb` (or `bsc`) / `eth` (or `ethereum`) / `base` / `arbitrum` / `optimism` / `polygon` / `solana` / `morph` / `avalanche` / `tron` / many more. This is the single balance tool that works across every chain OWS signs on.
+Chain identifiers accepted: `bnb` (or `bsc`) / `eth` (or `ethereum`) / `base` / `arbitrum` / `optimism` / `polygon` / `solana` / `morph` / `klay` / `avalanche` / `tron` / many more.
+
+**Kaia / Kairos exception:** do **not** trust Bitget `batch-v2` for `8217` / `1001` balance checks right now. Live verification showed Bitget returning `0` for funded Kaia addresses. For Kaia mainnet and Kairos testnet, use raw JSON-RPC against a Kaia RPC instead:
+
+```bash
+# Native KAIA / test KAIA
+curl -s https://public-en.node.kaia.io \
+  -H 'content-type: application/json' \
+  --data '{"jsonrpc":"2.0","id":1,"method":"eth_getBalance","params":["<addr>","latest"]}'
+
+# ERC-20 balanceOf on Kaia / Kairos
+curl -s <kaia-or-kairos-rpc-url> \
+  -H 'content-type: application/json' \
+  --data '{"jsonrpc":"2.0","id":1,"method":"eth_call","params":[{"to":"<token>","data":"0x70a08231000000000000000000000000<addr-without-0x>"},"latest"]}'
+```
+
+Interpret the returned hex as wei / token smallest units using the token's decimals. For Bitget-facing Kaia metadata, prefer chain code `klay`, but for balance checks on Kaia / Kairos use raw RPC.
 
 Requires the `bitget-wallet` skill to be present (preinstalled in every tenant pod alongside `ows`).
 
@@ -319,7 +364,7 @@ ows config show
 
 | Family  | Chain names (`--chain` value)                                                                    | CAIP-2 example                            |
 | ------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------- |
-| EVM     | Friendly names: `ethereum`, `base`, `arbitrum`, `optimism`, `polygon`, `bsc`, `avalanche`, `plasma`, `etherlink`. CAIP-2 only (no friendly alias in CLI v1.2.4): Tempo, Hyperliquid. | `eip155:1`, `eip155:8453`, `eip155:4217` (tempo), `eip155:999` (hyperliquid), … |
+| EVM     | Friendly names: `ethereum`, `base`, `arbitrum`, `optimism`, `polygon`, `bsc`, `avalanche`, `plasma`, `etherlink`. CAIP-2 recommended for Kaia / Kairos: `eip155:8217`, `eip155:1001`. CAIP-2 only (no friendly alias in CLI v1.2.4): Tempo, Hyperliquid. | `eip155:1`, `eip155:8453`, `eip155:8217` (kaia), `eip155:1001` (kairos), `eip155:4217` (tempo), `eip155:999` (hyperliquid), … |
 | Solana  | `solana`                                                                                         | `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp` |
 | Bitcoin | `bitcoin`                                                                                        | `bip122:000000000019d6689c085ae165831e93` |
 | Other   | `cosmos`, `tron`, `ton`, `sui`, `filecoin`, `spark`, `xrpl`                                      | `cosmos:cosmoshub-4`, `tron:mainnet`, …   |
@@ -335,6 +380,34 @@ This section contains OWS-specific execution notes for every skill that supports
 **Routing rule:** `onchain` is the top-level skill. When the user explicitly names OWS (e.g. "using OWS", "via my OWS vault"), read this guide for the specific downstream skill being requested. Downstream skill files do NOT mention OWS — all OWS logic lives here.
 
 **Pre-check for every OWS flow:** If `ows wallet list` returns no wallet, ask the user to create one first (`ows wallet create --name ...`) — do NOT auto-create.
+
+### Kaia Quick Reference
+
+**Native OWS CLI:**
+- Message signing: `OWS_PASSPHRASE="ows_key_..." ows sign message --wallet <name> --chain eip155:8217 --message "..." --json`
+- Unsigned tx signing: `OWS_PASSPHRASE="ows_key_..." ows sign tx --wallet <name> --chain eip155:8217 --tx <hex> --json`
+- Sign + broadcast: `OWS_PASSPHRASE="ows_key_..." ows sign send-tx --wallet <name> --chain eip155:8217 --rpc-url https://public-en.node.kaia.io --tx <hex> --json`
+- Kairos examples are the same shape with `--chain eip155:1001 --rpc-url https://public-en-kairos.node.kaia.io`
+
+**`purr` OWS wrappers:**
+- Vendor unsigned payloads: `purr ows-wallet sign-transaction --ows-wallet <name> --txs-json <json> --chain-id 8217`
+- Transfer builder: `purr ows-wallet build-transfer --ows-wallet <name> --to 0x... --amount 0.01 --chain-id 8217 [--token 0x...]`
+- Step execution: `purr ows-execute --steps-file /tmp/steps.json --ows-wallet <name>`
+- Kairos examples are the same shape with `--chain-id 1001`
+
+**Current Kaia support notes:**
+- `purr ows-wallet sign-transaction` signs Kaia EVM payloads with OWS using CAIP-2 `eip155:8217`.
+- `purr ows-wallet build-transfer` has built-in default RPCs for Kaia mainnet (`8217`) and Kairos (`1001`), so `--rpc-url` is optional unless you want to override them.
+- `purr ows-execute` supports Kaia step execution on `8217` and Kairos on `1001`; all step `chainId`s must match.
+- Native `ows sign tx` accepts Kaia / Kairos with CAIP-2 `--chain eip155:8217` / `eip155:1001`. Prefer CAIP-2; do not use the friendly alias `kaia`.
+- Native `ows sign send-tx` for Kaia / Kairos must include an explicit `--rpc-url` because OWS 1.2.4 does not ship default RPC entries for `8217` / `1001`.
+- Native `ows sign send-tx` also requires a typed EVM tx (`0x01` / `0x02`), not a legacy untyped tx.
+- For Kaia / Kairos balance checks, use raw RPC (`eth_getBalance` for native, `eth_call balanceOf` for tokens) instead of Bitget `batch-v2`.
+
+**Important boundary from `kaia-skills`:**
+- The current `purr` OWS wrappers and the generic native `ows` examples here are correct for **Ethereum-compatible Kaia flows**: simple transfers, ERC-20 transfers, contract calls, typed-data signing, and vendor unsigned payloads that reduce to EVM type 0/1/2 semantics.
+- They do **not** implement Kaia-native transaction families such as protocol fee delegation, `AccountUpdate`, `Cancel`, `ValueTransferMemo`, or KIP-247 gas abstraction. Those require Kaia-specific construction/signing with `@kaiachain/ethers-ext` or `@kaiachain/viem-ext`, plus the right Kaia-native fields (`from`, fee payer signatures, gasless router calls, etc.).
+- If the user explicitly asks for fee delegation, gas sponsorship, account-key changes, or gasless token-paid transactions on Kaia/Kairos, route to `kaia-skills` (`fee-delegation`, `gas-abstraction`, `accounts`, `transactions`, `sdk`) rather than using the generic `purr ows-*` path.
 
 ---
 
