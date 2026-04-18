@@ -35,6 +35,7 @@ This directory contains the Pieverse built-in skills. Each folder is a skill uni
 | `blockbeats` | BlockBeats intelligence — 1,500+ sources including AI-driven insights, Hyperliquid on-chain data, and Polymarket analytics. |
 | `bnbchain-mcp` | BNB Chain MCP server — read-only blockchain queries for BNB Chain / opBNB blocks, transactions, contracts, ERC20 / NFTs, balances, and network info. |
 | `ddg-search` | DuckDuckGo web search — zero-config, no API key required. Use as a fallback when `web_search` is unavailable. |
+| `kaia-skills` | Kaia knowledge bundle — network basics, gas, fee delegation, governance, SDKs, and transaction types. |
 | `mantle` | Mantle skill bundle — network reference, address lookup, risk evaluation, portfolio analysis, DeFi planning, indexing, debugging, simulation, and smart-contract lifecycle. |
 | `panewslab` | PANewsLab skill bundle — crypto news reading, article publishing, and rendered web viewing. |
 | `rootdata-crypto` | RootData crypto intelligence — project / investor / people search, funding rounds, trending projects, and personnel job changes. |

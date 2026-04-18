@@ -232,7 +232,7 @@ This installs the `purr` binary to `~/.purrfectclaw/bin/purr` and prints PATH in
 To pin a specific version:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Pieverse-Eng/purr-cli/main/install.sh | PURR_VERSION=v0.2.1 bash
+curl -fsSL https://raw.githubusercontent.com/Pieverse-Eng/purr-cli/main/install.sh | PURR_VERSION=v0.2.2 bash
 ```
 
 Verify:
