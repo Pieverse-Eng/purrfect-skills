@@ -155,6 +155,19 @@
 					"targetPath": "morph/vendor/morph-x402/SKILL.md"
 				}
 			]
+		},
+		{
+			"id": "memome",
+			"repo": "https://github.com/joachimber/memome.git",
+			"commit": "0657e319557a9b75a7d342068e4c61afb5d9edd6",
+			"notes": "Genetic recombination for four.meme tokens. Takes two parent tokens, extracts a 4-chromosome genome, performs dominance-weighted crossover + bounded mutation, and hands off to fourmeme create-token (TEE-signed) for the on-chain deploy. BSC only. Built for Four.meme AI Sprint.",
+			"skills": [
+				{
+					"name": "memome-breeder",
+					"upstreamPath": "skills/memome-breeder/SKILL.md",
+					"targetPath": "memome-breeder/SKILL.md"
+				}
+			]
 		}
 	]
 }
