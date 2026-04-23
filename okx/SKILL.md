@@ -98,7 +98,7 @@ If it is **not available**, install it from the OKX GitHub release:
 
 ```bash
 ONCHAINOS_VERSION="v2.4.1"
-ONCHAINOS_TARGET=$(case "$(uname -m)" in x86_64) echo x86_64-unknown-linux-gnu ;; aarch64|arm64) echo aarch64-unknown-linux-gnu ;; i686) echo i686-unknown-linux-gnu ;; armv7l) echo armv7-unknown-linux-gnueabihf ;; *) echo "Unsupported architecture: $(uname -m)" &>&2; exit 1 ;; esac)
+ONCHAINOS_TARGET=$(case "$(uname -m)" in x86_64) echo x86_64-unknown-linux-gnu ;; aarch64|arm64) echo aarch64-unknown-linux-gnu ;; i686) echo i686-unknown-linux-gnu ;; armv7l) echo armv7-unknown-linux-gnueabihf ;; *) echo "Unsupported architecture: $(uname -m)" >&2; exit 1 ;; esac)
 ONCHAINOS_BINARY="onchainos-${ONCHAINOS_TARGET}"
 curl -fsSL -o /tmp/onchainos "https://github.com/okx/onchainos-skills/releases/download/${ONCHAINOS_VERSION}/${ONCHAINOS_BINARY}"
 curl -fsSL -o /tmp/onchainos-checksums.txt "https://github.com/okx/onchainos-skills/releases/download/${ONCHAINOS_VERSION}/checksums.txt"
