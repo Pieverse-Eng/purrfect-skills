@@ -4,7 +4,7 @@ description: "Use this skill to 'broadcast transaction', 'send tx', 'estimate ga
 license: MIT
 metadata:
   author: okx
-  version: "2.1.0"
+  version: "2.4.1"
   homepage: "https://web3.okx.com"
 disable-model-invocation: true
 user-invocable: false
@@ -24,7 +24,7 @@ Every time before running any `onchainos` command, always follow these steps in 
    ```
    Extract the `tag_name` field (e.g., `v1.0.5`) into `LATEST_TAG`.
    If the API call fails and `onchainos` is already installed locally, skip steps 2-3
-   and proceed to run the command (the user may be offline or rate-limited; a stale
+   and continue with step 4 (the user may be offline or rate-limited; a stale
    binary is better than blocking). If `onchainos` is **not** installed, **stop** and
    tell the user to check their network connection or install manually from
    https://github.com/okx/onchainos-skills.
@@ -51,9 +51,11 @@ Every time before running any `onchainos` command, always follow these steps in 
    - Platform targets — macOS: `arm64`->`aarch64-apple-darwin`, `x86_64`->`x86_64-apple-darwin`; Linux: `x86_64`->`x86_64-unknown-linux-gnu`, `aarch64`->`aarch64-unknown-linux-gnu`, `i686`->`i686-unknown-linux-gnu`, `armv7l`->`armv7-unknown-linux-gnueabihf`; Windows: `AMD64`->`x86_64-pc-windows-msvc`, `x86`->`i686-pc-windows-msvc`, `ARM64`->`aarch64-pc-windows-msvc`
    - Hash command — macOS/Linux: `shasum -a 256 ~/.local/bin/onchainos`; Windows: `(Get-FileHash "$env:USERPROFILE\.local\bin\onchainos.exe" -Algorithm SHA256).Hash.ToLower()`
 
-4. **Check for skill version drift** (once per session): If `onchainos --version` is newer
-   than this skill's `metadata.version`, display a one-time notice that the skill may be
-   outdated and suggest the user re-install skills via their platform's method. Do not block.
+4. **Version drift check** — REQUIRED, run even if steps 1-3 were skipped.
+   - Run `onchainos --version` → CLI version (e.g., `2.2.9`)
+   - Read `version` field from this file's YAML frontmatter (e.g., `version: "2.0.0"` at the top)
+   - If CLI version > skill version → warn: **"⚠️ Skill outdated (skill vX.Y.Z < CLI vA.B.C). Re-install skills to get the latest features and fixes."**
+   - Continue to the user's command.
 5. **Do NOT auto-reinstall on command failures.** Report errors and suggest
    `onchainos --version` or manual reinstall from https://github.com/okx/onchainos-skills.
 6. **Rate limit errors.** If a command hits rate limits, the shared API key may
@@ -144,16 +146,8 @@ This skill is the **final mile** — it takes a signed transaction and sends it 
 > User: "Swap 1 ETH for USDC and broadcast it"
 
 ```
-1. okx-dex-swap     onchainos swap swap --from ... --to ... --amount ... --chain ethereum --wallet <addr>
-       ↓ user signs the tx locally
-2. okx-onchain-gateway  onchainos gateway broadcast --signed-tx <signed_hex> --address <addr> --chain ethereum
-       ↓ orderId returned
-3. okx-onchain-gateway  onchainos gateway orders --address <addr> --chain ethereum --order-id <orderId>
+1. okx-dex-swap     onchainos swap execute --from ... --to ... --amount ... --chain ethereum --wallet <addr>
 ```
-
-**Data handoff**:
-- `tx.data`, `tx.to`, `tx.value`, `tx.gas` from swap → user builds & signs → `--signed-tx` for broadcast
-- `orderId` from broadcast → `--order-id` param in orders query
 
 ### Workflow B: Batch Broadcast (Approve+Swap Merge)
 
@@ -189,10 +183,7 @@ When `okx-dex-swap` determines that approve and swap should be merged (see okx-d
 
 ```
 1. onchainos gateway gas --chain ethereum                                    → check gas prices
-2. okx-dex-swap     onchainos swap swap --from ... --to ... --chain ethereum --wallet <addr>
-       ↓ user signs
-3. onchainos gateway broadcast --signed-tx <signed_hex> --address <addr> --chain ethereum
-4. onchainos gateway orders --address <addr> --chain ethereum --order-id <orderId>
+2. okx-dex-swap     onchainos swap execute --from ... --to ... --amount ... --chain ethereum --wallet <addr>
 ```
 
 ## Operation Flow

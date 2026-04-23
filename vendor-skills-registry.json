@@ -48,8 +48,8 @@
 		{
 			"id": "okx",
 			"repo": "https://github.com/okx/onchainos-skills.git",
-			"commit": null,
-			"notes": "Imported verbatim under okx/vendor as official reference material. Platform routing and execution must still be adapted locally before enabling write flows.",
+			"commit": "0ab63584138b05d3ce2986b63532cf96b963e199",
+			"notes": "Imported verbatim under okx/vendor as official reference material (v2.4.1). Each skill dir may also include _shared/ and references/ subdirs. Platform routing and execution must still be adapted locally before enabling write flows.",
 			"skills": [
 				{
 					"name": "okx-agentic-wallet",
@@ -60,6 +60,21 @@
 					"name": "okx-audit-log",
 					"upstreamPath": "skills/okx-audit-log/SKILL.md",
 					"targetPath": "okx/vendor/okx-audit-log/SKILL.md"
+				},
+				{
+					"name": "okx-defi-invest",
+					"upstreamPath": "skills/okx-defi-invest/SKILL.md",
+					"targetPath": "okx/vendor/okx-defi-invest/SKILL.md"
+				},
+				{
+					"name": "okx-defi-portfolio",
+					"upstreamPath": "skills/okx-defi-portfolio/SKILL.md",
+					"targetPath": "okx/vendor/okx-defi-portfolio/SKILL.md"
+				},
+				{
+					"name": "okx-dex-bridge",
+					"upstreamPath": "skills/okx-dex-bridge/SKILL.md",
+					"targetPath": "okx/vendor/okx-dex-bridge/SKILL.md"
 				},
 				{
 					"name": "okx-dex-market",
@@ -85,6 +100,11 @@
 					"name": "okx-dex-trenches",
 					"upstreamPath": "skills/okx-dex-trenches/SKILL.md",
 					"targetPath": "okx/vendor/okx-dex-trenches/SKILL.md"
+				},
+				{
+					"name": "okx-dex-ws",
+					"upstreamPath": "skills/okx-dex-ws/SKILL.md",
+					"targetPath": "okx/vendor/okx-dex-ws/SKILL.md"
 				},
 				{
 					"name": "okx-onchain-gateway",
