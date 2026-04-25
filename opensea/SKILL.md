@@ -47,7 +47,7 @@ Write flows covered by this skill:
 - create listing — same limitation
 - cancel offer — no tooling available
 - cancel listing — same limitation
-- token swap execution — use the onchain skill's swap routing instead (dflow for Solana, bitget/pancake for EVM)
+- token swap execution — use the onchain skill's swap routing instead
 
 ## Read Path
 

@@ -330,7 +330,6 @@ openclaw skills list
 | `purr wallet sign-typed-data` | Sign EIP-712 typed data |
 | `purr execute` | Execute transaction steps from a file |
 | `purr pancake swap --execute` | Swap tokens via PancakeSwap |
-| `purr dflow swap --execute` | Swap tokens on Solana via DFlow |
 | `purr bitget swap --execute` | Multi-chain EVM swaps via Bitget |
 | `purr lista deposit --execute` | Deposit into Lista DAO vaults |
 | `purr lista list-vaults` | List available Lista vaults |
