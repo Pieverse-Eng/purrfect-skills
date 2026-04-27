@@ -195,8 +195,61 @@ For each row below: if the value is already available (in env, in earlier conver
 | 3 | HTTP route to charge for | `GET /weather` |
 | 4 | Server base URL (wherever buyers will reach it) | `http://localhost:4021` for local dev, `https://api.example.com` for production |
 | 5 | Price per call | `$0.01` or `0.1 USDT` |
-| 6 | Receiving wallet on X Layer (chainId 196) | `0xb483abdb92f8061e9a3a082a4aaaa6b88c381308` |
-| 7 | OKX API credentials status | `OKX_API_KEY` / `OKX_SECRET_KEY` / `OKX_PASSPHRASE` configured in the environment |
+| 6 | Payment mode | One-time (`exact`), batch (`aggr_deferred`), or both |
+| 7 | Receiving wallet on X Layer (chainId 196) | `0xb483abdb92f8061e9a3a082a4aaaa6b88c381308` |
+| 8 | OKX API credentials status | `OKX_API_KEY` / `OKX_SECRET_KEY` / `OKX_PASSPHRASE` configured in the environment |
+
+### Payment mode selection
+
+Ask for the payment mode if the user has not specified it. Do not silently default. If the user is unsure, explain the modes and ask them to choose.
+
+| Mode | Route scheme | Register on `eip155:196` | Use when | Notes |
+|---|---|---|---|---|
+| One-time payment | `exact` | TypeScript: `new ExactEvmScheme()`; Go: `exact.NewExactEvmScheme()`; Rust: `ExactEvmScheme::new()` | Normal paid API calls, higher-value resources, or requests that should have independent settlement | `syncSettle` can be used when delivery should wait for on-chain confirmation |
+| Batch payment | `aggr_deferred` | TypeScript: `new AggrDeferredEvmScheme()`; Go: `deferred.NewAggrDeferredEvmScheme()`; Rust: `AggrDeferredEvmScheme::new()` | High-frequency, low-value AI agent calls, micropayments, streaming billing, or bulk API usage | Requires the OKX Agentic Wallet buyer flow; uses session-key signing; `syncSettle` is not applicable |
+| Both | `exact` + `aggr_deferred` | Register both schemes and include both payment options in the route `accepts` list | Support both ordinary one-time buyers and Agentic Wallet batch buyers | Keep both options on the same protected route config |
+
+The minimal route patterns below are TypeScript-shaped examples for scheme selection. For Go and Rust syntax, open the matching `references/SELLER-*.md` and apply the same scheme: one-time uses `exact`, batch uses `aggr_deferred`.
+
+Minimal one-time route pattern:
+
+```typescript
+resourceServer.register("eip155:196", new ExactEvmScheme());
+
+const routes = {
+  "GET /api/data": {
+    accepts: [{
+      scheme: "exact",
+      network: "eip155:196",
+      payTo: "0xSellerWallet",
+      price: "$0.01",
+    }],
+    description: "Premium data endpoint",
+    mimeType: "application/json",
+  },
+};
+```
+
+Minimal batch route pattern:
+
+```typescript
+resourceServer.register("eip155:196", new AggrDeferredEvmScheme());
+
+const routes = {
+  "GET /api/data": {
+    accepts: [{
+      scheme: "aggr_deferred",
+      network: "eip155:196",
+      payTo: "0xSellerWallet",
+      price: "$0.001",
+    }],
+    description: "Data endpoint with deferred batch settlement",
+    mimeType: "application/json",
+  },
+};
+```
+
+Batch buyers include a session certificate in `accepted.extra.sessionCert`. Seller code should pass the payment through the SDK/facilitator flow as-is and does not need to parse that field.
 
 ### Credentials Handling
 
