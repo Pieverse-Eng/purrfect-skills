@@ -24,7 +24,7 @@ This directory contains the Pieverse built-in skills. Each folder is a skill uni
 | `kraken` | Kraken exchange — spot / xStocks / forex trading, earn, staking, funding, and paper trading. |
 | `lista-vaults` | Lista DAO lending vaults on BSC — deposit, redeem, and withdraw from ERC-4626 yield vaults. |
 | `morph` | Morph L2 domain router — wallet, explorer, DEX swap, cross-chain bridge, EIP-7702 delegation, EIP-8004 agent identity & reputation, and x402 USDC payments. |
-| `okx` | OKX domain router — token research, market data, portfolio analysis, smart-money signals, meme scanning, security checks, swaps, wallet ops, and x402 payments. |
+| `okx` | OKX domain router — token research, market data, WebSocket streams, portfolio analysis, smart-money signals, meme scanning, security checks, DEX swaps, cross-chain bridging, DeFi invest (APY/TVL discovery + deposit/redeem/stake/lend), DeFi portfolio view, wallet ops, and x402 payments. |
 | `opensea` | OpenSea entry point — execute NFT buy/sell via `purr opensea`, and route read operations to `opensea-vendor`. |
 | `pancake` | PancakeSwap implementation — swaps, liquidity pools (LP), and farms. |
 
@@ -50,4 +50,5 @@ This directory contains the Pieverse built-in skills. Each folder is a skill uni
 
 | Skill | Description |
 |-------|-------------|
+| `okx-x402-seller` | Add OKX Onchain OS x402 payment collection to an HTTP API — per-call charging in USDT0/USDG on X Layer. Covers Express, Hono, Fastify, and Next.js via `@okxweb3/x402-*`. Seller side only; pair with `okx/vendor/okx-x402-payment` for the buyer flow. |
 | `pieverse-a2a` | Pieverse HTTP 402 A2A payment flow — probe, confirm, authorize through the hosted wallet, and retry with `X-Pieverse-Payment`. |

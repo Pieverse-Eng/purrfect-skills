@@ -32,7 +32,7 @@ onchainos memepump tokens --chain <chain> --stage <stage> [options]
 | Param | Required | Default | Description |
 |---|---|---|---|
 | `--chain` | Yes | - | Chain name (e.g., `solana`, `bsc`) |
-| `--stage` | Yes | - | Token stage: `NEW`, `MIGRATING`, or `MIGRATED` |
+| `--stage` | Yes | `NEW` | Token stage: `NEW`, `MIGRATING`, or `MIGRATED` |
 | `--wallet-address` | No | - | Wallet address for position-specific data |
 | `--protocol-id-list` | No | - | Comma-separated protocol IDs (get IDs from `memepump chains`) |
 | `--quote-token-address-list` | No | - | Comma-separated quote token addresses |
@@ -134,12 +134,12 @@ onchainos memepump token-details --address <address> [--chain <chain>]
 | `market.sellTxCount1h` | String | 1-hour sell transaction count |
 | `bondingPercent` | String | Bonding curve progress (0-100) |
 | `tags.top10HoldingsPercent` | String | Top 10 holders percentage (0-100) |
-| `tags.devHoldingsPercent` | String | Dev holdings percentage (0-100) |
-| `tags.insidersPercent` | String | Insiders percentage (0-100) |
-| `tags.bundlersPercent` | String | Bundlers percentage (0-100) |
-| `tags.snipersPercent` | String | Snipers percentage (0-100) |
-| `tags.freshWalletsPercent` | String | Fresh wallets percentage (0-100) |
-| `tags.suspectedPhishingWalletPercent` | String | Phishing wallet percentage (0-100) |
+| `tags.devHoldingsPercent` | String \| null | Dev holdings percentage (0-100); `null` if token is < 2s old |
+| `tags.insidersPercent` | String \| null | Insiders percentage (0-100); `null` if token is < 2s old |
+| `tags.bundlersPercent` | String \| null | Bundlers percentage (0-100); `null` if token is < 2s old |
+| `tags.snipersPercent` | String \| null | Snipers percentage (0-100); `null` if token is < 2s old |
+| `tags.freshWalletsPercent` | String \| null | Fresh wallets percentage (0-100); `null` if token is < 2s old |
+| `tags.suspectedPhishingWalletPercent` | String \| null | Phishing wallet percentage (0-100); `null` if token is < 2s old |
 | `tags.totalHolders` | String | Total holder count |
 | `social.x` | String | X (Twitter) URL |
 | `social.telegram` | String | Telegram URL |
