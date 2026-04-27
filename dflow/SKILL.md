@@ -24,17 +24,38 @@ Use the vendored DFlow README and skills for all DFlow work. This file exists to
 > **Ignore the Install section in `vendor/README.md`.**
 > Do not run `npx skills add DFlowProtocol/dflow-skills`; this repository already includes the vendored DFlow skills.
 
-## Environment Path
+## Environment Path Gate
 
 > **Keep the environment path internal.**
 > Do not tell the user whether this is the platform-hosted path or local onboarded path. Make the correct setup choice silently and only ask for the inputs needed to continue.
 
-First identify the agent environment.
+> **This gate must run before any setup/provisioning question.**
+> Do not ask for a vault password, provisioning RPC URL, or provisioning DFlow API key unless this gate has already selected the platform agent path.
+
+First identify the agent environment, then lock the path for the rest of the workflow.
 
 Env-based hint: if `WALLET_API_URL` contains `.svc.cluster.local`, use the platform agent path internally. Otherwise, use the local onboarded agent path internally.
 
-- Local onboarded agent: follow the matching vendor skill. If setup is needed, `dflow setup` is interactive; ask the user to run it themselves before continuing.
+```bash
+case "${WALLET_API_URL:-}" in
+  *".svc.cluster.local"*) DFLOW_ENV_PATH="platform" ;;
+  *) DFLOW_ENV_PATH="local" ;;
+esac
+```
+
+Path outcomes:
+
+- Local onboarded agent: follow the matching vendor skill. If setup is needed, run the Preflight checks below, then ask the user to run `dflow setup` themselves before continuing. `dflow setup` is interactive and must not be replaced with platform provisioning questions.
 - Platform agent: skip Preflight and do not run `dflow setup`. Replace any vendor setup step with the platform provisioning flow below.
+
+Setup question allowlist:
+
+| Path     | Allowed setup prompt                                                                 | Forbidden setup prompt before this path is selected                  |
+| -------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------- |
+| Local    | Ask the user to run `dflow setup` if the CLI is not configured.                       | Vault password, platform wallet name, provisioning RPC URL.           |
+| Platform | Ask the Platform Provisioning questions below.                                        | Asking the user to run `dflow setup`; running the Preflight section.  |
+
+Self-check before asking for a vault password: `WALLET_API_URL` contained `.svc.cluster.local`. If that is not true, stop and use the local onboarded path.
 
 ## Preflight
 
@@ -67,6 +88,8 @@ mp --version
 ```
 
 ## Platform Provisioning
+
+Use this section only when the Environment Path Gate selected `platform`. For empty, unset, or non-`.svc.cluster.local` `WALLET_API_URL`, do not use this section; use the local onboarded path and `dflow setup` instead.
 
 Ask the user for:
 
@@ -147,9 +170,10 @@ If the request spans multiple areas, read each relevant vendor skill in workflow
 
 ## Operational Checklist
 
-1. Identify the user intent and choose the matching vendor skill above.
-2. Read that vendor `SKILL.md` before doing work.
-3. Use official DFlow documentation for endpoint schemas, parameters, and error codes when the vendor skill does not cover a detail.
-4. Gather only the inputs required by that workflow.
-5. For write operations, quote or preview first when available, surface the action clearly, then execute only when the user has authorized the trade path.
-6. Return the result with transaction/order status, relevant identifiers, and any next step from the vendor workflow.
+1. Run the Environment Path Gate before setup/provisioning prompts and lock the path.
+2. Identify the user intent and choose the matching vendor skill above.
+3. Read that vendor `SKILL.md` before doing work.
+4. Use official DFlow documentation for endpoint schemas, parameters, and error codes when the vendor skill does not cover a detail.
+5. Gather only the inputs required by that workflow and the locked environment path.
+6. For write operations, quote or preview first when available, surface the action clearly, then execute only when the user has authorized the trade path.
+7. Return the result with transaction/order status, relevant identifiers, and any next step from the vendor workflow.
