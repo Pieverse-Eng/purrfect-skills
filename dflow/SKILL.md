@@ -1,6 +1,6 @@
 ---
 name: dflow
-description: Use when the user wants DFlow operations: Solana spot swaps, Kalshi prediction-market trading, Kalshi market discovery/data, wallet portfolio views, Proof KYC, or platform-fee monetization.
+description: "Use when the user wants DFlow operations: Solana spot swaps, Kalshi prediction-market trading, Kalshi market discovery/data, wallet portfolio views, Proof KYC, or platform-fee monetization."
 metadata:
   openclaw:
     primaryEnv: DFLOW_API_KEY
