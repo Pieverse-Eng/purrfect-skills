@@ -692,35 +692,6 @@ Same pattern for `redeem` and `withdraw`.
 
 ---
 
-### dflow-swap
-
-**Pattern:** `purr dflow-ows swap` (single command — quote → sign → broadcast → confirm).
-
-**Address:** `ows wallet list` → named Solana wallet address.
-
-**Balance:** `python3 skills/bitget-wallet/vendor/bitget-wallet-agent-api.py batch-v2 --chain solana --address <addr> --contract <mint-or-empty>`.
-
-**Notes:**
-- `purr dflow-ows swap` runs entirely inside the pod, signing locally with OWS.
-- Default RPC is `https://api.mainnet-beta.solana.com`. Override with `$SOLANA_RPC_URL` or `--rpc-url`.
-
-**Flow:**
-```
-1. Confirm Solana address from `ows wallet list`
-2. python3 skills/bitget-wallet/vendor/bitget-wallet-agent-api.py batch-v2 --chain solana --address <ows-solana-addr> --contract <mint-or-empty>
-3. OWS_PASSPHRASE="ows_key_..." purr dflow-ows swap --from-token <mint> --to-token <mint> --amount <human-readable> --ows-wallet <name> --slippage 0.01
-4. Re-run python3 skills/bitget-wallet/vendor/bitget-wallet-agent-api.py batch-v2
-```
-
-**Failure modes:**
-| Error | Fix |
-|-------|-----|
-| `policy denied: chain solana` | Policy missing Solana — create one with `solana` chain |
-| `Simulation failed: Attempt to debit an account but found no record of a prior credit` | Wallet has no SOL or no input token. Fund first. |
-| `Solana tx confirmation timed out` | Tx may still confirm later — check explorer with returned `hash` before retrying. |
-
----
-
 ### binance-connect
 
 **Pattern:** address-only substitution. No on-chain write originates from this skill — Binance delivers crypto directly.
