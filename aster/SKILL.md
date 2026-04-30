@@ -2,13 +2,8 @@
 name: aster
 description: Aster DEX perpetual futures — market data, trading, and account management.
 metadata:
-  {
-    "openclaw":
-      {
-        "primaryEnv": "ASTER_API_SECRET",
-        "requires": { "env": ["ASTER_API_SECRET", "ASTER_USER"] },
-      },
-  }
+  openclaw:
+    primaryEnv: ASTER_API_SECRET
 ---
 
 # Aster DEX (Perpetual Futures)

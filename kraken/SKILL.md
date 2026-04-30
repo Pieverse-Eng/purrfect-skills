@@ -2,16 +2,8 @@
 name: kraken
 description: Kraken exchange — spot/xStocks/forex trading, market data, earn/staking, funding, and paper trading via the kraken CLI.
 metadata:
-  {
-    "openclaw":
-      {
-        "primaryEnv": "KRAKEN_API_KEY",
-        "requires":
-          {
-            "env": ["KRAKEN_API_KEY", "KRAKEN_API_SECRET"],
-          },
-      },
-  }
+  openclaw:
+    primaryEnv: KRAKEN_API_KEY
 ---
 
 ## Setup / Pre-flight Checks

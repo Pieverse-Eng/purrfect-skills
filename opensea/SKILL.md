@@ -2,13 +2,8 @@
 name: opensea
 description: Entry point for ALL OpenSea operations. Read this skill FIRST before using opensea-vendor. Contains buy/sell NFT execution via purr opensea, routing rules, and scope limits. Routes reads to the opensea-vendor skill and its CLI/scripts. Create offer, create listing, and cancel are NOT supported — direct users to opensea.io.
 metadata:
-  {
-    "openclaw":
-      {
-        "primaryEnv": "OPENSEA_API_KEY",
-        "requires": { "env": ["OPENSEA_API_KEY"] },
-      },
-  }
+  openclaw:
+    primaryEnv: OPENSEA_API_KEY
 ---
 
 # OpenSea

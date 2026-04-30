@@ -2,13 +2,8 @@
 name: okx
 description: Use when the user wants OKX-powered token research, market data, public wallet portfolio analysis, smart-money signals, meme token scanning, security checks, DEX swaps, cross-chain bridging, DeFi investing (deposit/redeem/stake/lend), DeFi portfolio viewing, wallet operations, WebSocket market data sessions, buyer-side x402 payment, audit-log troubleshooting, gateway preflight queries, or seller-side x402 payment collection (adding a paywall to the user's own HTTP API via the `@okxweb3/x402-*` SDK).
 metadata:
-  {
-    "openclaw":
-      {
-        "primaryEnv": "OKX_API_KEY",
-        "requires": { "env": ["OKX_API_KEY", "OKX_SECRET_KEY", "OKX_PASSPHRASE"] },
-      },
-  }
+  openclaw:
+    primaryEnv: OKX_API_KEY
 ---
 
 # OKX

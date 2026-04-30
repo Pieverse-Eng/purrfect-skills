@@ -13,8 +13,6 @@ metadata:
     requires:
       bins:
         - curl
-      env:
-        - BLOCKBEATS_API_KEY
     os:
       - darwin
       - linux

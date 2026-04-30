@@ -4,9 +4,6 @@ description: "Use when the user wants DFlow operations: Solana spot swaps, Kalsh
 metadata:
   openclaw:
     primaryEnv: DFLOW_API_KEY
-    requires:
-      env:
-        - DFLOW_API_KEY
 ---
 
 # DFlow
