@@ -50,5 +50,6 @@ This directory contains the Pieverse built-in skills. Each folder is a skill uni
 
 | Skill | Description |
 |-------|-------------|
+| `instance-renewal` | Hosted instance billing status and renewal through `purr instance`, with preset mapping such as `bsc-usdt` to chain/token identifiers. |
 | `okx-x402-seller` | Add OKX Onchain OS x402 payment collection to an HTTP API — per-call charging in USDT0/USDG on X Layer. Covers Express, Hono, Fastify, and Next.js via `@okxweb3/x402-*`. Seller side only; pair with `okx/vendor/okx-x402-payment` for the buyer flow. |
 | `pieverse-a2a` | Pieverse HTTP 402 A2A payment flow — probe, confirm, authorize through the hosted wallet, and retry with `X-Pieverse-Payment`. |
