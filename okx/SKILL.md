@@ -1,6 +1,6 @@
 ---
 name: okx
-description: Use when the user wants OKX-powered token research, market data, public wallet portfolio analysis, smart-money signals, meme token scanning, security checks, DEX swaps, cross-chain bridging, DeFi investing (deposit/redeem/stake/lend), DeFi portfolio viewing, wallet operations, WebSocket market data sessions, buyer-side x402 payment, audit-log troubleshooting, gateway preflight queries, or seller-side x402 payment collection (adding a paywall to the user's own HTTP API via the `@okxweb3/x402-*` SDK).
+description: Use when the user wants OKX-powered token research, market data, wallet portfolio analysis, smart-money signals, meme token scanning, security checks, DEX swaps, cross-chain bridging, DeFi investing and portfolio viewing, wallet operations, WebSocket market streams, third-party DApp routing, agent-to-agent payment links, HTTP 402 payment authorization, audit-log troubleshooting, gateway preflight queries, or adding an x402 paywall to their own HTTP API.
 metadata:
   openclaw:
     primaryEnv: OKX_API_KEY
@@ -46,12 +46,15 @@ Do not proceed with any authenticated `onchainos` command, live seller payment v
   - DeFi product discovery (APY / TVL / V3 depth & price charts)
   - cross-chain bridge quote comparison and status tracking
   - WebSocket channel management (price, candle, trades, signals, meme)
+  - A2A payment status query (`onchainos payment a2a-pay status`)
 - Write:
   - swap quote, approve, and execute via DEX aggregation
   - cross-chain bridge execution (Stargate / Across / Relay / Gas.zip)
   - DeFi deposit / redeem / stake / lend / borrow / repay / claim / LP add / LP remove
   - wallet lifecycle, auth, balance, send, tx history, contract call
-  - buyer-side x402 payment authorization for payment-gated resources
+  - HTTP 402 payment authorization for x402 + MPP payment-gated resources (dispatcher detects protocol)
+  - A2A payment lifecycle — seller `create` payment links, buyer `pay` (TEE-signed EIP-3009)
+  - third-party DApp plugin discovery, install, and forwarding (20+ DeFi protocols)
 - Build:
   - seller-side x402 payment layer — add paywall middleware to the user's own HTTP API (TypeScript / Rust / Go)
 
@@ -75,7 +78,9 @@ Each vendor skill's `SKILL.md` teaches the agent the exact `onchainos` commands 
 | `vendor/okx-defi-invest` | DeFi investing — product discovery (APY/TVL/V3 charts), deposit, redeem, claim, stake, lend, borrow, repay, LP add/remove |
 | `vendor/okx-defi-portfolio` | DeFi portfolio view — positions overview and per-protocol position detail across lending, staking, LP, and yield protocols |
 | `vendor/okx-agentic-wallet` | Wallet lifecycle, auth, balance, portfolio PnL, send, tx history, contract call |
-| `vendor/okx-x402-payment` | Buyer-side x402 payment authorization for payment-gated resources |
+| `vendor/okx-x402-payment` | HTTP 402 dispatcher for buyer-side x402 + MPP payment authorization (auto-detects protocol from response headers; covers x402 v1/v2 and MPP charge / session / voucher / topup / close / settle) |
+| `vendor/okx-a2a-payment` | Agent-to-agent payment links via `onchainos payment a2a-pay` — seller `create`, buyer `pay` (TEE-signed EIP-3009), and `status` query |
+| `vendor/okx-dapp-discovery` | Third-party DApp plugin router (Polymarket, Aave V3, Hyperliquid, PancakeSwap, Morpho, Raydium, Curve, Compound V3, Pendle, Clanker, pump.fun, Lido, GMX V2, ether.fi, Kamino, Orca, Meteora) — resolves named DApp to plugin, installs on demand, forwards prompt |
 
 ## Setup / Pre-flight Checks
 
@@ -92,7 +97,7 @@ fi
 If it is **not available**, install it from the OKX GitHub release:
 
 ```bash
-ONCHAINOS_VERSION="v2.4.1"
+ONCHAINOS_VERSION="v3.0.0"
 ONCHAINOS_TARGET=$(case "$(uname -m)" in x86_64) echo x86_64-unknown-linux-gnu ;; aarch64|arm64) echo aarch64-unknown-linux-gnu ;; i686) echo i686-unknown-linux-gnu ;; armv7l) echo armv7-unknown-linux-gnueabihf ;; *) echo "Unsupported architecture: $(uname -m)" >&2; exit 1 ;; esac)
 ONCHAINOS_BINARY="onchainos-${ONCHAINOS_TARGET}"
 curl -fsSL -o /tmp/onchainos "https://github.com/okx/onchainos-skills/releases/download/${ONCHAINOS_VERSION}/${ONCHAINOS_BINARY}"
@@ -138,7 +143,9 @@ Upstream OKX skills support: X Layer, Solana, Ethereum, Base, BSC, Arbitrum, Pol
 | "invest in DeFi", "earn yield", "deposit into Aave", "stake ETH on Lido", "APY", "TVL", "add liquidity", "redeem", "claim rewards", "borrow / repay" | `vendor/okx-defi-invest` |
 | "check my DeFi positions", "view DeFi holdings", "my DeFi portfolio", "show staking positions", "show lending positions" | `vendor/okx-defi-portfolio` |
 | "wallet balance", "wallet login", "send tokens", "tx history" | `vendor/okx-agentic-wallet` |
-| "pay for 402 resource", "sign x402 payment", "payment-gated URL" (OKX x402 buyer side, not Pieverse/Morph) | `vendor/okx-x402-payment` |
+| "pay for 402 resource", "sign x402 payment", "payment-gated URL", "WWW-Authenticate: Payment", "MPP", "machine payment", "open channel", "voucher", "session payment", "close/topup/settle channel" (OKX x402/MPP buyer side, not Pieverse/Morph) | `vendor/okx-x402-payment` |
+| "create payment link", "pay paymentId", "pay a2a_…", "a2a payment status", "agent-to-agent payment" | `vendor/okx-a2a-payment` |
+| "trade on Polymarket / Aave / Hyperliquid / PancakeSwap / Lido / GMX / Pendle / Curve / Morpho / Raydium / Orca / Meteora / ether.fi / Kamino / Compound / Clanker / pump.fun (trade)", "buy HYPE", "stake on Lido", "PT-stETH on Pendle", "5min updown", named DApp + action verb | `vendor/okx-dapp-discovery` |
 | "add payment to my API", "charge per call", "monetize my endpoint", "add x402 paywall" (seller side) | **Seller Integration** section below |
 
 ## Routing Rules
@@ -147,6 +154,10 @@ Upstream OKX skills support: X Layer, Solana, Ethereum, Base, BSC, Arbitrum, Pol
 - If a read result leads to an on-chain action, follow the vendor skill's execution flow
 - For DeFi: viewing positions → `okx-defi-portfolio`; changing positions (deposit/redeem/stake/borrow/etc.) → `okx-defi-invest`
 - For cross-chain movement: always `okx-dex-bridge` (not `okx-dex-swap`, which is same-chain)
+- Named third-party DApp + action verb (e.g. "stake on Lido", "buy HYPE", "PT-stETH on Pendle") → `okx-dapp-discovery` (NOT `okx-dex-swap` / `okx-defi-invest`); see that skill's Rule 0 (DApp-name-beats-verb)
+- pump.fun: trade verbs (buy/sell/snipe) → `okx-dapp-discovery`; analysis verbs (dev history, bundle detection) → `okx-dex-trenches`
+- HTTP 402 with `WWW-Authenticate: Payment` header → MPP path of `okx-x402-payment`; with `PAYMENT-REQUIRED` header or `x402Version` body → x402 path of the same skill (the skill auto-detects)
+- A2A payment (`a2a_...` paymentId, `onchainos payment a2a-pay`) → `okx-a2a-payment`; do NOT confuse with `okx-x402-payment` (external HTTP 402)
 
 ## Typical Workflows
 
@@ -303,7 +314,9 @@ Expect `HTTP/1.1 402 Payment Required` with a `PAYMENT-REQUIRED` header (base64-
 | DeFi investing | `okx/vendor/okx-defi-invest/` |
 | DeFi portfolio viewing | `okx/vendor/okx-defi-portfolio/` |
 | Agentic wallet | `okx/vendor/okx-agentic-wallet/` |
-| Buyer-side x402 payment | `okx/vendor/okx-x402-payment/` |
+| Buyer-side x402 + MPP payment dispatcher | `okx/vendor/okx-x402-payment/` |
+| A2A payment links | `okx/vendor/okx-a2a-payment/` |
+| Third-party DApp plugin discovery | `okx/vendor/okx-dapp-discovery/` |
 | Seller-side x402 — TypeScript reference | `okx/references/SELLER-typescript.md` |
 | Seller-side x402 — Rust reference | `okx/references/SELLER-rust.md` |
 | Seller-side x402 — Go reference | `okx/references/SELLER-go.md` |
