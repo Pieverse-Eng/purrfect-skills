@@ -35,6 +35,9 @@ the runtime needs a purr CLI version with the `instance` command group.
 | Preset | chainId | tokenAddress | Meaning |
 |---|---:|---|---|
 | `bsc-usdt` | `56` | `0x55d398326f99059fF775485246999027B3197955` | Renew with USDT on BSC |
+| `okx-xlayer-usdg` | `196` | `0x4ae46a509f6b1d9056937ba4500cb143933d2dc8` | Renew with USDG on X Layer through the OKX App x402 rail |
+| `okx-xlayer-usdt0` | `196` | `0x779ded0c9e1022225f8e0630b35a9b54be713736` | Renew with USDT0 on X Layer through the OKX App x402 rail |
+| `okx-xlayer-usdc` | `196` | `0x74b7f16337b8972027f6196a17a631ac6de26d22` | Renew with USDC on X Layer through the OKX App x402 rail |
 
 The CLI uses identifiers only:
 
@@ -64,6 +67,23 @@ purr instance status
 ```text
 chainId: 56
 tokenAddress: 0x55d398326f99059fF775485246999027B3197955
+```
+
+For OKX App x402 renewal presets, keep the same CLI shape and only swap the
+identifiers:
+
+```text
+okx-xlayer-usdg:
+chainId: 196
+tokenAddress: 0x4ae46a509f6b1d9056937ba4500cb143933d2dc8
+
+okx-xlayer-usdt0:
+chainId: 196
+tokenAddress: 0x779ded0c9e1022225f8e0630b35a9b54be713736
+
+okx-xlayer-usdc:
+chainId: 196
+tokenAddress: 0x74b7f16337b8972027f6196a17a631ac6de26d22
 ```
 
 4. Preview renewal without paying:
