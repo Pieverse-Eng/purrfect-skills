@@ -31,7 +31,7 @@ npm install @cobo/agentic-wallet@0.1.6           # TypeScript
 EOF
 else
   if ! command -v caw >/dev/null 2>&1; then
-    CAW_VERSION=v0.2.70 ./cobo-agentic-wallet/scripts/bootstrap-env.sh --only caw
+    CAW_VERSION=v0.2.82 ./cobo-agentic-wallet/scripts/bootstrap-env.sh --only caw
     export PATH="$HOME/.cobo-agentic-wallet/bin:$PATH"
   fi
 
