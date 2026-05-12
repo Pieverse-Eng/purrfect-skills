@@ -16,11 +16,21 @@ through their agent/merchant skill.
 The current instance runtime must expose the merchant MCP tool
 `purrfect_order_create`.
 
-The claim submission must use the current instance's authenticated platform API
-context.
+The claim submission must use this instance's platform API auth:
 
-Use `INSTANCE_ID` as the request `instanceId`; check it is present with
-`test -n "${INSTANCE_ID:-}"`.
+- `WALLET_API_URL`
+- `WALLET_API_TOKEN`
+- `INSTANCE_ID`
+
+Before submitting, check they are present:
+
+```bash
+test -n "${WALLET_API_URL:-}" && test -n "${WALLET_API_TOKEN:-}" && test -n "${INSTANCE_ID:-}"
+```
+
+Use `Authorization: Bearer ${WALLET_API_TOKEN}` and use `INSTANCE_ID` as the
+request `instanceId`. Do not use `PIEVERSE_API_KEY`, `PLATFORM_FORWARD_SECRET`,
+or a user app token for this call.
 
 ## OKX x402 Workflow
 
@@ -36,7 +46,7 @@ Use `INSTANCE_ID` as the request `instanceId`; check it is present with
 
 2. Read the returned `buyUrl`.
 
-3. Submit the `buyUrl` to the platform API:
+3. Submit the `buyUrl` to the platform API using this instance's auth:
 
 POST /v1/redpackets/{code}/merchant-payment
 
@@ -44,7 +54,7 @@ Use this request body:
 
 ```json
 {
-  "instanceId": "<this user's merchant instance id>",
+  "instanceId": "<INSTANCE_ID>",
   "buyUrl": "<merchant buyUrl>",
   "orderCode": "<merchant order code>"
 }
@@ -60,3 +70,5 @@ Use this request body:
   reports the claim did not complete.
 - If the merchant order amount does not equal the red packet claim amount, cancel
   and recreate the order before submitting.
+- If the platform returns `403 "Token not authorized for this instance"`, stop.
+  The runtime token is not authorized for the submitted `INSTANCE_ID`.
