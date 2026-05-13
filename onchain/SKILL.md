@@ -54,6 +54,7 @@ Then ask exactly:
 | Arbitrum One    | 42161    | ETH          | arbitrum                    |
 | Polygon         | 137      | MATIC        | matic                       |
 | Optimism        | 10       | ETH          | optimism                    |
+| X Layer         | 196      | OKB          | —                           |
 | Solana          | —        | SOL          | (use `--chain-type solana`) |
 
 ### Common Token Addresses (BSC)
@@ -97,9 +98,25 @@ purr wallet balance --chain-type solana --token USDC # USDC on Solana
 purr wallet transfer --to 0x... --amount 0.01 --chain-id 56                    # native BNB
 purr wallet transfer --to 0x... --amount 10 --chain-id 56 --token USDT         # USDT on BSC
 purr wallet transfer --to 0x... --amount 5 --chain-id 8453 --token USDC        # USDC on Base
+purr wallet transfer --to 0x... --amount 1 --chain-id 196 \
+  --token 0x74b7f16337b8972027f6196a17a631ac6de26d22 --decimals 6              # USDT on X Layer (raw address → --decimals required)
 purr wallet transfer --to FuQPd1q... --amount 0.5 --chain-type solana          # native SOL
 purr wallet transfer --to FuQPd1q... --amount 100 --chain-type solana --token USDC  # USDC on Solana
 ```
+
+> **`--decimals` is required when `--token` is a raw contract address on a chain whose token registry purr doesn't carry** (anything outside the BSC tickers in "Common Token Addresses" above). Without it, the wallet service treats `--amount` as 18-decimal atomic units and the upstream returns `502 {"ok":false,"error":"Wallet service error"}` for tokens that use a different precision. Common stables (USDT, USDC, USDT0) are 6 decimals on most chains.
+>
+> If the token's decimals are unknown, query the contract via the chain's RPC before transferring:
+>
+> ```bash
+> # foundry
+> cast call <TOKEN_ADDRESS> "decimals()(uint8)" --rpc-url <chain-rpc>
+>
+> # or raw JSON-RPC (0x313ce567 is the decimals() selector)
+> curl -sS -X POST <chain-rpc> -H 'content-type: application/json' \
+>   -d '{"jsonrpc":"2.0","id":1,"method":"eth_call","params":[{"to":"<TOKEN_ADDRESS>","data":"0x313ce567"},"latest"]}'
+> # result is hex; e.g. "0x06" → 6
+> ```
 
 ## Non-Swap On-Chain Tasks
 
@@ -120,3 +137,4 @@ Use JSON-RPC / explorer workflows for:
 | Arbitrum One    | `https://arbitrum-one-rpc.publicnode.com` | 42161    |
 | Optimism        | `https://optimism-rpc.publicnode.com`     | 10       |
 | Polygon         | `https://polygon-bor-rpc.publicnode.com`  | 137      |
+| X Layer         | `https://rpc.xlayer.tech`                 | 196      |
