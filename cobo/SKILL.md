@@ -26,17 +26,17 @@ if test -n "${WALLET_API_URL:-}" \
   cat <<EOF
 Hosted instance detected. Install SDKs in your own application project:
 
-pip install cobo-agentic-wallet==0.1.39          # Python
-npm install @cobo/agentic-wallet@0.1.6           # TypeScript
+pip install cobo-agentic-wallet==0.1.40          # Python
+npm install @cobo/agentic-wallet@0.1.7           # TypeScript
 EOF
 else
   if ! command -v caw >/dev/null 2>&1; then
-    CAW_VERSION=v0.2.82 ./cobo-agentic-wallet/scripts/bootstrap-env.sh --only caw
+    CAW_VERSION=v0.2.84 ./cobo-agentic-wallet/scripts/bootstrap-env.sh --only caw
     export PATH="$HOME/.cobo-agentic-wallet/bin:$PATH"
   fi
 
-  python3 -m pip install cobo-agentic-wallet==0.1.39
-  npm install @cobo/agentic-wallet@0.1.6
+  python3 -m pip install cobo-agentic-wallet==0.1.40
+  npm install @cobo/agentic-wallet@0.1.7
 fi
 ```
 
