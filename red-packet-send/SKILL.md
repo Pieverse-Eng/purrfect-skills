@@ -51,8 +51,8 @@ curl -sS -X POST "$WALLET_API_URL/v2/instances/$INSTANCE_ID/redpackets" \
   -H "Authorization: Bearer $WALLET_API_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "recipient": "colin.pie",
-    "amountBaseUnits": "100000"
+    "recipient": "<recipient>",
+    "amountBaseUnits": "<amountBaseUnits>"
   }'
 ```
 

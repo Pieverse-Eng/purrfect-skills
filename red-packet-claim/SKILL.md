@@ -32,9 +32,10 @@ curl -sS "$WALLET_API_URL/v2/instances/$INSTANCE_ID/redpackets/pending" \
   -H "Authorization: Bearer $WALLET_API_TOKEN"
 ```
 
-Show sender, human amount, expiry, and envelope id. Convert `amountBaseUnits`
-using `token.decimals`. If `data.pending` is empty, say there are no pending
-redpackets.
+Show sender, expiry, envelope id, and amount in `token.symbol`. Display
+`amountBaseUnits` in token units using `token.decimals`; do not show the raw
+base-unit integer as the amount. If `data.pending` is empty, say there are no
+pending redpackets.
 
 ## Claim
 
