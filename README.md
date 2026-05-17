@@ -54,4 +54,4 @@ This directory contains the Pieverse built-in skills. Each folder is a skill uni
 | `okx-x402-seller` | Add OKX Onchain OS x402 payment collection to an HTTP API — per-call charging in USDT0/USDG on X Layer. Covers Express, Hono, Fastify, and Next.js via `@okxweb3/x402-*`. Seller side only; pair with `okx/vendor/okx-x402-payment` for the buyer flow. |
 | `pieverse-a2a` | Pieverse HTTP 402 A2A payment flow — probe, confirm, authorize through the hosted wallet, and retry with `X-Pieverse-Payment`. |
 | `red-packet-send` | P2P XLayer USDC redpacket sender flow — parse amount and recipient, then call the platform `/v2/instances/:id/redpackets` API directly. |
-| `red-packet-claim` | P2P redpacket claim flow — inspect pending redpackets and claim all or selected envelopes through the platform API directly. |
+| `red-packet-claim` | P2P redpacket claim flow — inspect pending redpackets and claim all, by sender handle, or selected envelopes through the platform API directly. |
