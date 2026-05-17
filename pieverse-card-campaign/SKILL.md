@@ -56,12 +56,30 @@ Backend/provider side handles provider submission.
 
 ## Output
 
-Parse the CLI JSON response. On success, return a concise chat message with:
+Parse the CLI JSON response. On success, return this chat message:
 
-- Card image from `imageUrl` using Markdown image syntax.
-- Suggested tweet text from `suggestedTweetText`.
-- X Web Intent URL from `xIntentUrl`.
-- Share URL from `shareUrl`.
+```text
+Pieverse campaign card
+
+<raw imageUrl>
+
+Tweet:
+<finalTweetText>
+
+[Share to X](<xIntentUrl>)
+[Open card](<shareUrl>)
+```
+
+`finalTweetText` is `suggestedTweetText`, but ensure it includes `@pieverse`,
+`@purrfectagent0`, and `shareUrl` exactly once. Build or verify `xIntentUrl` as:
+
+```text
+https://x.com/intent/tweet?text=<encodeURIComponent(finalTweetText)>
+```
+
+Do not add `&via=` or other intent params.
+`Share to X` opens the X composer with `finalTweetText`; `Open card` opens the
+campaign card page.
 
 Relevant successful output fields:
 
@@ -96,20 +114,3 @@ Summarize the CLI error in plain language. Preserve `purchaseId`,
 
 The purchase is idempotent within the reward window; repeated runs should resume
 or return the existing purchase.
-
-## Staging Check
-
-For staging validation, run the same command from a hosted staging or canary
-instance:
-
-```bash
-purr erc8183 buy-card
-```
-
-Pass criteria:
-
-- command exits successfully
-- status is `completed`
-- output includes `imageUrl`, `shareUrl`, and `xIntentUrl`
-- chat response shows the image and share URL
-- no-handle, no-funds, expired, and rejected cases are summarized cleanly
