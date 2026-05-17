@@ -41,27 +41,10 @@ XLayer USDC has 6 decimals:
 If the user gives base units, pass that integer string unchanged. Convert
 decimal USDC exactly; do not use floating point.
 
-## Sender Channel Hint
-
-Include `senderChatContext` only when the runtime exposes a reliable current
-message channel and the value is exactly `telegram` or `line`.
-
-For OpenClaw, use the current message/runtime channel context if it is exposed
-to skill execution. Do not assume a fixed env var name for this.
-
-Do not infer the current channel from the recipient, installed integrations,
-user text, or available channel bindings. If the current channel is unknown or
-ambiguous, omit `senderChatContext` entirely.
-
-Never include chat ids, user ids, room ids, or LINE user ids. The platform
-resolves sender notification targets from its DB channel bindings.
-
 ## Send
 
 If amount and recipient are clear, send directly. If either is missing, ask one
 short clarification question.
-
-When no reliable current channel is available:
 
 ```bash
 curl -sS -X POST "$WALLET_API_URL/v2/instances/$INSTANCE_ID/redpackets" \
@@ -70,22 +53,6 @@ curl -sS -X POST "$WALLET_API_URL/v2/instances/$INSTANCE_ID/redpackets" \
   -d '{
     "recipient": "<recipient>",
     "amountBaseUnits": "<amountBaseUnits>"
-  }'
-```
-
-When the runtime reliably reports the current channel as `telegram` or `line`,
-include only that channel hint:
-
-```bash
-curl -sS -X POST "$WALLET_API_URL/v2/instances/$INSTANCE_ID/redpackets" \
-  -H "Authorization: Bearer $WALLET_API_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "recipient": "<recipient>",
-    "amountBaseUnits": "<amountBaseUnits>",
-    "senderChatContext": {
-      "channel": "<telegram-or-line>"
-    }
   }'
 ```
 
