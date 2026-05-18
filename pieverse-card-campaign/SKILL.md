@@ -1,6 +1,6 @@
 ---
 name: pieverse-card-campaign
-description: Use only from a hosted Pieverse instance when the agent needs to buy, generate, or resume the Pieverse ERC-8183 campaign card, including requests like Pieverse card campaign, campaign card, buy card, buy-card, or `$purr erc8183 buy-card`.
+description: Use only from a hosted Pieverse instance when the agent needs to buy, generate, create, complete, or resume a Pieverse ERC-8183 Agent Intro Card / campaign card, including requests mentioning the pieverse-card-generation-v1 service, Pieverse ERC-8183 service job, Agent Intro Card, final card image, campaign card, buy card, buy-card, or `$purr erc8183 buy-card`.
 ---
 
 # Pieverse Card Campaign
@@ -22,11 +22,11 @@ esac
 
 Required env vars:
 
-| Env var | Meaning |
-|---|---|
-| `WALLET_API_URL` | Platform API base URL |
+| Env var            | Meaning               |
+| ------------------ | --------------------- |
+| `WALLET_API_URL`   | Platform API base URL |
 | `WALLET_API_TOKEN` | Hosted instance token |
-| `INSTANCE_ID` | Hosted instance ID |
+| `INSTANCE_ID`      | Hosted instance ID    |
 
 If a check fails, explain that the campaign must run from a hosted Pieverse
 instance.
@@ -61,7 +61,7 @@ Parse the CLI JSON response. On success, return this chat message:
 ```text
 Pieverse campaign card
 
-<raw imageUrl>
+[Open image](<imageUrl>)
 
 Tweet:
 <finalTweetText>
@@ -80,6 +80,8 @@ https://x.com/intent/tweet?text=<encodeURIComponent(finalTweetText)>
 Do not add `&via=` or other intent params.
 `Share to X` opens the X composer with `finalTweetText`; `Open card` opens the
 campaign card page.
+Render `imageUrl` as a clickable Markdown link: `[Open image](<imageUrl>)`.
+Do not output the raw image URL as a standalone line.
 
 Relevant successful output fields:
 
@@ -102,15 +104,15 @@ Relevant successful output fields:
 Summarize the CLI error in plain language. Preserve `purchaseId`,
 `rejectTxHash`, and `refundTxHash` when the CLI includes them.
 
-| Case | Response |
-|---|---|
-| Missing hosted env | Explain that hosted instance wallet access is required. |
-| Missing `.pie` handle | Ask the user to claim a `.pie` handle before buying the card. |
-| Insufficient funds | Explain which wallet asset or chain needs funds when named by the CLI. |
-| Rejected | Say the ERC-8183 job was rejected and show any reject or refund tx hash. |
-| Expired | Say the ERC-8183 job expired and show any refund tx hash. |
-| Failed | Say the purchase failed and include the purchase ID when present. |
-| Provider timeout | Tell the user they can run `purr erc8183 buy-card` again to resume. |
+| Case                  | Response                                                                 |
+| --------------------- | ------------------------------------------------------------------------ |
+| Missing hosted env    | Explain that hosted instance wallet access is required.                  |
+| Missing `.pie` handle | Ask the user to claim a `.pie` handle before buying the card.            |
+| Insufficient funds    | Explain which wallet asset or chain needs funds when named by the CLI.   |
+| Rejected              | Say the ERC-8183 job was rejected and show any reject or refund tx hash. |
+| Expired               | Say the ERC-8183 job expired and show any refund tx hash.                |
+| Failed                | Say the purchase failed and include the purchase ID when present.        |
+| Provider timeout      | Tell the user they can run `purr erc8183 buy-card` again to resume.      |
 
 The purchase is idempotent within the reward window; repeated runs should resume
 or return the existing purchase.
