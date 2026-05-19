@@ -1,6 +1,6 @@
 ---
 name: pieverse-card-campaign
-description: Use only from a hosted Pieverse instance when the agent needs to buy, generate, create, complete, or resume a Pieverse ERC-8183 Agent Intro Card / campaign card, including requests mentioning the pieverse-card-generation-v1 service, Pieverse ERC-8183 service job, Agent Intro Card, final card image, campaign card, buy card, buy-card, or `$purr erc8183 buy-card`.
+description: Use only from a hosted Pieverse instance when the agent needs to buy, generate, submit, fund, receive, accept, or resume a Pieverse ERC-8183 Agent Intro Card / campaign card, including requests mentioning the pieverse-card-generation-v1 service, Pieverse ERC-8183 service job, Agent Intro Card, final card image, campaign card, buy card, buy-card, `$purr erc8183 card`, or `$purr erc8183 buy-card`.
 ---
 
 # Pieverse Card Campaign
@@ -33,52 +33,100 @@ instance.
 
 ## Run
 
-Before running, ask the user to confirm the purchase or resume action. After
-confirmation, run:
+Before running, ask the user to confirm the purchase or resume action. Then run
+the flow as four visible phases: submit task, charge/payment, receive
+deliverable, and confirm receipt.
+
+While running, briefly report which phase is in progress: submitting task,
+charging payment, waiting for deliverable, or confirming receipt. Keep command
+details and resume instructions internal.
+
+### 1. Submit Task
+
+Create or reuse the card purchase:
 
 ```bash
-purr erc8183 buy-card
+purr erc8183 card purchase
 ```
 
-The CLI handles the user-side flow:
+Read `purchaseId` from the JSON response. Then create/register the ERC-8183 job:
 
-1. Create or reuse the card purchase.
-2. Create the ERC-8183 job through `/wallet/execute`.
-3. Recover `onChainJobId` from the create transaction receipt.
-4. Set budget, approve the payment token when needed, and fund the job.
-5. Record progress with the platform backend.
-6. Wait for provider submission.
-7. Complete the job as evaluator.
-8. Claim refund when rejected or expired and refundable.
+```bash
+purr erc8183 card create-job --purchase-id <purchaseId>
+```
 
-The CLI constructs user-side transaction steps for `/wallet/execute`.
-Backend/provider side handles provider submission.
+This phase submits the campaign card task and records the on-chain job id with
+the backend.
+
+### 2. Charge / Payment
+
+Fund the submitted task:
+
+```bash
+purr erc8183 card fund --purchase-id <purchaseId>
+```
+
+This phase sets the budget, approves the payment token when needed, funds the
+job, and lets the backend/provider submit the deliverable.
+
+### 3. Receive Deliverable
+
+Wait for the provider deliverable:
+
+```bash
+purr erc8183 card deliverable --purchase-id <purchaseId> --wait
+```
+
+Continue only when the response status is `submitted` or `completed` and the
+response includes the card fields such as `imageUrl`, `shareUrl`, and
+`suggestedTweetText`.
+
+### 4. Confirm Receipt
+
+Accept/settle the delivered job:
+
+```bash
+purr erc8183 card accept --purchase-id <purchaseId>
+```
+
+Report success only after the final response status is `completed`.
+
+The CLI constructs user-side transaction steps for `/wallet/execute`; the
+backend/provider handles provider-side submission. If a step was already done,
+rerun the same command with the same `purchaseId`; the backend and CLI should
+resume from the existing state.
+
+For rejected or expired refundable jobs, run:
+
+```bash
+purr erc8183 card refund --purchase-id <purchaseId>
+```
 
 ## Output
 
-Parse the CLI JSON response. On success, return this chat message:
+Parse the final command JSON response internally. On success, return this chat
+message:
 
 ```text
 Pieverse campaign card
 
 [Open image](<imageUrl>)
 
-Tweet:
-<finalTweetText>
-
 [Share to X](<xIntentUrl>)
 [Open card](<shareUrl>)
 ```
 
-`finalTweetText` is `suggestedTweetText`, but ensure it includes `@pieverse`,
-`@purrfectagent0`, and `shareUrl` exactly once. Build or verify `xIntentUrl` as:
+For the final success reply, use only the output template above.
+
+Build or verify `xIntentUrl` from `suggestedTweetText`:
 
 ```text
-https://x.com/intent/tweet?text=<encodeURIComponent(finalTweetText)>
+https://x.com/intent/tweet?text=<encodeURIComponent(suggestedTweetText)>
 ```
 
-Do not add `&via=` or other intent params.
-`Share to X` opens the X composer with `finalTweetText`; `Open card` opens the
+Put `suggestedTweetText` only inside the `Share to X` link as the encoded `text`
+parameter. Do not add `&via=` or other intent params.
+`Share to X` opens the X composer with `suggestedTweetText`; `Open card` opens the
 campaign card page.
 Render `imageUrl` as a clickable Markdown link: `[Open image](<imageUrl>)`.
 Do not output the raw image URL as a standalone line.
@@ -92,27 +140,35 @@ Relevant successful output fields:
   "imageUrl": "https://...",
   "shareUrl": "https://...",
   "suggestedTweetText": "...",
-  "xIntentUrl": "https://x.com/intent/tweet?text=...",
   "erc8183": {
-    "onChainJobId": "..."
+    "onChainJobId": "...",
+    "txHashes": {
+      "fund": "...",
+      "complete": "..."
+    }
   }
 }
 ```
 
 ## Errors
 
-Summarize the CLI error in plain language. Preserve `purchaseId`,
-`rejectTxHash`, and `refundTxHash` when the CLI includes them.
+Summarize errors in plain language without mentioning commands. Match backend
+`code` values or command error text internally, then use the user-facing
+response below. Preserve `purchaseId`, `rejectTxHash`, and `refundTxHash` when
+they are available.
 
-| Case                  | Response                                                                 |
-| --------------------- | ------------------------------------------------------------------------ |
-| Missing hosted env    | Explain that hosted instance wallet access is required.                  |
-| Missing `.pie` handle | Ask the user to claim a `.pie` handle before buying the card.            |
-| Insufficient funds    | Explain which wallet asset or chain needs funds when named by the CLI.   |
-| Rejected              | Say the ERC-8183 job was rejected and show any reject or refund tx hash. |
-| Expired               | Say the ERC-8183 job expired and show any refund tx hash.                |
-| Failed                | Say the purchase failed and include the purchase ID when present.        |
-| Provider timeout      | Tell the user they can run `purr erc8183 buy-card` again to resume.      |
+| Internal match | User-facing response |
+| -------------- | -------------------- |
+| Missing hosted env, `INSTANCE_TOKEN_REQUIRED`, `AGENT_SELF_INTRO_HOSTED_INSTANCE_REQUIRED` | Explain that hosted Pieverse instance wallet access is required. |
+| `AGENT_SELF_INTRO_DISABLED` | Say the campaign is currently unavailable. |
+| `AGENT_SELF_INTRO_HANDLE_REQUIRED` | Ask the user to claim a `.pie` handle before generating the card. |
+| Preparing/not found/missing job fields/provider timeout/tx not confirmed/RPC read failure | Say the card is still being prepared or confirmed; keep waiting or resume internally. |
+| Transaction failed/reverted/wallet execution failed/insufficient funds | Say the on-chain payment step failed; mention the asset or chain needing funds when the error names one. |
+| `ERC8183_PROGRESS_TX_MISMATCH`, `JobCreated`/`JobRegistered` event mismatch, transaction target mismatch | Say the on-chain proof did not match the purchase and stop. |
+| `ERC8183_PROGRESS_MISSING_FIELD`, `ERC8183_PROGRESS_BACKWARDS`, `ERC8183_PROGRESS_STATUS_UNSUPPORTED` | Say the purchase progress could not be updated because the current state is inconsistent. |
+| Purchase not submitted, job not submitted on-chain, accept attempted too early | Say the deliverable is not ready yet and continue waiting/resuming internally. |
+| Purchase already completed/terminal | Return the existing completed card when fields are present; otherwise say the purchase is already finished. |
+| Rejected/expired/not refundable/failed | State the terminal or refund status and preserve tx hashes when present. |
 
-The purchase is idempotent within the reward window; repeated runs should resume
-or return the existing purchase.
+The purchase is idempotent within the reward window; repeated internal attempts
+should resume or return the existing purchase.
