@@ -1,92 +1,76 @@
 ---
 name: pieverse-card-campaign
-description: Use only from a hosted Pieverse instance when the agent needs to buy, generate, submit, fund, receive, accept, or resume a Pieverse ERC-8183 Agent Intro Card / campaign card, including requests mentioning the pieverse-card-generation-v1 service, Pieverse ERC-8183 service job, Agent Intro Card, final card image, campaign card, buy card, buy-card, `$purr erc8183 card`, or `$purr erc8183 buy-card`.
+description: Use when the agent needs to buy, generate, submit, fund, receive, accept, refund, or resume a Pieverse Agent Intro Card / campaign card through the staged card flow, including requests mentioning the pieverse-card-generation-v1 service, Pieverse service job, Agent Intro Card, final card image, campaign card, buy card, or buy-card.
 ---
 
 # Pieverse Card Campaign
 
 Use this skill inside a hosted instance to buy, generate, or resume the Pieverse
-ERC-8183 campaign card.
-
-## Requirements
-
-Check the hosted instance environment:
-
-```bash
-test -n "${WALLET_API_URL:-}" && test -n "${WALLET_API_TOKEN:-}" && test -n "${INSTANCE_ID:-}"
-case "${WALLET_API_URL:-}" in
-  *".svc.cluster.local"*) ;;
-  *) echo "not_hosted_instance"; exit 1 ;;
-esac
-```
-
-Required env vars:
-
-| Env var            | Meaning               |
-| ------------------ | --------------------- |
-| `WALLET_API_URL`   | Platform API base URL |
-| `WALLET_API_TOKEN` | Hosted instance token |
-| `INSTANCE_ID`      | Hosted instance ID    |
-
-If a check fails, explain that the campaign must run from a hosted Pieverse
-instance.
+campaign card.
 
 ## Run
 
-Before running, ask the user to confirm the purchase or resume action. Then run
-the flow as four visible phases: submit task, charge/payment, receive
-deliverable, and confirm receipt.
+Before running, ask the user to confirm the purchase or resume action once. After
+confirmation, run the full flow end-to-end without asking again unless a
+terminal error requires user action. Treat the flow as four visible phases:
+submit task, charge/payment, receive deliverable, and confirm receipt.
 
 While running, briefly report which phase is in progress: submitting task,
 charging payment, waiting for deliverable, or confirming receipt. Keep command
-details and resume instructions internal.
+details, raw statuses, purchase ids, job ids, tx hashes, and resume instructions
+internal.
 
 ### 1. Submit Task
 
 Create or reuse the card purchase:
 
 ```bash
-purr erc8183 card purchase
+purr pieverse card purchase
 ```
 
-Read `purchaseId` from the JSON response. Then create/register the ERC-8183 job:
+Read `purchaseId` from the JSON response. Then create/register the service job:
 
 ```bash
-purr erc8183 card create-job --purchase-id <purchaseId>
+purr pieverse card create-job --purchase-id <purchaseId>
 ```
 
-This phase submits the campaign card task and records the on-chain job id with
-the backend.
+This phase submits the campaign card task and records the job id with the
+backend.
 
 ### 2. Charge / Payment
 
 Fund the submitted task:
 
 ```bash
-purr erc8183 card fund --purchase-id <purchaseId>
+purr pieverse card fund --purchase-id <purchaseId>
 ```
 
-This phase sets the budget, approves the payment token when needed, funds the
-job, and lets the backend/provider submit the deliverable.
+This phase records the budget, approval, and funding progress, then lets the
+backend/provider submit the deliverable.
 
 ### 3. Receive Deliverable
 
 Wait for the provider deliverable:
 
 ```bash
-purr erc8183 card deliverable --purchase-id <purchaseId> --wait
+purr pieverse card deliverable --purchase-id <purchaseId> --wait
 ```
 
 Continue only when the response status is `submitted` or `completed` and the
 response includes the card fields such as `imageUrl`, `shareUrl`, and
 `suggestedTweetText`.
 
+For this flow, `submitted` means the provider deliverable is ready. When
+`deliverable --wait` returns `submitted` with the card fields present,
+immediately proceed to confirm receipt; do not keep polling for `completed`
+before running accept.
+
 ### 4. Confirm Receipt
 
 Accept/settle the delivered job:
 
 ```bash
-purr erc8183 card accept --purchase-id <purchaseId>
+purr pieverse card accept --purchase-id <purchaseId>
 ```
 
 Report success only after the final response status is `completed`.
@@ -99,7 +83,7 @@ resume from the existing state.
 For rejected or expired refundable jobs, run:
 
 ```bash
-purr erc8183 card refund --purchase-id <purchaseId>
+purr pieverse card refund --purchase-id <purchaseId>
 ```
 
 ## Output
