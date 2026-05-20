@@ -1,6 +1,6 @@
 ---
 name: pieverse-card-campaign
-description: Use when the agent needs to buy, generate, submit, fund, receive, accept, refund, or resume a Pieverse Agent Intro Card / campaign card through the staged card flow, including requests mentioning the pieverse-card-generation-v1 service, Pieverse service job, Agent Intro Card, final card image, campaign card, buy card, or buy-card.
+description: Use when the agent needs to buy, generate, fund, submit, receive, refund, or resume a Pieverse Agent Intro Card / campaign card through the staged card flow, including requests mentioning the pieverse-card-generation-v1 service, Pieverse service job, Agent Intro Card, final card image, campaign card, buy card, or buy-card.
 ---
 
 # Pieverse Card Campaign
@@ -12,13 +12,15 @@ campaign card.
 
 Before running, ask the user to confirm the purchase or resume action once. After
 confirmation, run the full flow end-to-end without asking again unless a
-terminal error requires user action. Treat the flow as four visible phases:
-submit task, charge/payment, receive deliverable, and confirm receipt.
+terminal error requires user action. Treat the flow as three visible phases:
+submit task, charge/payment, and receive deliverable.
 
 While running, briefly report which phase is in progress: submitting task,
-charging payment, waiting for deliverable, or confirming receipt. Keep command
-details, raw statuses, purchase ids, job ids, tx hashes, and resume instructions
-internal.
+charging payment, or waiting for deliverable. Keep command details, raw
+statuses, purchase ids, job ids, tx hashes, and resume instructions internal.
+
+The campaign card flow succeeds when the deliverable response includes the card
+links and share text.
 
 ### 1. Submit Task
 
@@ -39,14 +41,14 @@ backend.
 
 ### 2. Charge / Payment
 
-Fund the submitted task:
+Fund the task:
 
 ```bash
 purr pieverse card fund --purchase-id <purchaseId>
 ```
 
-This phase records the budget, approval, and funding progress, then lets the
-backend/provider submit the deliverable.
+This phase records payment progress, then lets the backend/provider submit the
+deliverable.
 
 ### 3. Receive Deliverable
 
@@ -56,35 +58,23 @@ Wait for the provider deliverable:
 purr pieverse card deliverable --purchase-id <purchaseId> --wait
 ```
 
-Continue only when the response status is `submitted` or `completed` and the
-response includes the card fields such as `imageUrl`, `shareUrl`, and
-`suggestedTweetText`.
+Continue only when the response includes the card fields such as `imageUrl`,
+`shareUrl`, and `suggestedTweetText`.
 
-For this flow, `submitted` means the provider deliverable is ready. When
-`deliverable --wait` returns `submitted` with the card fields present,
-immediately proceed to confirm receipt; do not keep polling for `completed`
-before running accept.
+When `deliverable --wait` returns with the card fields present, stop the
+campaign card flow and report success.
 
-### 4. Confirm Receipt
-
-Accept/settle the delivered job:
-
-```bash
-purr pieverse card accept --purchase-id <purchaseId>
-```
-
-Report success only after the final response status is `completed`.
-
-The CLI constructs user-side transaction steps for `/wallet/execute`; the
-backend/provider handles provider-side submission. If a step was already done,
-rerun the same command with the same `purchaseId`; the backend and CLI should
-resume from the existing state.
+Each command is resumable with the same `purchaseId`. If a command reports
+existing progress, continue with the next command in sequence instead of
+starting a new purchase.
 
 For rejected or expired refundable jobs, run:
 
 ```bash
 purr pieverse card refund --purchase-id <purchaseId>
 ```
+
+Use refund only for rejected or expired refundable jobs.
 
 ## Output
 
@@ -120,7 +110,6 @@ Relevant successful output fields:
 ```json
 {
   "purchaseId": "...",
-  "status": "completed",
   "imageUrl": "https://...",
   "shareUrl": "https://...",
   "suggestedTweetText": "...",
@@ -128,7 +117,7 @@ Relevant successful output fields:
     "onChainJobId": "...",
     "txHashes": {
       "fund": "...",
-      "complete": "..."
+      "submit": "..."
     }
   }
 }
@@ -147,12 +136,12 @@ they are available.
 | `AGENT_SELF_INTRO_DISABLED` | Say the campaign is currently unavailable. |
 | `AGENT_SELF_INTRO_HANDLE_REQUIRED` | Ask the user to claim a `.pie` handle before generating the card. |
 | Preparing/not found/missing job fields/provider timeout/tx not confirmed/RPC read failure | Say the card is still being prepared or confirmed; keep waiting or resume internally. |
-| Transaction failed/reverted/wallet execution failed/insufficient funds | Say the on-chain payment step failed; mention the asset or chain needing funds when the error names one. |
+| Transaction failed/reverted/wallet execution failed/insufficient funds/insufficient allowance | Say the on-chain payment step failed; ask the user to ensure the hosted wallet has enough funds and gas, then resume internally. |
 | `ERC8183_PROGRESS_TX_MISMATCH`, `JobCreated`/`JobRegistered` event mismatch, transaction target mismatch | Say the on-chain proof did not match the purchase and stop. |
 | `ERC8183_PROGRESS_MISSING_FIELD`, `ERC8183_PROGRESS_BACKWARDS`, `ERC8183_PROGRESS_STATUS_UNSUPPORTED` | Say the purchase progress could not be updated because the current state is inconsistent. |
-| Purchase not submitted, job not submitted on-chain, accept attempted too early | Say the deliverable is not ready yet and continue waiting/resuming internally. |
-| Purchase already completed/terminal | Return the existing completed card when fields are present; otherwise say the purchase is already finished. |
+| Deliverable not ready, purchase/job not ready on-chain | Say the card is not ready yet and continue waiting/resuming internally. |
+| Purchase already terminal | Return the existing card when fields are present; otherwise say the purchase is already finished. |
 | Rejected/expired/not refundable/failed | State the terminal or refund status and preserve tx hashes when present. |
 
-The purchase is idempotent within the reward window; repeated internal attempts
+The purchase is idempotent within the campaign window; repeated internal attempts
 should resume or return the existing purchase.
