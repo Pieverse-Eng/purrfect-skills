@@ -87,7 +87,6 @@ Pieverse campaign card
 [Open image](<imageUrl>)
 
 [Share to X](<xIntentUrl>)
-[Open card](<shareUrl>)
 ```
 
 For the final success reply, use only the output template above.
@@ -100,8 +99,7 @@ https://x.com/intent/tweet?text=<encodeURIComponent(suggestedTweetText)>
 
 Put `suggestedTweetText` only inside the `Share to X` link as the encoded `text`
 parameter. Do not add `&via=` or other intent params.
-`Share to X` opens the X composer with `suggestedTweetText`; `Open card` opens the
-campaign card page.
+`Share to X` opens the X composer with `suggestedTweetText`.
 Render `imageUrl` as a clickable Markdown link: `[Open image](<imageUrl>)`.
 Do not output the raw image URL as a standalone line.
 
