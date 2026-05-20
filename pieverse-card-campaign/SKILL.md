@@ -22,12 +22,29 @@ statuses, purchase ids, job ids, tx hashes, and resume instructions internal.
 The campaign card flow succeeds when the deliverable response includes the card
 links and share text.
 
+### 0. Preflight
+
+Before creating the purchase, determine the campaign routing parameters:
+
+- `channel`: inspect the system prompt or runtime context for the current chat
+  platform. If the current chat is Telegram, use `telegram`; otherwise use
+  `line`. Do not infer `channel` from the user's campaign wording.
+- `partner`: infer from the user's request. Use `bnb` when the request says BNB
+  ERC-8183 campaign, Pieverse x BNB, BNB partner campaign, BNB Chain, BSC, or
+  Binance. Use `okx` when the request says OKX onboarding campaign, Pieverse x
+  OKX, OKX partner campaign, or OKX. If the user mentions both or the partner is
+  not clear, ask one concise clarification before creating the purchase.
+
+Do this preflight before the first `purchase` command. Do not create a default
+purchase first and then try to change `partner` or `channel`; the purchase is
+idempotent by campaign variant.
+
 ### 1. Submit Task
 
 Create or reuse the card purchase:
 
 ```bash
-purr pieverse card purchase
+purr pieverse card purchase --partner <okx|bnb> --channel <telegram|line>
 ```
 
 Read `purchaseId` from the JSON response. Then create/register the service job:
