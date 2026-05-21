@@ -1,11 +1,11 @@
 ---
 name: red-packet-send
-description: Use when the user wants to send a P2P XLayer USDC redpacket to a .pie handle or raw EVM address through the platform redpacket API.
+description: Use when the user wants to send a P2P XLayer USDT redpacket to a .pie handle or raw EVM address through the platform redpacket API.
 ---
 
 # Red Packet Send
 
-Use when the user asks to send a USDC redpacket.
+Use when the user asks to send a USDT redpacket.
 
 ## Requirements
 
@@ -33,18 +33,24 @@ Recipient must be one of:
 Reject bare names, `@` usernames, Telegram/LINE ids, ENS, Space ID, and instance
 names. Do not auto-append `.pie`.
 
-XLayer USDC has 6 decimals:
+XLayer USDT (`USD₮0`, `0x779ded0c9e1022225f8e0630b35a9b54be713736`) has
+6 decimals:
 
-- `0.1 USDC` -> `100000`
-- `1 USDC` -> `1000000`
+- `0.1 USDT` -> `100000`
+- `1 USDT` -> `1000000`
 
 If the user gives base units, pass that integer string unchanged. Convert
-decimal USDC exactly; do not use floating point.
+decimal USDT exactly; do not use floating point.
 
 ## Send
 
 If amount and recipient are clear, send directly. If either is missing, ask one
 short clarification question.
+
+Always include `senderChatContext.channel`. Determine it from the runtime context:
+Hermes uses `Current Session Context` / `Source`; OpenClaw/PurrfectClaw uses
+`Inbound Context (trusted metadata)` `channel`, `provider`, or `surface`. Set the
+value to the detected channel: `telegram` or `line`.
 
 ```bash
 curl -sS -X POST "$WALLET_API_URL/v2/instances/$INSTANCE_ID/redpackets" \
@@ -52,7 +58,10 @@ curl -sS -X POST "$WALLET_API_URL/v2/instances/$INSTANCE_ID/redpackets" \
   -H "Content-Type: application/json" \
   -d '{
     "recipient": "<recipient>",
-    "amountBaseUnits": "<amountBaseUnits>"
+    "amountBaseUnits": "<amountBaseUnits>",
+    "senderChatContext": {
+      "channel": "<telegram-or-line>"
+    }
   }'
 ```
 
