@@ -54,6 +54,7 @@ Then ask exactly:
 | Arbitrum One    | 42161    | ETH          | arbitrum                    |
 | Polygon         | 137      | MATIC        | matic                       |
 | Optimism        | 10       | ETH          | optimism                    |
+| X Layer         | 196      | OKB          | xlayer                      |
 | Solana          | —        | SOL          | (use `--chain-type solana`) |
 
 ### Common Token Addresses (BSC)
@@ -64,6 +65,16 @@ Then ask exactly:
 | USDC  | `0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d` |
 | WBNB  | `0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c` |
 | CAKE  | `0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82` |
+
+### Common Token Addresses (X Layer, chain ID 196)
+
+| Token | Address                                      | Decimals |
+| ----- | -------------------------------------------- | -------- |
+| USDT0 | `0x779ded0c9e1022225f8e0630b35a9b54be713736` | 6        |
+| USDC  | `0x74b7F16337b8972027F6196A17a631aC6dE26d22` | 6        |
+| USDG  | `0x4ae46a509f6b1d9056937ba4500cb143933d2dc8` | 6        |
+
+`purr` exposes USDT0 under the ticker `USDT` on chain 196 (`--token USDT --chain-id 196`). USDC is also registered. USDG is NOT in purr's ticker registry — pass the contract address explicitly (`--token 0x4ae46a509f6b1d9056937ba4500cb143933d2dc8 --chain-id 196`).
 
 ## Wallet Operations
 
@@ -99,6 +110,12 @@ purr wallet balance --chain-type solana --token USDC # USDC on Solana
 ```
 
 `--token` accepts a ticker (e.g. `USDT`) or contract address. Case-insensitive. Always include `--chain-id` so the correct chain is queried (default: 56/BSC). Pass an unknown ticker and purr will list all available tickers for that chain.
+
+**Never guess an ERC-20 contract address.** If you don't already know the canonical address for a token on a given chain (e.g. USDT on X Layer), do NOT invent one or carry over a value from a different chain — different chains have different deployments for the same ticker. Instead:
+
+1. Check the "Common Token Addresses" tables above. If the token is listed for that chain, use that address.
+2. Otherwise call purr with the ticker — `purr wallet balance --token <TICKER> --chain-id <N>`. If the ticker is in purr's per-chain registry, it returns the address and balance; if not, it prints `Available tickers: ...` for that chain so you can pick the right one.
+3. If the ticker is genuinely not in purr's registry (e.g. USDG on X Layer), ask the user for the contract address rather than guessing.
 
 ### Transfer
 
