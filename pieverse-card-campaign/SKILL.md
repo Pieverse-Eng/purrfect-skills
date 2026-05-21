@@ -1,6 +1,6 @@
 ---
 name: pieverse-card-campaign
-description: Use when the agent needs to buy, generate, fund, submit, receive, refund, or resume a Pieverse Agent Intro Card / campaign card through the staged card flow, including requests mentioning the pieverse-card-generation-v1 service, Pieverse service job, Agent Intro Card, final card image, campaign card, buy card, or buy-card.
+description: Use when the user asks to forge or generate a Pieverse/Purrfect Claw agent intro card for the BNB ERC-8183 campaign, Pieverse x BNB partner campaign, OKX onboarding campaign, or Pieverse x OKX partner campaign, and return the image link and share text.
 ---
 
 # Pieverse Card Campaign
@@ -26,14 +26,13 @@ links and share text.
 
 Before creating the purchase, determine the campaign routing parameters:
 
-- `channel`: inspect the system prompt or runtime context for the current chat
-  platform. If the current chat is Telegram, use `telegram`; otherwise use
-  `line`. Do not infer `channel` from the user's campaign wording.
-- `partner`: infer from the user's request. Use `bnb` when the request says BNB
-  ERC-8183 campaign, Pieverse x BNB, BNB partner campaign, BNB Chain, BSC, or
-  Binance. Use `okx` when the request says OKX onboarding campaign, Pieverse x
-  OKX, OKX partner campaign, or OKX. If the user mentions both or the partner is
-  not clear, ask one concise clarification before creating the purchase.
+- `channel`: infer from the campaign prompt/card request text. Use `telegram`
+  when the prompt says the user is joining from Telegram, and `line` when it
+  says LINE.
+- `partner`: infer from the campaign prompt/card request text. Use `bnb` when
+  the prompt says BNB ERC-8183 campaign, Pieverse x BNB, BNB partner campaign,
+  BNB Chain, BSC, or Binance. Use `okx` when the prompt says OKX onboarding
+  campaign, Pieverse x OKX, OKX partner campaign, or OKX.
 
 Do this preflight before the first `purchase` command. Do not create a default
 purchase first and then try to change `partner` or `channel`; the purchase is
