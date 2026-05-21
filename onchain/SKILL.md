@@ -44,7 +44,7 @@ Then ask exactly:
 
 ## Chain Reference
 
-**Default chain is BNB Smart Chain (chain ID 56)** when the user does not specify a chain.
+**Default chain is BNB Smart Chain (chain ID 56)** for executable / chain-specific actions (transfer, swap, balance check, contract call) when the user does not specify a chain. This default does NOT apply to identity reads — an EVM wallet address is the same on every EVM chain, so do not pin a single "default chain" onto the address when sharing it (see [Get wallet address](#get-wallet-address)).
 
 | Chain           | Chain ID | Native Token | purr chain code             |
 | --------------- | -------- | ------------ | --------------------------- |
@@ -77,6 +77,15 @@ Then ask exactly:
 purr wallet address --chain-type ethereum   # EVM (all chains)
 purr wallet address --chain-type solana     # Solana
 ```
+
+The EVM address returned by `--chain-type ethereum` is the **same on every EVM chain** (BNB Smart Chain, Ethereum, Base, Arbitrum, Optimism, Polygon, …). When sharing it, surface that multi-chain reality instead of naming a single "default" chain. A correct reply looks like:
+
+> Your hosted wallet address (works on all EVM chains — BSC, Ethereum, Base, Arbitrum, Optimism, Polygon):
+> `0x…`
+>
+> Fund it with the native token of whichever chain you plan to transact on (BNB on BSC, ETH on Base/Arbitrum/Optimism/Ethereum, MATIC on Polygon, …).
+
+Do NOT pin the address to one chain or ask for "a small amount of BNB" by default — the user may intend to operate on Base, Arbitrum, or elsewhere. Only mention a specific gas token once the user has confirmed (or the surrounding skill has fixed) the target chain. Solana uses a separate address; never conflate the two.
 
 ### Check balance
 
