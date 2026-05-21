@@ -53,5 +53,6 @@ This directory contains the Pieverse built-in skills. Each folder is a skill uni
 | `pieverse-card-campaign` | Pieverse Agent Intro Card campaign - runs the staged `purr pieverse card` hosted-instance flow and returns the card image, share URL, and X intent. |
 | `instance-renewal` | Hosted instance billing status and renewal through `purr instance`, with preset mapping such as `bsc-usdt` to chain/token identifiers. |
 | `pieverse-a2a` | Pieverse HTTP 402 A2A payment flow — probe, confirm, authorize through the hosted wallet, and retry with `X-Pieverse-Payment`. |
-| `red-packet-send` | P2P XLayer USDC redpacket sender flow — parse amount and recipient, then call the platform `/v2/instances/:id/redpackets` API directly. |
+| `red-packet-race` | Pieverse OKX Red Packet Race leaderboard, My Rank, and audit-log queries. |
+| `red-packet-send` | P2P XLayer USDT0 redpacket sender flow — parse amount and recipient, then call the platform `/v2/instances/:id/redpackets` API directly. |
 | `red-packet-claim` | P2P redpacket claim flow — inspect pending redpackets and claim all, by sender handle, or selected envelopes through the platform API directly. |
