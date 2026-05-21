@@ -68,11 +68,13 @@ Then ask exactly:
 
 ### Common Token Addresses (X Layer, chain ID 196)
 
-| Token | Address                                      | Decimals |
-| ----- | -------------------------------------------- | -------- |
-| USDT0 | `0x779ded0c9e1022225f8e0630b35a9b54be713736` | 6        |
-| USDC  | `0x74b7F16337b8972027F6196A17a631aC6dE26d22` | 6        |
-| USDG  | `0x4ae46a509f6b1d9056937ba4500cb143933d2dc8` | 6        |
+| Token | Symbol on-chain | Address | Decimals | Explorer |
+| ----- | --------------- | ------- | -------- | -------- |
+| USDT0 | `USD₮0`         | `0x779ded0c9e1022225f8e0630b35a9b54be713736` | 6 | [OKLink](https://www.oklink.com/x-layer/token/0x779ded0c9e1022225f8e0630b35a9b54be713736) |
+| USDC  | `USDC`          | `0x74b7f16337b8972027f6196a17a631ac6de26d22` | 6 | [OKLink](https://www.oklink.com/x-layer/token/0x74b7f16337b8972027f6196a17a631ac6de26d22) |
+| USDG  | `USDG`          | `0x4ae46a509f6b1d9056937ba4500cb143933d2dc8` | 6 | [OKLink](https://www.oklink.com/x-layer/token/0x4ae46a509f6b1d9056937ba4500cb143933d2dc8) |
+
+All three are 6 decimals (verified via `decimals()` against `https://rpc.xlayer.tech`).
 
 `purr` exposes USDT0 under the ticker `USDT` on chain 196 (`--token USDT --chain-id 196`). USDC is also registered. USDG is NOT in purr's ticker registry — pass the contract address explicitly (`--token 0x4ae46a509f6b1d9056937ba4500cb143933d2dc8 --chain-id 196`).
 
