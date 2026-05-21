@@ -76,7 +76,9 @@ Then ask exactly:
 
 All three are 6 decimals (verified via `decimals()` against `https://rpc.xlayer.tech`).
 
-`purr` exposes USDT0 under the ticker `USDT` on chain 196 (`--token USDT --chain-id 196`). USDC is also registered. USDG is NOT in purr's ticker registry — pass the contract address explicitly (`--token 0x4ae46a509f6b1d9056937ba4500cb143933d2dc8 --chain-id 196`).
+`purr` registers all three under their canonical tickers on chain 196: `USDC`, `USDT0`, and `USDG` — so `--token USDC --chain-id 196`, `--token USDT0 --chain-id 196`, and `--token USDG --chain-id 196` all resolve.
+
+**Do NOT use `--token USDT --chain-id 196`.** The bare `USDT` ticker is intentionally unmapped on X Layer: it used to alias the legacy bridged Tether (`0x1E4a5963aBFD975d8c9021ce480b42188849D41d`), which is deprecated. The canonical Tether-family asset on X Layer is `USD₮0` — always use `USDT0`. `purr` will surface `Unknown token "USDT" on chain 196` with `USDT0` in the available-tickers list if you forget.
 
 ## Wallet Operations
 
@@ -117,7 +119,7 @@ purr wallet balance --chain-type solana --token USDC # USDC on Solana
 
 1. Check the "Common Token Addresses" tables above. If the token is listed for that chain, use that address.
 2. Otherwise call purr with the ticker — `purr wallet balance --token <TICKER> --chain-id <N>`. If the ticker is in purr's per-chain registry, it returns the address and balance; if not, it prints `Available tickers: ...` for that chain so you can pick the right one.
-3. If the ticker is genuinely not in purr's registry (e.g. USDG on X Layer), ask the user for the contract address rather than guessing.
+3. If the ticker is genuinely not in purr's registry (purr's error message lists every ticker that IS registered for that chain), ask the user for the contract address rather than guessing.
 
 ### Transfer
 
