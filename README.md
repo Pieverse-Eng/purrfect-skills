@@ -45,7 +45,6 @@ This directory contains the Pieverse built-in skills. Each folder is a skill uni
 | Skill | Description |
 |-------|-------------|
 | `cobo` | Cobo Agentic Wallet router — wallet onboarding or pairing, pact workflows, Cobo-managed transfers, contract calls, message signing, DeFi execution, and SDK/MCP integrations. |
-| `ows` | Open Wallet Standard (OWS) — local wallet custody, policy-gated signing, and API-key access. Manages the `~/.ows/` vault. |
 
 ### Payments & Protocols
 

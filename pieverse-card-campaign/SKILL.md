@@ -5,97 +5,41 @@ description: Use when the user asks to forge or generate a Pieverse/Purrfect Cla
 
 # Pieverse Card Campaign
 
-Use this skill inside a hosted instance to buy, generate, or resume the Pieverse
-campaign card.
+Use this skill inside a hosted instance to generate the Pieverse campaign card
+directly through the platform API.
 
 ## Run
 
-Before running, ask the user to confirm the purchase or resume action once. After
-confirmation, run the full flow end-to-end without asking again unless a
-terminal error requires user action. Treat the flow as three visible phases:
-submit task, charge/payment, and receive deliverable.
+Determine the routing parameters:
 
-While running, briefly report which phase is in progress: submitting task,
-charging payment, or waiting for deliverable. Keep command details, raw
-statuses, purchase ids, job ids, tx hashes, and resume instructions internal.
-
-The campaign card flow succeeds when the deliverable response includes the card
-links and share text.
-
-### 0. Preflight
-
-Before creating the purchase, determine the campaign routing parameters:
-
-- `channel`: infer from the campaign prompt/card request text. Use `telegram`
-  when the prompt says the user is joining from Telegram, and `line` when it
-  says LINE.
+- `channel`: infer from the current session context or campaign prompt. Use
+  `telegram` for Telegram and `line` for LINE.
 - `partner`: infer from the campaign prompt/card request text. Use `bnb` when
   the prompt says BNB ERC-8183 campaign, Pieverse x BNB, BNB partner campaign,
   BNB Chain, BSC, or Binance. Use `okx` when the prompt says OKX onboarding
   campaign, Pieverse x OKX, OKX partner campaign, or OKX.
+- `lv`: use `lv1`.
 
-Do this preflight before the first `purchase` command. Do not create a default
-purchase first and then try to change `partner` or `channel`; the purchase is
-idempotent by campaign variant.
-
-### 1. Submit Task
-
-Create or reuse the card purchase:
+Call the platform endpoint directly:
 
 ```bash
-purr pieverse card purchase --partner <okx|bnb> --channel <telegram|line>
+curl -sS -X POST "$WALLET_API_URL/v1/instances/$INSTANCE_ID/erc8183/services/agent-self-intro/card/purchase" \
+  -H "Authorization: Bearer $WALLET_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "partner": "<okx-or-bnb>",
+    "channel": "<telegram-or-line>",
+    "lv": "lv1"
+  }'
 ```
 
-Read `purchaseId` from the JSON response. Then create/register the service job:
-
-```bash
-purr pieverse card create-job --purchase-id <purchaseId>
-```
-
-This phase submits the campaign card task and records the job id with the
-backend.
-
-### 2. Charge / Payment
-
-Fund the task:
-
-```bash
-purr pieverse card fund --purchase-id <purchaseId>
-```
-
-This phase records payment progress, then lets the backend/provider submit the
-deliverable.
-
-### 3. Receive Deliverable
-
-Wait for the provider deliverable:
-
-```bash
-purr pieverse card deliverable --purchase-id <purchaseId> --wait
-```
-
-Continue only when the response includes the card fields such as `imageUrl`,
-`shareUrl`, and `suggestedTweetText`.
-
-When `deliverable --wait` returns with the card fields present, stop the
-campaign card flow and report success.
-
-Each command is resumable with the same `purchaseId`. If a command reports
-existing progress, continue with the next command in sequence instead of
-starting a new purchase.
-
-For rejected or expired refundable jobs, run:
-
-```bash
-purr pieverse card refund --purchase-id <purchaseId>
-```
-
-Use refund only for rejected or expired refundable jobs.
+The flow succeeds when the response includes `imageUrl`, `shareUrl`, and
+`suggestedTweetText`. Keep command details, raw statuses, purchase ids, and card
+ids internal.
 
 ## Output
 
-Parse the final command JSON response internally. On success, return this chat
-message:
+Parse the API response internally. On success, return this chat message:
 
 ```text
 Pieverse campaign card
@@ -123,16 +67,12 @@ Relevant successful output fields:
 
 ```json
 {
-  "purchaseId": "...",
-  "imageUrl": "https://...",
-  "shareUrl": "https://...",
-  "suggestedTweetText": "...",
-  "erc8183": {
-    "onChainJobId": "...",
-    "txHashes": {
-      "fund": "...",
-      "submit": "..."
-    }
+  "ok": true,
+  "data": {
+    "purchaseId": "...",
+    "imageUrl": "https://...",
+    "shareUrl": "https://...",
+    "suggestedTweetText": "..."
   }
 }
 ```
@@ -140,22 +80,16 @@ Relevant successful output fields:
 ## Errors
 
 Summarize errors in plain language without mentioning commands. Match backend
-`code` values or command error text internally, then use the user-facing
-response below. Preserve `purchaseId`, `rejectTxHash`, and `refundTxHash` when
-they are available.
+`code` values or response text internally, then use the user-facing response
+below.
 
 | Internal match | User-facing response |
 | -------------- | -------------------- |
 | Missing hosted env, `INSTANCE_TOKEN_REQUIRED`, `AGENT_SELF_INTRO_HOSTED_INSTANCE_REQUIRED` | Explain that hosted Pieverse instance wallet access is required. |
 | `AGENT_SELF_INTRO_DISABLED` | Say the campaign is currently unavailable. |
 | `AGENT_SELF_INTRO_HANDLE_REQUIRED` | Ask the user to claim a `.pie` handle before generating the card. |
-| Preparing/not found/missing job fields/provider timeout/tx not confirmed/RPC read failure | Say the card is still being prepared or confirmed; keep waiting or resume internally. |
-| Transaction failed/reverted/wallet execution failed/insufficient funds/insufficient allowance | Say the on-chain payment step failed; ask the user to ensure the hosted wallet has enough funds and gas, then resume internally. |
-| `ERC8183_PROGRESS_TX_MISMATCH`, `JobCreated`/`JobRegistered` event mismatch, transaction target mismatch | Say the on-chain proof did not match the purchase and stop. |
-| `ERC8183_PROGRESS_MISSING_FIELD`, `ERC8183_PROGRESS_BACKWARDS`, `ERC8183_PROGRESS_STATUS_UNSUPPORTED` | Say the purchase progress could not be updated because the current state is inconsistent. |
-| Deliverable not ready, purchase/job not ready on-chain | Say the card is not ready yet and continue waiting/resuming internally. |
-| Purchase already terminal | Return the existing card when fields are present; otherwise say the purchase is already finished. |
-| Rejected/expired/not refundable/failed | State the terminal or refund status and preserve tx hashes when present. |
+| Missing `imageUrl`, `shareUrl`, or `suggestedTweetText` | Say the card response is incomplete and ask the user to try again shortly. |
+| Other non-OK response | Say the card could not be generated right now and ask the user to try again. |
 
 The purchase is idempotent within the campaign window; repeated internal attempts
 should resume or return the existing purchase.
