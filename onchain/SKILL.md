@@ -1,6 +1,6 @@
 ---
 name: onchain
-description: On-chain operations orchestrator. Classify user intent, discover available sibling skills, and route to the matching skill for execution.
+description: Use for wallet address, balance checks, and user transfers. Classify user intent, discover available sibling skills, and route to the matching skill for execution.
 ---
 
 # On-Chain Orchestrator
