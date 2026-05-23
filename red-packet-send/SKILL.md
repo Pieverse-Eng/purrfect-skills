@@ -67,7 +67,19 @@ curl -sS -X POST "$WALLET_API_URL/v2/instances/$INSTANCE_ID/redpackets" \
 
 Show `data.ackText` on success.
 
-On failure, show `code` if present and `error` plainly. Common codes:
+On failure, show `code` if present and `error` plainly.
+
+If `code` is `REDPACKET_INSUFFICIENT_BALANCE`, run:
+
+```bash
+purr wallet address --chain-type ethereum --chain-id 196
+```
+
+Show the returned `.address` as the deposit address. Tell the user to deposit
+XLayer USDT (`USD₮0`, `0x779ded0c9e1022225f8e0630b35a9b54be713736`) there,
+then retry.
+
+Common codes:
 
 - `REDPACKET_INVALID_RECIPIENT`
 - `REDPACKET_RECIPIENT_NOT_FOUND`
