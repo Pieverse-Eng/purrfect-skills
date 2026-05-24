@@ -3,23 +3,82 @@ name: kaia-skills
 description: Use when a request involves Kaia blockchain, KAIA token, or building on the Kaia network. Applies to developing, deploying, or interacting with smart contracts, dApps, wallets, or DeFi protocols on Kaia. Covers Kaia-specific features like fee delegation, gas abstraction, role-based account keys, MEV auction (KIP-249), and the Kaia SDK ecosystem (@kaiachain/ethers-ext, @kaiachain/viem-ext). Also covers Kaia's EVM compatibility, system contracts, token standards (KIP-7/17/37), governance (PGT framework), and ecosystem integrations with Kakao and LINE.
 ---
 
-# KAIA SKILLS — What AI agents get wrong about Kaia.
+## Using `purr` CLI on Kaia / Kairos
+
+For operations signed by the managed wallet, use the `purr` CLI. Pass `--chain-id 8217` for Kaia mainnet or `--chain-id 1001` for Kairos testnet — there is no friendly `--chain kaia` alias, always use the numeric id. For OWS-custody signing see [`ows/SKILL.md`](../ows/SKILL.md) instead.
+
+### Wallet operations (managed custody)
+
+Before broadcasting any native or token transfer, ask for explicit user confirmation; after a successful transfer, return the Kaiascan transaction link to the user: `https://kaiascan.io/tx/<hash>` for Kaia mainnet (chain id 8217) or `https://kairos.kaiascan.io/tx/<hash>` for Kairos testnet (chain id 1001).
+
+```bash
+# Get the Ethereum-type address issued for this chain
+purr wallet address --chain-type ethereum --chain-id 8217
+
+# Balances — native KAIA or an ERC-20 at <token>
+purr wallet balance --chain-id 8217
+purr wallet balance --chain-id 8217 --token 0x<erc20>
+
+# Sign a message / EIP-712 typed data
+purr wallet sign            --address 0x<addr> --message "hello kaia" --chain-type ethereum
+purr wallet sign-typed-data --address 0x<addr> --data /tmp/typed-data.json
+
+# Sign a prebuilt unsigned tx (EVM type 0/1/2 only)
+purr wallet sign-transaction --chain-id 8217 --txs-json '<json>'
+
+# Direct transfer / abi-call through the managed wallet
+purr wallet transfer --to 0x<recipient> --amount 0.01       --chain-id 8217
+purr wallet transfer --to 0x<recipient> --amount 10 --token 0x<erc20> --chain-id 8217
+purr wallet abi-call --to 0x<contract>  --signature 'register(string)' --args '["..."]' --chain-id 8217
+```
+
+### Known ERC-20 tokens
+
+| Network                         | Token           | Address                                      | Decimals | Notes                                      |
+| ------------------------------- | --------------- | -------------------------------------------- | -------- | ------------------------------------------ |
+| Kaia Mainnet (Chain ID: 8217)   | JPYC / JPY Coin | `0xE7C3D8C9a439feDe00D2600032D5dB0Be71C3c29` | 18       | Japanese yen stablecoin on Kaia.           |
+| Kairos Testnet (Chain ID: 1001) | JPYC / JPY Coin | `0xE7C3D8C9a439feDe00D2600032D5dB0Be71C3c29` | 18       | Faucet-supported test JPYC on Kaia Kairos. |
+
+JPYC metadata is verified via ERC-20 `name`, `symbol`, and `decimals` calls on Kaia mainnet and Kairos RPC. Kairos faucet support was announced by JPYC on 2026-05-18. Use the address above with `--token` for JPYC balance, transfer, approve, and calldata-builder flows.
+
+### EVM calldata builder → execute
+
+`purr evm ...` emits `TxStep[]` JSON on stdout. Collect steps into a file, then run `purr execute` to broadcast them through the managed wallet. Works for any EVM-compatible action on Kaia / Kairos.
+
+```bash
+purr evm approve  --token 0x<erc20> --spender 0x<spender> --amount 1000000 --chain-id 8217
+purr evm transfer --to 0x<recipient> --amount-wei 1000 --chain-id 8217 [--token 0x<erc20>]
+purr evm raw      --to 0x<contract>  --data 0x<hex> --value 0 --gas-limit 21000 --chain-id 8217
+purr evm abi-call --to 0x<contract>  --signature 'register(string)' --args '["..."]' --gas-limit 500000 --chain-id 8217
+
+purr execute --steps-file /tmp/steps.json --dedup-key kaia-<uuid>
+```
+
+All steps inside a single `purr execute` call must share the same `chainId`.
+
+### What `purr` does NOT do on Kaia
+
+`purr` builds and signs only Ethereum-compatible transactions (legacy, EIP-2930, EIP-1559). It does **not** construct Kaia-native transaction families. For these, fall back to `@kaiachain/ethers-ext` / `@kaiachain/viem-ext` and follow the linked sub-skills:
+
+- Protocol fee delegation (sender + fee-payer signatures) → [`vendor/fee-delegation/SKILL.md`](vendor/fee-delegation/SKILL.md)
+- KIP-247 gas abstraction (pay gas in ERC-20) → [`vendor/gas-abstraction/SKILL.md`](vendor/gas-abstraction/SKILL.md)
+- `AccountUpdate`, role-based key rotation → [`vendor/accounts/SKILL.md`](vendor/accounts/SKILL.md)
+- `Cancel`, `ValueTransferMemo`, other Kaia-native tx types → [`vendor/transactions/SKILL.md`](vendor/transactions/SKILL.md)
+- SDK choice and troubleshooting → [`vendor/sdk/SKILL.md`](vendor/sdk/SKILL.md)
+
+---
+
+## Knowledge Base
+
+### What AI agents get wrong about Kaia
 
 Your training data about Kaia is incomplete or wrong. Gas units, contract addresses, ecosystem state, SDK packages, governance structure — much has changed. This file tells you what you're wrong about and where to get corrections.
 
 **Kaia is NOT Klaytn.** Klaytn (Kakao) + Finschia (LINE) merged into Kaia in 2024. If you're referencing Klaytn docs, caver-js, peb/ston units, or Cypress/Baobab names — you're outdated.
 
----
-
-## Start Here
-
 **Building a dApp on Kaia?** Fetch [vendor/getting-started/SKILL.md](vendor/getting-started/SKILL.md) first.
 
 **Need a specific topic?** Each skill below is standalone. Fetch only the ones relevant to your task.
-
----
-
-## Skills
 
 ### [Getting Started](vendor/getting-started/SKILL.md)
 Quick setup for Kaia development. RPC endpoints, chain IDs, SDK installation.
@@ -96,57 +155,3 @@ Recent and upcoming Kaia upgrades.
 - Kaia Transition (v1.0.x, Aug 2024): Klaytn→Kaia, tips (KIP-162), PublicDelegation
 - Prague (v2.0.x, Jul 2025): EIP-7702, Gas Abstraction, Consensus Liquidity
 - Osaka (v2.2.x, Apr 2026): Blob tx (KIP-279), address(0) fix, flexible rewards
-
----
-
-## Using `purr` CLI on Kaia / Kairos
-
-For operations signed by the managed wallet, use the `purr` CLI. Pass `--chain-id 8217` for Kaia mainnet or `--chain-id 1001` for Kairos testnet — there is no friendly `--chain kaia` alias, always use the numeric id. For OWS-custody signing see [`ows/SKILL.md`](../ows/SKILL.md) instead.
-
-### Wallet operations (managed custody)
-
-```bash
-# Get the Ethereum-type address issued for this chain
-purr wallet address --chain-type ethereum --chain-id 8217
-
-# Balances — native KAIA or an ERC-20 at <token>
-purr wallet balance --chain-id 8217
-purr wallet balance --chain-id 8217 --token 0x<erc20>
-
-# Sign a message / EIP-712 typed data
-purr wallet sign            --address 0x<addr> --message "hello kaia" --chain-type ethereum
-purr wallet sign-typed-data --address 0x<addr> --data /tmp/typed-data.json
-
-# Sign a prebuilt unsigned tx (EVM type 0/1/2 only)
-purr wallet sign-transaction --chain-id 8217 --txs-json '<json>'
-
-# Direct transfer / abi-call through the managed wallet
-purr wallet transfer --to 0x<recipient> --amount 0.01       --chain-id 8217
-purr wallet transfer --to 0x<recipient> --amount 10 --token 0x<erc20> --chain-id 8217
-purr wallet abi-call --to 0x<contract>  --signature 'register(string)' --args '["..."]' --chain-id 8217
-```
-
-### EVM calldata builder → execute
-
-`purr evm ...` emits `TxStep[]` JSON on stdout. Collect steps into a file, then run `purr execute` to broadcast them through the managed wallet. Works for any EVM-compatible action on Kaia / Kairos.
-
-```bash
-purr evm approve  --token 0x<erc20> --spender 0x<spender> --amount 1000000 --chain-id 8217
-purr evm transfer --to 0x<recipient> --amount-wei 1000 --chain-id 8217 [--token 0x<erc20>]
-purr evm raw      --to 0x<contract>  --data 0x<hex> --value 0 --gas-limit 21000 --chain-id 8217
-purr evm abi-call --to 0x<contract>  --signature 'register(string)' --args '["..."]' --gas-limit 500000 --chain-id 8217
-
-purr execute --steps-file /tmp/steps.json --dedup-key kaia-<uuid>
-```
-
-All steps inside a single `purr execute` call must share the same `chainId`.
-
-### What `purr` does NOT do on Kaia
-
-`purr` builds and signs only Ethereum-compatible transactions (legacy, EIP-2930, EIP-1559). It does **not** construct Kaia-native transaction families. For these, fall back to `@kaiachain/ethers-ext` / `@kaiachain/viem-ext` and follow the linked sub-skills:
-
-- Protocol fee delegation (sender + fee-payer signatures) → [`vendor/fee-delegation/SKILL.md`](vendor/fee-delegation/SKILL.md)
-- KIP-247 gas abstraction (pay gas in ERC-20) → [`vendor/gas-abstraction/SKILL.md`](vendor/gas-abstraction/SKILL.md)
-- `AccountUpdate`, role-based key rotation → [`vendor/accounts/SKILL.md`](vendor/accounts/SKILL.md)
-- `Cancel`, `ValueTransferMemo`, other Kaia-native tx types → [`vendor/transactions/SKILL.md`](vendor/transactions/SKILL.md)
-- SDK choice and troubleshooting → [`vendor/sdk/SKILL.md`](vendor/sdk/SKILL.md)
