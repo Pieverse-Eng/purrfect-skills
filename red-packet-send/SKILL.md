@@ -47,10 +47,11 @@ decimal USDT exactly; do not use floating point.
 If amount and recipient are clear, send directly. If either is missing, ask one
 short clarification question.
 
-Always include `senderChatContext.channel`. Determine it from the runtime context:
-Hermes uses `Current Session Context` / `Source`; OpenClaw/PurrfectClaw uses
-`Inbound Context (trusted metadata)` `channel`, `provider`, or `surface`. Set the
-value to the detected channel: `telegram` or `line`.
+Include `senderChatContext.channel` only when the runtime context reliably says
+the current channel is `telegram` or `line`. Hermes may expose this through
+`Current Session Context` / `Source`; OpenClaw/PurrfectClaw may expose it through
+`Inbound Context (trusted metadata)` `channel`, `provider`, or `surface`.
+Standalone agents without chat-channel context must omit `senderChatContext`.
 
 ```bash
 curl -sS -X POST "$WALLET_API_URL/v2/instances/$INSTANCE_ID/redpackets" \
@@ -62,6 +63,18 @@ curl -sS -X POST "$WALLET_API_URL/v2/instances/$INSTANCE_ID/redpackets" \
     "senderChatContext": {
       "channel": "<telegram-or-line>"
     }
+  }'
+```
+
+For standalone agents without chat-channel context:
+
+```bash
+curl -sS -X POST "$WALLET_API_URL/v2/instances/$INSTANCE_ID/redpackets" \
+  -H "Authorization: Bearer $WALLET_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "recipient": "<recipient>",
+    "amountBaseUnits": "<amountBaseUnits>"
   }'
 ```
 
