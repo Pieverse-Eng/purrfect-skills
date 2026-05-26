@@ -28,25 +28,89 @@ Choose an authentication method based on your use case:
 
 ### Option A: API Key (Default — recommended for autonomous agents)
 
-Send a POST request to register. No authentication required.
+Send a POST request to register. No authentication required. Remote agents must
+receive a `.pie` handle during registration. Use the helper below: it sends both
+`name` and a normalized `handle`, retries policy/name conflicts with a short
+suffix, and backs off on temporary handle-claim failures.
 
 ```bash
-curl -sf -X POST "https://purr.pieverse.io/v1/agents/register" \
-  -H "Content-Type: application/json" \
-  -d '{"name": "YOUR_AGENT_NAME", "chainType": "ethereum"}'
+AGENT_NAME="YOUR_AGENT_NAME"
+REGISTER_RESPONSE="$(AGENT_NAME="$AGENT_NAME" node <<'NODE'
+const apiBase = process.env.PURRFECT_API_BASE || 'https://purr.pieverse.io'
+const baseName = process.env.AGENT_NAME
+if (!baseName || baseName === 'YOUR_AGENT_NAME') {
+  console.error('Set AGENT_NAME to a unique agent name')
+  process.exit(1)
+}
+const retryCodes = new Set([
+  'AGENT_NAME_TAKEN',
+  'HANDLE_TAKEN',
+  'HANDLE_RESERVED',
+  'HANDLE_RESERVATION_EXPIRED',
+  'handle_already_taken',
+  'handle_reserved',
+  'invalid_handle',
+])
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+function normalizeHandle(input) {
+  let handle = input.trim().toLowerCase()
+    .replace(/\.pie$/u, '')
+    .replace(/[^a-z0-9]+/gu, '-')
+    .replace(/^-+|-+$/gu, '')
+    .replace(/-+/gu, '-')
+    .slice(0, 30)
+    .replace(/-+$/u, '')
+  if (handle.length < 5) handle = `agent-${handle || 'remote'}`.slice(0, 30).replace(/-+$/u, '')
+  return handle
+}
+for (let attempt = 1; attempt <= 6; attempt++) {
+  const suffix = attempt === 1 ? '' : `-${Math.random().toString(16).slice(2, 8)}`
+  const name = `${baseName}${suffix}`
+  const body = { name, handle: normalizeHandle(name), chainType: 'ethereum' }
+  const res = await fetch(`${apiBase}/v1/agents/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  const json = await res.json().catch(() => ({ error: `http_${res.status}` }))
+  const data = json.data || {}
+  if (res.ok && data.agentId && data.apiKey && data.wallet && data.handle && data.renderedHandle) {
+    console.log(JSON.stringify(json))
+    process.exit(0)
+  }
+  const code = json.code || json.error || ''
+  if (retryCodes.has(code)) continue
+  if (code === 'HANDLE_CLAIM_RETRYABLE') {
+    await sleep(attempt * 1000)
+    continue
+  }
+  console.error(JSON.stringify(json))
+  process.exit(1)
+}
+console.error('registration failed after retries')
+process.exit(1)
+NODE
+)"
+printf '%s\n' "$REGISTER_RESPONSE"
 ```
 
 Replace `YOUR_AGENT_NAME` with a unique name (e.g. your hostname or agent identifier).
 If the name is already taken, the API returns `409` with:
 
 ```json
-{ "ok": false, "error": "Agent name already exists" }
+{ "ok": false, "error": "Agent name already exists", "code": "AGENT_NAME_TAKEN" }
 ```
 
-In that case, retry with a different name, for example by appending a hostname,
-environment, or random suffix.
+The helper retries with a random suffix for name/handle conflicts or policy
+blocks (`AGENT_NAME_TAKEN`, `HANDLE_TAKEN`, `HANDLE_RESERVED`,
+`HANDLE_RESERVATION_EXPIRED`, `handle_already_taken`, `handle_reserved`, or
+`invalid_handle`). It backs off and retries on `HANDLE_CLAIM_RETRYABLE`. If you
+are calling the API manually, use the same retry policy with a different `name`
+and `handle`.
 
 The response contains the values you need. **Save the `apiKey` immediately — it is shown only once.**
+Only continue if the response includes `apiKey`, `wallet`, `handle`, and
+`renderedHandle`.
 
 ```json
 {
@@ -54,59 +118,59 @@ The response contains the values you need. **Save the `apiKey` immediately — i
   "data": {
     "agentId": "...",
     "apiKey": "pcp_live_...",
+    "handle": "your-agent",
+    "renderedHandle": "your-agent.pie",
     "walletProvisioned": true,
     "wallet": { "address": "0x...", "chainId": 56, "chainType": "ethereum" }
   }
 }
 ```
 
-If wallet provisioning is temporarily unavailable, registration still succeeds
-and returns:
+If handle proof signing is temporarily unavailable, registration fails without
+returning an API key:
 
 ```json
 {
-  "ok": true,
-  "data": {
-    "agentId": "...",
-    "apiKey": "pcp_live_...",
-    "walletProvisioned": false,
-    "wallet": null
-  }
+  "ok": false,
+  "error": "handle_claim_retryable",
+  "code": "HANDLE_CLAIM_RETRYABLE"
 }
 ```
 
-When `walletProvisioned` is `false`, keep the `agentId` and `apiKey`, then
-create the wallet later with:
-
-```bash
-curl -sf -X POST "https://purr.pieverse.io/v1/instances/$AGENT_ID/wallet/ensure" \
-  -H "Authorization: Bearer $API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"chainType":"ethereum"}'
-```
+In that case, wait briefly and run the registration helper again. Do not write
+credentials to disk from a failed registration response.
 
 Write the credentials to `~/.purrfectclaw/.env`:
 
 ```bash
 mkdir -p ~/.purrfectclaw
-cat > ~/.purrfectclaw/.env << 'ENVEOF'
-AGENT_ID=<agentId from response>
-API_KEY=<apiKey from response>              # Your static API key (pcp_live_*)
-AUTH_TOKEN=$API_KEY                         # Used by Steps 2-4
-WALLET_API_URL=https://purr.pieverse.io
-WALLET_API_TOKEN=<apiKey from response>
-INSTANCE_ID=<agentId from response>
-ENVEOF
+ENV_TMP="$(mktemp)"
+if ! REGISTER_RESPONSE="$REGISTER_RESPONSE" node > "$ENV_TMP" <<'NODE'
+const body = JSON.parse(process.env.REGISTER_RESPONSE || '{}')
+const d = body.data || {}
+if (!d.agentId || !d.apiKey || !d.wallet?.address || !d.handle || !d.renderedHandle) {
+  console.error('Refusing to write env: registration response is missing required identity fields')
+  process.exit(1)
+}
+function out(name, value) {
+  console.log(`${name}=${String(value)}`)
+}
+out('AGENT_ID', d.agentId)
+out('API_KEY', d.apiKey)
+out('AUTH_TOKEN', d.apiKey)
+out('WALLET_API_URL', 'https://purr.pieverse.io')
+out('WALLET_API_TOKEN', d.apiKey)
+out('INSTANCE_ID', d.agentId)
+out('WALLET_ADDRESS', d.wallet.address)
+out('PIE_HANDLE', d.handle)
+out('PIE_NAME', d.renderedHandle)
+NODE
+then
+  rm -f "$ENV_TMP"
+  return 1 2>/dev/null || exit 1
+fi
+mv "$ENV_TMP" ~/.purrfectclaw/.env
 ```
-
-If `walletProvisioned=true`, also add:
-
-```bash
-WALLET_ADDRESS=<wallet.address from response>
-```
-
-If `walletProvisioned=false`, leave `WALLET_ADDRESS` unset for now and fill it
-in after `wallet/ensure` succeeds.
 
 Source it for subsequent steps:
 
