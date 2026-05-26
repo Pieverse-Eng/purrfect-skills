@@ -6,8 +6,8 @@ description: Use when a hosted Pieverse or Purr-Fect Claw agent needs to inspect
 # Instance Renewal
 
 Use this skill inside a hosted tenant pod when the user asks to check the
-current instance billing status, preview renewal readiness, or renew the
-instance subscription.
+current instance billing status, preview renewal details, or renew the instance
+subscription.
 
 The renewal action is performed only through `purr instance`. Do not call
 pieverse-app directly, do not send wallet transactions manually, and do not
