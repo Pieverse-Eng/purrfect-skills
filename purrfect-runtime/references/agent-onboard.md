@@ -29,15 +29,68 @@ Choose an authentication method based on your use case:
 ### Option A: API Key (Default — recommended for autonomous agents)
 
 Send a POST request to register. No authentication required. Remote agents must
-receive a `.pie` handle during registration. Use the bundled helper from the
-`purrfect-runtime` skill root; it sends both `name` and a normalized `handle`,
-retries policy/name conflicts with a short suffix, and backs off on temporary
-handle-claim failures.
+receive a `.pie` handle during registration. Use the helper below: it sends both
+`name` and a normalized `handle`, retries policy/name conflicts with a short
+suffix, and backs off on temporary handle-claim failures.
 
 ```bash
-# Run from the purrfect-runtime skill root, the directory containing SKILL.md.
 AGENT_NAME="YOUR_AGENT_NAME"
-REGISTER_RESPONSE="$(AGENT_NAME="$AGENT_NAME" bash scripts/register-remote-agent.sh)"
+REGISTER_RESPONSE="$(AGENT_NAME="$AGENT_NAME" node <<'NODE'
+const apiBase = process.env.PURRFECT_API_BASE || 'https://purr.pieverse.io'
+const baseName = process.env.AGENT_NAME
+if (!baseName || baseName === 'YOUR_AGENT_NAME') {
+  console.error('Set AGENT_NAME to a unique agent name')
+  process.exit(1)
+}
+const retryCodes = new Set([
+  'AGENT_NAME_TAKEN',
+  'HANDLE_TAKEN',
+  'HANDLE_RESERVED',
+  'HANDLE_RESERVATION_EXPIRED',
+  'handle_already_taken',
+  'handle_reserved',
+  'invalid_handle',
+])
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+function normalizeHandle(input) {
+  let handle = input.trim().toLowerCase()
+    .replace(/\.pie$/u, '')
+    .replace(/[^a-z0-9]+/gu, '-')
+    .replace(/^-+|-+$/gu, '')
+    .replace(/-+/gu, '-')
+    .slice(0, 30)
+    .replace(/-+$/u, '')
+  if (handle.length < 5) handle = `agent-${handle || 'remote'}`.slice(0, 30).replace(/-+$/u, '')
+  return handle
+}
+for (let attempt = 1; attempt <= 6; attempt++) {
+  const suffix = attempt === 1 ? '' : `-${Math.random().toString(16).slice(2, 8)}`
+  const name = `${baseName}${suffix}`
+  const body = { name, handle: normalizeHandle(name), chainType: 'ethereum' }
+  const res = await fetch(`${apiBase}/v1/agents/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  const json = await res.json().catch(() => ({ error: `http_${res.status}` }))
+  const data = json.data || {}
+  if (res.ok && data.agentId && data.apiKey && data.wallet && data.handle && data.renderedHandle) {
+    console.log(JSON.stringify(json))
+    process.exit(0)
+  }
+  const code = json.code || json.error || ''
+  if (retryCodes.has(code)) continue
+  if (code === 'HANDLE_CLAIM_RETRYABLE') {
+    await sleep(attempt * 1000)
+    continue
+  }
+  console.error(JSON.stringify(json))
+  process.exit(1)
+}
+console.error('registration failed after retries')
+process.exit(1)
+NODE
+)"
 printf '%s\n' "$REGISTER_RESPONSE"
 ```
 
