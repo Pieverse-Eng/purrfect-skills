@@ -27,7 +27,7 @@ echo "CONFIGURED=$CONFIGURED WALLET=${WALLET_ADDRESS:-unset}"
 
 ## Onboarding
 
-Read and follow the onboarding guide at [references/agent-onboard.md](references/agent-onboard.md).
+Read and follow the platform onboarding guide at https://purr.pieverse.io/agent-onboard.md.
 
 Follow every step in that file, with two changes:
 
@@ -58,11 +58,11 @@ else
 fi
 ```
 
-**After Step 4 (Verify)** — the `purr` CLI now includes built-in `purr store` commands for managing skills from the Pieverse Skill Store and OKX Plugin Store. Make sure `purr` is available (if not, revisit the `purr` CLI installation step in `agent-onboard.md`). If `purr` is available but `purr store` is missing, install the latest `purr-cli` from source as a fallback:
+**After Step 4 (Verify)** — the `purr` CLI now includes built-in `purr store` commands for managing skills from the Pieverse Skill Store and OKX Plugin Store. Make sure `purr` is available (if not, revisit the `purr` CLI installation step in the platform onboarding guide). If `purr` is available but `purr store` is missing, install the latest `purr-cli` from source as a fallback:
 
 ```bash
 if ! command -v purr >/dev/null 2>&1; then
-  echo "purr CLI not found. Please re-run the purr CLI installation step from agent-onboard.md."
+  echo "purr CLI not found. Please re-run the purr CLI installation step from https://purr.pieverse.io/agent-onboard.md."
   exit 1
 fi
 if ! purr store list --limit 1 >/dev/null 2>&1; then
@@ -95,7 +95,7 @@ onchainos --version
 # Expected: prints version (e.g. onchainos 2.2.9)
 ```
 
-All other steps — follow as written in `agent-onboard.md`.
+All other steps — follow as written in https://purr.pieverse.io/agent-onboard.md.
 
 **After onboarding completes** — newly installed skills are not picked up by the current session automatically. Tell the user to reload their agent so the new skills appear in the skill registry. Remind them to do the same after any future `purr store install` / `purr store remove` call.
 
