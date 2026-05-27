@@ -1,11 +1,13 @@
 ---
 name: red-packet-send
-description: Use when the user wants to send a P2P XLayer USDT redpacket to a .pie handle or raw EVM address through the platform redpacket API.
+description: Use when the user wants to send a P2P X Layer USDT redpacket, send dollars to a .pie handle, or send a red packet to a .pie handle/raw EVM address through the platform redpacket API.
 ---
 
 # Red Packet Send
 
-Use when the user asks to send a USDT redpacket.
+Use when the user asks to send a redpacket or asks to send a dollar amount to a
+`.pie` handle. Do not use `purr wallet transfer` for `.pie` redpacket
+recipients; call the platform redpacket API below.
 
 ## Requirements
 
@@ -36,8 +38,8 @@ names. Do not auto-append `.pie`.
 XLayer USDT (`USD₮0`, `0x779ded0c9e1022225f8e0630b35a9b54be713736`) has
 6 decimals:
 
-- `0.1 USDT` -> `100000`
-- `1 USDT` -> `1000000`
+- `0.1 USDT` or `$0.10` -> `100000`
+- `1 USDT` or `$1` -> `1000000`
 
 If the user gives base units, pass that integer string unchanged. Convert
 decimal USDT exactly; do not use floating point.
