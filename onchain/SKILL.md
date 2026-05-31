@@ -132,6 +132,10 @@ redpacket or dollar amount, use `red-packet-send` instead.
 purr wallet transfer --to 0x... --amount 0.01 --chain-id 56                    # native BNB
 purr wallet transfer --to 0x... --amount 10 --chain-id 56 --token USDT         # USDT on BSC
 purr wallet transfer --to 0x... --amount 5 --chain-id 8453 --token USDC        # USDC on Base
+purr wallet transfer --to 0x... --amount 0.1 --chain-id 196                    # native OKB on X Layer
+purr wallet transfer --to 0x... --amount 0.1 --chain-id 196 --token USDT0      # USDT0 on X Layer
+purr wallet transfer --to 0x... --amount 0.1 --chain-id 196 --token USDC       # USDC on X Layer
+purr wallet transfer --to 0x... --amount 0.1 --chain-id 196 --token USDG       # USDG on X Layer
 purr wallet transfer --to FuQPd1q... --amount 0.5 --chain-type solana          # native SOL
 purr wallet transfer --to FuQPd1q... --amount 100 --chain-type solana --token USDC  # USDC on Solana
 ```
