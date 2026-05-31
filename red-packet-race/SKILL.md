@@ -21,10 +21,7 @@ Do not use this skill to send, claim, or list pending redpackets. Defer to
 - Race token: `usdt0`
 - Campaign start (UTC): `2026-05-21`
 - Dates are UTC `YYYY-MM-DD`; `window_start` is inclusive, `window_end` is exclusive
-- Leaderboard returns at most Top 50
-
-For a one-day window, `window_end` is the next UTC date. Example for
-2026-05-21: `window_start=2026-05-21&window_end=2026-05-22`.
+- Leaderboard returns Top 10 by default; pass `limit` up to 20 for more rows
 
 ## Requirements
 
@@ -46,22 +43,28 @@ tokens or env values in replies.
 
 ## Pick the endpoint
 
-| Intent | Period | Endpoint |
-| --- | --- | --- |
-| Leaderboard | Today (default) | `GET /v2/redpacket-race/leaderboard` |
-| Leaderboard | Specific UTC day | same + `window_start` and `window_end` |
-| Leaderboard | Total campaign | same + `window_start=2026-05-21` (omit `window_end`) |
-| My rank | Today (default) | `GET /v2/instances/$INSTANCE_ID/redpacket-race/my-rank` |
-| My rank | Specific UTC day | same + `window_start` and `window_end` |
-| My rank | Total campaign | same + `window_start=2026-05-21` (omit `window_end`) |
-| Audit | Today (default) | `GET /v2/instances/$INSTANCE_ID/redpacket-race/audit-log` |
-| Audit | Specific UTC day | same + `window_date_utc=YYYY-MM-DD` |
+| Intent | Endpoint |
+| --- | --- |
+| Leaderboard | `GET /v2/redpacket-race/leaderboard` |
+| My rank | `GET /v2/instances/$INSTANCE_ID/redpacket-race/my-rank` |
+| Audit | `GET /v2/instances/$INSTANCE_ID/redpacket-race/audit-log` |
 
-Every endpoint takes `token=usdt0`. Audit uses `window_date_utc`, not the
-start/end pair. For the total campaign, omitting `window_end` lets the server
-read activity-to-date through the current UTC window end. Passing `window_end`
-scopes the result to an explicit window; it is a one-day window only when
-`window_end` is the next UTC date after `window_start`.
+Start every request with `token=usdt0`, then add the needed query pattern:
+
+| Period / option | Query pattern |
+| --- | --- |
+| Today (default) | no window params |
+| Specific UTC day for leaderboard/my-rank | `window_start=YYYY-MM-DD&window_end=NEXT-YYYY-MM-DD` |
+| Specific UTC day for audit | `window_date_utc=YYYY-MM-DD` |
+| Explicit date range | `window_start=YYYY-MM-DD&window_end=YYYY-MM-DD` |
+| Total campaign/history | `window_start=2026-05-21` (omit `window_end`) |
+| More leaderboard rows | `limit=N`, max `20` |
+
+For one-day `window_start` / `window_end` queries, `window_end` is the next UTC
+date. Audit supports either `window_date_utc` or `window_start` / `window_end`;
+never combine them. Omitting `window_end` with `window_start` reads through the
+current UTC window end. `limit` is leaderboard-only, but it can be combined with
+leaderboard window params.
 
 If the user asks for the current or latest leaderboard without saying total,
 overall, campaign-to-date, or a specific date, use the Today endpoint only. Do
@@ -87,6 +90,12 @@ Total campaign (since launch):
 curl -sS "$WALLET_API_URL/v2/redpacket-race/leaderboard?token=usdt0&window_start=2026-05-21"
 ```
 
+More rows:
+
+```bash
+curl -sS "$WALLET_API_URL/v2/redpacket-race/leaderboard?token=usdt0&limit=20"
+```
+
 Show a compact ranked list. Per entry include:
 
 - rank
@@ -96,8 +105,11 @@ Show a compact ranked list. Per entry include:
 - `rank_delta_vs_prev_day` when not null
 - rewards as `<rewards_pieverse> PIEVERSE (~$<rewards_usdt_equiv>)` when both fields are present
 
-Never label `rewards_usdt_equiv` as a PIEVERSE amount. Do not editorialize
-about reward multipliers, generosity, or bugs unless the user asks.
+Use `rendered_handle` exactly as returned; do not shorten handles, drop `.pie`,
+or replace them with raw `handle`.
+
+Label `pieverse_usd_price` as PIEVERSE USD price and `rewards_usdt_equiv` as
+rewards USD equivalent.
 
 ## My Rank
 
@@ -128,6 +140,10 @@ curl -sS "$WALLET_API_URL/v2/instances/$INSTANCE_ID/redpacket-race/my-rank?token
 Branch on `state`:
 
 - `ranked` — show the resolved handle and the user's leaderboard entry.
+  Include rank, rendered handle, sent/received counts and amounts, score,
+  rewards, and `rank_delta_vs_prev_day` when present.
+  Label `*_count` fields as counts and `*_amount` fields as amounts, e.g.
+  "Total received count" vs. "Total received amount".
 - `no_rank` with `reason=handle_not_found` — the instance needs a `.pie` handle.
 - `no_rank` with `reason=not_ranked_current_window` — no eligible race activity in this window yet.
 - `no_rank` with `reason=no_current_window_snapshot` — leaderboard data is warming up.
@@ -135,7 +151,7 @@ Branch on `state`:
 ## Audit Details
 
 Use when the user asks why they are not ranked, why activity is not counting,
-or for their race transfer details. Audit is per-day.
+or for their race transfer details. Audit can be per-day or a UTC date range.
 
 Today:
 
@@ -144,15 +160,30 @@ curl -sS "$WALLET_API_URL/v2/instances/$INSTANCE_ID/redpacket-race/audit-log?dir
   -H "Authorization: Bearer $WALLET_API_TOKEN"
 ```
 
-Specific UTC day (example 2026-05-21):
+Specific UTC day:
 
 ```bash
-curl -sS "$WALLET_API_URL/v2/instances/$INSTANCE_ID/redpacket-race/audit-log?window_date_utc=2026-05-21&direction=all&channel=telegram&limit=50&token=usdt0" \
+curl -sS "$WALLET_API_URL/v2/instances/$INSTANCE_ID/redpacket-race/audit-log?window_date_utc=YYYY-MM-DD&direction=all&channel=telegram&limit=50&token=usdt0" \
+  -H "Authorization: Bearer $WALLET_API_TOKEN"
+```
+
+Explicit date range:
+
+```bash
+curl -sS "$WALLET_API_URL/v2/instances/$INSTANCE_ID/redpacket-race/audit-log?window_start=YYYY-MM-DD&window_end=YYYY-MM-DD&direction=all&channel=telegram&limit=50&token=usdt0" \
+  -H "Authorization: Bearer $WALLET_API_TOKEN"
+```
+
+Campaign history:
+
+```bash
+curl -sS "$WALLET_API_URL/v2/instances/$INSTANCE_ID/redpacket-race/audit-log?window_start=2026-05-21&direction=all&channel=telegram&limit=50&token=usdt0" \
   -H "Authorization: Bearer $WALLET_API_TOKEN"
 ```
 
 Query options:
 
+- Window params: use the query patterns above.
 - `direction`: `all` (default), `sent`, or `received`.
 - `channel`: `telegram`, `line`, or `all`. Detect from runtime context —
   Hermes uses `Current Session Context` / `Source`; OpenClaw/PurrfectClaw uses
@@ -164,9 +195,13 @@ Query options:
 
 Output:
 
-1. Summarize `summary.race_credit`.
+1. Summarize `summary.race_credit`; label `*_count_credit` as count credit,
+   `*_amount` as amount, and only `score_credit` as score credit.
 2. List recent entries with direction, counterparty, status, amount, channel,
-   `counted_for_race`, and any non-zero race credit.
+   `counted_for_race`, and any non-zero race credit, using the same count /
+   amount / score label split.
+   Format `amount_base_units` with `token.decimals` and `token.symbol`; do not
+   display base units directly.
 3. If an entry is not counted, point out observable facts only: unclaimed
    status, wrong channel, tiny amount, zero race credit, missing `.pie`
    handle. If none apply, say it may be due to race caps, qualification gates,
@@ -174,7 +209,7 @@ Output:
 
 ## Errors
 
-- HTTP 400 with window parameters: the date window is invalid, or the windowed leaderboard API may not be deployed yet.
+- HTTP 400 with window parameters: the date window is invalid.
 - HTTP 401 or 403 on personal endpoints: hosted instance authorization is missing or expired.
 - Empty `leaderboard`: no ranked participants are available for this window.
 - Empty audit entries: no race activity was found for that day/channel.
