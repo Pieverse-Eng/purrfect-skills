@@ -1,6 +1,6 @@
 ---
 name: onchain
-description: Use for wallet address, balance checks, and user transfers. Classify user intent, discover available sibling skills, and route to the matching skill for execution.
+description: Use for wallet address, balance checks, user transfers, and direct wallet transfers to Pie Names (.pie). Not for red packet requests. Classify user intent, discover available sibling skills, and route to the matching skill for execution.
 ---
 
 # On-Chain Orchestrator
@@ -23,7 +23,7 @@ Do not hardcode vendor-specific routing here. Read sibling skill descriptions at
 6. Do not ask the user to choose between skills for the same intent. Routing is deterministic.
 7. For LP/farm discovery and planning (APY, pools, deep links), route to `pancake` — it owns the planner sub-skills. LP/farm execution is BSC-only.
 8. For HTTP payment-gated resources, route to a matching payment protocol sibling skill before treating the request as a wallet transfer or swap.
-9. For redpacket requests, or requests to send a dollar amount to a `.pie` handle, route to `red-packet-send` when that sibling skill exists. Do not pass `.pie` handles to `purr wallet transfer`; wallet transfer only accepts raw chain addresses.
+9. For redpacket requests, or requests to send a dollar amount to a `.pie` handle, route to `red-packet-send` when that sibling skill exists. For direct wallet transfers to a `.pie` handle, keep the flow in this skill: resolve the handle with `purr pns resolve`, then pass the returned raw address to `purr wallet transfer`.
 
 ## Confirmation Contract (Mandatory)
 
@@ -124,9 +124,32 @@ purr wallet balance --chain-type solana --token USDC # USDC on Solana
 
 ### Transfer
 
-`purr wallet transfer` only accepts raw chain addresses. It does not resolve
-`.pie` handles. If the recipient is a `.pie` handle and the user is sending a
-redpacket or dollar amount, use `red-packet-send` instead.
+`purr wallet transfer` only accepts raw chain addresses. If the recipient is a
+`.pie` handle in a direct EVM wallet transfer, resolve it first through PNS,
+then transfer to the returned address.
+
+Do not pass `.pie` handles directly to `purr wallet transfer`. Do not
+auto-append `.pie` to bare names. If PNS resolution fails, stop and show the
+plain error instead of guessing an address.
+
+```bash
+TO_ADDRESS="$(purr pns resolve <handle>.pie)"
+purr wallet transfer --to "$TO_ADDRESS" --amount 0.01 --chain-id 56
+```
+
+For ERC-20 transfers, keep the same resolution step and add the token flag:
+
+```bash
+TO_ADDRESS="$(purr pns resolve <handle>.pie)"
+purr wallet transfer --to "$TO_ADDRESS" --amount 10 --chain-id 56 --token USDT
+```
+
+PNS resolves to an EVM instance wallet address. If the user asks for a Solana
+transfer to a `.pie` handle, ask for a raw Solana address unless a Solana PNS
+resolution flow is documented.
+
+If the recipient is a `.pie` handle and the user is sending a redpacket or
+dollar amount, use `red-packet-send` instead.
 
 ```bash
 purr wallet transfer --to 0x... --amount 0.01 --chain-id 56                    # native BNB
