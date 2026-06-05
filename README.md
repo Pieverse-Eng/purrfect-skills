@@ -50,7 +50,7 @@ This directory contains the Pieverse built-in skills. Each folder is a skill uni
 
 | Skill | Description |
 |-------|-------------|
-| `pieverse-card-campaign` | Pieverse Agent Intro Card campaign - runs the staged `purr pieverse card` hosted-instance flow and returns the card image, share URL, and X intent. |
+| `pieverse-card-campaign` | Pieverse BNB Chain ERC-8183 Agent Intro Card campaign - runs the staged `purr pieverse card` hosted-instance on-chain flow and returns the card image, share URL, and X intent. |
 | `instance-renewal` | Hosted instance billing status and renewal through `purr instance`, with preset mapping such as `bsc-usdt` to chain/token identifiers. |
 | `pieverse-a2a` | Pieverse HTTP 402 A2A payment flow — probe, confirm, authorize through the hosted wallet, and retry with `X-Pieverse-Payment`. |
 | `red-packet-race` | Pieverse OKX Red Packet Race leaderboard, My Rank, and audit-log queries. |
