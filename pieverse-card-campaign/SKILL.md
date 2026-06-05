@@ -8,12 +8,36 @@ description: Use when the user asks to forge or generate a Pieverse/Purrfect Cla
 Use this skill inside a hosted instance to generate the Pieverse BNB Chain
 ERC-8183 campaign card through the staged `purr pieverse card` on-chain flow.
 
+## Parameters
+
+- `partner`: always use `bnb` for this campaign.
+- `channel`: infer from the current session context. Use `telegram` for Telegram
+  and `line` for LINE.
+- `lv`: use `lv1`.
+- `pieName`: optional. If provided, it must match the hosted wallet's claimed
+  `.pie` handle.
+- `purchaseId`: use the returned purchase id when resuming `create-job`, `fund`,
+  or `deliverable`.
+
 ## Run
 
 Start or resume the BNB-only card purchase:
 
 ```bash
 purr pieverse card purchase
+```
+
+Equivalent purchase API example:
+
+```bash
+curl -sS -X POST "$WALLET_API_URL/v1/instances/$INSTANCE_ID/erc8183/services/agent-self-intro/card/purchase" \
+  -H "Authorization: Bearer $WALLET_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "partner": "bnb",
+    "channel": "<telegram-or-line>",
+    "lv": "lv1"
+  }'
 ```
 
 Then run the ERC-8183 on-chain steps on BNB Smart Chain mainnet (chain ID 56):
