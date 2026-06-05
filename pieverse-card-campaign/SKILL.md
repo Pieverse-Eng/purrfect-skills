@@ -24,10 +24,11 @@ ERC-8183 campaign card through the staged `purr pieverse card` on-chain flow.
 Start or resume the BNB-only card purchase:
 
 ```bash
-purr pieverse card purchase
+purr pieverse card purchase --partner bnb --channel <telegram-or-line>
 ```
 
-Equivalent purchase API example:
+Equivalent purchase API example. Use this curl path when a user supplies
+`pieName`; omit the `pieName` field when it is not provided.
 
 ```bash
 curl -sS -X POST "$WALLET_API_URL/v1/instances/$INSTANCE_ID/erc8183/services/agent-self-intro/card/purchase" \
@@ -36,7 +37,8 @@ curl -sS -X POST "$WALLET_API_URL/v1/instances/$INSTANCE_ID/erc8183/services/age
   -d '{
     "partner": "bnb",
     "channel": "<telegram-or-line>",
-    "lv": "lv1"
+    "lv": "lv1",
+    "pieName": "<optional-pie-name>"
   }'
 ```
 
@@ -54,7 +56,7 @@ command details, raw statuses, purchase ids, and card ids internal.
 
 ## Output
 
-Parse the API response internally. On success, return this chat message:
+Parse command/API responses internally. On success, return this chat message:
 
 ```text
 Pieverse campaign card
@@ -78,7 +80,8 @@ parameter. Do not add `&via=` or other intent params.
 Render `imageUrl` as a clickable Markdown link: `[Open image](<imageUrl>)`.
 Do not output the raw image URL as a standalone line.
 
-Relevant successful output fields:
+Relevant successful output fields. `purr` may print these fields at the top
+level; curl returns them under `data`.
 
 ```json
 {
