@@ -25,8 +25,9 @@ report the completed job without quoting a score.
 
 ## Run
 
-Run the staged flow in order. Continue after `purchase` and inspect the judge
-input before spending on-chain gas and payment.
+Run the staged flow in order. Continue after `purchase`; do not inspect the
+judge input until after the on-chain job has been funded. The backend only makes
+the provider input readable after ERC-8183 funding is confirmed.
 
 ### 1. Purchase Intent
 
@@ -39,21 +40,7 @@ purr pieverse purrfect-yap purchase
 Read `purchaseId`, `campaignSlug`, `campaignDay`, and `pieName` from the JSON
 response. The purchase response is not final.
 
-### 2. Inspect Judge Input
-
-Before creating or funding the on-chain job, inspect the provider input:
-
-```bash
-purr pieverse purrfect-yap input --purchase-id <purchaseId>
-```
-
-Continue when `posts` contains at least one eligible post. If `posts` is empty,
-pause before on-chain job creation/funding. Tell the user that no eligible
-PurrfectYap posts have been discovered for the campaign yet, and resume later
-with the same `purchaseId` once the campaign crawler/provider has ingested the
-post.
-
-### 3. Create On-Chain Job
+### 2. Create On-Chain Job
 
 Create and register the ERC-8183 service job:
 
@@ -64,7 +51,7 @@ purr pieverse purrfect-yap create-job --purchase-id <purchaseId>
 This step must perform the on-chain job creation/register operation before the
 judge job can be funded.
 
-### 4. Fund On-Chain Job
+### 3. Fund On-Chain Job
 
 Fund the registered job:
 
@@ -74,6 +61,26 @@ purr pieverse purrfect-yap fund --purchase-id <purchaseId>
 
 This step performs the BNB Chain payment flow, including the required `$U`
 payment token approval/funding and BNB gas.
+
+### 4. Inspect Judge Input
+
+After funding is confirmed, inspect the provider input. The input endpoint is
+gated by ERC-8183 progress: run this step only after the purchase is `funded`,
+`submitted`, or `completed`.
+
+If the backend returns `ERC8183_PURCHASE_NOT_FUNDED`, continue or resume the
+`create-job` and `fund` steps first, then retry `input` with the same
+`purchaseId`.
+
+Continue when `posts` contains at least one eligible post. If `posts` is empty,
+the funded job is not finished yet. Do not start a new purchase. Tell the user
+that no eligible PurrfectYap posts have been discovered for the campaign yet,
+then resume later with the same `purchaseId` by retrying `input` or checking
+`result --wait`/`status`.
+
+```bash
+purr pieverse purrfect-yap input --purchase-id <purchaseId>
+```
 
 ### 5. Wait For Judgement Completion
 
@@ -152,6 +159,7 @@ they are available.
 | `SOCIAL_MEME_BOOSTER_DISABLED` | Say the PurrfectYap judge service is currently unavailable. |
 | `SOCIAL_MEME_BOOSTER_HANDLE_REQUIRED` | Ask the user to claim a `.pie` handle before running the PurrfectYap judge. |
 | `SOCIAL_MEME_BOOSTER_PARTICIPANT_REQUIRED` | Ask the user to join the BNB Survivor Quest campaign before running the PurrfectYap judge. |
+| `ERC8183_PURCHASE_NOT_FUNDED` from `input` | Continue or resume the create/fund steps first; do not present this as a final failure. |
 | Empty `input.posts`, no eligible posts, no discovered posts | Say no eligible PurrfectYap posts have been discovered yet; ask the user to wait for ingestion or post eligible campaign content, then resume with the same purchase. |
 | Preparing/not found/missing job fields/provider timeout/status remains `funded`/status remains `submitted`/tx not confirmed/RPC read failure | Say the PurrfectYap judge job is still being prepared or processed; keep waiting or resume internally. |
 | `SOCIAL_MEME_BOOSTER_JUDGEMENT_REQUIRED`, `SOCIAL_MEME_BOOSTER_LIVE_SNAPSHOT_REQUIRED` | Say the judge could not complete because live X engagement data is not ready, and resume later. |
