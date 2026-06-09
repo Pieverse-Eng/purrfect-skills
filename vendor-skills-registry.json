@@ -24,6 +24,69 @@
 			]
 		},
 		{
+			"id": "binance",
+			"repo": "https://github.com/binance/binance-skills-hub.git",
+			"commit": "97d3a746dbe934c0d337fb27855b4f7dc7e01485",
+			"notes": "Imported verbatim under binance-agentic-wallet as official reference material. Runtime uses the @binance/agentic-wallet npm package and baw CLI; state-changing wallet actions still require user confirmation and Binance App policy controls.",
+			"skills": [
+				{
+					"name": "binance-agentic-wallet",
+					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/SKILL.md",
+					"targetPath": "binance-agentic-wallet/SKILL.md"
+				},
+				{
+					"name": "binance-agentic-wallet-authentication",
+					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/authentication.md",
+					"targetPath": "binance-agentic-wallet/references/authentication.md"
+				},
+				{
+					"name": "binance-agentic-wallet-limit-order",
+					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/limit-order.md",
+					"targetPath": "binance-agentic-wallet/references/limit-order.md"
+				},
+				{
+					"name": "binance-agentic-wallet-market-order",
+					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/market-order.md",
+					"targetPath": "binance-agentic-wallet/references/market-order.md"
+				},
+				{
+					"name": "binance-agentic-wallet-prediction",
+					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/prediction.md",
+					"targetPath": "binance-agentic-wallet/references/prediction.md"
+				},
+				{
+					"name": "binance-agentic-wallet-preflight",
+					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/preflight.md",
+					"targetPath": "binance-agentic-wallet/references/preflight.md"
+				},
+				{
+					"name": "binance-agentic-wallet-security",
+					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/security.md",
+					"targetPath": "binance-agentic-wallet/references/security.md"
+				},
+				{
+					"name": "binance-agentic-wallet-send",
+					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/send.md",
+					"targetPath": "binance-agentic-wallet/references/send.md"
+				},
+				{
+					"name": "binance-agentic-wallet-wallet-setting",
+					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/wallet-setting.md",
+					"targetPath": "binance-agentic-wallet/references/wallet-setting.md"
+				},
+				{
+					"name": "binance-agentic-wallet-wallet-view",
+					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/wallet-view.md",
+					"targetPath": "binance-agentic-wallet/references/wallet-view.md"
+				},
+				{
+					"name": "binance-agentic-wallet-x402-payment",
+					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/x402-payment.md",
+					"targetPath": "binance-agentic-wallet/references/x402-payment.md"
+				}
+			]
+		},
+		{
 			"id": "pancakeswap",
 			"repo": "https://github.com/pancakeswap/pancakeswap-ai.git",
 			"commit": "7f1d924278f2350fe618774ff7734c94d8a0a268",
