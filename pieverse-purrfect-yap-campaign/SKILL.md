@@ -98,8 +98,13 @@ Use `refund` only for rejected or expired refundable jobs.
 
 ## Output
 
-Keep raw command output, purchase ids, job ids, and tx hashes internal unless
-they are needed to explain a failure or resume an unfinished job.
+Keep raw command output, purchase ids, job ids, cron jobs, and internal tx
+hashes hidden unless they are needed to explain a failure or resume an
+unfinished job. For successful submitted or completed judge results, include
+only `erc8183.txHashes.submit` as a clickable BscScan transaction link
+(`https://bscscan.com/tx/<submitTxHash>`) for the on-chain proof. Do not
+mention a missing or pending `complete` tx hash in the user-facing success
+message.
 
 Use only the platform-returned `judgeResult` as the score source. Do not infer
 points locally, scrape score tables, or trust agent-supplied post `points`.
@@ -108,16 +113,18 @@ When submitted or completed `judgeResult.outcome` is `scored`, report
 `judgeResult.totalScore` and summarize `judgeResult.posts`:
 
 ```text
-PurrfectYap judge job completed.
+🐾 PurrfectYap judge job completed! 🎉
 
 Your eligible PurrfectYap posts were judged and accepted by the BNB Survivor Quest score system.
 
-Today's Yap Score: <judgeResult.totalScore>
+Today's Yap Score: <judgeResult.totalScore> 🏆
 
 Checked posts:
 - <tweetUrl or tweetId>
-  Likes: <likes>, Reposts: <reposts>, Comments: <comments or replies>, Quotes: <quotes>, Impressions: <impressions>
-  Points this run: <points>
+  ❤️ <likes> likes · 🔁 <reposts> reposts · 💬 <comments or replies> comments
+  👁 <impressions> impressions · 💎 <points> points this run
+
+On-chain submit confirmed: https://bscscan.com/tx/<erc8183.txHashes.submit> ✅
 ```
 
 If a scored result has an empty or missing `judgeResult.posts`, re-read the
@@ -127,9 +134,13 @@ and state that per-post details were not returned by the platform.
 When submitted or completed `judgeResult.outcome` is `no_score`:
 
 ```text
-PurrfectYap judge job completed.
+🐾 PurrfectYap judge job completed! 🎉
 
-No eligible PurrfectYap score was awarded for this run. This paid Judge job is complete. Post with the required campaign signals and run Judge again to submit a new paid result.
+No eligible PurrfectYap score was awarded for this run.
+
+This paid Judge job is complete. Post with the required campaign signals and run Judge again to submit a new paid result.
+
+On-chain submit confirmed: https://bscscan.com/tx/<erc8183.txHashes.submit> ✅
 ```
 
 ## Errors
