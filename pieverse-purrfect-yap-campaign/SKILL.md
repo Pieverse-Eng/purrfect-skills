@@ -22,8 +22,9 @@ mainnet (chain ID 56).
   no-eligible-posts deliverable.
 - Do not wait for future posts on the same purchase. If the user posts later and
   wants those posts judged, start a new paid judge purchase.
-- Once the platform accepts `completed`, `failed`, or `rejected`, that
-  `purchaseId` is terminal. Do not reuse it for another scoring attempt.
+- Once the platform returns `submitted` or `completed` with `judgeResult`, that
+  paid judge run has produced its user-facing result. Do not reuse the
+  `purchaseId` for another scoring attempt.
 - Users may judge multiple times in the same UTC campaign day. The campaign
   keeps the latest scored judgement for that instance/day, even if the latest
   score is lower. A no-score completion finishes the paid job but does not
@@ -75,15 +76,17 @@ or resume `create-job` and `fund`, then retry `input`. Treat `input.posts` as a
 snapshot for this paid job; continue to judgement completion whether it has
 posts or is empty. The input endpoint is not the score endpoint.
 
-### 5. Wait For Result
+### 5. Wait For Submitted Result
 
 ```bash
 purr pieverse purrfect-yap result --purchase-id <purchaseId> --wait
 ```
 
-The flow succeeds only when final `status` is `completed` and
-`erc8183.txHashes.fund`, `submit`, and `complete` are present. Read the
-user-facing score summary from `judgeResult` in the completed result.
+The flow succeeds when `status` is `submitted` or `completed`,
+`erc8183.txHashes.fund` and `erc8183.txHashes.submit` are present, and
+`judgeResult` is present. The current platform returns checked post details in
+`judgeResult.posts`; use those details as the source for per-post metrics and
+points. A `complete` tx hash is not required for the user-facing result.
 
 ### Refund
 
@@ -95,29 +98,49 @@ Use `refund` only for rejected or expired refundable jobs.
 
 ## Output
 
-Keep raw command output, purchase ids, job ids, and tx hashes internal unless
-they are needed to explain a failure or resume an unfinished job.
+Keep raw command output, purchase ids, job ids, cron jobs, and internal tx
+hashes hidden unless they are needed to explain a failure or resume an
+unfinished job. For successful submitted or completed judge results, include
+only `erc8183.txHashes.submit` as a clickable BscScan transaction link
+(`https://bscscan.com/tx/<submitTxHash>`) for the on-chain proof. Do not
+mention a missing or pending `complete` tx hash in the user-facing success
+message.
 
 Use only the platform-returned `judgeResult` as the score source. Do not infer
 points locally, scrape score tables, or trust agent-supplied post `points`.
 
-When completed `judgeResult.outcome` is `scored`, report
-`judgeResult.totalScore`:
+When submitted or completed `judgeResult.outcome` is `scored`, report
+`judgeResult.totalScore` and summarize `judgeResult.posts`:
 
 ```text
-PurrfectYap judge job completed.
+🐾 PurrfectYap judge job completed! 🎉
 
 Your eligible PurrfectYap posts were judged and accepted by the BNB Survivor Quest score system.
 
-Today's Yap Score: <judgeResult.totalScore>
+Today's Yap Score: <judgeResult.totalScore> 🏆
+
+Checked posts:
+- <tweetUrl or tweetId>
+  ❤️ <likes> likes · 🔁 <reposts> reposts · 💬 <comments or replies> comments
+  👁 <impressions> impressions · 💎 <points> points this run
+
+On-chain submit confirmed: https://bscscan.com/tx/<erc8183.txHashes.submit> ✅
 ```
 
-When completed `judgeResult.outcome` is `no_score`:
+If a scored result has an empty or missing `judgeResult.posts`, re-read the
+purchase detail once. If the details are still missing, report the total score
+and state that per-post details were not returned by the platform.
+
+When submitted or completed `judgeResult.outcome` is `no_score`:
 
 ```text
-PurrfectYap judge job completed.
+🐾 PurrfectYap judge job completed! 🎉
 
-No eligible PurrfectYap score was awarded for this run. This paid Judge job is complete. Post with the required campaign signals and run Judge again to submit a new paid result.
+No eligible PurrfectYap score was awarded for this run.
+
+This paid Judge job is complete. Post with the required campaign signals and run Judge again to submit a new paid result.
+
+On-chain submit confirmed: https://bscscan.com/tx/<erc8183.txHashes.submit> ✅
 ```
 
 ## Errors
@@ -132,14 +155,14 @@ Preserve `purchaseId`, `rejectTxHash`, and `refundTxHash` when available.
 | `SOCIAL_MEME_BOOSTER_HANDLE_REQUIRED` | Ask the user to claim a `.pie` handle. |
 | `SOCIAL_MEME_BOOSTER_PARTICIPANT_REQUIRED` | Ask the user to join the campaign. |
 | `ERC8183_PURCHASE_NOT_FUNDED` from `input` | Resume `create-job` and `fund` first. |
-| Empty `input.posts`, no eligible posts, no discovered posts | Not an error after completion; report `judgeResult.outcome: no_score` when returned. |
-| Preparing/not found/missing job fields/provider timeout/status remains `funded` or `submitted`/tx not confirmed/RPC read failure | The job is still being prepared or processed; keep waiting or resume internally. |
+| Empty `input.posts`, no eligible posts, no discovered posts | Not an error after submitted/completed result; report `judgeResult.outcome: no_score` when returned. |
+| Preparing/not found/missing job fields/provider timeout/status remains `funded`/tx not confirmed/RPC read failure | The job is still being prepared or processed; keep waiting or resume internally. |
 | `SOCIAL_MEME_BOOSTER_JUDGEMENT_REQUIRED` | The provider completion payload is incomplete; resume later. |
 | `SOCIAL_MEME_BOOSTER_LIVE_SNAPSHOT_REQUIRED` | Live X engagement data is not ready; resume later. |
 | Transaction failed/reverted/wallet execution failed/insufficient funds, allowance, or gas | The payment step failed; preserve the purchase id and contact the Pieverse team. |
 | Progress mismatch, missing progress fields, backwards progress, unsupported status, transaction target mismatch | The on-chain proof or purchase state is inconsistent; stop. |
-| Missing final `fund`, `submit`, or `complete` tx hashes | On-chain proof is incomplete; keep waiting or resume internally. |
-| Completed result missing `judgeResult` | Re-read the purchase detail once; if still missing, report completion without a score and contact the Pieverse team. |
+| Missing final `fund` or `submit` tx hashes | On-chain proof is incomplete; keep waiting or resume internally. |
+| Submitted/completed result missing `judgeResult` | Re-read the purchase detail once; if still missing, report the submitted/completed status without a score and contact the Pieverse team. |
 | Purchase already terminal | Return existing `judgeResult` if present; otherwise state the terminal status. |
 | Rejected/expired/not refundable/failed | State the terminal or refund status. |
 | Other non-OK response | The job could not be completed right now. |
