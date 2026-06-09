@@ -1,7 +1,7 @@
 ---
 name: binance-agentic-wallet
 description: |
-  Use when the user mentions connect/disconnect wallet, sign in, sign out, web3 wallet, wallet address,
+  Use when the user mentions connect/disconnect binance agentic wallet, sign in, sign out, web3 wallet, wallet address,
   check balance, how much crypto do I have, send BNB/USDT/crypto, transfer tokens, swap tokens,
   buy/sell token, DEX trade, limit order, market order, cancel order, get a quote, transaction history,
   wallet settings, daily limit, slippage, MEV protection, supported chains, available networks,
