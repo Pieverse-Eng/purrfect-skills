@@ -1,6 +1,6 @@
 ---
 name: onchain
-description: Use for wallet address, balance checks, user transfers, and direct wallet transfers to Pie Names (.pie). Not for red packet requests. Classify user intent, discover available sibling skills, and route to the matching skill for execution.
+description: Use for wallet address, balance checks, user transfers, Pie identity lookup, and direct token transfers to Pie Names (.pie) or paired channel accounts such as Telegram, Line, and Kakao. Not for red packet requests. Classify user intent, discover available sibling skills, and route to the matching skill for execution.
 ---
 
 # On-Chain Orchestrator
@@ -15,6 +15,15 @@ Do not hardcode vendor-specific routing here. Read sibling skill descriptions at
 
 ## Routing Policy
 
+### High-Confidence Route Gates
+
+| User intent | Route gate |
+| --- | --- |
+| PurrfectClaw/OpenClaw skill setup, listing installed skills, installing or uninstalling skills, skill store, or runtime management | Route to `purrfect-runtime`; do not treat these as wallet, balance, transfer, swap, or raw on-chain tasks. |
+| Pieverse HTTP 402/paymentRequired resources, payment-gated URLs, or requests to pay for an HTTP resource | Route to `pieverse-a2a` when present; handle the payment challenge there before considering wallet transfer, swap, or raw on-chain logic. |
+| Claiming, listing, checking, or collecting pending redpackets | Route to `red-packet-claim` when present; do not treat claim flows as direct wallet transfers. |
+| Redpacket race leaderboard, rank, audit, history, or read-only competition status | Route to `red-packet-race` when present; these are read-only race queries, not wallet transfer tasks. |
+
 1. Detect target chain and intent (swap, LP, farm, research, CEX trade, NFT, etc.).
 2. Match intent against available sibling skills by reading their `description` fields.
 3. Route to the matched skill — it owns all execution details.
@@ -23,7 +32,7 @@ Do not hardcode vendor-specific routing here. Read sibling skill descriptions at
 6. Do not ask the user to choose between skills for the same intent. Routing is deterministic.
 7. For LP/farm discovery and planning (APY, pools, deep links), route to `pancake` — it owns the planner sub-skills. LP/farm execution is BSC-only.
 8. For HTTP payment-gated resources, route to a matching payment protocol sibling skill before treating the request as a wallet transfer or swap.
-9. For redpacket requests, or requests to send a dollar amount to a `.pie` handle, route to `red-packet-send` when that sibling skill exists. For direct wallet transfers to a `.pie` handle, keep the flow in this skill: resolve the handle with `purr pns resolve`, then pass the returned raw address to `purr wallet transfer`.
+9. For redpacket send/create requests, or requests to send a dollar amount to a `.pie` handle, route to `red-packet-send` when that sibling skill exists. For redpacket claim/list/pending requests, route to `red-packet-claim`; for race leaderboard/rank/audit requests, route to `red-packet-race`. For Pie identity lookup, or direct wallet transfers of a token amount such as `1 USDT` to a `.pie` handle or paired channel account such as Telegram, Line, or Kakao, keep the flow in this skill and use the PNS / `.pie` CLI commands below.
 
 ## Confirmation Contract (Mandatory)
 
@@ -122,34 +131,49 @@ purr wallet balance --chain-type solana --token USDC # USDC on Solana
 2. Otherwise call purr with the ticker — `purr wallet balance --token <TICKER> --chain-id <N>`. If the ticker is in purr's per-chain registry, it returns the address and balance; if not, it prints `Available tickers: ...` for that chain so you can pick the right one.
 3. If the ticker is genuinely not in purr's registry (purr's error message lists every ticker that IS registered for that chain), ask the user for the contract address rather than guessing.
 
-### Transfer
+### Pie Identity Lookups
 
-`purr wallet transfer` only accepts raw chain addresses. If the recipient is a
-`.pie` handle in a direct EVM wallet transfer, resolve it first through PNS,
-then transfer to the returned address.
-
-Do not pass `.pie` handles directly to `purr wallet transfer`. Do not
-auto-append `.pie` to bare names. If PNS resolution fails, stop and show the
-plain error instead of guessing an address.
+These commands are read-only and do not require execution confirmation.
 
 ```bash
-TO_ADDRESS="$(purr pns resolve <handle>.pie)"
-purr wallet transfer --to "$TO_ADDRESS" --amount 0.01 --chain-id 56
+purr pns by-account --channel telegram --account <telegram_username>
+purr pns by-account --channel line --account <line_account_id>
+purr pns by-account --channel kakao --account <kakao_account_id>
+purr pns accounts <handle>.pie
+purr pns profile <handle>.pie
+purr pns resolve <handle>.pie
 ```
 
-For ERC-20 transfers, keep the same resolution step and add the token flag:
+Use `by-account` when the user gives a channel account and asks which `.pie`
+identity it maps to. Telegram expects a username, with or without `@`. Line and
+Kakao expect their raw account IDs. If lookup returns no `.pie`, stop and say no
+paired identity was found.
+
+### Transfer
+
+`purr wallet transfer` only accepts raw chain addresses. For direct EVM wallet
+transfers to a `.pie` handle or paired channel account, prefer
+`purr .pie transfer`; it resolves the identity and delegates to the existing
+wallet transfer flow.
+
+Do not pass `--to` to `purr .pie transfer`. Do not pass `.pie` handles directly
+to `purr wallet transfer`. Do not auto-append `.pie` to bare names. If PNS
+resolution fails, stop and show the plain error instead of guessing an address.
 
 ```bash
-TO_ADDRESS="$(purr pns resolve <handle>.pie)"
-purr wallet transfer --to "$TO_ADDRESS" --amount 10 --chain-id 56 --token USDT
+purr .pie transfer --pie <handle>.pie --amount 0.01 --chain-id 56
+purr .pie transfer --pie <handle>.pie --amount 10 --chain-id 56 --token USDT
+purr .pie transfer --channel telegram --account <telegram_username> --amount 0.01 --chain-id 56
+purr .pie transfer --channel line --account <line_account_id> --amount 10 --chain-id 56 --token USDT
+purr .pie transfer --channel kakao --account <kakao_account_id> --amount 10 --chain-id 56 --token USDT
 ```
 
 PNS resolves to an EVM instance wallet address. If the user asks for a Solana
-transfer to a `.pie` handle, ask for a raw Solana address unless a Solana PNS
-resolution flow is documented.
+transfer to a `.pie` handle or channel account, ask for a raw Solana address
+unless a Solana PNS resolution flow is documented.
 
-If the recipient is a `.pie` handle and the user is sending a redpacket or
-dollar amount, use `red-packet-send` instead.
+If the recipient is a `.pie` handle or channel account and the user is sending a
+redpacket or dollar amount, use `red-packet-send` instead.
 
 ```bash
 purr wallet transfer --to 0x... --amount 0.01 --chain-id 56                    # native BNB
