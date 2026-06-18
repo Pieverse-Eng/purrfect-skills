@@ -1,208 +1,55 @@
 ---
 name: onchain
-description: Use for wallet address, balance checks, user transfers, Pie identity lookup, and direct token transfers to Pie Names (.pie) or paired channel accounts such as Telegram, Line, and Kakao. Not for red packet requests. Classify user intent, discover available sibling skills, and route to the matching skill for execution.
+description: Use when the user wants to check wallet addresses or balances, look up Pie identities or profiles, transfer to a raw address, .pie handle, or Telegram account, or perform read-only chain checks. Not for red packet requests.
 ---
 
-# On-Chain Orchestrator
+# Onchain
 
-`onchain` is the top-level routing skill. It classifies user intent and dispatches to the appropriate sibling skill.
+## Overview
 
-## Skill Discovery
+This Skill covers wallet addresses, balances, Pie identity lookup, direct
+transfers, and read-only chain checks.
 
-This instance has built-in skills for third-party vendors installed as sibling skill directories. Each skill's frontmatter `description` field explains when to invoke it. Identify user intent and route to the matching skill — the skill's SKILL.md contains all execution details, CLI commands, and tool references.
+Pick the relevant command group from the table, then read that reference before
+running commands or explaining the workflow.
 
-Do not hardcode vendor-specific routing here. Read sibling skill descriptions at runtime to determine the best match for user intent.
+For EVM chain commands, include `--chain-id`. Common chain IDs:
 
-## Routing Policy
-
-### High-Confidence Route Gates
-
-| User intent | Route gate |
-| --- | --- |
-| PurrfectClaw/OpenClaw skill setup, listing installed skills, installing or uninstalling skills, skill store, or runtime management | Route to `purrfect-runtime`; do not treat these as wallet, balance, transfer, swap, or raw on-chain tasks. |
-| Pieverse HTTP 402/paymentRequired resources, payment-gated URLs, or requests to pay for an HTTP resource | Route to `pieverse-a2a` when present; handle the payment challenge there before considering wallet transfer, swap, or raw on-chain logic. |
-| Claiming, listing, checking, or collecting pending redpackets | Route to `red-packet-claim` when present; do not treat claim flows as direct wallet transfers. |
-| Redpacket race leaderboard, rank, audit, history, or read-only competition status | Route to `red-packet-race` when present; these are read-only race queries, not wallet transfer tasks. |
-
-1. Detect target chain and intent (swap, LP, farm, research, CEX trade, NFT, etc.).
-2. Match intent against available sibling skills by reading their `description` fields.
-3. Route to the matched skill — it owns all execution details.
-4. If multiple skills could match, prefer the one the user explicitly names (e.g. "via OKX", "on Kraken", "on Gate").
-5. If no skill matches, fall back to JSON-RPC / explorer workflows for raw on-chain queries.
-6. Do not ask the user to choose between skills for the same intent. Routing is deterministic.
-7. For LP/farm discovery and planning (APY, pools, deep links), route to `pancake` — it owns the planner sub-skills. LP/farm execution is BSC-only.
-8. For HTTP payment-gated resources, route to a matching payment protocol sibling skill before treating the request as a wallet transfer or swap.
-9. For redpacket send/create requests, or requests to send a dollar amount to a `.pie` handle, route to `red-packet-send` when that sibling skill exists. For redpacket claim/list/pending requests, route to `red-packet-claim`; for race leaderboard/rank/audit requests, route to `red-packet-race`. For Pie identity lookup, or direct wallet transfers of a token amount such as `1 USDT` to a `.pie` handle or paired channel account such as Telegram, Line, or Kakao, keep the flow in this skill and use the PNS / `.pie` CLI commands below.
-
-## Confirmation Contract (Mandatory)
-
-Any executable action (swap, trade, LP, farm, transfer, order placement) requires explicit user confirmation before execution.
-
-### Before execution, show:
-
-- action type (swap, LP add, stake, order, etc.)
-- chain
-- key parameters (tokens, amounts, slippage, leverage, etc.)
-
-Then ask exactly:
-
-`Do you want to execute this action with these parameters? (Yes/No)`
-
-- If user says Yes: execute.
-- If user says No: do not execute; offer edit or cancel.
-- If any parameter changes after confirmation: ask again.
-
-## Chain Reference
-
-**Default chain is BNB Smart Chain (chain ID 56)** for executable / chain-specific actions (transfer, swap, balance check, contract call) when the user does not specify a chain. This default does NOT apply to identity reads — an EVM wallet address is the same on every EVM chain, so do not pin a single "default chain" onto the address when sharing it (see [Get wallet address](#get-wallet-address)).
-
-| Chain           | Chain ID | Native Token | purr chain code             |
-| --------------- | -------- | ------------ | --------------------------- |
-| BNB Smart Chain | 56       | BNB          | bnb                         |
-| Ethereum        | 1        | ETH          | eth                         |
-| Base            | 8453     | ETH          | base                        |
-| Arbitrum One    | 42161    | ETH          | arbitrum                    |
-| Polygon         | 137      | MATIC        | matic                       |
-| Optimism        | 10       | ETH          | optimism                    |
-| X Layer         | 196      | OKB          | xlayer                      |
-| Solana          | —        | SOL          | (use `--chain-type solana`) |
+| Chain | Chain ID | Native Token |
+| --- | ---: | --- |
+| BNB Smart Chain | 56 | BNB |
+| Ethereum | 1 | ETH |
+| Base | 8453 | ETH |
+| Arbitrum One | 42161 | ETH |
+| Polygon | 137 | MATIC |
+| Optimism | 10 | ETH |
+| X Layer | 196 | OKB |
+| Solana | use `--chain-type solana` | SOL |
 
 ### Common Token Addresses (BSC)
 
-| Token | Address                                      |
-| ----- | -------------------------------------------- |
-| USDT  | `0x55d398326f99059fF775485246999027B3197955` |
-| USDC  | `0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d` |
-| WBNB  | `0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c` |
-| CAKE  | `0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82` |
+| Token | Address |
+| --- | --- |
+| USDT | `0x55d398326f99059fF775485246999027B3197955` |
+| USDC | `0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d` |
+| WBNB | `0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c` |
+| CAKE | `0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82` |
 
 ### Common Token Addresses (X Layer, chain ID 196)
 
 | Token | Symbol on-chain | Address | Decimals | Explorer |
-| ----- | --------------- | ------- | -------- | -------- |
-| USDT0 | `USD₮0`         | `0x779ded0c9e1022225f8e0630b35a9b54be713736` | 6 | [OKLink](https://www.oklink.com/x-layer/token/0x779ded0c9e1022225f8e0630b35a9b54be713736) |
-| USDC  | `USDC`          | `0x74b7f16337b8972027f6196a17a631ac6de26d22` | 6 | [OKLink](https://www.oklink.com/x-layer/token/0x74b7f16337b8972027f6196a17a631ac6de26d22) |
-| USDG  | `USDG`          | `0x4ae46a509f6b1d9056937ba4500cb143933d2dc8` | 6 | [OKLink](https://www.oklink.com/x-layer/token/0x4ae46a509f6b1d9056937ba4500cb143933d2dc8) |
+| --- | --- | --- | ---: | --- |
+| USDT0 | `USD₮0` | `0x779ded0c9e1022225f8e0630b35a9b54be713736` | 6 | [OKLink](https://www.oklink.com/x-layer/token/0x779ded0c9e1022225f8e0630b35a9b54be713736) |
+| USDC | `USDC` | `0x74b7f16337b8972027f6196a17a631ac6de26d22` | 6 | [OKLink](https://www.oklink.com/x-layer/token/0x74b7f16337b8972027f6196a17a631ac6de26d22) |
+| USDG | `USDG` | `0x4ae46a509f6b1d9056937ba4500cb143933d2dc8` | 6 | [OKLink](https://www.oklink.com/x-layer/token/0x4ae46a509f6b1d9056937ba4500cb143933d2dc8) |
 
-All three are 6 decimals (verified via `decimals()` against `https://rpc.xlayer.tech`).
+## Command Groups
 
-`purr` registers all three under their canonical tickers on chain 196: `USDC`, `USDT0`, and `USDG` — so `--token USDC --chain-id 196`, `--token USDT0 --chain-id 196`, and `--token USDG --chain-id 196` all resolve.
-
-**Do NOT use `--token USDT --chain-id 196`.** The bare `USDT` ticker is intentionally unmapped on X Layer: it used to alias the legacy bridged Tether (`0x1E4a5963aBFD975d8c9021ce480b42188849D41d`), which is deprecated. The canonical Tether-family asset on X Layer is `USD₮0` — always use `USDT0`. `purr` will surface `Unknown token "USDT" on chain 196` with `USDT0` in the available-tickers list if you forget.
-
-## Wallet Operations
-
-> **Default provider is `purr wallet`.**
-> Route to OWS **only when the `ows` skill is present in this workspace AND the user explicitly names it** (e.g. "using OWS", "via my OWS vault").
-> When both conditions are met, read `skills/ows/SKILL.md` → "Per-Skill Integration Guide" for the specific downstream skill. Do NOT fall back to `purr wallet` commands once OWS is explicitly chosen.
-
-### Get wallet address
-
-```bash
-purr wallet address --chain-type ethereum   # EVM (all chains)
-purr wallet address --chain-type solana     # Solana
-```
-
-The EVM address returned by `--chain-type ethereum` is the **same on every EVM chain** (BNB Smart Chain, Ethereum, Base, Arbitrum, Optimism, Polygon, …). When sharing it, surface that multi-chain reality instead of naming a single "default" chain. A correct reply looks like:
-
-> Your hosted wallet address (works on all EVM chains — BSC, Ethereum, Base, Arbitrum, Optimism, Polygon):
-> `0x…`
->
-> Fund it with the native token of whichever chain you plan to transact on (BNB on BSC, ETH on Base/Arbitrum/Optimism/Ethereum, MATIC on Polygon, …).
-
-Do NOT pin the address to one chain or ask for "a small amount of BNB" by default — the user may intend to operate on Base, Arbitrum, or elsewhere. Only mention a specific gas token once the user has confirmed (or the surrounding skill has fixed) the target chain. Solana uses a separate address; never conflate the two.
-
-### Check balance
-
-```bash
-purr wallet balance --chain-id 56                   # native BNB (default chain)
-purr wallet balance --chain-id 8453                 # native ETH on Base
-purr wallet balance --token USDT --chain-id 56      # USDT on BSC
-purr wallet balance --token USDC --chain-id 8453    # USDC on Base
-purr wallet balance --chain-type solana              # native SOL
-purr wallet balance --chain-type solana --token USDC # USDC on Solana
-```
-
-`--token` accepts a ticker (e.g. `USDT`) or contract address. Case-insensitive. Always include `--chain-id` so the correct chain is queried (default: 56/BSC). Pass an unknown ticker and purr will list all available tickers for that chain.
-
-**Never guess an ERC-20 contract address.** If you don't already know the canonical address for a token on a given chain (e.g. USDT on X Layer), do NOT invent one or carry over a value from a different chain — different chains have different deployments for the same ticker. Instead:
-
-1. Check the "Common Token Addresses" tables above. If the token is listed for that chain, use that address.
-2. Otherwise call purr with the ticker — `purr wallet balance --token <TICKER> --chain-id <N>`. If the ticker is in purr's per-chain registry, it returns the address and balance; if not, it prints `Available tickers: ...` for that chain so you can pick the right one.
-3. If the ticker is genuinely not in purr's registry (purr's error message lists every ticker that IS registered for that chain), ask the user for the contract address rather than guessing.
-
-### Pie Identity Lookups
-
-These commands are read-only and do not require execution confirmation.
-
-```bash
-purr pns by-account --channel telegram --account <telegram_username>
-purr pns by-account --channel line --account <line_account_id>
-purr pns by-account --channel kakao --account <kakao_account_id>
-purr pns accounts <handle>.pie
-purr pns profile <handle>.pie
-purr pns resolve <handle>.pie
-```
-
-Use `by-account` when the user gives a channel account and asks which `.pie`
-identity it maps to. Telegram expects a username, with or without `@`. Line and
-Kakao expect their raw account IDs. If lookup returns no `.pie`, stop and say no
-paired identity was found.
-
-### Transfer
-
-`purr wallet transfer` only accepts raw chain addresses. For direct EVM wallet
-transfers to a `.pie` handle or paired channel account, prefer
-`purr .pie transfer`; it resolves the identity and delegates to the existing
-wallet transfer flow.
-
-Do not pass `--to` to `purr .pie transfer`. Do not pass `.pie` handles directly
-to `purr wallet transfer`. Do not auto-append `.pie` to bare names. If PNS
-resolution fails, stop and show the plain error instead of guessing an address.
-
-```bash
-purr .pie transfer --pie <handle>.pie --amount 0.01 --chain-id 56
-purr .pie transfer --pie <handle>.pie --amount 10 --chain-id 56 --token USDT
-purr .pie transfer --channel telegram --account <telegram_username> --amount 0.01 --chain-id 56
-purr .pie transfer --channel line --account <line_account_id> --amount 10 --chain-id 56 --token USDT
-purr .pie transfer --channel kakao --account <kakao_account_id> --amount 10 --chain-id 56 --token USDT
-```
-
-PNS resolves to an EVM instance wallet address. If the user asks for a Solana
-transfer to a `.pie` handle or channel account, ask for a raw Solana address
-unless a Solana PNS resolution flow is documented.
-
-If the recipient is a `.pie` handle or channel account and the user is sending a
-redpacket or dollar amount, use `red-packet-send` instead.
-
-```bash
-purr wallet transfer --to 0x... --amount 0.01 --chain-id 56                    # native BNB
-purr wallet transfer --to 0x... --amount 10 --chain-id 56 --token USDT         # USDT on BSC
-purr wallet transfer --to 0x... --amount 5 --chain-id 8453 --token USDC        # USDC on Base
-purr wallet transfer --to 0x... --amount 0.1 --chain-id 196                    # native OKB on X Layer
-purr wallet transfer --to 0x... --amount 0.1 --chain-id 196 --token USDT0      # USDT0 on X Layer
-purr wallet transfer --to 0x... --amount 0.1 --chain-id 196 --token USDC       # USDC on X Layer
-purr wallet transfer --to 0x... --amount 0.1 --chain-id 196 --token USDG       # USDG on X Layer
-purr wallet transfer --to FuQPd1q... --amount 0.5 --chain-type solana          # native SOL
-purr wallet transfer --to FuQPd1q... --amount 100 --chain-type solana --token USDC  # USDC on Solana
-```
-
-## Non-Swap On-Chain Tasks
-
-Use JSON-RPC / explorer workflows for:
-
-- transaction lookup
-- receipt / log decoding
-- sender tracing
-- balance and token state checks
-
-### RPC Endpoints
-
-| Chain           | RPC URL                                   | Chain ID |
-| --------------- | ----------------------------------------- | -------- |
-| BNB Smart Chain | `https://bsc-rpc.publicnode.com`          | 56       |
-| Ethereum        | `https://ethereum-rpc.publicnode.com`     | 1        |
-| Base            | `https://base-rpc.publicnode.com`         | 8453     |
-| Arbitrum One    | `https://arbitrum-one-rpc.publicnode.com` | 42161    |
-| Optimism        | `https://optimism-rpc.publicnode.com`     | 10       |
-| Polygon         | `https://polygon-bor-rpc.publicnode.com`  | 137      |
+| Group | What It Does | Reference |
+| --- | --- | --- |
+| Wallet Address | Returns the user's EVM or Solana wallet address. | [wallet-address.md](references/wallet-address.md) |
+| Balances | Checks native token, ERC-20, or SPL token balances. | [balances.md](references/balances.md) |
+| Pie Identity / PNS Lookups | Resolves `.pie` handles, paired Telegram accounts, account lists, and profiles. | [pie-identity.md](references/pie-identity.md) |
+| Direct `.pie` Transfers | Sends funds to a `.pie` handle or paired Telegram account. | [pie-transfers.md](references/pie-transfers.md) |
+| Raw Address Transfers | Sends funds directly to a raw EVM or Solana wallet address. | [raw-address-transfers.md](references/raw-address-transfers.md) |
+| Read-Only Chain Checks | Looks up transactions, receipts, logs, senders, token state, or balances through RPC/explorer workflows. | [read-only-chain-checks.md](references/read-only-chain-checks.md) |
