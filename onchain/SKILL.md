@@ -1,6 +1,6 @@
 ---
 name: onchain
-description: Use when the user wants to check wallet addresses or balances, look up Pie identities or profiles, transfer to a raw address, .pie handle, or Telegram account, or perform read-only chain checks. Not for red packet requests.
+description: Wallet/profile lookup,transfers,chain reads. Not red packets
 ---
 
 # Onchain
