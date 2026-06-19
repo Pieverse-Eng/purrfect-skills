@@ -1,8 +1,6 @@
 ---
 name: aster-api-trading-v3
 description: Place, cancel, batch, and query orders for Aster Futures API v3 (/fapi/v3/). Use when placing/canceling orders or querying open/historical. Signed; see aster-api-auth-v3.
-disable-model-invocation: true
-user-invocable: false
 ---
 
 # Aster API Trading

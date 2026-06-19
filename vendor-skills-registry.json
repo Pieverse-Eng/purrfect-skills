@@ -7,19 +7,124 @@
 			"notes": "v3 skills only (EIP-712 auth). Our SKILL.md files are hand-written with execution flows; upstream skills are reference material.",
 			"skills": [
 				{
-					"name": "futures-market-data",
+					"name": "futures-account-skill",
+					"upstreamPath": "skills/aster-api-account-v3/SKILL.md",
+					"targetPath": "aster/vendor/futures-account/SKILL.md"
+				},
+				{
+					"name": "futures-account-reference",
+					"upstreamPath": "skills/aster-api-account-v3/reference.md",
+					"targetPath": "aster/vendor/futures-account/reference.md"
+				},
+				{
+					"name": "futures-auth-skill",
+					"upstreamPath": "skills/aster-api-auth-v3/SKILL.md",
+					"targetPath": "aster/vendor/futures-auth/SKILL.md"
+				},
+				{
+					"name": "futures-auth-reference",
+					"upstreamPath": "skills/aster-api-auth-v3/reference.md",
+					"targetPath": "aster/vendor/futures-auth/reference.md"
+				},
+				{
+					"name": "futures-errors-skill",
+					"upstreamPath": "skills/aster-api-errors-v3/SKILL.md",
+					"targetPath": "aster/vendor/futures-errors/SKILL.md"
+				},
+				{
+					"name": "futures-errors-reference",
+					"upstreamPath": "skills/aster-api-errors-v3/reference.md",
+					"targetPath": "aster/vendor/futures-errors/reference.md"
+				},
+				{
+					"name": "futures-market-data-skill",
 					"upstreamPath": "skills/aster-api-market-data-v3/SKILL.md",
 					"targetPath": "aster/vendor/futures-market-data/SKILL.md"
 				},
 				{
-					"name": "futures-trading",
+					"name": "futures-market-data-reference",
+					"upstreamPath": "skills/aster-api-market-data-v3/reference.md",
+					"targetPath": "aster/vendor/futures-market-data/reference.md"
+				},
+				{
+					"name": "spot-account-skill",
+					"upstreamPath": "skills/aster-api-spot-account-v3/SKILL.md",
+					"targetPath": "aster/vendor/spot-account/SKILL.md"
+				},
+				{
+					"name": "spot-account-reference",
+					"upstreamPath": "skills/aster-api-spot-account-v3/reference.md",
+					"targetPath": "aster/vendor/spot-account/reference.md"
+				},
+				{
+					"name": "spot-auth-skill",
+					"upstreamPath": "skills/aster-api-spot-auth-v3/SKILL.md",
+					"targetPath": "aster/vendor/spot-auth/SKILL.md"
+				},
+				{
+					"name": "spot-auth-reference",
+					"upstreamPath": "skills/aster-api-spot-auth-v3/reference.md",
+					"targetPath": "aster/vendor/spot-auth/reference.md"
+				},
+				{
+					"name": "spot-errors-skill",
+					"upstreamPath": "skills/aster-api-spot-errors-v3/SKILL.md",
+					"targetPath": "aster/vendor/spot-errors/SKILL.md"
+				},
+				{
+					"name": "spot-errors-reference",
+					"upstreamPath": "skills/aster-api-spot-errors-v3/reference.md",
+					"targetPath": "aster/vendor/spot-errors/reference.md"
+				},
+				{
+					"name": "spot-market-data-skill",
+					"upstreamPath": "skills/aster-api-spot-market-data-v3/SKILL.md",
+					"targetPath": "aster/vendor/spot-market-data/SKILL.md"
+				},
+				{
+					"name": "spot-market-data-reference",
+					"upstreamPath": "skills/aster-api-spot-market-data-v3/reference.md",
+					"targetPath": "aster/vendor/spot-market-data/reference.md"
+				},
+				{
+					"name": "spot-trading-skill",
+					"upstreamPath": "skills/aster-api-spot-trading-v3/SKILL.md",
+					"targetPath": "aster/vendor/spot-trading/SKILL.md"
+				},
+				{
+					"name": "spot-trading-reference",
+					"upstreamPath": "skills/aster-api-spot-trading-v3/reference.md",
+					"targetPath": "aster/vendor/spot-trading/reference.md"
+				},
+				{
+					"name": "spot-websocket-skill",
+					"upstreamPath": "skills/aster-api-spot-websocket-v3/SKILL.md",
+					"targetPath": "aster/vendor/spot-websocket/SKILL.md"
+				},
+				{
+					"name": "spot-websocket-reference",
+					"upstreamPath": "skills/aster-api-spot-websocket-v3/reference.md",
+					"targetPath": "aster/vendor/spot-websocket/reference.md"
+				},
+				{
+					"name": "futures-trading-skill",
 					"upstreamPath": "skills/aster-api-trading-v3/SKILL.md",
 					"targetPath": "aster/vendor/futures-trading/SKILL.md"
 				},
 				{
-					"name": "futures-account",
-					"upstreamPath": "skills/aster-api-account-v3/SKILL.md",
-					"targetPath": "aster/vendor/futures-account/SKILL.md"
+					"name": "futures-trading-reference",
+					"upstreamPath": "skills/aster-api-trading-v3/reference.md",
+					"targetPath": "aster/vendor/futures-trading/reference.md"
+				},
+				{
+					"name": "futures-websocket-skill",
+					"upstreamPath": "skills/aster-api-websocket-v3/SKILL.md",
+					"targetPath": "aster/vendor/futures-websocket/SKILL.md"
+				},
+				{
+					"name": "futures-websocket-reference",
+					"upstreamPath": "skills/aster-api-websocket-v3/reference.md",
+					"targetPath": "aster/vendor/futures-websocket/reference.md"
 				}
 			]
 		},

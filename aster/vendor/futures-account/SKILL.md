@@ -1,8 +1,6 @@
 ---
 name: aster-api-account-v3
 description: Account, balance, positions, leverage, margin type, isolated margin, spot–futures transfer for Aster Futures API v3. Use when reading/updating balance, positions, or transferring. Signed; see aster-api-auth-v3. Prefer user data stream for real-time.
-disable-model-invocation: true
-user-invocable: false
 ---
 
 # Aster API Account
