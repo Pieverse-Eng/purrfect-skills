@@ -1,6 +1,6 @@
 ---
 name: bnbchain-mcp
-description: BNB MCP:read-only blockchain data via MCP tools
+description: BNB MCP,read-only blockchain data via MCP tools
 ---
 
 # BNB Chain MCP Skill (Read-Only)
