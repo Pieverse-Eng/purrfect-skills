@@ -1,6 +1,6 @@
 ---
 name: onchain
-description: Wallet/profile lookup,transfers,chain reads. Not red packets
+description: Wallet/profile lookup,.pie/Telegram transfers,chain reads
 ---
 
 # Onchain
