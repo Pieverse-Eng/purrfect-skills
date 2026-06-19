@@ -1,57 +1,78 @@
 ---
 name: gate-dex-wallet
-version: "2026.3.19-2"
-updated: "2026-03-19"
-description: "Gate DEX wallet ACCOUNT MANAGEMENT skill. For personal wallet operations: login/logout authentication, check token balances, view wallet addresses, transfer/send tokens to addresses, x402 payment (402: EVM exact/upto, Solana exact/upto via dex_tx_x402_fetch), transaction history, swap history, DApp wallet-connect and contract interactions, CLI tool. This skill manages wallet state and identity — it does not provide market data lookups or execute token swaps."
-disable-model-invocation: true
+version: "2026.5.6-1"
+updated: "2026-05-06"
+description: "Manages Gate DEX wallet accounts, identity, assets, and connectivity. Use when the user asks to 'log in with Google' or Gate, 'check my balance', 'show my wallet address', 'view tx history', 'send USDT', 'withdraw to Gate', 'pay an x402 URL', 'connect wallet', or 'use gate-wallet CLI'. Handles authentication, portfolio and swap history, transfers, Gate deposit flows, x402, DApp signing, approvals, contract calls, and wallet connection checks. Do NOT use for market data or token swap execution."
 user-invocable: false
+disable-model-invocation: true
 ---
 
 # Gate DEX Wallet
 
-> **Pure Routing Layer** — Wallet ACCOUNT MANAGEMENT only. Handles identity, balances, transfers, DApp, CLI. All sub-modules in `references/`.
+> **Pure Routing Layer** — This SKILL.md is a lightweight router. All sub-module details live in `references/`.
 
-**Trigger Scenarios**: Use when the user wants to **manage their wallet account or identity**:
-- Auth: "login", "logout", "authenticate", "token expired", "OAuth"
-- Balance: "check balance", "my assets", "total portfolio", "wallet address"
-- History: "transaction history", "swap history", "past transactions"
-- Transfer: "transfer ETH to 0xABC", "send tokens", "batch transfer"
-- x402: "pay for 402 API", "x402 payment", "payment required", "pay and fetch URL"
-- DApp: "connect wallet to DApp", "sign message", "contract call", "approve spending"
-- CLI: "gate-wallet command", "CLI tool", "openapi-swap", "hybrid swap"
+## General Rules
 
-**NOT this skill** (common misroutes):
-- "what is ETH price" → `gate-dex-market` (market data lookup)
-- "swap ETH for USDT" → `gate-dex-trade` (swap execution)
-- "is this token safe" → `gate-dex-market` (security audit)
+⚠️ STOP — You MUST read and strictly follow the shared runtime rules before proceeding.
+Do NOT select or call any tool until all rules are read. These rules have the highest priority.
+→ Read [gate-runtime-rules.md](https://github.com/gate/gate-skills/blob/master/skills/gate-runtime-rules.md)
+- **Only call MCP tools explicitly listed in this skill.** Tools not documented here must NOT be called, even if they
+  exist in the MCP server.
+
+## Signing gate — Gate Verify MCP (mandatory)
+
+Before **any** MCP call to `dex_wallet_sign_transaction`, `dex_wallet_sign_message`, or **`dex_tx_x402_fetch`** (signing tools only — **`dex_tx_x402_checkin_preview`** is not a signing call and does **not** require prior `tx_checkin`):
+
+1. User must pass the existing confirmation gates (preview / message text / payment intent) for that operation.
+2. Agent **MUST** call the **Gate Verify** HTTP MCP server (see **Gate Verify MCP** under [MCP Server Connection Detection](#mcp-server-connection-detection)) tool **`/v1/tx/checkin`** or **`tx_checkin`** per `references/tx-checkin.md` and treat success as a **hard prerequisite**. **Do not** run the legacy **`tx-checkin`** shell binary or require the user to execute local check-in commands. Discover the verify server by scanning configured MCP servers until **`tools/list`** includes the check-in tool. **Auth:** pass **`authorization`** in the check-in tool **`arguments`** with the **same `mcp_token`** as wallet MCP calls — **not** by copying the wallet server’s HTTP **`headers`** onto the Verify MCP entry — see `references/tx-checkin.md`.
+3. After **`dex_tx_transfer_preview`**, the check-in **`message`** argument **must** be the preview field **`txBundle`** string **only** — **do not** assemble txbundle JSON from `unsigned_tx_hex` or other fields (see `references/tx-checkin.md`).
+4. **x402 (`dex_tx_x402_fetch`)**: **Do not** call `dex_tx_x402_fetch` first to probe 402. For **EVM exact / EIP-3009** (e.g. CoinGecko Pro x402 on Base), **first** call wallet MCP **`dex_tx_x402_checkin_preview`** — it returns the **`tx_checkin`** payload (including the correct 64-hex **`message`**) and **`x402_payment_required_b64`** so the agent never hand-builds the EIP-3009 digest. **Then** complete Gate Verify **`/v1/tx/checkin`** / **`tx_checkin`** using **`authorization`** (same **`mcp_token`**) together with the **`tx_checkin`** fields returned by preview. **Then** call **`dex_tx_x402_fetch`** with the same `url` / `method` / `body` / `headers` as preview, **`checkin_token`** from Verify, and the **same** **`x402_payment_required_b64`** from the preview result. For **POST JSON**, include **`Content-Type: application/json`** in the `headers` JSON on **both** preview and fetch (avoids common **415**). Full ordering and Solana / upto exceptions: `references/x402.md`, `references/tx-checkin.md`.
+5. Other single-step MCP tools that sign internally: same **`/v1/tx/checkin`** call **immediately before** the wallet MCP tool when the gateway requires it; follow backend docs for `checkin_token` / intent payload.
+
+## Applicable Scenarios
+
+Use this skill when the user wants to **manage their on-chain wallet account, identity, or assets**:
+
+- Authenticate or manage sessions (login via Google or Gate OAuth, logout)
+- Query token balances, total portfolio value, or wallet addresses
+- View transaction history or past swap records
+- Transfer or send tokens to an address (single or batch); **mandatory Gate Verify MCP check-in** (`/v1/tx/checkin`) before any signing (`references/tx-checkin.md`)
+- Withdraw or cash out **on-chain** to their Gate Exchange account (deposit address resolved for their UID; not CEX-internal balance moves from this skill)
+- Pay for HTTP 402 resources via x402 protocol (EVM exact/upto, Solana exact/upto); **`dex_tx_x402_checkin_preview`** (EVM EIP-3009) then **Gate Verify MCP check-in** then **`dex_tx_x402_fetch`** (`references/x402.md`, `references/tx-checkin.md`)
+- Interact with DApps (connect wallet, sign messages, approve tokens, call contracts)
+- Use the gate-wallet CLI tool for any of the above
+- Detect or configure MCP Server connectivity
 
 ---
 
-## Auto-Update (Session Start Only)
+## Capability Boundaries
 
-On session start (not during interactions), check for updates once:
-
-1. Read this file's frontmatter `version` and `updated` fields.
-2. Fetch remote SKILL.md from `https://raw.githubusercontent.com/gateio/web3_wallet_skill/master/skills/gate-dex-wallet/SKILL.md`.
-3. Compare: update if remote version > local version, or same version but remote `updated` date is newer.
-4. On update: fetch and overwrite all skill files (`SKILL.md`, `README.md`, `CHANGELOG.md`, `install.sh`, `install_cli.sh`, `references/auth.md`, `references/transfer.md`, `references/dapp.md`, `references/cli.md`, `references/x402.md`).
-5. On failure: silently continue — never block user interactions.
-6. Skip if: already checked this session, or skill was installed < 24h ago.
+| Supported | Not Supported (route elsewhere) |
+|-----------|---------------------------------|
+| Authentication & session management | Token price / K-line queries -> `gate-dex-market` |
+| Balance & address queries | Token swap execution -> `gate-dex-trade` |
+| Transaction & swap history | Token security audits -> `gate-dex-market` |
+| Token transfers (EVM + Solana); on-chain withdraw to Gate Exchange (deposit address flow) | |
+| x402 payment (EVM exact/upto + Solana exact/upto) | |
+| DApp interactions & approvals | |
+| CLI dual-channel operations | |
 
 ---
 
 ## Module Routing
 
-Route to corresponding sub-module based on user intent:
+Route to the corresponding sub-module based on user intent:
 
-| User Intent | Keywords | Target |
-|-------------|----------|--------|
-| **Authentication** | "login", "logout", "token expired", "OAuth" | `references/auth.md` |
-| **Asset Queries** | "check balance", "total assets", "wallet address", "transaction history", "swap history" | This file (see below) |
-| **Transfer** | "transfer", "send", "batch transfer", "gas fee" | `references/transfer.md` |
-| **x402 Payment** | "402 payment", "x402 pay", "payment required", "pay for API/URL" | `references/x402.md` |
-| **DApp Interactions** | "DApp", "sign message", "approve", "connect wallet", "contract call" | `references/dapp.md` |
-| **CLI Tool** | "gate-wallet command", "CLI", "command line", "openapi-swap", "hybrid swap" | `references/cli.md` |
+| User Intent | Target |
+|-------------|--------|
+| Login, logout, sign in, sign out, token expired, session expired, OAuth, Google login, Gate login, authenticate, re-login, switch account, "I can't access my wallet", "not logged in" | `references/auth.md` |
+| Check balance, total assets, portfolio value, wallet address, my address, how much do I have, show my tokens, tx history, transaction history, swap history, past transactions, "what do I own", "how many ETH", "list my coins", "show holdings" | `references/asset-query.md` |
+| Withdraw to Gate Exchange, cash out to my Gate account, send funds to the exchange deposit address, move coins from wallet to Gate (on-chain deposit), bind or rebind Gate UID for withdraw | `references/withdraw.md` |
+| Transfer, send tokens, send to address, batch transfer, "send 1 ETH to 0x...", "transfer USDT", "move tokens", "pay someone", "send crypto to a friend" (arbitrary or known on-chain address — not exchange deposit resolution) | `references/transfer.md` + `references/tx-checkin.md` before sign |
+| Any signing: before `dex_wallet_sign_transaction` / `dex_wallet_sign_message`; checkin_token; Gate Verify `/v1/tx/checkin` | `references/tx-checkin.md` (read **before** signing) |
+| 402 payment, x402 pay, payment required, pay for API, pay for URL, "fetch and pay", "call this URL and pay", "paid endpoint", "pay for access", "HTTP 402", Permit2 payment, upto payment | `references/x402.md` (`dex_tx_x402_checkin_preview` → `references/tx-checkin.md` → `dex_tx_x402_fetch`) |
+| DApp connect, connect wallet, sign message, approve, revoke approval, contract call, EIP-712, Permit, personal_sign, "interact with Uniswap", "add liquidity", "stake on Lido", "mint NFT", "sign for DApp login", authorize contract | `references/dapp.md` + `references/tx-checkin.md` before every sign |
+| gate-wallet CLI, command line, terminal, openapi-swap, hybrid swap, "use CLI", "run command", "gate-wallet balance", script automation, npm gate-wallet | `references/cli.md` |
 
 ---
 
@@ -59,122 +80,107 @@ Route to corresponding sub-module based on user intent:
 
 Before the first MCP tool call in a session, perform one connection probe:
 
-1. **Server Discovery**: Scan configured MCP servers for tools `dex_wallet_get_token_list`, `dex_tx_quote`, `dex_tx_swap`
-2. **Record Identifier**: Supports flexible naming (gate-wallet, gate-dex, dex, wallet, custom names)
-3. **Verify Connection**: `CallMcpTool(server="<identifier>", toolName="dex_chain_config", arguments={chain: "eth"})`
+1. **Discover**: Scan configured MCP servers for tools `dex_wallet_get_token_list`, `dex_tx_quote`, and `dex_tx_swap`.
+2. **Identify**: Accept flexible server names (gate-wallet, gate-dex, dex, wallet, user-gate-wallet, or any custom name).
+3. **Verify**: `CallMcpTool(server="<id>", toolName="dex_chain_config", arguments={chain: "eth"})`.
 
-| Result | Action | Next |
-|--------|--------|------|
-| Success | Record server identifier | Use for all subsequent calls this session |
-| Failure | Display setup guide below | Re-detect next session |
+| Result | Action |
+|--------|--------|
+| Success | Record server identifier; use for all subsequent calls this session |
+| Failure | Display setup guide below (at most once per session); re-detect next session |
 
-**Setup guide** (show at most once per session when detection fails):
+### OpenClaw Platform Detection
 
-```
-Gate Wallet MCP Server:
-  - URL: https://api.gatemcp.ai/mcp/dex
-  - Type: HTTP
-
-  Cursor: Settings -> MCP -> Add server, or edit ~/.cursor/mcp.json
-  Claude Code: claude mcp add --transport http gate-dex --scope project https://api.gatemcp.ai/mcp/dex
-```
-
----
-
-## Authentication State
-
-All operations requiring auth need valid `mcp_token`:
-
-- No `mcp_token` -> Route to `references/auth.md` for login
-- Token expired -> Try `dex_auth_refresh_token` silent refresh; if failed, guide to re-login
-
----
-
-## Asset Query Module (MCP Tools)
-
-### Tools
-
-| Tool | Purpose | Key Parameters |
-|------|---------|----------------|
-| `dex_wallet_get_token_list` | Token balances | `chain?`, `mcp_token` |
-| `dex_wallet_get_total_asset` | Total asset value | `account_id`, `mcp_token` |
-| `dex_wallet_get_addresses` | Wallet addresses | `account_id`, `mcp_token` |
-| `dex_chain_config` | Chain configuration | `chain`, `mcp_token` |
-| `dex_tx_list` | Transaction history | `account_id`, `chain?`, `page?`, `limit?`, `mcp_token` |
-| `dex_tx_detail` | Transaction details | `hash_id`, `chain`, `mcp_token` |
-| `dex_tx_history_list` | Swap history | `account_id`, `chain?`, `page?`, `limit?`, `mcp_token` |
-
-### Token list: use `orignCoinNumber` for balance (not `coinNumber`)
-
-Wallet / token-list APIs may return both a display-oriented `coinNumber` and a raw amount `orignCoinNumber`. **Do not rely on `coinNumber` for balances** — it can be formatted for UI and cause rounding or parsing errors. **For any balance display, comparison, or downstream math, use `orignCoinNumber`** (raw numeric string/amount as returned by the API), then apply decimals/`symbol` for human-readable formatting. See internal spec: [Lark wiki](https://gtglobal.jp.larksuite.com/wiki/ObSnwDsMlieSCEk7h2sjGtsCp2e).
-
-### Query Flow
+When the OpenClaw/mcporter platform is detected, route MCP calls through `mcporter`:
 
 ```text
-Step 0: MCP Server connection detection (once per session)
-  |
-Step 1: Authentication check
-  |- No mcp_token -> Route to references/auth.md
-  +- Valid token -> Continue
-  |
-Step 2: Execute query
-  |- Balance: dex_wallet_get_token_list({ chain?, mcp_token })
-  |- Total assets: dex_wallet_get_total_asset({ account_id, mcp_token })
-  |- Addresses: dex_wallet_get_addresses({ account_id, mcp_token })
-  |- Tx history: dex_tx_list({ account_id, chain?, mcp_token })
-  +- Swap history: dex_tx_history_list({ account_id, chain?, mcp_token })
-  |
-Step 3: Format and display results
+CallMcpTool(server="mcporter", toolName="call_tool", arguments={
+  server: "<gate-dex-server>",
+  tool: "<tool_name>",
+  arguments: { ...params }
+})
 ```
+
+### Setup Guide (shown once on detection failure)
+
+```
+Gate DEX MCP Server:
+  URL:  https://api.gatemcp.ai/mcp/dex
+  Type: HTTP
+
+  Cursor:      Settings -> MCP -> Add server, or edit ~/.cursor/mcp.json
+  Claude Code:  claude mcp add --transport http gate-dex --scope project https://api.gatemcp.ai/mcp/dex
+  Codex CLI:    codex mcp add gate-dex --transport http --url https://api.gatemcp.ai/mcp/dex
+```
+
+### Gate Verify MCP (signing check-in)
+
+Add a **second** HTTP MCP server used **only** for transaction check-in before signing (`references/tx-checkin.md`):
+
+```
+Gate Verify MCP:
+  URL:  https://api.gatemcp.ai/mcp/dex/sec
+  Type: HTTP
+
+  Cursor:      Settings -> MCP -> Add server (URL only is fine for check-in; pass mcp_token as tool arg authorization per references/tx-checkin.md)
+  Tool name:   /v1/tx/checkin or tx_checkin  (discover via tools/list; server name is user-defined, e.g. gate-dex-sec)
+```
+
+Before the first check-in in a session, resolve the verify server id by scanning configured MCP servers until **`tools/list`** includes **`tx_checkin`** or **`/v1/tx/checkin`**.
+
+### Runtime Error Handling
+
+| Error Type | Keywords | Action |
+|------------|----------|--------|
+| MCP Server not configured | `server not found`, `unknown server` | Show setup guide |
+| Remote service unreachable | `connection refused`, `timeout`, `DNS error` | Prompt to check server status and network |
+| Authentication failure | `400`, `401`, `unauthorized` | Follow §3 of [gate-runtime-rules.md](https://github.com/gate/gate-skills/blob/master/skills/gate-runtime-rules.md) |
 
 ---
 
 ## Follow-up Routing
 
-| User Intent After Query | Target |
-|------------------------|--------|
-| View token quotes / K-line | `gate-dex-market` |
-| Token security audit | `gate-dex-market` |
-| Transfer / send tokens | `references/transfer.md` |
-| Exchange / Swap tokens | `gate-dex-trade` |
-| x402 / pay for 402 API | `references/x402.md` |
-| DApp interaction | `references/dapp.md` |
-| Login / auth expired | `references/auth.md` |
-| CLI / command line | `references/cli.md` |
+After completing an operation, **proactively suggest 2-4 relevant next actions** to the user (see each module's "Post-XXX Suggestions" section for templates). Then route based on the user's response:
+
+| User Intent After Operation | Target |
+|-----------------------------|--------|
+| View token prices, K-line charts, market cap, trading volume | `gate-dex-market` |
+| Run a token security audit, check if token is safe | `gate-dex-market` |
+| Transfer or send tokens to an arbitrary on-chain address | `references/transfer.md` |
+| Withdraw or cash out on-chain to Gate Exchange | `references/withdraw.md` |
+| Swap, exchange, buy, sell, convert tokens on DEX | `gate-dex-trade` |
+| Pay for a 402 resource, x402 payment | `references/x402.md` (preview → `references/tx-checkin.md` → fetch) |
+| Interact with a DApp, connect wallet, sign, approve | `references/dapp.md` |
+| Mandatory Gate Verify MCP check-in before any signing, checkin_token | `references/tx-checkin.md` |
+| Login, re-login, fix expired auth, switch account | `references/auth.md` |
+| Use CLI commands, gate-wallet terminal operations | `references/cli.md` |
+| Check balance, view assets, transaction history | `references/asset-query.md` |
 
 ---
 
-## Cross-Skill Collaboration
+## NOT This Skill (Common Misroutes)
 
-This skill serves as the **wallet data center**, called by other skills:
+These intents should NOT trigger this skill:
 
-| Caller | Scenario | Tools Used |
-|--------|----------|------------|
-| `gate-dex-trade` | Balance verification, token address resolution | `dex_wallet_get_token_list` |
-| `gate-dex-trade` | Get chain-specific wallet address | `dex_wallet_get_addresses` |
-| `gate-dex-market` | Guide to view holdings after market query | `dex_wallet_get_token_list` |
+| User Intent | Correct Skill |
+|-------------|---------------|
+| "What is the price of ETH?" / "Show BTC chart" / "Token rankings" | `gate-dex-market` |
+| "Swap ETH for USDT" / "Buy SOL" / "Exchange tokens" / "DEX trade" | `gate-dex-trade` |
+| "Is this token safe?" / "Audit contract 0x..." / "Honeypot check" | `gate-dex-market` |
+| "Show top gainers" / "New token listings" / "Market overview" | `gate-dex-market` |
 
 ---
 
 ## Supported Chains
 
-| Chain ID | Network | Type |
-|----------|---------|------|
-| `eth` | Ethereum | EVM |
-| `bsc` | BNB Smart Chain | EVM |
-| `polygon` | Polygon | EVM |
-| `arbitrum` | Arbitrum One | EVM |
-| `optimism` | Optimism | EVM |
-| `avax` | Avalanche C-Chain | EVM |
-| `base` | Base | EVM |
-| `sol` | Solana | Non-EVM |
+EVM: `eth`, `bsc`, `polygon`, `arbitrum`, `optimism`, `avax`, `base` | Non-EVM: `sol`
 
 ---
 
 ## Security Rules
 
-1. **Authentication check**: Verify `mcp_token` validity before all operations
-2. **Sensitive info**: `mcp_token` must not be displayed in plain text
-3. **Auto refresh**: Prioritize silent refresh when token expires
-4. **Auth guidance**: Route to `references/auth.md` when authentication fails
-5. **Cross-skill security**: Provide secure balance verification and address retrieval for other skills
+1. **Authentication first**: Verify `mcp_token` validity before all operations; on failure follow §3 of [gate-runtime-rules.md](https://github.com/gate/gate-skills/blob/master/skills/gate-runtime-rules.md).
+2. **Token confidentiality**: Never display `mcp_token` in plaintext; use placeholders like `<mcp_token>`.
+3. **MCP Server errors**: Display all MCP Server error messages to users transparently — never hide or modify them.
+4. **Transaction irreversibility**: Digital asset transactions on-chain are generally irreversible. Before any transfer, withdraw, or x402 signing, remind the user to verify the recipient address (or payment URL/asset) — once submitted it cannot be undone.
+5. **AI output disclaimer**: Any balance, history, or analytical output is for general information only and does not constitute any representation, warranty, or guarantee by Gate, nor investment, financial, tax, or legal advice.

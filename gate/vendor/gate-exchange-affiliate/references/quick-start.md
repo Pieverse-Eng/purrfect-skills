@@ -142,7 +142,7 @@ The skill provides 5 core metrics:
 
 **Problem**: You receive an error about not having affiliate privileges.
 
-**Solution**: 
+**Solution**:
 1. Verify your account has partner role
 2. Apply for affiliate program at: https://www.gate.com/referral/affiliate
 3. Check API credentials have correct permissions

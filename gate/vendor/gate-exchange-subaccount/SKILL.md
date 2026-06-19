@@ -1,18 +1,105 @@
 ---
 name: gate-exchange-subaccount
-version: "2026.3.12-1"
-updated: "2026-03-12"
-description: Manage sub-accounts on Gate Exchange including querying status, listing, creating, locking, and unlocking sub-accounts. Use this skill whenever the user asks about sub-account management, sub-account status, creating sub-accounts, locking or unlocking sub-accounts. Trigger phrases include "sub-account", "subaccount", "sub account status", "create sub-account", "lock sub-account", "unlock sub-account", "list sub-accounts", "my sub-accounts", or any request involving sub-account queries or management operations.
-disable-model-invocation: true
+description: "Gate Exchange sub-account management skill. Use when the user asks to manage, create, lock, unlock, or list their sub-accounts. Triggers on 'sub-account status', 'create sub-account', 'lock sub-account', 'my sub-accounts'."
 user-invocable: false
+disable-model-invocation: true
+metadata:
+  openclaw:
+    emoji: "💱"
+    os:
+      - darwin
+      - linux
+    primaryEnv: GATE_API_KEY
+    requires:
+      bins:
+        - gate-cli
+      env:
+        - GATE_API_KEY
+        - GATE_API_SECRET
+
+    install:
+      - kind: download
+        os:
+          - linux
+        url: "https://github.com/gate/gate-cli/releases/download/v0.6.2/gate-cli_0.6.2_linux_amd64.tar.gz"
+        bins:
+          - gate-cli
+        targetDir: "bin"
+        label: "Download gate-cli (Linux x64)"
+      - kind: download
+        os:
+          - linux
+        url: "https://github.com/gate/gate-cli/releases/download/v0.6.2/gate-cli_0.6.2_linux_arm64.tar.gz"
+        bins:
+          - gate-cli
+        targetDir: "bin"
+        label: "Download gate-cli (Linux arm64)"
+      - kind: download
+        os:
+          - darwin
+        url: "https://github.com/gate/gate-cli/releases/download/v0.6.2/gate-cli_0.6.2_darwin_amd64.tar.gz"
+        bins:
+          - gate-cli
+        targetDir: "bin"
+        label: "Download gate-cli (macOS Intel)"
+      - kind: download
+        os:
+          - darwin
+        url: "https://github.com/gate/gate-cli/releases/download/v0.6.2/gate-cli_0.6.2_darwin_arm64.tar.gz"
+        bins:
+          - gate-cli
+        targetDir: "bin"
+        label: "Download gate-cli (macOS Apple Silicon)"
 ---
+
+### Resolving `gate-cli` (binary path)
+
+Resolve **`gate-cli`** in order: **(1)** **`command -v gate-cli`** and **`gate-cli --version`** succeeds; **(2)** **`${HOME}/.local/bin/gate-cli`** if executable; **(3)** **`${HOME}/.openclaw/skills/bin/gate-cli`** if executable. Canonical rules: [`exchange-runtime-rules.md`](https://github.com/gate/gate-skills/blob/master/skills/exchange-runtime-rules.md) §4 (or [`gate-runtime-rules.md`](https://github.com/gate/gate-skills/blob/master/skills/gate-runtime-rules.md) §4).
+
 
 # Gate Exchange Sub-Account Skill
 
 ## General Rules
-Read and follow [`gate-runtime-rules.md`](https://github.com/gate/gate-skills/blob/master/skills/gate-runtime-rules.md) first.
 
-Provide sub-account management capabilities on Gate, including querying sub-account status, listing all sub-accounts, creating new sub-accounts, and locking/unlocking sub-accounts.
+⚠️ STOP — You MUST read and strictly follow the shared runtime rules before proceeding.
+Do NOT select or call any tool until all rules are read. These rules have the highest priority.
+→ Read [gate-runtime-rules.md](https://github.com/gate/gate-skills/blob/master/skills/gate-runtime-rules.md)
+- **Only use the `gate-cli` commands explicitly listed in this skill.** Commands not documented here must NOT be run for these workflows, even if other interfaces expose them.
+
+## Skill Dependencies
+
+
+### gate-cli commands used
+
+**Query Operations (Read-only)**
+
+- `gate-cli cex sub-account get`
+- `gate-cli cex sub-account list`
+- `gate-cli cex sub-account lock`
+- `gate-cli cex sub-account unlock`
+
+**Execution Operations (Write)**
+
+- `gate-cli cex sub-account create`
+
+### Authentication
+- **Interactive file setup:** when **`GATE_API_KEY`** and **`GATE_API_SECRET`** are **not** both set on the host, run **`gate-cli config init`** to complete the wizard for API key, secret, profiles, and defaults (see [gate-cli](https://github.com/gate/gate-cli)).
+- **Env / flags:** **`gate-cli config init`** is **not** required when credentials are already supplied — e.g. **both** **`GATE_API_KEY`** and **`GATE_API_SECRET`** set on the host, or **`--api-key`** / **`--api-secret`** where supported — never ask the user to paste secrets into chat.
+- **Permissions:** Sa:Write
+- **Portal:** create or rotate keys outside the chat: https://www.gate.com/myaccount/profile/api-key/manage
+
+### Installation Check
+- **Required:** `gate-cli` (run `sh ./setup.sh` from this skill directory if missing; optional `GATE_CLI_SETUP_MODE=release`).
+- Add `$HOME/.openclaw/skills/bin` to **`PATH`** if you invoke `gate-cli` by name (or the directory where [`setup.sh`](./setup.sh) installs it).
+- **Credentials:** When **`GATE_API_KEY`** and **`GATE_API_SECRET`** are both set (non-empty) for the host, **do not** require **`gate-cli config init`** — that is equivalent valid config for `gate-cli`. When **both** are unset or empty, **remind** the operator to run **`gate-cli config init`** **or** to configure **`GATE_API_KEY`** / **`GATE_API_SECRET`** in the **matching skill** from the skill library (never ask the user to paste secrets into chat).
+- **Sanity check:** Do not proceed with authenticated calls until the CLI behaves as expected (e.g. **`gate-cli --version`** or a read-only **`gate-cli cex ...`** command from this skill); confirm credentials resolve before mutating operations.
+
+## Execution mode
+
+**Read and strictly follow** [`references/gate-cli.md`](./references/gate-cli.md), then execute this skill's sub-account workflow.
+
+- `SKILL.md` keeps intent routing and permission boundaries.
+- `references/gate-cli.md` is the authoritative `gate-cli` execution contract for create/lock/unlock confirmation gates and status verification.
 
 ## Prerequisites
 
@@ -24,11 +111,11 @@ Provide sub-account management capabilities on Gate, including querying sub-acco
 
 | Tool | Auth | Description |
 |------|------|-------------|
-| `cex_sa_get_sa` | Yes | Get details of a specific sub-account by user ID |
-| `cex_sa_list_sas` | Yes | List all sub-accounts under the main account |
-| `cex_sa_create_sa` | Yes | Create a new normal sub-account |
-| `cex_sa_lock_sa` | Yes | Lock a sub-account to disable login and trading |
-| `cex_sa_unlock_sa` | Yes | Unlock a previously locked sub-account |
+| `gate-cli cex sub-account get` | Yes | Get details of a specific sub-account by user ID |
+| `gate-cli cex sub-account list` | Yes | List all sub-accounts under the main account |
+| `gate-cli cex sub-account create` | Yes | Create a new normal sub-account |
+| `gate-cli cex sub-account lock` | Yes | Lock a sub-account to disable login and trading |
+| `gate-cli cex sub-account unlock` | Yes | Unlock a previously locked sub-account |
 
 ## Workflow
 
@@ -55,7 +142,7 @@ Intent detection rules:
 
 #### Case A: Query Sub-Account Status (`query_status`)
 
-Call `cex_sa_get_sa` with:
+Call `gate-cli cex sub-account get` with:
 - `user_id`: The sub-account UID provided by the user
 
 Key data to extract:
@@ -69,7 +156,7 @@ Present the sub-account details in a structured format.
 
 #### Case B: List All Sub-Accounts (`list_all`)
 
-Call `cex_sa_list_sas` with:
+Call `gate-cli cex sub-account list` with:
 - `type`: "0" (normal sub-accounts only)
 
 Key data to extract:
@@ -79,16 +166,16 @@ Present results as a table with username, UID, remark (if any), and current stat
 
 #### Case C: Create Sub-Account (`create`)
 
-**Pre-check**: Call `cex_sa_list_sas` with `type`: "0" to get the current list of normal sub-accounts. Check if the user can still create more sub-accounts based on the returned count.
+**Pre-check**: Call `gate-cli cex sub-account list` with `type`: "0" to get the current list of normal sub-accounts. Check if the user can still create more sub-accounts based on the returned count.
 
 If creation is available:
 1. Ask the user to provide a login name for the new sub-account
 2. Optionally collect: email, remark
 3. Confirm all details with the user before proceeding
-4. Call `cex_sa_create_sa` with:
-   - `login_name`: User-provided login name (required)
-   - `email`: User-provided email (optional)
-   - `remark`: User-provided remark (optional)
+4. Call `gate-cli cex sub-account create` with:
+ - `login_name`: User-provided login name (required)
+ - `email`: User-provided email (optional)
+ - `remark`: User-provided remark (optional)
 5. Present the newly created sub-account details
 
 Key data to extract:
@@ -101,11 +188,11 @@ Key data to extract:
 #### Case D: Lock Sub-Account (`lock`)
 
 1. Validate that `user_id` is provided; if not, ask the user
-2. Call `cex_sa_get_sa` with `user_id` to verify the sub-account exists and belongs to the main account
+2. Call `gate-cli cex sub-account get` with `user_id` to verify the sub-account exists and belongs to the main account
 3. If the sub-account is already locked, inform the user and stop
 4. Confirm with the user: "Are you sure you want to lock sub-account {user_id} ({login_name})? This will disable login and trading for this sub-account."
-5. On confirmation, call `cex_sa_lock_sa` with:
-   - `user_id`: The sub-account UID
+5. On confirmation, call `gate-cli cex sub-account lock` with:
+ - `user_id`: The sub-account UID
 6. Report the result
 
 Key data to extract:
@@ -114,11 +201,11 @@ Key data to extract:
 #### Case E: Unlock Sub-Account (`unlock`)
 
 1. Validate that `user_id` is provided; if not, ask the user
-2. Call `cex_sa_get_sa` with `user_id` to verify the sub-account exists and is currently locked
+2. Call `gate-cli cex sub-account get` with `user_id` to verify the sub-account exists and is currently locked
 3. If the sub-account is already unlocked/normal, inform the user and stop
 4. Confirm with the user: "Are you sure you want to unlock sub-account {user_id} ({login_name})?"
-5. On confirmation, call `cex_sa_unlock_sa` with:
-   - `user_id`: The sub-account UID
+5. On confirmation, call `gate-cli cex sub-account unlock` with:
+ - `user_id`: The sub-account UID
 6. Report the result
 
 Key data to extract:
@@ -151,12 +238,12 @@ Present results using the Report Template below. Always include relevant context
 ```
 Sub-Account Details
 ---
-Username:      {login_name}
-UID:           {user_id}
-Status:        {state}
-Type:          {type}
-Remark:        {remark or "N/A"}
-Created:       {create_time}
+Username: {login_name}
+UID: {user_id}
+Status: {state}
+Type: {type}
+Remark: {remark or "N/A"}
+Created: {create_time}
 ```
 
 ### List All Sub-Accounts Response
@@ -167,7 +254,7 @@ Your Sub-Accounts
 | # | Username | UID | Status | Remark |
 |---|----------|-----|--------|--------|
 | 1 | {login_name} | {user_id} | {state} | {remark or "-"} |
-| 2 | ... | ... | ... | ... |
+| 2 |... |... |... |... |
 
 Total: {count} sub-account(s)
 ```
@@ -177,10 +264,10 @@ Total: {count} sub-account(s)
 ```
 Sub-Account Created Successfully
 ---
-Username:      {login_name}
-UID:           {user_id}
-Status:        Normal
-Remark:        {remark or "N/A"}
+Username: {login_name}
+UID: {user_id}
+Status: Normal
+Remark: {remark or "N/A"}
 
 Note: Only normal sub-accounts can be created through this interface.
 ```
@@ -190,10 +277,10 @@ Note: Only normal sub-accounts can be created through this interface.
 ```
 Sub-Account {Action} Successfully
 ---
-Username:      {login_name}
-UID:           {user_id}
+Username: {login_name}
+UID: {user_id}
 Previous Status: {previous_state}
-Current Status:  {new_state}
+Current Status: {new_state}
 ```
 
 ## Domain Knowledge
@@ -206,7 +293,7 @@ Current Status:  {new_state}
 
 ## Safety Rules
 
-- **Write operations** (`cex_sa_create_sa`, `cex_sa_lock_sa`, `cex_sa_unlock_sa`): Always require explicit user confirmation before execution. Never auto-execute.
+- **Write operations** (`gate-cli cex sub-account create`, `gate-cli cex sub-account lock`, `gate-cli cex sub-account unlock`): Always require explicit user confirmation before execution. Never auto-execute.
 - **UID validation**: Before lock/unlock, always verify the sub-account exists and belongs to the current main account.
 - **State check**: Before lock/unlock, check current state to avoid redundant operations.
 - **No sensitive data exposure**: Never expose API keys, internal endpoint URLs, or raw error traces.
