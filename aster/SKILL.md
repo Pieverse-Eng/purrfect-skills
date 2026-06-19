@@ -125,6 +125,13 @@ purr aster api --endpoint /fapi/v3/balance \
   --user <USER_WALLET>
 ```
 
+## Execution Flow — Account Overview
+
+```bash
+purr aster api --endpoint /fapi/v3/account \
+  --user <USER_WALLET>
+```
+
 ## Execution Flow — Place Order
 
 1. Get price: `cd ./skills/aster/vendor && python3 aster_api.py ticker --symbol BTCUSDT`
@@ -224,6 +231,6 @@ websocket execution commands unless that CLI surface exists.
 
 - `-1000 No agent found`: The Pieverse managed wallet is not authorized for the `--user` Aster account, or the wrong main wallet address was used
 - `-1021 INVALID_TIMESTAMP`: Server time drift — use `python3 aster_api.py server-time` to check
-- `-1022 INVALID_SIGNATURE`: Signing format error — verify credentials are correct
+- `-1022 INVALID_SIGNATURE`: Signing, user, or authorization mismatch. Use `purr aster api` and do not manually sign; `purr` handles the signing payload. Verify the `--user` main login wallet and that the Pieverse managed wallet from `purr wallet address --chain-type ethereum --chain-id 56` is authorized in Aster Pro API.
 - `-2019 MARGIN_NOT_SUFFICIENT`: Not enough margin
 - `-4047/-4048 MARGIN_TYPE_ERROR`: Cannot change margin with open positions/orders
