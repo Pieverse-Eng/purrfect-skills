@@ -1,6 +1,6 @@
 ---
 name: aster
-description: Aster DEX perpetual futures — market data, trading, and account management.
+description: Aster futures API,market data,trading,account,deposits
 metadata:
   openclaw:
     primaryEnv: ASTER_USER_WALLET
