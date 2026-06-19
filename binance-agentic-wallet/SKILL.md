@@ -1,14 +1,6 @@
 ---
 name: binance-agentic-wallet
-description: |
-  Use when the user mentions connect/disconnect binance agentic wallet, sign in, sign out, web3 wallet, wallet address,
-  check balance, how much crypto do I have, send BNB/USDT/crypto, transfer tokens, swap tokens,
-  buy/sell token, DEX trade, limit order, market order, cancel order, get a quote, transaction history,
-  wallet settings, daily limit, slippage, MEV protection, supported chains, available networks,
-  prediction market, predict.fun, YES/NO market, place a prediction,
-  redeem winnings, claim payout, prediction portfolio, prediction PnL,
-  x402 payment, HTTP 402 Payment Required, pay a known x402 API,
-  or any on-chain wallet operation.
+description: Binance Agentic Wallet:auth,send,swap,predict,x402
 metadata:
   author: binance-web3-team
   version: "1.2.0"

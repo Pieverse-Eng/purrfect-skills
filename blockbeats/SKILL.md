@@ -1,6 +1,6 @@
 ---
 name: blockbeats
-description: BlockBeats Skill covers over 1,500 information sources, including AI-driven insights, Hyperliquid on-chain data, and Polymarket market analytics. It also features robust keyword-based search functionality.
+description: BlockBeats:crypto news,search,market,macro,ETF,AI
 metadata:
   openclaw:
     emoji: "📰"
