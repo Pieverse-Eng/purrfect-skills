@@ -1,6 +1,6 @@
 ---
 name: onchain
-description: Wallet/profile lookup,.pie/Telegram transfers,chain reads
+description: Address/balance lookup,.pie,transfers,Telegram,chain reads
 ---
 
 # Onchain
