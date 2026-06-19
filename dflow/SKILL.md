@@ -1,6 +1,6 @@
 ---
 name: dflow
-description: "Use when the user wants DFlow operations: Solana spot swaps, Kalshi prediction-market trading, Kalshi market discovery/data, wallet portfolio views, Proof KYC, or platform-fee monetization."
+description: DFlow,Solana swaps,Kalshi markets,KYC,fees,portfolio
 metadata:
   openclaw:
     primaryEnv: DFLOW_API_KEY
@@ -95,7 +95,7 @@ Ask the user for:
 | Wallet name    | optional | `default`                                       |
 | Vault password | required | —                                               |
 | Solana RPC URL | optional | `https://api.mainnet-beta.solana.com`           |
-| DFlow API key  | required | get one at https://pond.dflow.net/build/api-key |
+| DFlow API key  | required | get one at https://pond.dflow.net/get-started/api-key |
 
 Provision the wallet by generating a mnemonic with `ows`, then importing it with `dflow wallet import --mnemonic`. **Do not use `ows wallet create`** — DFlow can read those wallets but headless signing may fail.
 
