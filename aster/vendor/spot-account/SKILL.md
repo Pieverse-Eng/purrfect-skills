@@ -1,6 +1,8 @@
 ---
 name: aster-api-spot-account-v3
 description: Account, balances, user trades, spot–futures transfer, withdraw, API key for Aster Spot Testnet API v3. Use when reading/updating spot testnet account or transferring. Signed; see aster-api-spot-auth-v3.
+disable-model-invocation: true
+user-invocable: false
 ---
 
 # Aster Spot API Account (v3 — Testnet)

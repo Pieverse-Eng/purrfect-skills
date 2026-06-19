@@ -1,6 +1,8 @@
 ---
 name: aster-api-spot-errors-v3
 description: Error codes, rate limits, 429/418 handling for Aster Spot Testnet API v3. Use when handling spot testnet API errors or building rate-aware clients.
+disable-model-invocation: true
+user-invocable: false
 ---
 
 # Aster Spot API Errors (v3 — Testnet)

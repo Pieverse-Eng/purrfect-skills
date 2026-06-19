@@ -1,6 +1,8 @@
 ---
 name: aster-api-spot-websocket-v3
 description: WebSocket market + user data streams for Aster Spot Testnet API v3. Subscription model, stream names, listenKey (/api/v3/listenKey). Use when implementing real-time spot testnet market or user events. listenKey = signed; see aster-api-spot-auth-v3.
+disable-model-invocation: true
+user-invocable: false
 ---
 
 # Aster Spot API WebSocket (v3 — Testnet)

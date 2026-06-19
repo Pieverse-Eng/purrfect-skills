@@ -1,6 +1,8 @@
 ---
 name: aster-api-spot-market-data-v3
 description: Public REST market data for Aster Spot Testnet API v3. Ping, time, exchangeInfo, depth, trades, klines, tickers. Use when fetching spot testnet market data via /api/v3/. historicalTrades and commissionRate require signature.
+disable-model-invocation: true
+user-invocable: false
 ---
 
 # Aster Spot API Market Data (v3 — Testnet)

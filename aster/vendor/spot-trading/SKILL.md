@@ -1,6 +1,8 @@
 ---
 name: aster-api-spot-trading-v3
 description: Place, cancel, and query spot orders for Aster Spot Testnet API v3 (/api/v3/). Use when placing/canceling spot testnet orders or querying open/historical. Signed; see aster-api-spot-auth-v3.
+disable-model-invocation: true
+user-invocable: false
 ---
 
 # Aster Spot API Trading (v3 — Testnet)

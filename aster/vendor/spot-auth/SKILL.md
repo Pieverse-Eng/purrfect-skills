@@ -1,6 +1,8 @@
 ---
 name: aster-api-spot-auth-v3
 description: EIP-712 signed requests for Aster Spot Testnet API v3. Base sapi.asterdex-testnet.com, /api/v3/. Use when calling TRADE, USER_DATA, USER_STREAM, or MARKET_DATA on spot testnet. Algorithm same as aster-api-auth-v3.
+disable-model-invocation: true
+user-invocable: false
 ---
 
 # Aster Spot API Authentication (v3 — Testnet)

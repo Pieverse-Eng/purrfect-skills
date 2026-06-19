@@ -1,6 +1,8 @@
 ---
 name: aster-api-websocket-v3
 description: WebSocket market + user data streams for Aster Futures API v3. Subscription model, stream names, listenKey. Use when implementing real-time market or user events (orders, balance, positions). listenKey = signed; see aster-api-auth-v3.
+disable-model-invocation: true
+user-invocable: false
 ---
 
 # Aster API WebSocket
