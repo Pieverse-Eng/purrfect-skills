@@ -21,6 +21,7 @@ Usage:
 Standard library only. Read-only; no keys.
 """
 import json
+import math
 import os
 import sys
 from urllib.request import Request, urlopen
@@ -32,6 +33,14 @@ import spread    # noqa: E402  (normalize + compare)
 HL_INFO = "https://api.hyperliquid.xyz/info"
 DEX = "xyz"
 DEX_PREFIX = "xyz:"
+
+# Underlyings that are NOT single-name equities — the cash-and-carry / not-capturable
+# narrative does not cleanly apply (indices, ETFs, leveraged ETFs, commodities).
+NON_SINGLE_NAME = {
+    "XYZ100", "SP500", "JP225", "KR200", "SPX", "NDX", "US500", "US100", "US30", "N225", "GER40", "UK100", "HK50",
+    "SPY", "QQQ", "DIA", "IWM", "VTI", "VOO", "TQQQ", "SQQQ",
+    "GOLD", "GLD", "SILVER", "BRENTOIL", "CL", "COPPER", "CORN", "ALUMINIUM",
+}
 
 
 def _post(body, timeout=15):
@@ -71,16 +80,25 @@ def median(xs):
     return s[n // 2] if n % 2 else (s[n // 2 - 1] + s[n // 2]) / 2.0
 
 
-def basis(spot_ref, perp):
+def basis(spot_ref, perp, spot_reliable=None, spot_venue_count=None):
+    # never divide by / trust a non-positive spot reference
+    if not (isinstance(spot_ref, (int, float)) and math.isfinite(spot_ref) and spot_ref > 0):
+        return {"error": "spot reference is non-positive/invalid — basis suppressed", "reliable": False}
     b = (perp["mark"] - spot_ref) / spot_ref * 100.0
+    warnings = [
+        "perp is a 24/7 oracle MARK vs spot mid/executable — basis is INDICATIVE, distorted off US market hours / weekends",
+        "convergence is funding-driven and NOT capturable by an anonymous wallet (no physical redemption) — treat as a signal",
+    ]
+    reliable = True
+    if spot_reliable is False or (spot_venue_count is not None and spot_venue_count < 2):
+        reliable = False
+        warnings.insert(0, "spot reference is unreliable or single-venue — basis NOT certified; do not act on the headline number")
     return {
         "basis_pct": round(b, 4),
         "funding_apr_pct": perp["funding_apr_pct"],
         "direction": "perp rich (>spot)" if b > 0 else "perp cheap (<spot)",
-        "warnings": [
-            "perp is a 24/7 oracle MARK vs spot mid/executable — basis is INDICATIVE, distorted off US market hours / weekends",
-            "convergence is funding-driven and NOT capturable by an anonymous wallet (no physical redemption) — treat as a signal",
-        ],
+        "reliable": reliable,
+        "warnings": warnings,
     }
 
 
@@ -122,6 +140,14 @@ def _selftest():
     check("basis carries not-capturable warning", any("NOT capturable" in w for w in bz["warnings"]))
     check("basis carries market-hours warning", any("market hours" in w for w in bz["warnings"]))
 
+    # review repros: zero/negative spot_ref guarded; unreliable/single-venue spot not certified
+    check("basis guards zero spot_ref (no crash)", "error" in basis(0.0, p))
+    check("basis guards negative spot_ref", "error" in basis(-50.0, p))
+    check("unreliable spot -> basis not reliable", basis(400.0, p, spot_reliable=False)["reliable"] is False)
+    check("single-venue spot -> basis not reliable", basis(400.0, p, spot_reliable=True, spot_venue_count=1)["reliable"] is False)
+    check("good spot -> basis reliable", basis(400.0, p, spot_reliable=True, spot_venue_count=3)["reliable"] is True)
+    check("asset-class set flags indices/ETFs, not single names", "XYZ100" in NON_SINGLE_NAME and "GLD" in NON_SINGLE_NAME and "TSLA" not in NON_SINGLE_NAME)
+
     failed = [n for n, ok in checks if not ok]
     print(json.dumps({"selftest": "PASS" if not failed else "FAIL", "total": len(checks),
                       "passed": len(checks) - len(failed), "failed": failed}, indent=2))
@@ -133,13 +159,21 @@ def main(argv):
         return _selftest()
 
     if "--live" in argv:
-        u = argv[argv.index("--live") + 1]
+        i = argv.index("--live")
+        if i + 1 >= len(argv):
+            print(json.dumps({"error": "--live requires an underlying, e.g. --live TSLA"}), file=sys.stderr)
+            return 1
+        u = argv[i + 1]
         p = perp_for(u)
         print(json.dumps(p or {"error": f"no equity perp for {u.upper()} on {DEX} dex"}, indent=2))
         return 0
 
     if "--basis" in argv:
-        u = argv[argv.index("--basis") + 1].upper()
+        i = argv.index("--basis")
+        if i + 1 >= len(argv):
+            print(json.dumps({"error": "--basis requires an underlying, e.g. --basis TSLA"}), file=sys.stderr)
+            return 1
+        u = argv[i + 1].upper()
         perp = perp_for(u)
         if not perp:
             print(json.dumps({"underlying": u, "error": f"no equity perp on {DEX} dex — basis unavailable"}, indent=2))
@@ -157,8 +191,11 @@ def main(argv):
             "spot_reliable": sres.get("reliable"),
             "perp_mark": perp["mark"],
             "perp_venue": perp["venue"],
-            "basis": basis(spot_ref, perp),
+            "basis": basis(spot_ref, perp, sres.get("reliable"), len(sres["normalized"])),
         }
+        if u in NON_SINGLE_NAME:
+            out["asset_class_note"] = ("underlying is an index/ETF/commodity, not a single-name equity — "
+                                       "the equity cash-and-carry / not-capturable narrative may not apply")
         print(json.dumps(out, indent=2))
         return 0
 

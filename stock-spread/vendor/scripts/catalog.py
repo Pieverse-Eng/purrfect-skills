@@ -25,10 +25,14 @@ Standard library only. Read-only; no keys.
 """
 import json
 import os
+import re
 import sys
 import time
+from urllib.parse import quote
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
+
+TICKER_RE = re.compile(r"[A-Z0-9.]{1,10}")
 
 DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "symbology.json")
 
@@ -64,42 +68,79 @@ def strip_suffix(base, suffix):
     return base[:-len(suffix)] if suffix and base.endswith(suffix) else base
 
 
+def _add_universe(out, key, value, collisions, venue):
+    """Insert key->value, but never silently overwrite a distinct mapping (collision)."""
+    if key in out and out[key] != value:
+        if collisions is not None:
+            collisions.append(f"{venue}: {key!r} maps to both {out[key]!r} and {value!r} — kept first")
+        return
+    out[key] = value
+
+
 # --- enumerators (pure parse fns take raw, so they're fixture-testable) ---
 
-def parse_bybit_universe(raw, suffix="X"):
+def parse_bybit_universe(raw, suffix="X", collisions=None):
     out = {}
     for r in raw["result"]["list"]:
-        if r.get("symbolType") == "xstocks":
-            out[strip_suffix(r["baseCoin"], suffix)] = r["symbol"]
+        if r.get("symbolType") != "xstocks":
+            continue
+        base = r.get("baseCoin", "")
+        if not base.endswith(suffix):  # require the xStock suffix — no no-op strips
+            if collisions is not None:
+                collisions.append(f"bybit: baseCoin {base!r} lacks {suffix!r} suffix — skipped")
+            continue
+        _add_universe(out, strip_suffix(base, suffix), r["symbol"], collisions, "bybit")
     return out
 
 
-def parse_gate_universe(raw, suffix="X"):
+def parse_gate_universe(raw, suffix="X", collisions=None):
     out = {}
     for r in raw:
-        if "xStock" in (r.get("base_name") or "") and r.get("trade_status") == "tradable":
-            out[strip_suffix(r["base"], suffix)] = r["id"]
+        if "xStock" not in (r.get("base_name") or "") or r.get("trade_status") != "tradable":
+            continue
+        base = r.get("base", "")
+        if not base.endswith(suffix):
+            if collisions is not None:
+                collisions.append(f"gate: base {base!r} lacks {suffix!r} suffix — skipped")
+            continue
+        _add_universe(out, strip_suffix(base, suffix), r["id"], collisions, "gate")
     return out
 
 
-def verify_mint(search_results, underlying, issuer_freeze):
-    """Pick the Jupiter result whose symbol is exactly {underlying}x AND whose
-    freezeAuthority is the Backed issuer authority. Returns {mint,decimals} or None."""
+def verify_mint(search_results, underlying, issuer_freeze, issuer_mint=None):
+    """Resolve a Jupiter result to a genuine xStock mint. A match requires ALL of:
+    exact symbol {underlying}x, freezeAuthority == Backed issuer freeze authority,
+    the mint address carrying the issuer 'Xs' prefix, and (when known) mintAuthority
+    == the issuer mint authority. Returns {mint,decimals} only on a SINGLE unambiguous
+    match — multiple distinct candidates or zero matches return None (refuse to guess).
+
+    Note: freezeAuthority/mintAuthority are read from the Jupiter index, not confirmed
+    on-chain; an on-chain getAccountInfo cross-check is a documented follow-up. The
+    'Xs'-prefix + authority + symbol triple still rejects the look-alikes seen in review.
+    """
     want = f"{underlying}x".lower()
+    matches = []
     for t in search_results:
-        if t.get("symbol", "").lower() == want and t.get("freezeAuthority") == issuer_freeze:
-            return {"mint": t["id"], "decimals": t.get("decimals", 8)}
-    return None
+        if (t.get("symbol", "").lower() == want
+                and t.get("freezeAuthority") == issuer_freeze
+                and str(t.get("id", "")).startswith("Xs")
+                and (issuer_mint is None or t.get("mintAuthority") == issuer_mint)):
+            matches.append(t)
+    unique_mints = {t["id"] for t in matches}
+    if len(unique_mints) != 1:
+        return None
+    t = matches[0]
+    return {"mint": t["id"], "decimals": t.get("decimals", 8)}
 
 
 # --- live fetchers ---
 
-def enumerate_bybit():
-    return parse_bybit_universe(_get("https://api.bybit.com/v5/market/instruments-info?category=spot"))
+def enumerate_bybit(collisions=None):
+    return parse_bybit_universe(_get("https://api.bybit.com/v5/market/instruments-info?category=spot"), collisions=collisions)
 
 
-def enumerate_gate():
-    return parse_gate_universe(_get("https://api.gateio.ws/api/v4/spot/currency_pairs"))
+def enumerate_gate(collisions=None):
+    return parse_gate_universe(_get("https://api.gateio.ws/api/v4/spot/currency_pairs"), collisions=collisions)
 
 
 def binance_trading_symbols():
@@ -107,24 +148,23 @@ def binance_trading_symbols():
     return {s["symbol"] for s in raw["symbols"] if s.get("status") == "TRADING"}
 
 
-def resolve_mint_live(underlying, issuer_freeze):
-    raw = _get(f"https://lite-api.jup.ag/tokens/v2/search?query={underlying}x")
-    return verify_mint(raw, underlying, issuer_freeze)
+def resolve_mint_live(underlying, auth):
+    raw = _get("https://lite-api.jup.ag/tokens/v2/search?query=" + quote(f"{underlying}x", safe=""))
+    return verify_mint(raw, underlying, auth["freeze"], auth.get("mint"))
 
 
-def build_catalog(verbose=False):
+def build_catalog(verbose=False, collisions=None):
     cfg = _load()
     rules, auth = cfg["cex_rules"], cfg["issuer_authority"]["xstocks"]
-    issuer_freeze = auth["freeze"]
     underlyings = {}
 
     def add(u, venue, info):
         underlyings.setdefault(u, {"venues": {}})["venues"][venue] = info
 
-    by = enumerate_bybit()
+    by = enumerate_bybit(collisions)
     for u, sym in by.items():
         add(u, "bybit", {"id": sym, "settlement": rules["bybit"]["settlement"], "type": "cex", "verified": True, "live": True, "source": "bybit instruments-info symbolType=xstocks"})
-    ga = enumerate_gate()
+    ga = enumerate_gate(collisions)
     for u, pid in ga.items():
         add(u, "gate", {"id": pid, "settlement": rules["gate"]["settlement"], "type": "cex", "verified": True, "live": True, "source": "gate currency_pairs base_name~xStock"})
 
@@ -138,7 +178,7 @@ def build_catalog(verbose=False):
         if i:
             time.sleep(1)  # be gentle with Jupiter lite-api
         try:
-            m = resolve_mint_live(u, issuer_freeze)
+            m = resolve_mint_live(u, auth)
         except Exception as e:
             m = None
             if verbose:
@@ -164,6 +204,12 @@ _FX_JUP_GOOD = [{"id": "XsDoVfqeBukxuZHWhdvWHBhgEHjGNst4MLodqsJHzoB", "symbol": 
 _FX_JUP_SCAM = [{"id": "FAKEmintaddr1111111111111111111111111111111", "symbol": "TSLAx", "decimals": 6,
                  "freezeAuthority": "ScamAuthorityXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"}]
 _ISSUER_FREEZE = "JDq14BWvqCRFNu1krb12bcRpbGtJZ1FLEakMw6FdxJNs"
+_FX_JUP_SPOOF = [{"id": "ScamMintNoXsPrefix000000000000000000000000", "symbol": "TSLAx", "decimals": 6,
+                  "freezeAuthority": "JDq14BWvqCRFNu1krb12bcRpbGtJZ1FLEakMw6FdxJNs"}]
+_FX_JUP_AMBIG = [
+    {"id": "Xsaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "symbol": "TSLAx", "decimals": 8, "freezeAuthority": "JDq14BWvqCRFNu1krb12bcRpbGtJZ1FLEakMw6FdxJNs"},
+    {"id": "Xsbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "symbol": "TSLAx", "decimals": 8, "freezeAuthority": "JDq14BWvqCRFNu1krb12bcRpbGtJZ1FLEakMw6FdxJNs"},
+]
 
 
 def _selftest():
@@ -183,12 +229,27 @@ def _selftest():
     ga = parse_gate_universe(_FX_GATE)
     check("gate enumerate xStock only (no BTC)", set(ga) == {"TSLA"})
 
+    # collision + no-op-strip handling (review repro: MAX vs MA)
+    cols = []
+    dup = {"result": {"list": [
+        {"symbol": "TSLAXUSDT", "baseCoin": "TSLAX", "symbolType": "xstocks"},
+        {"symbol": "TSLAXUSDT_DUP", "baseCoin": "TSLAX", "symbolType": "xstocks"},
+        {"symbol": "MAUSDT", "baseCoin": "MA", "symbolType": "xstocks"},
+    ]}}
+    by2 = parse_bybit_universe(dup, collisions=cols)
+    check("dup baseCoin: first kept (no silent overwrite)", by2["TSLA"] == "TSLAXUSDT")
+    check("dup baseCoin: collision recorded", any("maps to both" in c for c in cols))
+    check("no-suffix base skipped (not mis-keyed)", "MA" not in by2)
+    check("no-suffix base recorded", any("lacks" in c for c in cols))
+
     good = verify_mint(_FX_JUP_GOOD, "TSLA", _ISSUER_FREEZE)
     check("mint verify accepts genuine issuer authority", good and good["mint"].startswith("XsDoVf"))
     scam = verify_mint(_FX_JUP_SCAM, "TSLA", _ISSUER_FREEZE)
     check("mint verify REJECTS look-alike (wrong freezeAuthority)", scam is None)
     none = verify_mint([], "TSLA", _ISSUER_FREEZE)
     check("mint verify returns None on no match", none is None)
+    check("mint verify REJECTS spoof (right authority, non-Xs id)", verify_mint(_FX_JUP_SPOOF, "TSLA", _ISSUER_FREEZE) is None)
+    check("mint verify REFUSES ambiguous multi-match", verify_mint(_FX_JUP_AMBIG, "TSLA", _ISSUER_FREEZE) is None)
 
     failed = [n for n, ok in checks if not ok]
     print(json.dumps({"selftest": "PASS" if not failed else "FAIL", "total": len(checks),
@@ -201,30 +262,38 @@ def main(argv):
         return _selftest()
     if "--refresh" in argv:
         cfg = _load()
-        underlyings = build_catalog(verbose=True)
+        collisions = []
+        underlyings = build_catalog(verbose=True, collisions=collisions)
         cfg["underlyings"] = dict(sorted(underlyings.items()))
         cfg["_generated_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
         _save(cfg)
         cov = {u: sorted(v["venues"]) for u, v in cfg["underlyings"].items()}
-        print(json.dumps({"refreshed": len(cov), "coverage": cov, "generated_at": cfg["_generated_at"]}, indent=2))
+        print(json.dumps({"refreshed": len(cov), "coverage": cov, "collisions": collisions, "generated_at": cfg["_generated_at"]}, indent=2))
         return 0
     if "--underlying" in argv:
         i = argv.index("--underlying")
+        if i + 1 >= len(argv):
+            print(json.dumps({"error": "--underlying requires a ticker"}), file=sys.stderr)
+            return 1
         u = argv[i + 1].strip().upper()
+        if not TICKER_RE.fullmatch(u):
+            print(json.dumps({"error": f"invalid ticker {u!r}; expected ^[A-Z0-9.]{{1,10}}$"}))
+            return 1
         cfg = _load()
-        auth = cfg["issuer_authority"]["xstocks"]["freeze"]
+        auth = cfg["issuer_authority"]["xstocks"]
         venues = {}
         bn = binance_trading_symbols()
         # rule-derive + validate per CEX, then mint
         try:
             gd = _get(f"https://api.gateio.ws/api/v4/spot/currency_pairs/{u}X_USDT")
-            if gd.get("trade_status") == "tradable":
+            if gd.get("trade_status") == "tradable" and "xStock" in (gd.get("base_name") or ""):
                 venues["gate"] = {"id": f"{u}X_USDT", "settlement": "USDT", "type": "cex", "verified": True}
         except Exception:
             pass
         try:
             bi = _get(f"https://api.bybit.com/v5/market/instruments-info?category=spot&symbol={u}XUSDT")
-            if bi["result"]["list"]:
+            lst = bi["result"]["list"]
+            if lst and lst[0].get("symbolType") == "xstocks":
                 venues["bybit"] = {"id": f"{u}XUSDT", "settlement": "USDT", "type": "cex", "verified": True}
         except Exception:
             pass
