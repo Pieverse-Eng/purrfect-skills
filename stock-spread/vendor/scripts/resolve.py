@@ -93,11 +93,13 @@ def _selftest():
         check("no substring match", False)
     except KeyError:
         check("no substring match", True)
-    # unverified / unresolved entries surface a warning
-    check(
-        "NVDA unresolved solana mint warned",
-        any("solana_jupiter" in w for w in resolve("NVDA", data)["warnings"]),
-    )
+    # invariant: every resolved Solana mint carries the issuer 'Xs' prefix (anti-scam)
+    xs_ok = True
+    for _u, rec in data["underlyings"].items():
+        sj = rec["venues"].get("solana_jupiter")
+        if sj and sj.get("id") and not sj["id"].startswith("Xs"):
+            xs_ok = False
+    check("all resolved Solana mints carry issuer 'Xs' prefix", xs_ok)
     # schema integrity: every venue entry carries settlement + verified
     ok = True
     for _u, rec in data["underlyings"].items():

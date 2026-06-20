@@ -26,13 +26,14 @@ description: "READ-ONLY cross-venue price & spread intelligence for tokenized st
 | Kraken | CEX | USD | ⛔ deferred — xStocks not on public `AssetPairs` |
 | Bitget | wallet | USDT | ⛔ deferred — keyed wallet API |
 
-Covered underlyings + exact per-venue identifiers live in `vendor/data/symbology.json`. Unverified identifiers and unresolved mints are surfaced as warnings and never traded on.
+Covered underlyings + exact per-venue identifiers live in `vendor/data/symbology.json` — **generated** by `catalog.py --refresh` (enumerated from each venue's own instrument list + Jupiter, with Solana mints verified against the Backed issuer `freezeAuthority`). ~36 underlyings auto-discovered; **not hand-maintained**. Unverified identifiers / unresolved mints are surfaced as warnings and never traded on.
 
 ## How to run (read-only; Python 3 stdlib, no API keys)
 1. **Resolve symbology:** `python3 vendor/scripts/resolve.py <UNDERLYING>`
 2. **Live cross-venue spread (main flow):**
    `python3 vendor/scripts/adapters.py --live <UNDERLYING> | python3 vendor/scripts/spread.py`
-3. **Offline gate / self-tests:** `resolve.py --selftest`, `spread.py --selftest`, `adapters.py --selftest`; `spread.py --demo` shows the fake-spread guard.
+3. **Offline gate / self-tests:** `resolve.py --selftest`, `spread.py --selftest`, `adapters.py --selftest`, `catalog.py --selftest`; `spread.py --demo` shows the fake-spread guard.
+4. **Refresh coverage (sourced, not hand-edited):** `python3 vendor/scripts/catalog.py --refresh` re-enumerates the universe from venue instrument lists + Jupiter (issuer-verified) and regenerates `symbology.json`.
 
 ## Reading the output (do not mislead the user)
 - `spread_pct` is computed **only after settlement-currency normalization**; always report it together with `price_basis`.

@@ -1,46 +1,952 @@
 {
   "version": "2026-06-20",
-  "note": "Canonical per-venue identifiers for tokenized-equity / stock assets. RESOLVE BY EXACT UNDERLYING KEY ONLY — never by ticker substring or fuzzy match (scam look-alikes exist on-chain). Each venue entry carries `verified` (identifier confirmed), `live` (a keyless public read is wired), `settlement`, and `source`. Settlement currency differs per venue and MUST be normalized before any spread is computed.",
+  "note": "Canonical per-venue identifiers for tokenized-equity / stock assets. RESOLVE BY EXACT UNDERLYING KEY ONLY \u2014 never by ticker substring or fuzzy match (scam look-alikes exist on-chain). Each venue entry carries `verified` (identifier confirmed), `live` (a keyless public read is wired), `settlement`, and `source`. Settlement currency differs per venue and MUST be normalized before any spread is computed.",
   "quote_mints": {
-    "USDC": { "mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", "decimals": 6 }
+    "USDC": {
+      "mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+      "decimals": 6
+    }
   },
+  "issuer_authority": {
+    "xstocks": {
+      "freeze": "JDq14BWvqCRFNu1krb12bcRpbGtJZ1FLEakMw6FdxJNs",
+      "mint": "7pt9tkctJPK7PPNQJ77GKg8ZffSF6QxoMiCFYHxrtaCj",
+      "note": "Backed-controlled SPL authority shared by ALL xStocks \u2014 used to verify a Jupiter-resolved mint is genuine and reject pump.fun look-alikes."
+    }
+  },
+  "cex_rules": {
+    "gate": {
+      "kind": "xstocks",
+      "suffix": "X",
+      "pair": "{BASE}_USDT",
+      "settlement": "USDT",
+      "enumerate": "GET /api/v4/spot/currency_pairs -> base_name contains 'xStock' & trade_status tradable"
+    },
+    "bybit": {
+      "kind": "xstocks",
+      "suffix": "X",
+      "pair": "{BASE}USDT",
+      "settlement": "USDT",
+      "enumerate": "GET /v5/market/instruments-info?category=spot -> symbolType=='xstocks'"
+    },
+    "binance_bstocks": {
+      "kind": "bstocks",
+      "suffix": "B",
+      "pair": "{BASE}USDT",
+      "settlement": "USDT",
+      "enumerate": "GET /api/v3/exchangeInfo -> validate {UNDERLYING}BUSDT exists & status TRADING"
+    }
+  },
+  "_underlyings_generated_by": "catalog.py --refresh (enumerated from venue instrument lists + Jupiter mint, issuer-authority verified). Do not hand-edit; regenerate.",
   "issuer_canonical_sources": {
     "xstocks_solana_mints": "https://api.xstocks.fi/v1/assets (issuer asset API; exact-address match)",
     "xstocks_evm_tokenlist": "https://github.com/backed-fi/cowswap-xstocks-tokenlist (EVM only)"
   },
   "underlyings": {
-    "TSLA": {
-      "name": "Tesla, Inc.",
+    "AAPL": {
       "venues": {
-        "kraken":          { "id": "TSLAx/USD",  "settlement": "USD",  "type": "cex", "withdrawable": true, "verified": true,  "live": false, "source": "Kraken xStocks listing", "live_note": "NOT on public AssetPairs/Ticker (probe 2026-06-20: 'Unknown asset pair'); needs tokenized_asset endpoint — deferred" },
-        "gate":            { "id": "TSLAX_USDT", "settlement": "USDT", "type": "cex", "withdrawable": true, "verified": true,  "live": true,  "source": "Gate v4 public spot ticker (probe-verified 2026-06-20)" },
-        "bybit":           { "id": "TSLAXUSDT",  "settlement": "USDT", "type": "cex", "withdrawable": true, "verified": true,  "live": true,  "source": "Bybit v5 public spot ticker (probe-verified 2026-06-20)" },
-        "binance_bstocks": { "id": "TSLABUSDT",  "settlement": "USDT", "type": "cex", "withdrawable": true, "verified": true,  "live": true,  "source": "Binance public spot ticker, bStocks B-suffix (probe-verified 2026-06-20)" },
-        "bitget":          { "id": null, "settlement": "USDT", "type": "wallet", "withdrawable": true, "verified": false, "live": false, "source": "Bitget Wallet on-chain API — keyed B2B portal, not keyless; deferred" },
-        "solana_jupiter":  { "id": "XsDoVfqeBukxuZHWhdvWHBhgEHjGNst4MLodqsJHzoB", "decimals": 8, "settlement": "USDC", "type": "dex", "chain": "solana", "withdrawable": true, "verified": true, "live": true, "source": "xStocks TSLAx SPL mint; Jupiter lite-api quote (probe-verified 2026-06-20)" }
+        "bybit": {
+          "id": "AAPLXUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "bybit instruments-info symbolType=xstocks"
+        },
+        "gate": {
+          "id": "AAPLX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "XsbEhLAtcf6HdfpFZ5xEMdqW8nfAvcsP5bdudRLJzJp",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
       }
     },
-    "AAPL": {
-      "name": "Apple Inc.",
+    "ABBV": {
       "venues": {
-        "kraken":          { "id": "AAPLx/USD",  "settlement": "USD",  "type": "cex", "withdrawable": true, "verified": true,  "live": false, "source": "Kraken xStocks listing", "live_note": "not on public AssetPairs — deferred" },
-        "gate":            { "id": "AAPLX_USDT", "settlement": "USDT", "type": "cex", "withdrawable": true, "verified": true,  "live": true,  "source": "Gate v4 public spot ticker (symbol pattern probe-verified for TSLAX)" },
-        "bybit":           { "id": "AAPLXUSDT",  "settlement": "USDT", "type": "cex", "withdrawable": true, "verified": true,  "live": true,  "source": "Bybit v5 public spot ticker (symbol pattern probe-verified for TSLAX)" },
-        "binance_bstocks": { "id": "AAPLBUSDT",  "settlement": "USDT", "type": "cex", "withdrawable": true, "verified": true,  "live": true,  "source": "Binance public spot ticker (symbol pattern probe-verified for TSLAB)" },
-        "bitget":          { "id": null, "settlement": "USDT", "type": "wallet", "withdrawable": true, "verified": false, "live": false, "source": "Bitget Wallet on-chain API — deferred" },
-        "solana_jupiter":  { "id": "XsbEhLAtcf6HdfpFZ5xEMdqW8nfAvcsP5bdudRLJzJp", "decimals": 8, "settlement": "USDC", "type": "dex", "chain": "solana", "withdrawable": true, "verified": true, "live": true, "source": "xStocks AAPLx SPL mint (>=2 sources)" }
+        "gate": {
+          "id": "ABBVX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "XswbinNKyPmzTa5CskMbCPvMW6G5CMnZXZEeQSSQoie",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "ABT": {
+      "venues": {
+        "gate": {
+          "id": "ABTX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "XsHtf5RpxsQ7jeJ9ivNewouZKJHbPxhPoEy6yYvULr7",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "ACN": {
+      "venues": {
+        "gate": {
+          "id": "ACNX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "Xs5UJzmCRQ8DWZjskExdSQDnbE6iLkRu2jjrRAB1JSU",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "AMZN": {
+      "venues": {
+        "bybit": {
+          "id": "AMZNXUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "bybit instruments-info symbolType=xstocks"
+        },
+        "gate": {
+          "id": "AMZNX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "Xs3eBt7uRfJX8QUs4suhyU8p2M6DoUDrJyWBa8LLZsg",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "AVGO": {
+      "venues": {
+        "gate": {
+          "id": "AVGOX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "XsgSaSvNSqLTtFuyWPBhK9196Xb9Bbdyjj4fH3cPJGo",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "AZN": {
+      "venues": {
+        "gate": {
+          "id": "AZNX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "Xs3ZFkPYT2BN7qBMqf1j1bfTeTm1rFzEFSsQ1z3wAKU",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "CMCSA": {
+      "venues": {
+        "gate": {
+          "id": "CMCSAX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "XsvKCaNsxg2GN8jjUmq71qukMJr7Q1c5R2Mk9P8kcS8",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "COIN": {
+      "venues": {
+        "bybit": {
+          "id": "COINXUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "bybit instruments-info symbolType=xstocks"
+        },
+        "gate": {
+          "id": "COINX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "Xs7ZdzSHLU9ftNJsii5fCeJhoRWSC32SQGzGQtePxNu",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "CRCL": {
+      "venues": {
+        "bybit": {
+          "id": "CRCLXUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "bybit instruments-info symbolType=xstocks"
+        },
+        "gate": {
+          "id": "CRCLX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "binance_bstocks": {
+          "id": "CRCLBUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "binance exchangeInfo validated"
+        },
+        "solana_jupiter": {
+          "id": "XsueG8BtpquVJX9LVLLEGuViXUungE6WmK5YZ3p3bd1",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "CRWD": {
+      "venues": {
+        "gate": {
+          "id": "CRWDX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "Xs7xXqkcK7K8urEqGg52SECi79dRp2cEKKuYjUePYDw",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "CSCO": {
+      "venues": {
+        "gate": {
+          "id": "CSCOX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "Xsr3pdLQyXvDJBFgpR5nexCEZwXvigb8wbPYp4YoNFf",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "DFDV": {
+      "venues": {
+        "gate": {
+          "id": "DFDVX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "Xs2yquAgsHByNzx68WJC55WHjHBvG9JsMB7CWjTLyPy",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "DHR": {
+      "venues": {
+        "gate": {
+          "id": "DHRX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "Xseo8tgCZfkHxWS9xbFYeKFyMSbWEvZGFV1Gh53GtCV",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "GLD": {
+      "venues": {
+        "gate": {
+          "id": "GLDX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "Xsv9hRk1z5ystj9MhnA7Lq4vjSsLwzL2nxrwmwtD3re",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "GOOGL": {
+      "venues": {
+        "bybit": {
+          "id": "GOOGLXUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "bybit instruments-info symbolType=xstocks"
+        },
+        "gate": {
+          "id": "GOOGLX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "XsCPL9dNWBMvFtTmwcCA5v3xWPSMEBCszbQdiLLq6aN",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "HD": {
+      "venues": {
+        "gate": {
+          "id": "HDX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "XszjVtyhowGjSC5odCqBpW1CtXXwXjYokymrk7fGKD3",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "HON": {
+      "venues": {
+        "gate": {
+          "id": "HONX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "XsRbLZthfABAPAfumWNEJhPyiKDW6TvDVeAeW7oKqA2",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "HOOD": {
+      "venues": {
+        "bybit": {
+          "id": "HOODXUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "bybit instruments-info symbolType=xstocks"
+        },
+        "gate": {
+          "id": "HOODX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "XsvNBAYkrDRNhA7wPHQfX3ZUXZyZLdnCQDfHZ56bzpg",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "KO": {
+      "venues": {
+        "gate": {
+          "id": "KOX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "XsaBXg8dU5cPM6ehmVctMkVqoiRG2ZjMo1cyBJ3AykQ",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "LLY": {
+      "venues": {
+        "gate": {
+          "id": "LLYX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "Xsnuv4omNoHozR6EEW5mXkw8Nrny5rB3jVfLqi6gKMH",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "MA": {
+      "venues": {
+        "gate": {
+          "id": "MAX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "XsApJFV9MAktqnAc6jqzsHVujxkGm9xcSUffaBoYLKC",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "MCD": {
+      "venues": {
+        "bybit": {
+          "id": "MCDXUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "bybit instruments-info symbolType=xstocks"
+        },
+        "gate": {
+          "id": "MCDX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "XsqE9cRRpzxcGKDXj1BJ7Xmg4GRhZoyY1KpmGSxAWT2",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "META": {
+      "venues": {
+        "bybit": {
+          "id": "METAXUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "bybit instruments-info symbolType=xstocks"
+        },
+        "gate": {
+          "id": "METAX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "Xsa62P5mvPszXL1krVUnU5ar38bBSVcWAB6fmPCo5Zu",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "MSTR": {
+      "venues": {
+        "gate": {
+          "id": "MSTRX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "XsP7xzNPvEHS1m6qfanPUGjNmdnmsLKEoNAnHjdxxyZ",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "NFLX": {
+      "venues": {
+        "gate": {
+          "id": "NFLXX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "XsEH7wWfJJu2ZT3UCFeVfALnVA6CP5ur7Ee11KmzVpL",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
       }
     },
     "NVDA": {
-      "name": "NVIDIA Corporation",
       "venues": {
-        "kraken":          { "id": "NVDAx/USD",  "settlement": "USD",  "type": "cex", "withdrawable": true, "verified": true,  "live": false, "source": "Kraken xStocks listing — deferred (not on public API)" },
-        "gate":            { "id": "NVDAX_USDT", "settlement": "USDT", "type": "cex", "withdrawable": true, "verified": true,  "live": true,  "source": "Gate symbol pattern" },
-        "bybit":           { "id": "NVDAXUSDT",  "settlement": "USDT", "type": "cex", "withdrawable": true, "verified": true,  "live": true,  "source": "Bybit symbol pattern" },
-        "binance_bstocks": { "id": "NVDABUSDT",  "settlement": "USDT", "type": "cex", "withdrawable": true, "verified": true,  "live": true,  "source": "Binance bStocks symbol pattern" },
-        "bitget":          { "id": null, "settlement": "USDT", "type": "wallet", "withdrawable": true, "verified": false, "live": false, "source": "deferred" },
-        "solana_jupiter":  { "id": null, "decimals": 8, "settlement": "USDC", "type": "dex", "chain": "solana", "withdrawable": true, "verified": false, "live": false, "source": "NVDAx SPL mint not yet confirmed from issuer API — DO NOT trade until resolved" }
+        "bybit": {
+          "id": "NVDAXUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "bybit instruments-info symbolType=xstocks"
+        },
+        "gate": {
+          "id": "NVDAX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "binance_bstocks": {
+          "id": "NVDABUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "binance exchangeInfo validated"
+        },
+        "solana_jupiter": {
+          "id": "Xsc9qvGR1efVDFGLrVsmkzv3qi45LTBjeUKSPmx9qEh",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "PEP": {
+      "venues": {
+        "gate": {
+          "id": "PEPX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "Xsv99frTRUeornyvCfvhnDesQDWuvns1M852Pez91vF",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "PG": {
+      "venues": {
+        "gate": {
+          "id": "PGX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "XsYdjDjNUygZ7yGKfQaB6TxLh2gC6RRjzLtLAGJrhzV",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "PM": {
+      "venues": {
+        "gate": {
+          "id": "PMX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "Xsba6tUnSjDae2VcopDB6FGGDaxRrewFCDa5hKn5vT3",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "SPCX": {
+      "venues": {
+        "bybit": {
+          "id": "SPCXXUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "bybit instruments-info symbolType=xstocks"
+        },
+        "binance_bstocks": {
+          "id": "SPCXBUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "binance exchangeInfo validated"
+        },
+        "solana_jupiter": {
+          "id": "Xs3oZwbHvqis4NYcf4YKWmEia2eC84wSiVrcYcTqpH8",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "SPY": {
+      "venues": {
+        "gate": {
+          "id": "SPYX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "XsoCS1TfEyfFhfvj8EtZ528L3CaKBDBRqRapnBbDF2W",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "TQQQ": {
+      "venues": {
+        "gate": {
+          "id": "TQQQX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "XsjQP3iMAaQ3kQScQKthQpx9ALRbjKAjQtHg6TFomoc",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "TSLA": {
+      "venues": {
+        "bybit": {
+          "id": "TSLAXUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "bybit instruments-info symbolType=xstocks"
+        },
+        "gate": {
+          "id": "TSLAX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "binance_bstocks": {
+          "id": "TSLABUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "binance exchangeInfo validated"
+        },
+        "solana_jupiter": {
+          "id": "XsDoVfqeBukxuZHWhdvWHBhgEHjGNst4MLodqsJHzoB",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "UNH": {
+      "venues": {
+        "gate": {
+          "id": "UNHX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "XszvaiXGPwvk2nwb3o9C1CX4K6zH8sez11E6uyup6fe",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
+      }
+    },
+    "VTI": {
+      "venues": {
+        "gate": {
+          "id": "VTIX_USDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "verified": true,
+          "live": true,
+          "source": "gate currency_pairs base_name~xStock"
+        },
+        "solana_jupiter": {
+          "id": "XsssYEQjzxBCFgvYFFNuhJFBeHNdLWYeUSP8F45cDr9",
+          "decimals": 8,
+          "settlement": "USDC",
+          "type": "dex",
+          "chain": "solana",
+          "verified": true,
+          "live": true,
+          "source": "jupiter search + issuer-authority verified"
+        }
       }
     }
-  }
+  },
+  "_generated_at": "2026-06-20T11:33:45Z"
 }
