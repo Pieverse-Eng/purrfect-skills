@@ -1,6 +1,6 @@
 ---
 name: lista-vaults
-description: Lista DAO lending vault skill for BSC. Deposit, redeem, and withdraw from ERC-4626 yield vaults via purr lista commands.
+description: Lista DAO,BSC,vaults,ERC4626,yield,deposit,redeem,withdraw
 ---
 
 # Lista DAO Lending Vaults (BSC)
