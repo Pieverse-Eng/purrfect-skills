@@ -1,0 +1,40 @@
+{
+  "version": "2026-06-20",
+  "note": "Canonical per-venue identifiers for tokenized-equity / stock assets. RESOLVE BY EXACT UNDERLYING KEY ONLY — never by ticker substring or fuzzy match (scam look-alikes exist on-chain). Each venue entry carries a `verified` flag and `source`; unverified entries must be surfaced as such by any consumer and must be confirmed against the issuer-canonical source before a live read is trusted. Settlement currency differs per venue and must be normalized before any spread is computed.",
+  "issuer_canonical_sources": {
+    "xstocks_solana_mints": "https://api.xstocks.fi/v1/assets (issuer asset API; exact-address match)",
+    "xstocks_evm_tokenlist": "https://github.com/backed-fi/cowswap-xstocks-tokenlist (EVM only)"
+  },
+  "underlyings": {
+    "TSLA": {
+      "name": "Tesla, Inc.",
+      "venues": {
+        "kraken":          { "id": "TSLAx/USD",  "rest_altname": "TSLAxUSD", "settlement": "USD",  "type": "cex", "withdrawable": true,  "verified": true,  "source": "Kraken xStocks listing" },
+        "gate":            { "id": "TSLAX_USDT", "settlement": "USDT", "type": "cex", "withdrawable": true,  "verified": true,  "source": "Gate spot xStocks pair" },
+        "bybit":           { "id": "TSLAXUSDT",  "settlement": "USDT", "type": "cex", "withdrawable": true,  "verified": false, "source": "Bybit V5 symbolType=xstocks (symbol format unconfirmed)" },
+        "binance_bstocks": { "id": "TSLABUSDT",  "settlement": "USDT", "type": "cex", "withdrawable": true,  "verified": false, "source": "Binance bStocks B-suffix spot pair (inferred, unconfirmed)" },
+        "solana_jupiter":  { "id": "XsDoVfqeBukxuZHWhdvWHBhgEHjGNst4MLodqsJHzoB", "settlement": "USDC", "type": "dex", "chain": "solana", "withdrawable": true, "verified": true, "source": "xStocks TSLAx SPL mint (>=2 independent sources)" }
+      }
+    },
+    "AAPL": {
+      "name": "Apple Inc.",
+      "venues": {
+        "kraken":          { "id": "AAPLx/USD",  "rest_altname": "AAPLxUSD", "settlement": "USD",  "type": "cex", "withdrawable": true,  "verified": true,  "source": "Kraken xStocks listing" },
+        "gate":            { "id": "AAPLX_USDT", "settlement": "USDT", "type": "cex", "withdrawable": true,  "verified": true,  "source": "Gate spot xStocks pair" },
+        "bybit":           { "id": "AAPLXUSDT",  "settlement": "USDT", "type": "cex", "withdrawable": true,  "verified": false, "source": "Bybit V5 symbolType=xstocks (symbol format unconfirmed)" },
+        "binance_bstocks": { "id": "AAPLBUSDT",  "settlement": "USDT", "type": "cex", "withdrawable": true,  "verified": false, "source": "Binance bStocks B-suffix spot pair (inferred, unconfirmed)" },
+        "solana_jupiter":  { "id": "XsbEhLAtcf6HdfpFZ5xEMdqW8nfAvcsP5bdudRLJzJp", "settlement": "USDC", "type": "dex", "chain": "solana", "withdrawable": true, "verified": true, "source": "xStocks AAPLx SPL mint (>=2 independent sources)" }
+      }
+    },
+    "NVDA": {
+      "name": "NVIDIA Corporation",
+      "venues": {
+        "kraken":          { "id": "NVDAx/USD",  "rest_altname": "NVDAxUSD", "settlement": "USD",  "type": "cex", "withdrawable": true,  "verified": true,  "source": "Kraken xStocks listing" },
+        "gate":            { "id": "NVDAX_USDT", "settlement": "USDT", "type": "cex", "withdrawable": true,  "verified": true,  "source": "Gate spot xStocks pair" },
+        "bybit":           { "id": "NVDAXUSDT",  "settlement": "USDT", "type": "cex", "withdrawable": true,  "verified": false, "source": "Bybit V5 symbolType=xstocks (symbol format unconfirmed)" },
+        "binance_bstocks": { "id": "NVDABUSDT",  "settlement": "USDT", "type": "cex", "withdrawable": true,  "verified": false, "source": "Binance bStocks B-suffix spot pair (inferred, unconfirmed)" },
+        "solana_jupiter":  { "id": null, "settlement": "USDC", "type": "dex", "chain": "solana", "withdrawable": true, "verified": false, "source": "NVDAx SPL mint not yet confirmed from issuer API — DO NOT trade until resolved" }
+      }
+    }
+  }
+}
