@@ -1,6 +1,6 @@
 ---
 name: instance-renewal
-description: Use when a hosted Pieverse or Purr-Fect Claw agent needs to inspect its instance billing status or renew its subscription through purr CLI using the platform-managed trusted wallet, including friendly renewal presets such as bsc-usdt.
+description: Instance renewal,billing,status,presets
 ---
 
 # Instance Renewal
