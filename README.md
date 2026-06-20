@@ -40,6 +40,7 @@ This directory contains the Pieverse built-in skills. Each folder is a skill uni
 | `mantle` | Mantle skill bundle — network reference, address lookup, risk evaluation, portfolio analysis, DeFi planning, indexing, debugging, simulation, and smart-contract lifecycle. |
 | `panewslab` | PANewsLab skill bundle — crypto news reading, article publishing, and rendered web viewing. |
 | `rootdata-crypto` | RootData crypto intelligence — project / investor / people search, funding rounds, trending projects, and personnel job changes. |
+| `stock-spread` | READ-ONLY cross-venue tokenized-stock price & spread intelligence — resolves an equity to per-venue identifiers and reports the normalized CEX-vs-DEX spread across Gate, Bybit, Binance bStocks, and Solana/Jupiter. Quotes & comparison only; never trades. |
 
 ### Wallet & Infrastructure
 
