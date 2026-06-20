@@ -11,6 +11,7 @@ description: "READ-ONLY cross-venue price & spread intelligence for tokenized st
 - "compare TSLA across our venues", "where is AAPL cheapest right now"
 - "what's the tokenized Tesla price", "xStocks / bStocks price for NVDA"
 - "CEX vs DEX spread for `<stock>`", "is there a spread on `<stock>`"
+- "what's the basis on TSLA", "funding rate on the NVDA perp", "spot vs perp for COIN"
 
 ## NOT this skill
 - Buying / selling / swapping a stock token → execution is **out of scope** (read-only v1).
@@ -28,12 +29,15 @@ description: "READ-ONLY cross-venue price & spread intelligence for tokenized st
 
 Covered underlyings + exact per-venue identifiers live in `vendor/data/symbology.json` — **generated** by `catalog.py --refresh` (enumerated from each venue's own instrument list + Jupiter, with Solana mints verified against the Backed issuer `freezeAuthority`). ~36 underlyings auto-discovered; **not hand-maintained**. Unverified identifiers / unresolved mints are surfaced as warnings and never traded on.
 
+**Spot-vs-perp basis** is available where an on-chain equity perp exists — currently Hyperliquid's `xyz` builder dex (trade.xyz HIP-3): TSLA, NVDA, AAPL, COIN, CRCL, HOOD, … Read-only mark + funding; the basis is a **signal**, not a capturable trade (funding-driven convergence, no anonymous redemption).
+
 ## How to run (read-only; Python 3 stdlib, no API keys)
 1. **Resolve symbology:** `python3 vendor/scripts/resolve.py <UNDERLYING>`
 2. **Live cross-venue spread (main flow):**
    `python3 vendor/scripts/adapters.py --live <UNDERLYING> | python3 vendor/scripts/spread.py`
-3. **Offline gate / self-tests:** `resolve.py --selftest`, `spread.py --selftest`, `adapters.py --selftest`, `catalog.py --selftest`; `spread.py --demo` shows the fake-spread guard.
-4. **Refresh coverage (sourced, not hand-edited):** `python3 vendor/scripts/catalog.py --refresh` re-enumerates the universe from venue instrument lists + Jupiter (issuer-verified) and regenerates `symbology.json`.
+3. **Spot-vs-perp basis (arbitrage signal):** `python3 vendor/scripts/perps.py --basis <UNDERLYING>` — compares the spot consensus to the Hyperliquid `xyz` equity-perp mark and reports basis % + funding APR (read-only signal).
+4. **Offline gate / self-tests:** `resolve.py --selftest`, `spread.py --selftest`, `adapters.py --selftest`, `catalog.py --selftest`, `perps.py --selftest`; `spread.py --demo` shows the fake-spread guard.
+5. **Refresh coverage (sourced, not hand-edited):** `python3 vendor/scripts/catalog.py --refresh` re-enumerates the universe from venue instrument lists + Jupiter (issuer-verified) and regenerates `symbology.json`.
 
 ## Reading the output (do not mislead the user)
 - `spread_pct` is computed **only after settlement-currency normalization**; always report it together with `price_basis`.
