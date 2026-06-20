@@ -1,6 +1,6 @@
 ---
 name: kaia-skills
-description: Use when a request involves Kaia blockchain, KAIA token, or building on the Kaia network. Applies to developing, deploying, or interacting with smart contracts, dApps, wallets, or DeFi protocols on Kaia. Covers Kaia-specific features like fee delegation, gas abstraction, role-based account keys, MEV auction (KIP-249), and the Kaia SDK ecosystem (@kaiachain/ethers-ext, @kaiachain/viem-ext). Also covers Kaia's EVM compatibility, system contracts, token standards (KIP-7/17/37), governance (PGT framework), and ecosystem integrations with Kakao and LINE.
+description: Kaia,KAIA,gasless,accounts,fee delegation,SDK
 ---
 
 ## Using `purr` CLI on Kaia / Kairos
