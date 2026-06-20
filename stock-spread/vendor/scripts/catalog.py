@@ -25,10 +25,14 @@ Standard library only. Read-only; no keys.
 """
 import json
 import os
+import re
 import sys
 import time
+from urllib.parse import quote
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
+
+TICKER_RE = re.compile(r"[A-Z0-9.]{1,10}")
 
 DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "symbology.json")
 
@@ -82,14 +86,30 @@ def parse_gate_universe(raw, suffix="X"):
     return out
 
 
-def verify_mint(search_results, underlying, issuer_freeze):
-    """Pick the Jupiter result whose symbol is exactly {underlying}x AND whose
-    freezeAuthority is the Backed issuer authority. Returns {mint,decimals} or None."""
+def verify_mint(search_results, underlying, issuer_freeze, issuer_mint=None):
+    """Resolve a Jupiter result to a genuine xStock mint. A match requires ALL of:
+    exact symbol {underlying}x, freezeAuthority == Backed issuer freeze authority,
+    the mint address carrying the issuer 'Xs' prefix, and (when known) mintAuthority
+    == the issuer mint authority. Returns {mint,decimals} only on a SINGLE unambiguous
+    match — multiple distinct candidates or zero matches return None (refuse to guess).
+
+    Note: freezeAuthority/mintAuthority are read from the Jupiter index, not confirmed
+    on-chain; an on-chain getAccountInfo cross-check is a documented follow-up. The
+    'Xs'-prefix + authority + symbol triple still rejects the look-alikes seen in review.
+    """
     want = f"{underlying}x".lower()
+    matches = []
     for t in search_results:
-        if t.get("symbol", "").lower() == want and t.get("freezeAuthority") == issuer_freeze:
-            return {"mint": t["id"], "decimals": t.get("decimals", 8)}
-    return None
+        if (t.get("symbol", "").lower() == want
+                and t.get("freezeAuthority") == issuer_freeze
+                and str(t.get("id", "")).startswith("Xs")
+                and (issuer_mint is None or t.get("mintAuthority") == issuer_mint)):
+            matches.append(t)
+    unique_mints = {t["id"] for t in matches}
+    if len(unique_mints) != 1:
+        return None
+    t = matches[0]
+    return {"mint": t["id"], "decimals": t.get("decimals", 8)}
 
 
 # --- live fetchers ---
@@ -107,15 +127,14 @@ def binance_trading_symbols():
     return {s["symbol"] for s in raw["symbols"] if s.get("status") == "TRADING"}
 
 
-def resolve_mint_live(underlying, issuer_freeze):
-    raw = _get(f"https://lite-api.jup.ag/tokens/v2/search?query={underlying}x")
-    return verify_mint(raw, underlying, issuer_freeze)
+def resolve_mint_live(underlying, auth):
+    raw = _get("https://lite-api.jup.ag/tokens/v2/search?query=" + quote(f"{underlying}x", safe=""))
+    return verify_mint(raw, underlying, auth["freeze"], auth.get("mint"))
 
 
 def build_catalog(verbose=False):
     cfg = _load()
     rules, auth = cfg["cex_rules"], cfg["issuer_authority"]["xstocks"]
-    issuer_freeze = auth["freeze"]
     underlyings = {}
 
     def add(u, venue, info):
@@ -138,7 +157,7 @@ def build_catalog(verbose=False):
         if i:
             time.sleep(1)  # be gentle with Jupiter lite-api
         try:
-            m = resolve_mint_live(u, issuer_freeze)
+            m = resolve_mint_live(u, auth)
         except Exception as e:
             m = None
             if verbose:
@@ -164,6 +183,12 @@ _FX_JUP_GOOD = [{"id": "XsDoVfqeBukxuZHWhdvWHBhgEHjGNst4MLodqsJHzoB", "symbol": 
 _FX_JUP_SCAM = [{"id": "FAKEmintaddr1111111111111111111111111111111", "symbol": "TSLAx", "decimals": 6,
                  "freezeAuthority": "ScamAuthorityXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"}]
 _ISSUER_FREEZE = "JDq14BWvqCRFNu1krb12bcRpbGtJZ1FLEakMw6FdxJNs"
+_FX_JUP_SPOOF = [{"id": "ScamMintNoXsPrefix000000000000000000000000", "symbol": "TSLAx", "decimals": 6,
+                  "freezeAuthority": "JDq14BWvqCRFNu1krb12bcRpbGtJZ1FLEakMw6FdxJNs"}]
+_FX_JUP_AMBIG = [
+    {"id": "Xsaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "symbol": "TSLAx", "decimals": 8, "freezeAuthority": "JDq14BWvqCRFNu1krb12bcRpbGtJZ1FLEakMw6FdxJNs"},
+    {"id": "Xsbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "symbol": "TSLAx", "decimals": 8, "freezeAuthority": "JDq14BWvqCRFNu1krb12bcRpbGtJZ1FLEakMw6FdxJNs"},
+]
 
 
 def _selftest():
@@ -189,6 +214,8 @@ def _selftest():
     check("mint verify REJECTS look-alike (wrong freezeAuthority)", scam is None)
     none = verify_mint([], "TSLA", _ISSUER_FREEZE)
     check("mint verify returns None on no match", none is None)
+    check("mint verify REJECTS spoof (right authority, non-Xs id)", verify_mint(_FX_JUP_SPOOF, "TSLA", _ISSUER_FREEZE) is None)
+    check("mint verify REFUSES ambiguous multi-match", verify_mint(_FX_JUP_AMBIG, "TSLA", _ISSUER_FREEZE) is None)
 
     failed = [n for n, ok in checks if not ok]
     print(json.dumps({"selftest": "PASS" if not failed else "FAIL", "total": len(checks),
@@ -210,9 +237,15 @@ def main(argv):
         return 0
     if "--underlying" in argv:
         i = argv.index("--underlying")
+        if i + 1 >= len(argv):
+            print(json.dumps({"error": "--underlying requires a ticker"}), file=sys.stderr)
+            return 1
         u = argv[i + 1].strip().upper()
+        if not TICKER_RE.fullmatch(u):
+            print(json.dumps({"error": f"invalid ticker {u!r}; expected ^[A-Z0-9.]{{1,10}}$"}))
+            return 1
         cfg = _load()
-        auth = cfg["issuer_authority"]["xstocks"]["freeze"]
+        auth = cfg["issuer_authority"]["xstocks"]
         venues = {}
         bn = binance_trading_symbols()
         # rule-derive + validate per CEX, then mint

@@ -29,6 +29,7 @@ Output: JSON to stdout. Exit 0 on success; 1 on error / failed selftest.
 No network. Standard library only.
 """
 import json
+import math
 import sys
 
 DEFAULT_PARAMS = {"freshness_ms": 60000, "skew_ms": 30000, "peg_tolerance_bps": 50}
@@ -59,6 +60,7 @@ def compare(payload):
 
     normalized, warnings, excluded = [], [], []
     price_types, timestamps = set(), []
+    freshness_unknown = market_unknown = False
 
     for q in quotes:
         venue = q["venue"]
@@ -83,9 +85,19 @@ def compare(payload):
         if price_usd is None:
             excluded.append({"venue": venue, "reason": "unnormalizable settlement currency"})
             continue
-        price_types.add(q.get("price_type", "mid"))
-        if ts is not None:
+        # price sanity: a 0 / negative / NaN / Inf feed must never become a spread
+        if not (isinstance(price_usd, (int, float)) and math.isfinite(price_usd) and price_usd > 0):
+            excluded.append({"venue": venue, "reason": "non-positive or non-finite price"})
+            warnings.append(f"venue '{venue}': non-positive/invalid price ({q.get('price')!r}) — excluded")
+            continue
+        # fail-safe: if freshness or market state can't be verified, we must NOT certify reliable
+        if ts is None or now is None:
+            freshness_unknown = True
+        else:
             timestamps.append(ts)
+        if q.get("market_open") is None:
+            market_unknown = True
+        price_types.add(q.get("price_type", "mid"))
         normalized.append({
             "venue": venue,
             "price_usd": round(price_usd, 6),
@@ -111,6 +123,16 @@ def compare(payload):
         reliable = False
         warnings.append(
             f"cross-venue timestamp skew {max(timestamps) - min(timestamps)} ms exceeds {params['skew_ms']} ms — spread UNRELIABLE"
+        )
+    if freshness_unknown:
+        reliable = False
+        warnings.append(
+            "at least one leg has no verifiable timestamp — freshness UNKNOWN; spread not certified reliable"
+        )
+    if market_unknown:
+        reliable = False
+        warnings.append(
+            "market-open state UNKNOWN for at least one leg — spread may be stale-vs-live; not certified reliable"
         )
 
     prices = [n["price_usd"] for n in normalized]
@@ -203,6 +225,37 @@ def _selftest():
         {"venue": "solana_jupiter", "price": 251.0, "settlement": "USDC", "price_type": "executable", "timestamp_ms": NOW, "verified": True, "market_open": True},
     ]})
     check("unverified: bybit excluded", any(e["venue"] == "bybit" for e in r7["excluded"]))
+
+    # 8. non-positive price is excluded (never becomes a spread) — review repro
+    r8 = compare({"underlying": "TSLA", "now_ms": NOW, "pegs": ok_pegs, "quotes": [
+        {"venue": "a", "price": -5.0, "settlement": "USD", "price_type": "mid", "timestamp_ms": NOW, "verified": True, "market_open": True},
+        {"venue": "b", "price": 250.0, "settlement": "USD", "price_type": "mid", "timestamp_ms": NOW, "verified": True, "market_open": True},
+    ]})
+    check("negative price excluded", any(e["venue"] == "a" for e in r8["excluded"]))
+    check("negative price -> not reliable (no fake 208% spread)", r8["reliable"] is False)
+
+    # 9. zero price excluded too
+    r9 = compare({"underlying": "TSLA", "now_ms": NOW, "pegs": ok_pegs, "quotes": [
+        {"venue": "a", "price": 0.0, "settlement": "USD", "price_type": "mid", "timestamp_ms": NOW, "verified": True, "market_open": True},
+        {"venue": "b", "price": 250.0, "settlement": "USD", "price_type": "mid", "timestamp_ms": NOW, "verified": True, "market_open": True},
+    ]})
+    check("zero price excluded", any(e["venue"] == "a" for e in r9["excluded"]))
+
+    # 10. unknown freshness (no timestamp on a leg) -> NOT certified reliable (live-path P0)
+    r10 = compare({"underlying": "TSLA", "now_ms": NOW, "pegs": ok_pegs, "quotes": [
+        {"venue": "a", "price": 250.0, "settlement": "USD", "price_type": "mid", "timestamp_ms": NOW, "verified": True, "market_open": True},
+        {"venue": "b", "price": 252.0, "settlement": "USDC", "price_type": "executable", "verified": True, "market_open": True},
+    ]})
+    check("unknown freshness -> reliable False", r10["reliable"] is False)
+    check("unknown freshness warned", any("freshness UNKNOWN" in w for w in r10["warnings"]))
+
+    # 11. unknown market_open -> NOT certified reliable (the inert-guard P0)
+    r11 = compare({"underlying": "TSLA", "now_ms": NOW, "pegs": ok_pegs, "quotes": [
+        {"venue": "a", "price": 250.0, "settlement": "USD", "price_type": "mid", "timestamp_ms": NOW, "verified": True, "market_open": True},
+        {"venue": "b", "price": 252.0, "settlement": "USDC", "price_type": "executable", "timestamp_ms": NOW, "verified": True},
+    ]})
+    check("unknown market_open -> reliable False", r11["reliable"] is False)
+    check("unknown market_open warned", any("market-open state UNKNOWN" in w for w in r11["warnings"]))
 
     failed = [n for n, passed in checks if not passed]
     print(json.dumps({
