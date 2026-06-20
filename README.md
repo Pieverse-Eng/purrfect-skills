@@ -16,6 +16,7 @@ This directory contains the Pieverse built-in skills. Each folder is a skill uni
 | Skill | Description |
 |-------|-------------|
 | `aster` | Aster DEX perpetual futures — market data, trading, and account management. |
+| `binance` | Binance CEX via `binance-cli` — Spot, USD-S Futures, and Convert trading + market data (incl. bStocks spot pairs). Requires Binance API keys (auth). |
 | `binance-agentic-wallet` | Binance Web3 Agentic Wallet via `baw` CLI — sign-in, balances, transfers, DEX swaps, limit orders, prediction markets, and x402 payments. |
 | `binance-connect` | Fiat on-ramp via Binance Connect. Buy crypto with card, Apple Pay, or bank transfer directly to wallet. |
 | `bitget-wallet` | Bitget Wallet integration for multi-chain swaps, RWA stock trading, and market data. |
