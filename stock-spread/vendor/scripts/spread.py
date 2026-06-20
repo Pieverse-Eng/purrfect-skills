@@ -71,10 +71,6 @@ def compare(payload):
             excluded.append({"venue": venue, "reason": "unverified identifier — confirm vs issuer source before trusting"})
             warnings.append(f"venue '{venue}': UNVERIFIED identifier — excluded from spread")
             continue
-        if q.get("market_open") is False:
-            excluded.append({"venue": venue, "reason": "market closed"})
-            warnings.append(f"venue '{venue}': market closed — excluded from spread")
-            continue
         ts = q.get("timestamp_ms")
         if ts is not None and now is not None and (now - ts) > params["freshness_ms"]:
             excluded.append({"venue": venue, "reason": f"stale quote ({now - ts} ms old)"})
@@ -95,7 +91,7 @@ def compare(payload):
             freshness_unknown = True
         else:
             timestamps.append(ts)
-        if q.get("market_open") is None:
+        if q.get("market_open") is not True:
             market_unknown = True
         price_types.add(q.get("price_type", "mid"))
         normalized.append({
@@ -105,6 +101,7 @@ def compare(payload):
             "settlement": q.get("settlement"),
             "price_type": q.get("price_type", "mid"),
             "size_usd": q.get("size_usd"),
+            "price_impact_pct": q.get("price_impact_pct"),
         })
 
     result = {"underlying": underlying, "normalized": normalized, "excluded": excluded, "warnings": warnings}
@@ -132,7 +129,7 @@ def compare(payload):
     if market_unknown:
         reliable = False
         warnings.append(
-            "market-open state UNKNOWN for at least one leg — spread may be stale-vs-live; not certified reliable"
+            "market not confirmed open (closed/unknown) for at least one leg — tokens trade 24/7 but the spread is not certified reliable"
         )
 
     prices = [n["price_usd"] for n in normalized]
@@ -198,8 +195,9 @@ def _selftest():
         {"venue": "kraken", "price": 250.0, "settlement": "USD", "price_type": "mid", "timestamp_ms": NOW, "verified": True, "market_open": False},
         {"venue": "solana_jupiter", "price": 251.0, "settlement": "USDC", "price_type": "executable", "timestamp_ms": NOW, "verified": True, "market_open": True},
     ]})
-    check("closed: reliable False", r4["reliable"] is False)
-    check("closed: kraken excluded", any(e["venue"] == "kraken" for e in r4["excluded"]))
+    check("closed leg: reliable False", r4["reliable"] is False)
+    check("closed leg: kept (24/7 token), not excluded", any(n["venue"] == "kraken" for n in r4["normalized"]))
+    check("closed leg: 'not confirmed open' warning", any("not confirmed open" in w for w in r4["warnings"]))
 
     # 5. timestamp skew beyond skew_ms → unreliable
     r5 = compare({"underlying": "TSLA", "now_ms": NOW, "pegs": ok_pegs, "params": {"freshness_ms": 60000, "skew_ms": 30000}, "quotes": [
@@ -255,7 +253,7 @@ def _selftest():
         {"venue": "b", "price": 252.0, "settlement": "USDC", "price_type": "executable", "timestamp_ms": NOW, "verified": True},
     ]})
     check("unknown market_open -> reliable False", r11["reliable"] is False)
-    check("unknown market_open warned", any("market-open state UNKNOWN" in w for w in r11["warnings"]))
+    check("unknown market_open warned", any("not confirmed open" in w for w in r11["warnings"]))
 
     failed = [n for n, passed in checks if not passed]
     print(json.dumps({

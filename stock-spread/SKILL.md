@@ -42,11 +42,12 @@ Covered underlyings + exact per-venue identifiers live in `vendor/data/symbology
 ## Reading the output (do not mislead the user)
 - `spread_pct` is computed **only after settlement-currency normalization**; always report it together with `price_basis`.
 - If `price_basis` is `mixed` (CEX mid + DEX executable), state the spread is **indicative, not directly capturable**.
-- If `reliable: false`, do **not** present the spread as actionable — explain the reason (stale / timestamp skew / fewer than 2 comparable venues).
+- If `reliable: false`, do **not** present the spread as actionable — explain the reason from `warnings` (e.g. **US market closed/unknown** — tokens trade 24/7 but off-hours the cross-venue spread is *shown but not certified*; timestamp skew; non-positive price excluded; fewer than 2 comparable venues).
+- The DEX (`executable`) leg is a quote for a **small clip (~1 token)** — read its `size_usd` and `price_impact_pct`; a thin-liquidity name can show high impact, so don't treat it as fillable at size without checking.
 - Always surface `warnings`, `excluded`, and `skipped` to the user; never silently drop a venue.
 
 ## Safety rules
-1. **Read-only.** Never execute, swap, transfer, or sign. No API keys, no wallet.
+1. **Read-only (no financial/on-chain writes).** Never trade, swap, transfer, or sign; no API keys, no wallet. The *only* filesystem write is `catalog.py --refresh` regenerating the local `symbology.json` cache.
 2. **Exact-address resolution only.** Scam look-alike tokens exist on-chain; never match by ticker substring.
 3. **Objective data only.** No investment advice; flag unverified, illiquid, or market-closed venues.
 4. **Arb is signal, not free money.** Cross-venue convergence is generally NOT capturable by an anonymous wallet (KYC-gated redemption, US-hours peg), so present spreads as a signal.
