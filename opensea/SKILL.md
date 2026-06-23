@@ -1,6 +1,6 @@
 ---
 name: opensea
-description: Use for OpenSea NFT and token data, Seaport NFT trading, ERC20 swaps, AI tool registry/gating, x402 payments, and OpenSea payload preparation. For signing, order/message/payment signatures, or transaction execution, use purr opensea instead of official OpenSea wallet-provider or private-key commands.
+description: OpenSea, NFT, Seaport, swap, x402, pay, sign, execute, tools
 license: MIT
 metadata:
   openclaw:
