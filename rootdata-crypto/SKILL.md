@@ -1,6 +1,6 @@
 ---
 name: rootdata-crypto
-description: RootData, crypto projects, investors, funding, trends, jobs
+description: RootData,crypto projects,investors,funding,trends,jobs
 metadata:
   { "openclaw": { "primaryEnv": "ROOTDATA_SKILL_KEY" } }
 ---

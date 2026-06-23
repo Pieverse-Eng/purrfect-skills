@@ -1,6 +1,6 @@
 ---
 name: opensea
-description: OpenSea, NFT, Seaport, swap, x402, pay, sign, execute, tools
+description: OpenSea,NFT,Seaport orders,swap,x402,sign,execute,tools
 license: MIT
 metadata:
   openclaw:

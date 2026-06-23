@@ -1,6 +1,6 @@
 ---
 name: gate
-description: Gate,CEX/DEX,swaps,trading,earn,pay,x402,news
+description: Gate CEX/DEX,spot/futures,earn,Web3 Pay,x402,news
 ---
 
 # Gate

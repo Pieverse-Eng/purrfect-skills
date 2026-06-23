@@ -1,6 +1,6 @@
 ---
 name: fourmeme
-description: four.meme BSC,buy,sell,create,tax,agent,raised tokens
+description: four.meme BSC,buy,sell,create,TaxToken,raised tokens
 ---
 
 # four.meme

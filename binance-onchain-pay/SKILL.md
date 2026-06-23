@@ -1,6 +1,6 @@
 ---
 name: binance-onchain-pay
-description: Binance,buy/send crypto,fiat,payments,quotes,orders,contract
+description: Binance Onchain Pay,fiat,send,checkout,order,contract
 metadata:
   openclaw:
     primaryEnv: BINANCE_CONNECT_CLIENT_ID

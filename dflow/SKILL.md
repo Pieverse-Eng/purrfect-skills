@@ -1,6 +1,6 @@
 ---
 name: dflow
-description: DFlow,Solana swaps,Kalshi markets,KYC,fees,portfolio
+description: DFlow,Solana swaps,Kalshi,KYC,fees,portfolio,setup
 metadata:
   openclaw:
     primaryEnv: DFLOW_API_KEY

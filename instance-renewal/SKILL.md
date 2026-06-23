@@ -1,6 +1,6 @@
 ---
 name: instance-renewal
-description: Instance renewal,billing,status,presets
+description: Instance renewal,billing,status,payment presets
 ---
 
 # Instance Renewal

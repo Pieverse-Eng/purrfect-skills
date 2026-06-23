@@ -1,6 +1,6 @@
 ---
 name: red-packet
-description: redpacket, send, pending, claim, .pie, XLayer USDT0, history
+description: redpacket,send,pending,claim,history,.pie,XLayer USDT0
 ---
 
 # Red Packet

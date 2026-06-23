@@ -1,6 +1,6 @@
 ---
 name: kaia-skills
-description: Kaia,KAIA,gasless,accounts,fee delegation,SDK
+description: Kaia,KAIA,gas abstraction,accounts,fee delegation,SDK
 ---
 
 ## Using `purr` CLI on Kaia / Kairos

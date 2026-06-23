@@ -1,6 +1,6 @@
 ---
 name: cobo
-description: Cobo Agentic Wallet,onboard,pair,pacts,call,sign,DeFi
+description: Cobo Agentic Wallet,onboard,pacts,policy,sign,DeFi,SDK
 ---
 
 # Cobo Agentic Wallet Overview

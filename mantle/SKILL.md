@@ -1,6 +1,6 @@
 ---
 name: mantle
-description: Mantle L2, network, DeFi, risk, contracts
+description: Mantle L2,network,addresses,DeFi,risk,contracts
 ---
 
 # Mantle

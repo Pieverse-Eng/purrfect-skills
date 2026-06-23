@@ -1,6 +1,6 @@
 ---
 name: pancake
-description: PancakeSwap, swap, LP, farm, rewards, fees, BSC, Hub, trade
+description: PancakeSwap,swap,LP,farm,rewards,fees,BSC,Hub
 ---
 
 # PancakeSwap

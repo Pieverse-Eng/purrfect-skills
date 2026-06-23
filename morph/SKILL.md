@@ -1,6 +1,6 @@
 ---
 name: morph
-description: Morph L2, assets, explorer, DEX, bridge, ID, fee, 7702, x402
+description: Morph L2,assets,explorer,DEX,bridge,ID,7702,x402
 ---
 
 

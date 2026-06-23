@@ -1,6 +1,6 @@
 ---
 name: panewslab
-description: PANews, crypto news, Polymarket boards, publish, Markdown
+description: PANews,news,Polymarket boards,publish,Markdown pages
 ---
 
 # PANewsLab

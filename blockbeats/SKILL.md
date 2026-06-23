@@ -1,6 +1,6 @@
 ---
 name: blockbeats
-description: BlockBeats,crypto news,search,market,macro,ETF,AI
+description: BlockBeats,macro market,ETF,onchain flows,AI news
 metadata:
   openclaw:
     emoji: "📰"

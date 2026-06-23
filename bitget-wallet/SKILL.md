@@ -1,6 +1,6 @@
 ---
 name: bitget-wallet
-description: Bitget wallet, balance, token price, swaps, stock, x402
+description: Bitget Wallet,default swap,balance,risk,alpha,RWA,x402
 ---
 
 # Bitget Wallet Skill

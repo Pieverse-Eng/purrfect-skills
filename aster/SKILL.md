@@ -1,6 +1,6 @@
 ---
 name: aster
-description: Aster market data,trading,account,transfers,deposits,refs
+description: Aster DEX,futures market,trade,account,transfer,deposit
 metadata:
   openclaw:
     primaryEnv: ASTER_USER_WALLET
