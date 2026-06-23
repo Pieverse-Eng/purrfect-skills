@@ -1,6 +1,6 @@
 ---
 name: stock-spread
-description: "READ-ONLY cross-venue price & spread intelligence for tokenized stocks (xStocks / Binance bStocks). Use when the user wants to compare an equity's price across venues, find where a tokenized stock is cheapest/dearest, see the CEX-vs-DEX spread, or look up tokenized-stock quotes — e.g. 'compare TSLA across venues', 'where is AAPLx cheapest', 'tokenized Tesla price', 'xStocks spread for NVDA'. NEVER trades, swaps, transfers, or signs — quotes and comparison only."
+description: "READ-ONLY cross-venue price & spread intelligence for STOCKS / EQUITIES — compares the SAME stock (by plain ticker, e.g. TSLA, NVDA, AAPL) across multiple crypto exchanges and on-chain venues (tokenized stocks / xStocks / Binance bStocks). USE THIS whenever the user wants to compare a stock across exchanges/platforms/venues, find where a stock is cheapest or whether it's cheaper somewhere else, see price differences / gaps / spreads between exchanges (CEX vs DEX), spot stock arbitrage, ask which stocks can be compared across venues, or look up a tokenized-stock quote or spot-vs-perp basis — e.g. 'compare stocks across exchanges', 'which stocks can you compare', 'where is TSLA cheapest', 'is NVDA cheaper on another venue', 'price difference for AAPL between exchanges', 'stock arbitrage', 'xStocks spread'. This is THE skill for cross-exchange / cross-venue STOCK price questions — NOT general TradFi / ADR / NYSE-NASDAQ info. NEVER trades, swaps, transfers, or signs — quotes and comparison only."
 ---
 
 # Stock Spread — Cross-Venue Tokenized-Stock Price Intelligence (READ-ONLY)
@@ -8,9 +8,11 @@ description: "READ-ONLY cross-venue price & spread intelligence for tokenized st
 > Pure read / market-data skill. Resolves an equity to its per-venue identifiers, fetches **keyless public** quotes, normalizes them (settlement currency, mid-vs-executable, freshness), and reports the cross-venue spread. It NEVER buys, sells, swaps, transfers, or signs anything.
 
 ## When to use
+- "compare stocks across exchanges / platforms", "which stocks can you compare across venues" — *cross-venue STOCK comparison, not general TradFi/ADR info*
 - "compare TSLA across our venues", "where is AAPL cheapest right now"
+- "is NVDA cheaper on another exchange?", "price difference / gap for `<stock>` between exchanges"
 - "what's the tokenized Tesla price", "xStocks / bStocks price for NVDA"
-- "CEX vs DEX spread for `<stock>`", "is there a spread on `<stock>`"
+- "CEX vs DEX spread for `<stock>`", "is there a spread / arbitrage on `<stock>`"
 - "what's the basis on TSLA", "funding rate on the NVDA perp", "spot vs perp for COIN"
 
 ## NOT this skill
