@@ -1,54 +1,37 @@
 ---
 name: panewslab
-description: PANewsLab skill bundle — routes to the correct sub-skill for reading crypto news, publishing articles, or viewing rendered PANews web pages.
+description: PANews, crypto news, Polymarket boards, publish, Markdown
 ---
 
-# PANewsLab (News Reading + Creator + Web Viewer)
+# PANewsLab
 
-Router skill for all PANews operations. Dispatch to the appropriate sub-skill based on user intent.
+## Overview
 
-## Sub-Skills
+Use this skill to track crypto narratives, inspect public Polymarket smart money boards, publish faster on PANews, and turn PANews pages into agent-ready Markdown.
 
-| Sub-skill           | Location                     | Use for                                                                                                         |
-| ------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `panews`            | `panews/SKILL.md`            | Reading news: headlines, search, trending, articles, columns, series, topics, events, calendar, editorial picks |
-| `panews-creator`    | `panews-creator/SKILL.md`    | Publishing: create/edit/delete articles, manage drafts, upload images, search tags, apply for a column          |
-| `panews-web-viewer` | `panews-web-viewer/SKILL.md` | Rendered page reads: fetch PANews homepage, article pages, or column pages as Markdown                          |
+Always read the relevant vendor `SKILL.md` before running commands. Vendor instructions contain the current command list, workflow references, session requirements, and output rules.
 
-**Always read the relevant sub-skill SKILL.md before executing any commands.**
+## PANews Workflows
 
-## Intent Routing
+| Skill | What it does | Use when | Path |
+|---|---|---|---|
+| `panews` | Crypto and blockchain news discovery, briefings, and public smart money leaderboard reads. | You need PANews coverage about crypto news, projects, market narratives, rankings, events, calendars, or the latest public smart money board snapshots. | [`vendor/panews/SKILL.md`](vendor/panews/SKILL.md) |
+| `panews-creator` | Write, manage, and publish PANews articles with authenticated creator tools for sessions, drafts, submissions, image uploads, tag search, and columns. | You need authenticated PANews creator operations that require `PA-User-Session`. | [`vendor/panews-creator/SKILL.md`](vendor/panews-creator/SKILL.md) |
+| `panews-web-viewer` | Read PANews homepage, article, and column pages as Markdown with page metadata. | You need the rendered PANews page itself as Markdown rather than structured API-style content. | [`vendor/panews-web-viewer/SKILL.md`](vendor/panews-web-viewer/SKILL.md) |
 
-| User intent                                        | Route to            |
-| -------------------------------------------------- | ------------------- |
-| Today's headlines / what's happening in crypto     | `panews`            |
-| Search for coverage about a token or project       | `panews`            |
-| Breaking news / latest updates                     | `panews`            |
-| Trending / rankings / hot topics                   | `panews`            |
-| Read an article by ID                              | `panews`            |
-| Browse columns, series, or community topics        | `panews`            |
-| Events, conferences, calendar                      | `panews`            |
-| Editorial picks / hot searches                     | `panews`            |
-| Write / publish / submit an article                | `panews-creator`    |
-| Check my drafts / submissions / rejections         | `panews-creator`    |
-| Edit or resubmit a rejected article                | `panews-creator`    |
-| Upload an image / search tags                      | `panews-creator`    |
-| Apply for a column                                 | `panews-creator`    |
-| Polish or review article content before publishing | `panews-creator`    |
-| Read a PANews URL as Markdown                      | `panews-web-viewer` |
-| View the PANews homepage rendered content          | `panews-web-viewer` |
-| Open a column page and get rendered content        | `panews-web-viewer` |
-| Get the full rendered content of a PANews page     | `panews-web-viewer` |
+## Rules
 
-## General Principles
+- Do not predict price movements or give investment advice.
+- Keep news answers grounded in PANews coverage; say coverage is weak or missing instead of filling gaps with outside information.
+- Treat Polymarket smart money boards as read-only public leaderboard data, not editorial article coverage.
+- If a PANews or Polymarket-board request mixes factual lookup with prediction or buy/sell guidance, use the relevant vendor lookup for factual background first, then refuse only the unsupported prediction or advice. Do not extrapolate board rankings into future returns.
+- For creator operations, validate `PA-User-Session` before authenticated actions and stop on 401 so the user can refresh the session.
+- Require explicit confirmation before deleting creator content or submitting a draft for review.
+- Match `--lang` to the user's question language when the selected vendor command supports it. Polymarket board endpoints may not localize; translate or summarize returned fields if needed.
 
-- Do not predict price movements or give investment advice
-- Content strictly from PANews — do not add information PANews has not reported
-- For creator operations, session verification is required before any authenticated action
-- Match `--lang` to the user's question language when applicable; if omitted, the system locale is auto-detected
+## Ambiguity
 
-## Ambiguity Resolution
-
-- If the user provides a PANews URL without specifying format, route to `panews` (structured API). Only use `panews-web-viewer` if they explicitly ask for Markdown or rendered page content
-- If the user wants to write or edit content, use `panews-creator`; for reading content, use `panews`
-- When in doubt between reading sub-skills, prefer `panews` (API-based) over `panews-web-viewer` (page scrape)
+- If the user provides a PANews URL and asks for structured fields, search, article content, or an explanation, use `vendor/panews`.
+- If the user explicitly asks for Markdown, rendered page content, frontmatter metadata, or the page as displayed on the website, use `vendor/panews-web-viewer`.
+- If the user wants to write, edit, upload, publish, submit, manage drafts, or apply for a column, use `vendor/panews-creator`.
+- If a request mentions smart money boards, Polymarket board categories, leaderboard snapshots, board highlights, or comparing boards, use `vendor/panews`.
