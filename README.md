@@ -53,5 +53,4 @@ This directory contains the Pieverse built-in skills. Each folder is a skill uni
 |-------|-------------|
 | `instance-renewal` | Hosted instance billing status and renewal through `purr instance`, with preset mapping such as `bsc-usdt` to chain/token identifiers. |
 | `pieverse-a2a` | Pieverse HTTP 402 A2A payment flow — probe, confirm, authorize through the hosted wallet, and retry with `X-Pieverse-Payment`. |
-| `red-packet-send` | P2P XLayer USDT0 redpacket sender flow — parse amount and recipient, then call the platform `/v2/instances/:id/redpackets` API directly. |
-| `red-packet-claim` | P2P redpacket claim flow — inspect pending redpackets and claim all, by sender handle, or selected envelopes through the platform API directly. |
+| `red-packet` | P2P XLayer USDT0 redpackets through `purr redpacket` — send to `.pie`/EVM address, inspect pending, claim, and view sent history. |
