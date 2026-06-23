@@ -1,10 +1,10 @@
 ---
 name: okx-dex-swap
-description: "NOTE (gating): route to okx-dapp-discovery (NOT this skill) when prompt names a specific DApp as the swap venue: Polymarket, Aave V3, Hyperliquid, PancakeSwap, Morpho, Raydium, Curve, Compound V3, Pendle, Lido, ether.fi, GMX V2, Kamino, Orca, Meteora, Clanker, pump.fun, Uniswap. Examples that go to okx-dapp-discovery: 'swap on PancakeSwap', 'swap SOL for USDC on Raydium', 'use Hyperliquid to long ETH', '在 Curve 上换 USDT', 'swap on Uniswap'. okx-dapp-discovery installs the DApp's plugin and uses its native interface; this skill is for OKX-aggregated swaps without a named venue. Use this skill to 'swap tokens', 'trade OKB for USDC', 'buy tokens', 'sell tokens', 'exchange crypto', 'convert tokens', 'swap SOL for USDC', 'get a swap quote', 'execute a trade', 'find the best swap route', 'cheapest way to swap', 'optimal swap', 'compare swap rates', 'get swap calldata', 'build unsigned tx', or mentions swapping/trading/buying/selling/exchanging tokens across XLayer, Solana, Ethereum, Base, BSC, Arbitrum, Polygon, or any 20+ supported chains. Aggregates 500+ DEX sources for optimal routing/price. Supports slippage control, price impact protection, and cross-DEX route optimization."
+description: "Use this skill to swap, trade, buy, sell, exchange, or convert tokens, get a swap quote, execute a trade, find the best or cheapest swap route, compare swap rates, get swap calldata, or build an unsigned swap tx across XLayer, Solana, Ethereum, Base, BSC, Arbitrum, Polygon, or 20+ chains. OKX-aggregated routing over 500+ DEX sources with slippage control, price-impact protection, and cross-DEX route optimization. For OKX-aggregated swaps with no named venue. If the prompt names a specific DApp as the swap venue (Polymarket, Aave, Hyperliquid, PancakeSwap, Morpho, Raydium, Curve, Compound, Pendle, Lido, ether.fi, GMX, Kamino, Orca, Meteora, Clanker, pump.fun, Uniswap), route to okx-dapp-discovery instead, e.g. 'swap on PancakeSwap', 'swap SOL for USDC on Raydium', '在 Curve 上换 USDT', 'swap on Uniswap'."
 license: MIT
 metadata:
   author: okx
-  version: "3.0.0"
+  version: "3.3.14"
   homepage: "https://web3.okx.com"
 disable-model-invocation: true
 user-invocable: false
@@ -13,21 +13,6 @@ user-invocable: false
 # Onchain OS DEX Swap
 
 6 commands for multi-chain swap aggregation — quote, approve, one-shot execute, and calldata-only swap.
-
-## Step 0 — DApp Re-Route Check (run before every other step)
-
-Before running any `onchainos swap` command, scan the **original user prompt** for a named DApp/protocol. If any of the names below appear (English or Chinese), STOP this skill and invoke `okx-dapp-discovery` with the user's original prompt instead — the DApp's own plugin is the correct executor.
-
-Trigger names: **Polymarket · Aave · Hyperliquid · PancakeSwap · Pancake · PCS · Morpho · Raydium · Curve · Compound · Pendle · Lido · ether.fi · GMX · Kamino · Orca · Meteora · Clanker · Uniswap · pump.fun**.
-
-Trigger protocol-native tokens (route to `okx-dapp-discovery` even without DApp name): **HYPE, HLP, CAKE, veCAKE, CRV, crvUSD, 3pool, COMP, Comet, RAY, Whirlpool, ETHFI, eETH, weETH, LDO, stETH, wstETH, GLP, esGMX, GHO, kToken, PT-* / YT-* / `PT <token>`, vePENDLE, $CLANKER**.
-
-Examples that MUST re-route (do not run `swap quote` / `swap execute` here):
-- "swap on PancakeSwap", "swap SOL for USDC on Raydium", "swap on Uniswap", "在 Curve 上把 USDC 换成 USDT", "在 Orca 上把 SOL 换成 USDC", "swap on PancakeSwap V2 with classic LP".
-
-Stay in this skill ONLY when the venue is **unspecified or aggregated**: "swap 1 ETH for USDC", "best route from SOL to USDC", "trade USDC for OKB", "convert tokens", "buy 0.5 ETH with my USDC".
-
-If you have already started running commands and only then realise the user named a DApp, halt mid-flow and invoke `okx-dapp-discovery` — do not finish the aggregated swap.
 
 ## Pre-flight Checks
 
@@ -72,7 +57,7 @@ If you have already started running commands and only then realise the user name
 
 Acceptable CA sources (in order):
 1. **CLI TOKEN_MAP** (pass directly as `--from`/`--to`): native: `sol eth bnb okb matic pol avax ftm trx sui`; stablecoins: `usdc usdt dai`; wrapped: `weth wbtc wbnb wmatic`
-2. `onchainos token search --query <symbol> --chains <chain>` — for all other symbols
+2. `onchainos token search --query <symbol> --chains <chain>` — for all other symbols. Returns `tokenContractAddress` (use as `--from`/`--to`) and `decimal` (string, e.g. `"6"`);
 3. User provides full CA directly
 
 Multiple search results → show name/symbol/CA/chain, ask user to confirm before executing. Single exact match → show token details for user to verify before executing.
@@ -122,7 +107,7 @@ onchainos swap execute --from <token address from step1> --to <token address fro
 ```
 
 CLI handles approve (if needed) + sign + broadcast internally.
-Returns: `{ approveTxHash?, swapTxHash, fromAmount, toAmount, priceImpact, gasUsed }`
+Returns: `{ approveTxHash?, swapTxHash, fromAmount, toAmount, priceImpact, gasUsed, nextSteps }`
 
 #### Error Retry
 
@@ -152,9 +137,23 @@ Enabled only when the user has **explicitly authorized** automated execution. Th
 
 ### Step 6 — Report Result
 
-IMPORTANT: Report as **broadcast successful**. Use wording like "Swap transaction broadcast — final on-chain result pending". Do NOT say "Swap complete" / "Swap successful" / "On-chain success" — broadcast does not guarantee the tx lands or succeeds on-chain. Tell the user to check the explorer link for final status.
+<MUST>Translate the template's prose labels into the user's conversation language. `<swapTxHash>` and `<nextSteps.checkSwapStatus>` are verbatim placeholder values. Construct `<explorerUrl>` yourself from the chain's canonical block explorer; if unknown, omit the Explorer line.</MUST>
 
-Suggest follow-up: explorer link for `swapTxHash`, check new token price, or swap again.
+Report as **broadcast** (not "complete" / "successful" / "on-chain success") — broadcast ≠ landed. Output:
+
+```
+Swap broadcast — final on-chain result pending.
+Tx hash: <swapTxHash>
+
+1. Reply 1 — query on-chain status on Agent:
+  <nextSteps.checkSwapStatus>
+
+2. Explorer (click to open):
+  <explorerUrl>
+```
+
+- Use `nextSteps.checkSwapStatus` verbatim from the execute response.
+- After running `Reply 1`, if `txStatus` is **not** `SUCCESS` / `FAIL` (e.g. empty, `PENDING`, no record yet), tell the user the tx hasn't landed and they can reply `1` again to re-query. Do not auto-poll.
 
 
 ## Additional Resources
