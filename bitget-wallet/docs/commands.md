@@ -26,10 +26,9 @@ Unified API client: swap flow + balance + token search + market data. No API key
 | `liquidity` | Get liquidity pool info for a token. | User asks for liquidity or pool info. |
 | `security` | Security audit (highRisk, riskCount, buyTax/sellTax, etc.). | Before swap for unfamiliar tokens; user asks for safety check. See `docs/market-data.md`. |
 | `quote` | First quote: returns **multiple market results** in `data.quoteResults`. Agent must **display all** results to the user, **recommend the first**, and allow the user to **choose another** for confirm if they prefer. | Step 1 of swap: show all options; default to first for confirm unless user picks another. |
-| `confirm` | Second quote: locks in **one** market (the chosen one from quote), returns `data.orderId` and `data.quoteResult`. Use market/protocol/slippage from the **selected** quote result (default first; or the item user chose). | Step 2 of swap: get orderId and latest quoteResult for makeOrder/send using the user's chosen market. |
-| `make-order` | Creates order; returns unsigned `data.txs` (expires ~60s). | Only if not using `order_make_sign_send.py`; otherwise use combined script. |
-| `send` | Submits signed order: body is `{ "orderId", "txs" }` with `txs[].sig` filled. Input via `--json-stdin` or `--json-file`. | After signing makeOrder txs (e.g. via `order_sign.py`); or use `order_make_sign_send.py` for combined flow. |
-| `get-order-details` | Returns order status and result (e.g. `data.details.status`, `fromTxId`, `toTxId`). | After send: show user whether swap succeeded and tx links. |
+| `confirm` | Second quote: locks in **one** market (the chosen one from quote), returns `data.orderId` and `data.quoteResult`. Use market/protocol/slippage from the **selected** quote result (default first; or the item user chose). | Step 2 of swap: get orderId and latest quoteResult for `purr bitget order-execute`. |
+| `make-order` | Creates order; returns unsigned `data.txs` (expires ~60s). | Prefer `purr bitget order-execute` for supported EVM execution because it performs makeOrder + platform-wallet signing + Bitget submission together. |
+| `get-order-details` | Returns order status and result (e.g. `data.details.status`, `fromTxId`, `toTxId`). | After `purr bitget order-execute`: show user whether swap succeeded and tx links. |
 
 ### Usage Examples
 
@@ -67,64 +66,46 @@ python3 scripts/bitget-wallet-agent-api.py security --chain bnb --contract 0x55d
 python3 scripts/bitget-wallet-agent-api.py quote --from-address <wallet> --from-chain bnb --from-symbol USDT --from-contract <addr> --from-amount 0.01 --to-chain bnb --to-symbol BNB --to-contract ""
 # 2. Confirm
 python3 scripts/bitget-wallet-agent-api.py confirm --from-chain bnb --from-symbol USDT --from-contract <addr> --from-amount 0.01 --from-address <wallet> --to-chain bnb --to-symbol BNB --to-contract "" --to-address <wallet> --market <market.id> --protocol <market.protocol> --slippage <recommendSlippage>
-# 3. makeOrder (separate)
-python3 scripts/bitget-wallet-agent-api.py make-order --order-id <orderId> --from-chain bnb --from-contract <addr> --from-symbol USDT --to-chain bnb --to-contract "" --to-symbol BNB --from-address <wallet> --to-address <wallet> --from-amount 0.01 --slippage 1.00 --market bgwevmaggregator --protocol bgwevmaggregator_v000 > /tmp/makeorder.json
-# 4. Sign
-python3 scripts/order_sign.py --order-json "$(cat /tmp/makeorder.json)" --private-key-file <key_file> > /tmp/sigs.json
-# 5. Send (fill txs[i].sig from sigs, then send)
-# 6. Order status
+# 3. Execute supported EVM swap with platform wallet signing
+purr bitget order-execute --order-id <orderId> --from-chain bnb --from-contract <addr> --from-symbol USDT --from-address <wallet> --to-chain bnb --to-contract "" --to-symbol BNB --to-address <wallet> --from-amount 0.01 --slippage 1.00 --market bgwevmaggregator --protocol bgwevmaggregator_v000
+# 4. Order status
 python3 scripts/bitget-wallet-agent-api.py get-order-details --order-id <orderId>
 ```
 
 ---
 
-## `scripts/order_make_sign_send.py`
+## `purr bitget order-execute`
 
-One-shot makeOrder + sign + send. Supports EVM and Solana. Auto-detects chain from makeOrder response.
+Supported EVM swap/RWA execution. Runs Bitget makeOrder, verifies Bitget
+security headers, checks platform signer matches `--from-address`, signs through
+the platform wallet, then submits the order through Bitget.
 
-| When to use | When NOT to use |
-|-------------|-----------------|
-| After user confirms swap: run with orderId and params from confirm. | If signing with an external signer (e.g. hardware wallet), use make-order → sign externally → send instead. |
+Do not use official local signing scripts or direct Bitget order submission.
 
 ```bash
-# EVM
-python3 scripts/order_make_sign_send.py --private-key-file /tmp/.pk_evm --from-address <addr> --to-address <addr> --order-id <from_confirm> --from-chain bnb --from-contract <addr> --from-symbol USDT --to-chain bnb --to-contract "" --to-symbol BNB --from-amount 0.01 --slippage 1.00 --market bgwevmaggregator --protocol bgwevmaggregator_v000
-# Solana
-python3 scripts/order_make_sign_send.py --private-key-file-sol /tmp/.pk_sol --from-address <sol_addr> --to-address <sol_addr> --order-id <from_confirm> --from-chain sol --from-contract <mint> --from-symbol USDC --to-chain sol --to-contract <mint> --to-symbol USDT --from-amount 5 --slippage 0.01 --market ... --protocol ...
+purr bitget order-execute --order-id <from_confirm> --from-chain bnb --from-contract <addr> --from-symbol USDT --from-address <wallet> --to-chain bnb --to-contract "" --to-symbol BNB --to-address <wallet> --from-amount 0.01 --slippage 1.00 --market bgwevmaggregator --protocol bgwevmaggregator_v000
 ```
 
 ---
 
-## `scripts/order_sign.py`
+## `purr bitget transfer-execute`
 
-Sign order/makeOrder transaction data. Takes makeOrder response JSON, signs `data.txs`, outputs JSON array of signature hex strings.
-
-Supports: EVM raw tx signing, EVM gasPayMaster (gasless msgs eth_sign), EIP-712 typed data, Solana Ed25519, Solana gasPayMaster (partial-sign on serializedTransaction).
+Supported EVM token transfer and supported EVM gasless transfer.
 
 ```bash
-# EVM
-echo '<makeOrder_json>' | python3 scripts/order_sign.py --private-key-file <key_file>
-python3 scripts/order_sign.py --order-json "$(cat /tmp/makeorder.json)" --private-key-file <key_file>
-# Solana
-echo '<makeOrder_json>' | python3 scripts/order_sign.py --private-key-sol <base58>
+purr bitget transfer-execute --chain base --contract 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 --from-address <wallet> --to-address <recipient> --amount 50 --gasless true
 ```
 
 ---
 
-## `scripts/x402_pay.py`
+## `purr bitget x402-pay`
 
-x402 payment signing and pay flow (EIP-3009 USDC payments, Solana partial-sign).
-
-| Subcommand | What it does |
-|------------|----------------|
-| `sign-eip3009` | Signs an EIP-3009 transfer (e.g. USDC on Base) |
-| `sign-solana` | Partially signs a Solana transaction for x402 |
-| `pay` | Auto-detects 402 response, signs, pays, fetches resource |
+Supported EVM x402 EIP-3009 payment-required flow.
 
 ```bash
-python3 scripts/x402_pay.py sign-eip3009 --private-key-file <key_file> --token <usdc> --chain-id 8453 --to <payTo> --amount 10000
-python3 scripts/x402_pay.py sign-solana --private-key-file <key_file> --transaction <base64_tx>
-python3 scripts/x402_pay.py pay --url https://api.example.com/data --private-key-file <key_file>
+purr bitget x402-pay --url https://api.example.com/data --method GET
+purr bitget x402-pay --url https://api.example.com/data --method POST --data '<json>'
+purr bitget x402-sign-eip3009 --token <usdc> --chain-id 8453 --to <payTo> --amount 10000
 ```
 
 ## Token Deep Analysis (bgw_token_analyze)
@@ -138,7 +119,7 @@ All subcommands under `scripts/bitget-wallet-agent-api.py`. See [`docs/token-ana
 | `transaction-list` | Transaction records with tag/direction/time filtering | Drill into specific trades, smart money activity |
 | `holders-info` | Top 100 holders + classification + PnL | Holder distribution, concentration risk |
 | `profit-address-analysis` | Profitable address summary statistics | Profitability landscape overview |
-| `top-profit` | Top profitable addresses list with PnL | Identify successful traders |
+| `top-profit` | Top profitable addresses list with PnL. `--limit`, `--offset`, `--latest-position` (add/hold/reduce/close/open), `--txn-from-tags` (smart_money,kol,bot,manipulator). | Identify successful traders, filter by position or role |
 | `compare-tokens` | Side-by-side K-line comparison of two tokens | Compare price action between tokens |
 
 ```bash
@@ -164,8 +145,51 @@ python3 scripts/bitget-wallet-agent-api.py holders-info --chain sol --contract <
 python3 scripts/bitget-wallet-agent-api.py profit-address-analysis --chain sol --contract <addr>
 python3 scripts/bitget-wallet-agent-api.py top-profit --chain sol --contract <addr>
 
+# Smart money in token (smart_in_token composite analysis)
+python3 scripts/bitget-wallet-agent-api.py profit-address-analysis --chain sol --contract <addr>
+python3 scripts/bitget-wallet-agent-api.py top-profit --chain sol --contract <addr> --txn-from-tags smart_money --latest-position add
+
 # Compare two tokens
 python3 scripts/bitget-wallet-agent-api.py compare-tokens --chain-a sol --contract-a <addr1> --chain-b sol --contract-b <addr2> --period 1h --size 24
+```
+
+## Alpha Intelligence (bgw_alpha)
+
+All subcommands under `scripts/bitget-wallet-agent-api.py`. See [`docs/alpha.md`](alpha.md) for full domain knowledge.
+
+| Subcommand | What it does | When to use |
+|------------|-------------|-------------|
+| `alpha-gems` | AI-curated high-potential tokens. No parameters. | User asks for alpha picks, AI-selected gems, trending opportunities |
+| `alpha-signals` | Smart money/KOL/growth signals. `--chain`, `--page`, `--size`, `--offset`, `--filters`. | User asks for trading signals, smart money flow, KOL calls |
+| `alpha-hunter-find` | Smart money address list with scores. `--chain` (required), `--page`, `--limit`. | User asks for top smart money addresses, alpha hunters on a chain |
+| `alpha-hunter-detail` | Address scoring factor detail. `--chain` (required), `--address` (required). | User asks for detailed analysis of a specific smart money address |
+| `agent-alpha-tags` | List available Agent tag labels. No parameters. | User wants to see available behavioral tags before querying |
+| `agent-alpha-hunter-find` | Find addresses by Agent tag. `--chain` (required), `--tag` (required), `--page`, `--limit`. | User asks for addresses by behavioral type (meme_sniper, diamond_hand, etc.) |
+
+```bash
+# Alpha gems (no parameters)
+python3 scripts/bitget-wallet-agent-api.py alpha-gems
+
+# Alpha signals (all chains)
+python3 scripts/bitget-wallet-agent-api.py alpha-signals
+
+# Solana signals only
+python3 scripts/bitget-wallet-agent-api.py alpha-signals --chain sol --size 10
+
+# Filter by specific token
+python3 scripts/bitget-wallet-agent-api.py alpha-signals --filters '[{"chain":"sol","contract":"CE2Mfjg46daZVQHmc3iVLnVDFKQyQe5zwLB9Zmrppump"}]'
+
+# Top smart money on Solana
+python3 scripts/bitget-wallet-agent-api.py alpha-hunter-find --chain sol
+
+# Detail for a specific address
+python3 scripts/bitget-wallet-agent-api.py alpha-hunter-detail --chain sol --address <wallet_address>
+
+# List Agent tag labels
+python3 scripts/bitget-wallet-agent-api.py agent-alpha-tags
+
+# Find early alpha hunters on Solana
+python3 scripts/bitget-wallet-agent-api.py agent-alpha-hunter-find --chain sol --tag early_alpha_hunter --limit 10
 ```
 
 ## Address Discovery (bgw_address_find)
@@ -193,36 +217,8 @@ python3 scripts/bitget-wallet-agent-api.py recommend-address-list --group-ids 1 
 python3 scripts/bitget-wallet-agent-api.py recommend-address-list --sort-field last_activity_time --limit 10
 ```
 
-## `scripts/social-wallet.py`
+## Out Of Scope Signing Commands
 
-Social Login Wallet operations — sign transactions and messages via Bitget Wallet TEE (no local private key).
-
-| Subcommand | What it does |
-|------------|----------------|
-| `profile` | Get wallet identity (`walletId`) for API routing |
-| `core get_address` | Get wallet address for a chain |
-| `core sign_transaction` | Sign a transaction (ETH/BTC/SOL/Tron + all EVM chains) |
-| `core sign_message` | Sign a message (including `EthSign:` prefix for raw hash signing) |
-| `core get_public_key` | Get public key for a chain |
-| `core validate_address` | Validate an address for a chain |
-| `batchGetAddressAndPubkey` | Get addresses and public keys for multiple chains |
-
-```bash
-# Get walletId (required before using --wallet-id with bitget-wallet-agent-api.py)
-python3 scripts/social-wallet.py profile
-
-# Get address
-python3 scripts/social-wallet.py core get_address '{"chain":"eth"}'
-
-# Batch get addresses
-python3 scripts/social-wallet.py batchGetAddressAndPubkey '{"chainList":["eth","btc","sol"]}'
-
-# Sign transaction (EVM)
-python3 scripts/social-wallet.py core sign_transaction '{"chain":"evm_custom#bnb","chainId":56,"to":"0x...","value":0,"data":"0x...","nonce":0,"gasLimit":21000,"gasPrice":3000000000}'
-
-# Sign message (regular)
-python3 scripts/social-wallet.py core sign_message '{"chain":"eth","message":"hello"}'
-
-# Sign message (raw hash for gasPayMaster — EthSign prefix)
-python3 scripts/social-wallet.py core sign_message '{"chain":"evm_custom#bnb","message":"EthSign:0x<hash>"}'
-```
+Do not use local private-key scripts, Social Login Wallet scripts, or direct
+signed-payload submission. Solana partial-sign, Solana x402, and Tron execution
+are out of scope.

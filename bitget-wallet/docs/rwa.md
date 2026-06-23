@@ -9,7 +9,7 @@ This document describes **RWA stock trading**: tokenized real-world stocks (e.g.
 - **Buy** RWA stock tokens by spending stablecoins (USDT, USDC, etc.) on a supported chain (e.g. BNB, Ethereum).
 - **Sell** RWA stock tokens to receive stablecoins.
 
-Trading uses the same **swap** backend: RWA stock is treated as a token with a **ticker** (e.g. `NVDAon`), **name**, and **contract** address per chain. Supported chains for RWA are currently **bnb** and **eth**. The agent should use RWA-specific APIs for discovery and market info, then reuse the standard swap flow (quote → confirm → makeOrder → sign & send → getOrderDetails) with RWA ticker/contract as from/to token.
+Trading uses the same **swap** backend: RWA stock is treated as a token with a **ticker** (e.g. `NVDAon`), **name**, and **contract** address per chain. Supported chains for RWA are currently **bnb** and **eth**. The agent should use RWA-specific APIs for discovery and market info, then reuse the standard swap flow (quote → confirm → `purr bitget order-execute` → getOrderDetails) with RWA ticker/contract as from/to token.
 
 ## RWA Trading Flow
 
@@ -47,7 +47,7 @@ When the user decides to trade (buy or sell an RWA stock on a chosen chain):
 - **Buy RWA:** fromToken = stablecoin (e.g. USDT), toToken = RWA stock. Set `fromSymbol`/`fromContract` to the stablecoin, `toSymbol`/`toContract` to the RWA stock **name** and **contract** for that chain.
 - **Sell RWA:** fromToken = RWA stock, toToken = stablecoin. Set `fromSymbol`/`fromContract` to the RWA stock **name** and **contract**, `toSymbol`/`toContract` to the stablecoin.
 
-Follow [swap.md](swap.md) for balance check, token risk check, quote, confirm, makeOrder, sign, send, and getOrderDetails. After a successful swap, call **rwa-get-user-ticker-selector** (with `--user-address`) or **rwa-get-my-holdings** to show the user’s updated RWA position.
+Follow [swap.md](swap.md) for balance check, token risk check, quote, confirm, `purr bitget order-execute`, and getOrderDetails. After a successful swap, call **rwa-get-user-ticker-selector** (with `--user-address`) or **rwa-get-my-holdings** to show the user’s updated RWA position.
 
 ## Python Script Commands (RWA)
 

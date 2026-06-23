@@ -2,8 +2,9 @@
 """
 Bitget Wallet Agent API client — new swap flow (no apiKey).
 
-Flow: quote → confirm → makeOrder → send → getOrderDetails.
-Signing via order_sign.py with private key derived from mnemonic in secure storage (derive on-the-fly, discard after signing).
+Flow: quote → confirm → makeOrder → getOrderDetails.
+Signing, transaction submission, x402 payment, and transfer execution are out of
+scope for this packaged skill.
 """
 
 from __future__ import annotations
@@ -18,8 +19,47 @@ from typing import List, Optional
 
 import requests
 
+# ---------------------------------------------------------------------------
+# Production RSA public key for security-check / security-request-check verification
+# Override via BGW_SECURITY_PUBLIC_KEY env var to support key rotation without code deploy.
+# ---------------------------------------------------------------------------
+_SECURITY_PUBLIC_KEY_PEM_DEFAULT = (
+    "-----BEGIN PUBLIC KEY-----\n"
+    "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAk18NCL9CoiE8OQ588ehJ\n"
+    "hVoCenARvVymahlH3Sw8URZATuZw4k8ZKC8Sf7Zu9i9l3L3K5X4m2I20UENkOBzP\n"
+    "YGCRHk3Dy8SQk/e7ucj/hXJH07yNDJuv1t1nWXRhvwpG8rdW03KpDhJy4pgcAMXl\n"
+    "JYnJYqhfj7HW/urMD0KXw7dLNKyWKBoaGzKkoRvvxTSDHk35cjETcYg6H+bEm+Px\n"
+    "a+GnIJkuN5U2/LfZ4WxgNiIdE2zacHLcFoFsM14jTQdcvPid+6ilY8SQCA3GWc72\n"
+    "n1RudWoTj1ThEUVNWXgcwxLFIdiLCNH1YF7qINdRrjOOCCBBBpr6jdANdI2e4Dcy\n"
+    "DQIDAQAB\n"
+    "-----END PUBLIC KEY-----"
+)
+
+
+def _get_security_public_key_pem() -> str:
+    return os.environ.get("BGW_SECURITY_PUBLIC_KEY") or _SECURITY_PUBLIC_KEY_PEM_DEFAULT
+
+
+def _verify_security_header(signature_hex: str, data: bytes) -> bool:
+    """Verify RSA-PKCS1v15-SHA256 signature (0x-prefixed hex) against data bytes."""
+    from cryptography.hazmat.primitives import hashes, serialization
+    from cryptography.hazmat.primitives.asymmetric import padding
+    from cryptography.exceptions import InvalidSignature
+    try:
+        sig_hex = signature_hex
+        if sig_hex.startswith("0x") or sig_hex.startswith("0X"):
+            sig_hex = sig_hex[2:]
+        sig_bytes = bytes.fromhex(sig_hex)
+    except ValueError:
+        return False
+    pub_key = serialization.load_pem_public_key(_get_security_public_key_pem().encode())
+    try:
+        pub_key.verify(sig_bytes, data, padding.PKCS1v15(), hashes.SHA256())
+        return True
+    except InvalidSignature:
+        return False
+
 BASE_URL = "https://copenapi.bgwapi.io"
-WALLET_ID = ""  # Set via --wallet-id flag for Social Login Wallet users
 
 
 def _make_sign(method: str, path: str, body_str: str, ts: str) -> str:
@@ -32,20 +72,24 @@ def _make_sign(method: str, path: str, body_str: str, ts: str) -> str:
     return "0x" + digest
 
 
+_SECURITY_CHECK_PATHS = {
+    "/swap-go/swapx/makeOrder",
+}
+
+
 def _request(path: str, body: dict) -> dict:
-    """Send POST request with BKHmacAuth signing."""
+    """Send POST request with BKHmacAuth request authentication."""
     url = BASE_URL.rstrip("/") + path
     ts = str(int(time.time() * 1000))
     body_str = json.dumps(body, separators=(",", ":"), ensure_ascii=False)
     sign = _make_sign("POST", path, body_str, ts)
-    token_val = WALLET_ID if WALLET_ID else "toc_agent"
     headers = {
         "Content-Type": "application/json",
         "channel": "toc_agent",
         "brand": "toc_agent",
         "clientversion": "10.0.0",
         "language": "en",
-        "token": token_val,
+        "token": "toc_agent",
         "X-SIGN": sign,
         "X-TIMESTAMP": ts,
     }
@@ -53,25 +97,75 @@ def _request(path: str, body: dict) -> dict:
         resp = requests.post(url, data=body_str, headers=headers, timeout=30)
         if resp.status_code != 200:
             return {"status": -1, "error_code": resp.status_code, "msg": resp.text[:500]}
-        return resp.json()
+        result = resp.json()
+        if path in _SECURITY_CHECK_PATHS and result.get("status") == 0:
+            body_bytes = resp.content
+            sig_check = resp.headers.get("security-check", "")
+            sig_req_check = resp.headers.get("security-request-check", "")
+
+            sig_double_check = resp.headers.get("security-double-check", "")
+
+            # All three headers must be present
+            if not sig_check or not sig_req_check or not sig_double_check:
+                missing = []
+                if not sig_check:
+                    missing.append("security-check")
+                if not sig_req_check:
+                    missing.append("security-request-check")
+                if not sig_double_check:
+                    missing.append("security-double-check")
+                return {
+                    "status": -1,
+                    "error_code": -10001,
+                    "msg": f"Transaction blocked: missing security header(s): {', '.join(missing)}.",
+                }
+
+            # Verify security-check (server signs response body bytes)
+            if not _verify_security_header(sig_check, body_bytes):
+                return {
+                    "status": -1,
+                    "error_code": -10002,
+                    "msg": "Transaction blocked: security-check signature verification failed.",
+                }
+
+            # Verify security-request-check (server signs request body bytes)
+            if not _verify_security_header(sig_req_check, body_str.encode("utf-8")):
+                return {
+                    "status": -1,
+                    "error_code": -10003,
+                    "msg": "Transaction blocked: security-request-check signature verification failed.",
+                }
+
+            # Verify security-double-check (server signs responseBodySignature + requestBodySignature)
+            double_check_data = (sig_check + sig_req_check).encode("utf-8")
+            if not _verify_security_header(sig_double_check, double_check_data):
+                return {
+                    "status": -1,
+                    "error_code": -10004,
+                    "msg": "Transaction blocked: security-double-check signature verification failed.",
+                }
+
+            result["_security_check_valid"] = True
+            result["_security_request_check_valid"] = True
+            result["_security_double_check_valid"] = True
+        return result
     except Exception as e:
         return {"status": -1, "error_code": -1, "msg": str(e)}
 
 
 def _request_get(path_with_query: str) -> dict:
-    """Send GET request with BKHmacAuth signing. path_with_query includes query string (e.g. /path?ticker=NVDAon)."""
+    """Send GET request with BKHmacAuth request authentication."""
     url = BASE_URL.rstrip("/") + path_with_query
     ts = str(int(time.time() * 1000))
     body_str = ""
     sign = _make_sign("GET", path_with_query, body_str, ts)
-    token_val = WALLET_ID if WALLET_ID else "toc_agent"
     headers = {
         "Content-Type": "application/json",
         "channel": "toc_agent",
         "brand": "toc_agent",
         "clientversion": "10.0.0",
         "language": "en",
-        "token": token_val,
+        "token": "toc_agent",
         "X-SIGN": sign,
         "X-TIMESTAMP": ts,
     }
@@ -210,10 +304,7 @@ def make_order(
     protocol: str,
     source: str = "agent",
 ) -> dict:
-    """
-    Create order; returns unsigned data.txs.
-    Sign with scripts/order_sign.py (supports deriveTransaction format).
-    """
+    """Create order-preparation payload; returns unsigned data.txs."""
     body = {
         "orderId": order_id,
         "fromChain": from_chain,
@@ -234,20 +325,7 @@ def make_order(
 
 
 # ---------------------------------------------------------------------------
-# 4. Send order (with signatures) — path /swapx/send
-# ---------------------------------------------------------------------------
-
-def send(order_id: str, txs: List[dict]) -> dict:
-    """
-    Submit signed order. txs is makeOrder data.txs with each txs[i].sig filled.
-    Sign with order_sign.py to get signature array, then set txs[i].sig.
-    """
-    body = {"orderId": order_id, "txs": txs}
-    return _request("/swap-go/swapx/send", body)
-
-
-# ---------------------------------------------------------------------------
-# 5. Query order /swapx/getOrderDetails
+# 4. Query order /swapx/getOrderDetails
 # ---------------------------------------------------------------------------
 
 
@@ -409,6 +487,54 @@ def rankings(name: str) -> dict:
     """Get token rankings. name: e.g. topGainers, topLosers, or Hotpicks."""
     body = {"name": name}
     return _request("/market/v3/topRank/detail", body)
+
+
+def alpha_gems() -> dict:
+    """Get Alpha gems — AI-curated high-potential tokens with strategy labels."""
+    return _request_get("/market/v3/alpha/gems")
+
+
+def alpha_signals(
+    chain: str = "all",
+    page: int = 1,
+    size: int = 20,
+    offset: int = 0,
+    filters: Optional[List[dict]] = None,
+) -> dict:
+    """Get Alpha signals — smart money/KOL/growth signals for tokens."""
+    body: dict = {"chain": chain, "page": page, "size": size, "offset": offset}
+    if filters is not None:
+        body["filters"] = filters
+    return _request("/market/v3/alpha/signals", body)
+
+
+def alpha_hunter_find(chain: str, page: int = 1, limit: int = 20) -> dict:
+    """Get Alpha hunter (smart money) address list with scoring factors."""
+    body: dict = {"chain": chain, "page": page, "limit": limit}
+    return _request("/market/v3/address/smart-money", body)
+
+
+def alpha_hunter_detail(chain: str, address: str) -> dict:
+    """Get Alpha hunter factor detail for a specific address."""
+    body = {"chain": chain, "address": address}
+    return _request("/market/v3/address/factor-detail", body)
+
+
+def agent_alpha_tags() -> dict:
+    """Get available Agent tag labels (static enum)."""
+    return _request_get("/market/v3/address/agent-tags")
+
+
+def agent_alpha_hunter_find(chain: str, tag: str, page: int = 1, limit: int = 20) -> dict:
+    """Get addresses by Agent tag, sorted by score desc."""
+    body: dict = {"chain": chain, "tag": tag, "page": page, "limit": limit}
+    return _request("/market/v3/address/agent-tag-list", body)
+
+
+def multi_agent_signal(chain: str = "all", page: int = 1, size: int = 20) -> dict:
+    """Get Multi-Agent Signal list — tokens bought by Agent-tagged addresses (cross-strategy)."""
+    body: dict = {"chain": chain, "page": page, "size": size}
+    return _request("/market/v3/agent/signals", body)
 
 
 def liquidity(chain: str, contract: str) -> dict:
@@ -664,14 +790,26 @@ def profit_address_analysis(chain: str, contract: str) -> dict:
     return _request("/market/v2/coin/GetProfitAddressAnalysis", body)
 
 
-def top_profit(chain: str, contract: str) -> dict:
+def top_profit(
+    chain: str,
+    contract: str,
+    limit: int = 100,
+    offset: int = 0,
+    latest_position: Optional[str] = None,
+    txn_from_tags: Optional[List[str]] = None,
+) -> dict:
     """Top profitable addresses list with PnL details.
 
     Response: summary (profit_rate, buy_avg_price, sell_avg_price),
     list[] (address, latest_position, total_profit, total_profit_str,
-    total_profit_rate, total_profit_rate_str, user_tags, level_tag).
+    total_profit_rate, total_profit_rate_str, user_tags, level_tag),
+    address_tag_config[], address_level_tag_config[].
     """
-    body = {"chain": chain, "contract": contract}
+    body: dict = {"chain": chain, "contract": contract, "limit": limit, "offset": offset}
+    if latest_position is not None:
+        body["latest_position"] = latest_position
+    if txn_from_tags is not None:
+        body["txn_from_tags"] = txn_from_tags
     return _request("/market/v2/coin/GetTopProfit", body)
 
 
@@ -922,17 +1060,6 @@ def _cmd_make_order(args):
     print(json.dumps(out, indent=2, ensure_ascii=False))
 
 
-def _cmd_send(args):
-    # Read { orderId, txs } from stdin or file; txs already have sig filled
-    if args.json_stdin:
-        payload = json.load(sys.stdin)
-    else:
-        with open(args.json_file, encoding="utf-8") as f:
-            payload = json.load(f)
-    out = send(order_id=payload["orderId"], txs=payload["txs"])
-    print(json.dumps(out, indent=2, ensure_ascii=False))
-
-
 def _strip_tips_when_success(order_details_response: dict) -> dict:
     """When data.details.status is 'success', remove tips so it has no effect on the agent."""
     if order_details_response.get("error_code") != 0:
@@ -1084,6 +1211,63 @@ def _cmd_rankings(args):
     print(json.dumps(out, indent=2, ensure_ascii=False))
 
 
+def _cmd_alpha_gems(args):
+    out = alpha_gems()
+    print(json.dumps(out, indent=2, ensure_ascii=False))
+
+
+def _cmd_alpha_signals(args):
+    filters = None
+    if getattr(args, "filters", None):
+        filters = json.loads(args.filters)
+    out = alpha_signals(
+        chain=args.chain,
+        page=args.page,
+        size=args.size,
+        offset=args.offset,
+        filters=filters,
+    )
+    print(json.dumps(out, indent=2, ensure_ascii=False))
+
+
+def _cmd_alpha_hunter_find(args):
+    out = alpha_hunter_find(
+        chain=args.chain,
+        page=args.page,
+        limit=args.limit,
+    )
+    print(json.dumps(out, indent=2, ensure_ascii=False))
+
+
+def _cmd_alpha_hunter_detail(args):
+    out = alpha_hunter_detail(chain=args.chain, address=args.address)
+    print(json.dumps(out, indent=2, ensure_ascii=False))
+
+
+def _cmd_agent_alpha_tags(args):
+    out = agent_alpha_tags()
+    print(json.dumps(out, indent=2, ensure_ascii=False))
+
+
+def _cmd_agent_alpha_hunter_find(args):
+    out = agent_alpha_hunter_find(
+        chain=args.chain,
+        tag=args.tag,
+        page=args.page,
+        limit=args.limit,
+    )
+    print(json.dumps(out, indent=2, ensure_ascii=False))
+
+
+def _cmd_multi_agent_signal(args):
+    out = multi_agent_signal(
+        chain=args.chain,
+        page=args.page,
+        size=args.size,
+    )
+    print(json.dumps(out, indent=2, ensure_ascii=False))
+
+
 def _cmd_liquidity(args):
     out = liquidity(chain=args.chain, contract=args.contract)
     print(json.dumps(out, indent=2, ensure_ascii=False))
@@ -1190,7 +1374,15 @@ def _cmd_profit_address_analysis(args):
 
 
 def _cmd_top_profit(args):
-    out = top_profit(chain=args.chain, contract=args.contract)
+    tags = args.txn_from_tags.split(",") if getattr(args, "txn_from_tags", None) else None
+    out = top_profit(
+        chain=args.chain,
+        contract=args.contract,
+        limit=args.limit,
+        offset=args.offset,
+        latest_position=getattr(args, "latest_position", None),
+        txn_from_tags=tags,
+    )
     print(json.dumps(out, indent=2, ensure_ascii=False))
 
 
@@ -1340,13 +1532,22 @@ def _cmd_rwa_get_my_holdings(args):
     print(json.dumps(out, indent=2, ensure_ascii=False))
 
 
+def get_transfer_order(order_id: str) -> dict:
+    """
+    Query transfer order status via real-time chain query (not DB cache).
+    orderStatus: PENDING / PROCESSING / SUCCESS / FAILED.
+    """
+    from urllib.parse import quote as _quote
+    return _request_get(f"/userv2/order/getTransferOrder?orderId={_quote(order_id, safe='')}")
+
+
+def _cmd_get_transfer_order(args):
+    out = get_transfer_order(order_id=args.order_id)
+    print(json.dumps(out, indent=2, ensure_ascii=False))
+
+
 def main():
-    global WALLET_ID
-    parser = argparse.ArgumentParser(description="Bitget Wallet Agent API (new swap flow, no apiKey)")
-    parser.add_argument("--wallet-id", default="",
-                        help="Social Login Wallet ID (from profile endpoint). "
-                             "When set, all API calls use this as the 'token' header "
-                             "instead of the default 'toc_agent'.")
+    parser = argparse.ArgumentParser(description="Bitget Wallet Agent API (read, quote, order prep, and status only)")
     sub = parser.add_subparsers(dest="command", required=True)
 
     # quote
@@ -1399,13 +1600,6 @@ def main():
     p.add_argument("--market", required=True)
     p.add_argument("--protocol", required=True)
     p.set_defaults(func=_cmd_make_order)
-
-    # send
-    p = sub.add_parser("send", help="Send order (body: orderId + signed txs)")
-    g = p.add_mutually_exclusive_group(required=True)
-    g.add_argument("--json-stdin", action="store_true", help="Read JSON from stdin")
-    g.add_argument("--json-file", help="Read JSON from file")
-    p.set_defaults(func=_cmd_send)
 
     # getOrderDetails
     p = sub.add_parser("get-order-details", help="Query order /swapx/getOrderDetails")
@@ -1491,6 +1685,44 @@ def main():
     p = sub.add_parser("rankings", help="[Market] Get token rankings (e.g. topGainers, topLosers, Hotpicks)")
     p.add_argument("--name", required=True, help="e.g. topGainers, topLosers, or Hotpicks")
     p.set_defaults(func=_cmd_rankings)
+
+    p = sub.add_parser("alpha-gems", help="[Alpha] Alpha gems — AI-curated high-potential tokens")
+    p.set_defaults(func=_cmd_alpha_gems)
+
+    p = sub.add_parser("alpha-signals", help="[Alpha] Alpha signals — smart money/KOL/growth signals")
+    p.add_argument("--chain", default="all", help="Chain filter (sol, eth, bnb, base, all; default: all)")
+    p.add_argument("--page", type=int, default=1, help="Page number (default: 1)")
+    p.add_argument("--size", type=int, default=20, help="Page size (default: 20)")
+    p.add_argument("--offset", type=int, default=0, help="Offset for dedup (default: 0)")
+    p.add_argument("--filters", default=None, help='JSON array of {chain, contract} filters, e.g. \'[{"chain":"sol","contract":"0x..."}]\'')
+    p.set_defaults(func=_cmd_alpha_signals)
+
+    p = sub.add_parser("alpha-hunter-find", help="[Alpha] Alpha hunter — smart money address list with scores")
+    p.add_argument("--chain", required=True, help="Chain code (sol, eth, bnb, base)")
+    p.add_argument("--page", type=int, default=1, help="Page number (default: 1)")
+    p.add_argument("--limit", type=int, default=20, help="Page size (default: 20, max: 200)")
+    p.set_defaults(func=_cmd_alpha_hunter_find)
+
+    p = sub.add_parser("alpha-hunter-detail", help="[Alpha] Alpha hunter factor detail for an address")
+    p.add_argument("--chain", required=True, help="Chain code (sol, eth, bnb, base)")
+    p.add_argument("--address", required=True, help="Wallet address")
+    p.set_defaults(func=_cmd_alpha_hunter_detail)
+
+    p = sub.add_parser("agent-alpha-tags", help="[Alpha] List available Agent tag labels")
+    p.set_defaults(func=_cmd_agent_alpha_tags)
+
+    p = sub.add_parser("agent-alpha-hunter-find", help="[Alpha] Find addresses by Agent tag (e.g. early_alpha_hunter)")
+    p.add_argument("--chain", required=True, help="Chain code (sol, eth, bnb, base)")
+    p.add_argument("--tag", required=True, help="Agent tag (use agent-alpha-tags to list available)")
+    p.add_argument("--page", type=int, default=1, help="Page number (default: 1)")
+    p.add_argument("--limit", type=int, default=20, help="Page size (default: 20, max: 200)")
+    p.set_defaults(func=_cmd_agent_alpha_hunter_find)
+
+    p = sub.add_parser("multi-agent-signal", help="[Alpha] Multi-agent signals — tokens bought by Agent-tagged addresses (cross-strategy)")
+    p.add_argument("--chain", default="all", help="Chain filter (sol, eth, bnb, base, all; default: all)")
+    p.add_argument("--page", type=int, default=1, help="Page number (default: 1)")
+    p.add_argument("--size", type=int, default=20, help="Page size (default: 20, max: 100)")
+    p.set_defaults(func=_cmd_multi_agent_signal)
 
     p = sub.add_parser("liquidity", help="[Market] Get liquidity pool info for a token")
     p.add_argument("--chain", required=True)
@@ -1580,6 +1812,10 @@ def main():
     p = sub.add_parser("top-profit", help="[Analyze] Top profitable addresses list")
     p.add_argument("--chain", required=True)
     p.add_argument("--contract", required=True)
+    p.add_argument("--limit", type=int, default=100, help="Max results (default: 100)")
+    p.add_argument("--offset", type=int, default=0, help="Offset for pagination (default: 0)")
+    p.add_argument("--latest-position", dest="latest_position", default=None, help="Filter by position: add/hold/reduce/close/open")
+    p.add_argument("--txn-from-tags", dest="txn_from_tags", default=None, help="Comma-separated tag filter: smart_money,kol,bot,manipulator")
     p.set_defaults(func=_cmd_top_profit)
 
     p = sub.add_parser("compare-tokens", help="[Analyze] Compare two tokens K-line side by side")
@@ -1643,9 +1879,12 @@ def main():
     p.add_argument("--user-address", dest="user_address", required=True)
     p.set_defaults(func=_cmd_rwa_get_my_holdings)
 
+    # ---- Transfer (bgw_transfer) ----
+    p = sub.add_parser("get-transfer-order", help="[Transfer] Query transfer order status (real-time chain query)")
+    p.add_argument("--order-id", dest="order_id", required=True, help="Existing transfer orderId")
+    p.set_defaults(func=_cmd_get_transfer_order)
+
     args = parser.parse_args()
-    if args.wallet_id:
-        WALLET_ID = args.wallet_id
     args.func(args)
 
 

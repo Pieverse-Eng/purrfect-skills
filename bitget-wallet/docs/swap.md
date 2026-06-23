@@ -1,10 +1,10 @@
 # Swap (Token Swap) Domain Knowledge
 
-This document describes the **Swap flow**: use `scripts/bitget-wallet-agent-api.py` for the new API (no apiKey). Flow: **quote → confirm → makeOrder → sign & send → getOrderDetails**. See [Wallet & Signing](wallet-signing.md) for key management details.
+This document describes the **Swap flow**: use `scripts/bitget-wallet-agent-api.py` for read, risk, quote, confirm, and status APIs. Use `purr bitget order-execute` for supported EVM makeOrder + platform-wallet signing + Bitget submission. Flow: **quote → confirm → purr bitget order-execute → getOrderDetails**.
 
-**Wallet before swap:** The agent must have a configured wallet (mnemonic in secure storage, derived addresses in context). If not, guide the user through First-Time Wallet Setup (see SKILL.md). **Mnemonic and private keys must never appear in context.**
+**Wallet before swap:** Use the hosted platform wallet address. Run `purr wallet address --chain-type ethereum` when the wallet address is not already known. Never ask for or handle mnemonics, private keys, seed phrases, key files, Social Login Wallet credentials, or `.social-wallet-secret`.
 
-**Signing flow:** After makeOrder, derive the private key from mnemonic in secure storage, write it to a **unique** temporary file programmatically (`tempfile.mkstemp`, never shell `echo`), pass `--private-key-file <path>` to the signing script (which reads and deletes the file), fill `txs[].sig`, then send. MakeOrder unsigned data expires in ~60 seconds — sign and send must follow immediately. **Never pass private keys as command-line arguments** (they are visible in `ps` and shell history).
+**Signing flow:** Do not use official local signing scripts or direct Bitget order submission. After the user confirms a route, call `purr bitget order-execute`. The CLI calls Bitget `makeOrder`, verifies Bitget security headers, checks that the platform signer matches `--from-address`, signs through the platform wallet, then submits the order through Bitget.
 
 ## Flow Overview
 
@@ -13,14 +13,10 @@ This document describes the **Swap flow**: use `scripts/bitget-wallet-agent-api.
 | 0 | `bitget-wallet-agent-api.py check-swap-token` | Check fromToken and toToken for risks **before** quote; if risks or forbidden-buy on toToken, prompt user or stop. |
 | 1 | `bitget-wallet-agent-api.py quote` | First quote; returns multiple markets in `data.quoteResults`. Agent shows **all** results, recommends the first; user may choose another for confirm. |
 | 2 | `bitget-wallet-agent-api.py confirm` | Second quote; use market/protocol/slippage from **chosen** quote result (default first); Get latest quoteResult and orderId. The agent should display the `data.quoteResult`. If the `data.tips` are not empty, agent should display and remind user |
-| 3+4+5 | **`order_make_sign_send.py`** (mnemonic/private-key wallets) | makeOrder + sign + send in one run |
-| 3+4+5 | **`social_order_make_sign_send.py`** (Social Login Wallet) | makeOrder + sign (TEE) + send in one run |
-| 3′ | `bitget-wallet-agent-api.py make-order` | Create order; returns unsigned data.txs (~60s expiry) |
-| 4′ | `order_sign.py` + fill `txs[].sig` | Sign data.txs with private key (derived from mnemonic, discarded after) |
-| 5′ | `bitget-wallet-agent-api.py send` | Submit signed order (body: orderId + txs) |
+| 3+4+5 | **`purr bitget order-execute`** | Bitget makeOrder + platform-wallet sign + Bitget submission in one command |
 | 6 | `bitget-wallet-agent-api.py get-order-details` | Query order status and result |
 
-**Balance and token discovery:** Use **`batch-v2`** for all balance queries (returns balance + price in one call). Request format: `list: [{ chain, address, contract }]`. 
+**Balance and token discovery:** Use **`batch-v2`** for all balance queries (returns balance + price in one call). Request format: `list: [{ chain, address, contract }]`.
 **Search tokens:** To search tokens by keyword or contract address use **`search-tokens --keyword <keyword|contract>`** (optional **`--chain`** to restrict to one chain); use the returned `chain`, `contract`, `symbol` when building quote/confirm args.
 
 ## Pre-Trade Checks (All Trades)
@@ -105,33 +101,43 @@ Or with JSON stdin: `echo '{"list":[{"chain":"...","contract":"...","symbol":"..
     - `["user_gas"]` — native token balance is sufficient for gas fees → user pays gas normally (**preferred**)
     - `["no_gas"]` — native token balance is insufficient (near zero) → gasless mode, gas deducted from `fromToken`
     - The API defaults to `["user_gas"]` if not specified, which will fail if native balance is too low.
-- **Response:** If `error_code != 0`, show `msg` and stop. Show `data.quoteResult.outAmount`, `data.quoteResult.minAmount`, `data.quoteResult.gasFees.gasTotalAmount`. Store `data.orderId` for makeOrder, send, getOrderDetails.
+- **Response:** If `error_code != 0`, show `msg` and stop. Show `data.quoteResult.outAmount`, `data.quoteResult.minAmount`, `data.quoteResult.gasFees.gasTotalAmount`. Store `data.orderId` for `purr bitget order-execute` and getOrderDetails.
 - **Agent — must show in Second quote stage:** In the confirm step, the agent **must** present to the user the following from the confirm response: **`data.quoteResult.outAmount`** (expected output amount), **`data.quoteResult.minAmount`** (minimum output amount), and **`data.quoteResult.gasFees.gasTotalAmount`** (gas cost). Do not skip displaying these three fields before asking for user confirmation.
 - **Agent: handle `data.quoteResult.recommendFeatures` (gas payment):**
   - **`user_gas` or empty string** — User can pay gas with their **main-chain native token** balance; proceed with the swap flow.
   - **`no_gas`** — Main-chain balance is insufficient but gasless applies; gas will be paid from **fromSymbol**. Proceed with the swap.
   - **Any other value** — Gas is insufficient and gasLess does not apply. **Do not proceed.** Tell the user that gas is insufficient, the swap cannot be executed, and they need to top up main-chain native token; then stop.
 
-### 3–5. makeOrder, sign, send (combined — recommended)
+### 3–5. makeOrder, platform sign, send
 
-**For mnemonic/private-key wallets:**
+Use `purr bitget order-execute` after the user explicitly confirms the quote.
+Do not call `make-order`, local signing scripts, or `send` separately.
+If `purr bitget order-execute` fails, stop and show the exact CLI error. Do not
+fallback to `make-order`, `purr wallet sign-transaction`, raw transaction JSON,
+or any direct Bitget submission path.
 
-- **Script (EVM):** `python3 scripts/order_make_sign_send.py --private-key-file /tmp/.pk_evm --from-address <addr> --to-address <addr> --order-id <from_confirm> --from-chain ... --from-contract ... --from-symbol ... --to-chain ... --to-contract ... --to-symbol ... --from-amount ... --slippage ... --market ... --protocol ...`
-- **Script (Solana):** `python3 scripts/order_make_sign_send.py --private-key-file-sol /tmp/.pk_sol --from-address <sol_addr> --to-address <sol_addr> --order-id <from_confirm> --from-chain sol ...`
-- **Behavior:** Takes private key from secure storage, calls makeOrder, signs `data.txs`, fills `txs[].sig`, then sends. Auto-detects EVM vs Solana from makeOrder response. Never outputs private keys. Use this so the ~60s makeOrder expiry does not run out.
+```bash
+purr bitget order-execute \
+  --order-id <orderId> \
+  --from-chain <fromChain> \
+  --from-contract <fromContractOrEmpty> \
+  --from-symbol <fromSymbol> \
+  --from-address <platformWalletAddress> \
+  --to-chain <toChain> \
+  --to-contract <toContractOrEmpty> \
+  --to-symbol <toSymbol> \
+  --to-address <platformWalletAddress> \
+  --from-amount <fromAmount> \
+  --slippage <slippage> \
+  --market <market> \
+  --protocol <protocol>
+```
 
-**For Social Login Wallets:**
+Use the exact values returned by `quote` and `confirm`, including `orderId`,
+`market`, `protocol`, chain codes, contracts, symbols, amount, and slippage.
 
-- **Script:** `python3 scripts/social_order_make_sign_send.py --wallet-id <walletId> --order-id <from_confirm> --from-address <addr> --to-address <addr> --from-chain ... --from-contract ... --from-symbol ... --to-chain ... --to-contract ... --to-symbol ... --from-amount ... --slippage ... --market ... --protocol ...`
-- **Behavior:** Calls makeOrder, signs each tx via Bitget Wallet TEE API (no local private key), then sends. Auto-detects signing mode: EVM gasPayMaster (eth_sign hash), EVM regular tx, Solana, or Tron. Same ~60s window but signing is fast (single API call per tx).
-
-### 3′–5′. makeOrder, sign, send (separate steps)
-
-Use only when not using the combined script (e.g. external signer, or key from secure storage like 1Password).
-
-- **makeOrder:** `bitget-wallet-agent-api.py make-order` with orderId, market, protocol, slippage from confirm. Response `data.txs` expires in ~60s.
-- **Sign:** Derive private key from mnemonic in secure storage. Write to a unique temp file programmatically (`tempfile.mkstemp`). Pass full makeOrder response to `order_sign.py` (stdin or `--order-json`) with `--private-key-file <path>`. The script reads the key, deletes the file, signs, and outputs an array of signature hex strings.
-- **Fill & send:** Set `data.txs[i].sig` from that array, then `bitget-wallet-agent-api.py send --json-stdin` or `--json-file` with body `{ "orderId": data.orderId, "txs": data.txs }`.
+`purr bitget order-execute` supports EVM order execution. It rejects Solana
+partial-sign orders and Tron execution.
 
 ### 6. Query order (getOrderDetails)
 
@@ -142,15 +148,15 @@ Use only when not using the combined script (e.g. external signer, or key from s
 
 ## Confirmation and Compliance
 
-**Rule: Show order details first; sign and send only after explicit user confirmation.**
+**Rule: Show order details first; execute only after explicit user confirmation.**
 
-- The agent must **not** sign or send before the user explicitly confirms (e.g. "confirm", "execute", "yes").
+- The agent must **not** execute before the user explicitly confirms (e.g. "confirm", "execute", "yes").
 - Confirmation summary should include: orderId, amounts (from confirm or makeOrder), market, slippage, gas estimate, and any risk note.
 
 Recommended flow:
 
 ```
-0. If no wallet configured → guide user through First-Time Wallet Setup (see SKILL.md); derive and store addresses in context
+0. If no wallet address is known → `purr wallet address --chain-type ethereum`; use that address for from-address/to-address
 1. batch-v2 → verify fromToken balance ≥ fromAmount AND native token > 0 for gas; if insufficient, inform user and stop
 2. check-swap-token → for from + to tokens; if error_code != 0 show msg and stop; if checkTokenList non-empty show tips; if toToken has waringType "forbidden-buy" do not proceed and warn
 3. security / token-info / liquidity (silent, as applicable)
@@ -158,7 +164,7 @@ Recommended flow:
 5. confirm → use market/protocol/slippage from the chosen quote result (default first); get and show latest quoteResult(data.quoteResult), orderId(data.orderId) and gasFee(data.gasFee); also show tips(data.tips) if not empty
 6. PRESENT → show confirmation summary (required)
 7. WAIT → user explicitly confirms
-8. **Mnemonic/private-key wallets:** `order_make_sign_send.py`. **Social Login Wallet:** `social_order_make_sign_send.py --wallet-id <walletId>`. Both complete makeOrder+sign+send within ~60s.
+8. `purr bitget order-execute` → makeOrder + platform-wallet sign + Bitget submission
 9. get-order-details → show final status and txId / explorer link
 ```
 
@@ -205,10 +211,10 @@ The swap API supports 7 chains. Use these chain codes in all swap commands:
 1. **Always check balance before swap:** Run `batch-v2` before quote. The confirm API returns misleading error `40001: Demo trading failed. Please increase slippage.` when the actual issue is insufficient balance — always verify balance first.
 2. **Human-readable amounts:** In the swap flow, **fromAmount** (and toAmount, fromAmount in makeOrder, etc.) are always **human-readable** (e.g. `0.01` for 0.01 USDT, `1` for 1 token). Do **not** convert to smallest units (wei, lamports, or token decimals); pass the value as the user would say it (e.g. `--from-amount 0.01`).
 3. **Native token contract:** Use empty string `""` for toContract/fromContract when the token is native.
-4. **Do not submit twice:** One confirmation, one sign+send; duplicate submit can double-spend.
-5. **makeOrder data expiry:** Unsigned txs from makeOrder are valid ~60s; use **order_make_sign_send.py** (mnemonic wallets) or **social_order_make_sign_send.py** (Social Login Wallet) to avoid expiry.
+4. **Do not submit twice:** One confirmation, one execution; duplicate submit can double-spend. If execution fails, stop and report the error instead of trying another signing or submission path.
+5. **makeOrder data expiry:** Use `purr bitget order-execute` so makeOrder, signing, and Bitget submission happen together.
 6. **Chain codes:** Use API chain codes (`bnb`, `sol`, `eth`), not aliases (`bsc`, `solana`).
-7. **Gasless signing:** EVM gasPayMaster returns `msgs[]` with `signType: "eth_sign"` — `order_sign.py` returns full msgs JSON struct (not raw tx). Solana gasPayMaster uses `source.serializedTransaction` for partial-sign. Both are auto-detected.
+7. **Gasless signing:** EVM gasPayMaster returns `msgs[]` with `signType: "eth_sign"`; `purr bitget order-execute` signs supported EVM payloads through the platform wallet. Solana partial-sign is out of scope.
 8. **Cross-chain minimum:** Cross-chain swaps require minimum $10 USD value.
 
 For request/response details, see the script help: `python3 scripts/bitget-wallet-agent-api.py <command> --help`.

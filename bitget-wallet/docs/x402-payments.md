@@ -13,13 +13,13 @@ x402 is an open standard for internet-native payments, built on HTTP 402 ("Payme
 2. Resource Server → 402 Payment Required
    Headers: payment-required: base64(PaymentRequired JSON)
 3. Agent decodes PaymentRequired, reads accepts[0] (amount, token, network, payTo, scheme)
-4. Agent signs EIP-3009 TransferWithAuthorization (EIP-712 typed data)
+4. `purr bitget x402-pay` signs EIP-3009 TransferWithAuthorization through the platform wallet
 5. Agent → POST /resource + PAYMENT-SIGNATURE: base64(PaymentPayload JSON)
 6. Resource Server → CDP Facilitator /verify → /settle → on-chain USDC transfer
 7. Resource Server → 200 OK + data + payment-response header (settlement receipt)
 ```
 
-**Key insight:** The agent signs but never broadcasts. The Facilitator pays gas and submits on-chain. Agent is truly gasless.
+**Key insight:** `purr bitget x402-pay` signs through the platform wallet but never broadcasts directly. The Facilitator pays gas and submits on-chain. The agent is truly gasless.
 
 ## Payment Schemes
 
@@ -27,7 +27,7 @@ x402 is an open standard for internet-native payments, built on HTTP 402 ("Payme
 
 The primary and preferred method for USDC payments.
 
-Agent signs a `TransferWithAuthorization` message (EIP-712 typed data):
+`purr bitget x402-pay` signs a `TransferWithAuthorization` message (EIP-712 typed data) through the platform wallet:
 
 ```
 Domain: { name: "USD Coin", version: "2", chainId, verifyingContract: USDC }
@@ -91,54 +91,18 @@ Not commonly needed since x402 is USDC-first.
 Solana uses partially-signed transactions:
 1. Agent builds a `VersionedTransaction` with SPL `TransferChecked`
 2. `feePayer` = Facilitator's pubkey (from `extra.feePayer`)
-3. Agent signs as token authority, feePayer slot left empty
+3. The token authority signs, feePayer slot left empty
 4. Facilitator validates, co-signs, broadcasts
 
-## EIP-712 Signing — Critical Implementation Detail
+Solana x402 partial signing is out of scope for this packaged skill. Use
+`purr bitget x402-pay` only for EVM EIP-3009 payment-required flows.
 
-**⚠️ DO NOT use `eth_account.encode_typed_data` for x402 EIP-3009.**
+## EIP-712 Signing
 
-`encode_typed_data` encodes `bytes32` fields differently from the x402 facilitator's
-verification. This produces a valid-looking signature that facilitators reject as
-`invalid_payload`.
-
-**Correct approach:** Manually compute the EIP-712 hash:
-
-```python
-from eth_abi import encode
-from eth_utils import keccak
-
-# Domain separator
-domain_type_hash = keccak(b"EIP712Domain(string name,string version,"
-                          b"uint256 chainId,address verifyingContract)")
-domain_separator = keccak(
-    domain_type_hash
-    + keccak(token_name.encode())
-    + keccak(token_version.encode())
-    + encode(["uint256"], [chain_id])
-    + encode(["address"], [token_address]))
-
-# Struct hash
-auth_type_hash = keccak(b"TransferWithAuthorization(address from,address to,"
-                        b"uint256 value,uint256 validAfter,uint256 validBefore,"
-                        b"bytes32 nonce)")
-struct_hash = keccak(
-    auth_type_hash
-    + encode(["address"], [from_addr])
-    + encode(["address"], [to_addr])
-    + encode(["uint256"], [value])
-    + encode(["uint256"], [valid_after])
-    + encode(["uint256"], [valid_before])
-    + nonce_bytes)  # raw 32 bytes, NOT abi-encoded
-
-# Final hash
-msg_hash = keccak(b"\x19\x01" + domain_separator + struct_hash)
-
-# Sign
-signed = Account.unsafe_sign_hash(msg_hash)
-```
-
-**Key:** `nonce_bytes` must be raw 32 bytes directly concatenated, not ABI-encoded.
+Do not implement EIP-3009 signing manually in this skill. Use
+`purr bitget x402-pay` or `purr bitget x402-sign-eip3009`; the CLI handles the
+x402-compatible EIP-712 hash, signs through the hosted platform wallet, and
+returns the expected payment payload shape.
 
 ## Facilitator Ecosystem
 
@@ -182,7 +146,7 @@ All USDC contracts use EIP-712 domain: `name="USD Coin", version="2"`.
 
 ## Common Pitfalls
 
-1. **DO NOT use `encode_typed_data` for x402.** It encodes `bytes32` incorrectly. Use manual EIP-712 hash (see above).
+1. **Do not implement x402 signing manually.** Use `purr bitget x402-pay` or `purr bitget x402-sign-eip3009`.
 2. **`authorization` must match signed message exactly.** If you sign `validAfter=X` but return `validAfter=Y`, the facilitator rejects it.
 3. **`validAfter = now - 600`** (not `now`). 10-minute clock skew tolerance, matching the official SDK.
 4. **Amount units are 6 decimals for USDC.** `1000` = $0.001, `1000000` = $1.00.
@@ -202,13 +166,11 @@ Pinata offers x402-paid IPFS uploads. No registration needed.
 **What you get:** A temporary upload URL for private IPFS storage
 
 ```bash
-# Full end-to-end test using x402_pay.py
-python3 scripts/x402_pay.py pay \
+# Full end-to-end test using purr
+purr bitget x402-pay \
   --url "https://402.pinata.cloud/v1/pin/private?fileSize=100" \
-  --private-key <EVM_PRIVATE_KEY> \
   --method POST \
-  --data '{"fileSize": 100}' \
-  --auto
+  --data '{"fileSize": 100}'
 ```
 
 **Expected output:**
@@ -231,11 +193,9 @@ Settlement: {
 - No ETH needed (facilitator sponsors gas)
 
 **What happens:**
-1. Script sends POST → gets 402 with `payment-required` header
+1. `purr bitget x402-pay` sends POST → gets 402 with `payment-required` header
 2. Parses requirements: $0.001 USDC to Pinata on Base
-3. Signs EIP-3009 TransferWithAuthorization
+3. Signs EIP-3009 TransferWithAuthorization through the platform wallet
 4. Retries with `PAYMENT-SIGNATURE` header
 5. Pinata's facilitator verifies signature, settles on-chain
 6. Returns 200 + upload URL + settlement TX hash
-
-

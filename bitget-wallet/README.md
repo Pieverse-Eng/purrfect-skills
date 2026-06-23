@@ -9,9 +9,9 @@ An AI Agent skill that wraps the [Bitget Wallet API](https://web3.bitget.com/en/
 | Principle | Description |
 |-----------|-------------|
 | **Domain Knowledge + Tools** | Not just API wrappers — includes swap flow (see `docs/swap.md`), signing guides, security models, and known pitfalls so agents make informed decisions |
-| **Zero External Dependencies** | All code is self-contained. Solana signing is pure Python (Ed25519 + base58 built-in). EVM signing uses `eth_account` (standard). Only `requests` for API calls. No pip install needed for Solana |
+| **Platform Wallet Execution** | Query and planning commands stay in the Bitget script; supported EVM signing and execution use `purr bitget` with the hosted platform wallet |
 | **API Infrastructure, Not Reimplementation** | Capabilities come from Bitget Wallet's production API. The skill provides the knowledge and tooling layer, not a parallel implementation |
-| **Human-in-the-Loop by Default** | Swap operations generate transaction data but never sign autonomously. User confirmation required for all fund-moving actions |
+| **Human-in-the-Loop by Default** | Execution commands require clear parameters and user confirmation before any fund-moving action |
 
 ### Market Tools Architecture
 
@@ -22,6 +22,7 @@ Atomic Tools (Agent orchestrates)
 ├── bgw_token_find      Find tokens (chain scan / search / rankings / sectors)
 ├── bgw_token_check     Check tokens (security / dev / anti-manipulation / signals / market)
 ├── bgw_token_analyze   Analyze tokens (deep: timeline / trades / holdings / smart money)
+├── bgw_alpha           Alpha intelligence (gems / signals)
 ├── bgw_address_find    Find addresses (by pool / role / criteria)
 └── bgw_address_analyze Analyze addresses (scoring / PnL / style / operations / comparison)
 
@@ -46,7 +47,7 @@ Smart Tools (We orchestrate)
 | **Smart Money Analysis** | Profitable address stats + top earners list | "Are smart money addresses in profit?" |
 | **Token Comparison** | Side-by-side K-line comparison of two tokens | "Compare BONK vs WIF price action" |
 | **Address Discovery** | Find KOL / smart money addresses by role with performance filters | "Find top smart money on Solana with >80% win rate" |
-| **Social Login Wallet** | Sign transactions/messages via Bitget Wallet TEE — no local private key needed | "Sign this transaction with my Bitget Wallet" |
+| **Platform Wallet Execution** | Execute supported EVM swaps, RWA trades, transfers, and x402 payments via `purr bitget` | "Swap 5 USDT to USDC on BNB" |
 | **Balance Query** | On-chain balance per chain/address/token (native + ERC-20/SPL) | "What's my BNB balance?" |
 | **Balance + Price** | Batch balance with USD price in one call | "What's my portfolio worth?" |
 | **Token Info** | Price, market cap, holders, social links | "What's the price of SOL?" |
@@ -58,10 +59,11 @@ Smart Tools (We orchestrate)
 | **Token Risk Check** | Pre-swap safety check for from/to tokens (forbidden-buy detection) | "Is this token safe to buy?" |
 | **Swap Quote** | Multi-market quotes for same-chain/cross-chain swaps | "How much USDC for 1 SOL?" |
 | **Swap Confirm** | Final quote from selected market with orderId | Lock in price and route |
-| **Swap MakeOrder** | Generate unsigned transaction data for signing | Execute trades via wallet signing |
-| **Swap Send** | Submit signed transactions | Broadcast with MEV protection |
+| **Swap Execution** | Run makeOrder, platform-wallet signing, and Bitget submission through `purr bitget order-execute` | Execute trades after confirmation |
 | **Order Details** | Track order lifecycle (processing→success/failed) | "Check my swap status" |
-| **x402 Payment** | Pay for x402-enabled APIs with USDC on Base | "Access this paid API endpoint" |
+| **Token Transfer** | Direct EVM token transfer through `purr bitget transfer-execute` | "Send 100 USDT to 0xDeF..." |
+| **Gasless Transfer** | Transfer tokens without native gas — gas paid from USDT/USDC balance | "Send USDC on Base with no ETH for gas" |
+| **x402 Payment** | Pay EVM x402-enabled APIs with USDC on Base via `purr bitget x402-pay` | "Access this paid API endpoint" |
 
 > ⚠️ **Swap amounts are human-readable** — pass `0.1` for 0.1 USDT, NOT `100000000000000000`. The `toAmount` in responses is also human-readable. This differs from most on-chain APIs.
 
@@ -72,7 +74,7 @@ The swap flow enables two capabilities no other AI agent swap skill offers:
 **⛽ Gasless Transactions (EIP-7702)**
 - Swap tokens with **zero native token balance** — no ETH, no BNB, no MATIC needed
 - Gas cost is deducted from the input token automatically
-- Agent only signs; a backend relayer pays gas and broadcasts the transaction
+- `purr bitget order-execute` signs through the platform wallet; a backend relayer pays gas and broadcasts the transaction
 - Supported on all EVM chains (Ethereum, Base, BNB Chain, Arbitrum, Polygon, Morph)
 
 **🌉 One-Step Cross-Chain Swaps**
@@ -84,10 +86,8 @@ The swap flow enables two capabilities no other AI agent swap skill offers:
 ```
 1. quote          → Get multi-market quotes
 2. confirm        → Final quote from chosen market, get orderId
-3. makeOrder      → Create unsigned transaction data
-4. Sign           → Agent signs with wallet key
-5. send           → Submit signed data
-6. getOrderDetails → Track until success
+3. order-execute  → `purr bitget order-execute` runs makeOrder, platform-wallet signing, and send
+4. getOrderDetails → Track until success
 ```
 
 **Example — Same-chain swap:**
@@ -108,17 +108,17 @@ python3 scripts/bitget-wallet-agent-api.py confirm \
   --to-symbol USDC \
   --from-address 0xYourAddress --to-address 0xYourAddress \
   --market bgwevmaggregator --protocol bgwevmaggregator_v000 \
-  --slippage 0.01 --feature user_gas
+  --slippage 0.01 --features user_gas
 ```
 
 ### 💳 x402 Payments — Pay-Per-Request API Access
 
-x402 is an open standard for HTTP-native payments. When an agent encounters a paid API (HTTP 402), it signs a USDC authorization and retries — no accounts, no API keys needed.
+x402 is an open standard for HTTP-native payments. When an agent encounters a paid API (HTTP 402), `purr bitget x402-pay` signs a USDC authorization through the platform wallet and retries — no accounts, no API keys needed.
 
 **How it works:**
 ```
 1. Agent requests a resource → gets HTTP 402 + payment requirements
-2. Agent signs EIP-3009 TransferWithAuthorization (gasless, off-chain)
+2. `purr bitget x402-pay` signs EIP-3009 TransferWithAuthorization through the platform wallet
 3. Agent retries with PAYMENT-SIGNATURE header
 4. Service's facilitator settles on-chain → agent gets the resource
 ```
@@ -130,12 +130,46 @@ x402 is an open standard for HTTP-native payments. When an agent encounters a pa
 
 ```bash
 # Example: pay $0.001 for Pinata IPFS upload
-python3 scripts/x402_pay.py pay \
+purr bitget x402-pay \
   --url "https://402.pinata.cloud/v1/pin/private?fileSize=100" \
-  --private-key <key> --method POST --data '{"fileSize": 100}' --auto
+  --method POST --data '{"fileSize": 100}'
 ```
 
-See [`docs/x402-payments.md`](docs/x402-payments.md) for domain knowledge, signing details, and testing guide.
+See [`docs/x402-payments.md`](docs/x402-payments.md) for domain knowledge, payment details, and testing guide.
+
+### 💸 Gasless Token Transfer
+
+Direct on-chain token transfer where the server handles transaction construction, broadcasting, and tracking. Supports **gasless mode** — gas fees paid from stablecoin balance (USDT/USDC) instead of native tokens.
+
+**How it works:**
+```
+purr bitget transfer-execute
+  → makeTransferOrder + platform-wallet signing + submitTransferOrder (one shot)
+  → poll getTransferOrder until SUCCESS or FAILED
+```
+
+**Key features:**
+- **Gasless (EIP-7702 / FeePayer)** — transfer tokens with zero native gas. Gas deducted from USDT/USDC balance
+- **EVM chains** — ETH, BNB, Base, Arbitrum, Polygon, Morph
+- **Server-side broadcast** — Bitget handles nonce management and chain tracking after platform-wallet signing
+- **Explicit fallback** — if gasless is unavailable, prompts for confirmation before falling back to standard transfer
+
+```bash
+# Standard EVM token transfer
+purr bitget transfer-execute \
+  --chain eth --contract 0xdAC17F958D2ee523a2206206994597C13D831ec7 \
+  --from-address 0xAbC... --to-address 0xDeF... --amount 100
+
+# Gasless transfer (no ETH needed for gas)
+purr bitget transfer-execute \
+  --chain base --contract 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 \
+  --from-address 0xAbC... --to-address 0xDeF... --amount 50 --gasless true
+
+# Poll status
+python3 scripts/bitget-wallet-agent-api.py get-transfer-order --order-id <orderId>
+```
+
+See [`docs/transfer.md`](docs/transfer.md) for domain knowledge, signing modes, and gasless details.
 
 ### Supported Chains
 
@@ -159,8 +193,8 @@ Structured JSON → Agent interprets → Natural language response
 
 **Security by Design:**
 - No API key or HMAC signing needed — uses token-based authentication
-- Swap calldata generates transaction data; signing requires explicit wallet key access
-- **Wallet key management:** mnemonic stored in secure storage, private keys derived on-the-fly and discarded after each signing operation (never persisted)
+- Query and planning commands do not sign or broadcast
+- Supported EVM execution uses `purr bitget` and the hosted platform wallet; do not handle local keys, seed phrases, or Social Login Wallet credentials
 
 ---
 
@@ -192,10 +226,10 @@ Structured JSON → Agent interprets → Natural language response
 ### 4. Semi-Automated Trading Agent
 > "Buy this token with 1 SOL"
 
-- Swap quote → show route and slippage → user confirms → generate calldata → wallet signs
-- **Human-in-the-loop** — the agent cannot sign independently
+- Swap quote → show route and slippage → user confirms → `purr bitget order-execute`
+- **Human-in-the-loop** — execution happens only after explicit user confirmation
 - For: active traders wanting an AI assistant
-- Platforms: OpenClaw + Bitget Wallet App / hardware wallet
+- Platforms: OpenClaw / Purr-Fect Claw hosted runtime
 
 ### 5. Arbitrage Bot Data Layer
 > Monitor DEX price discrepancies, discover cross-chain arbitrage opportunities
@@ -228,11 +262,9 @@ Structured JSON → Agent interprets → Natural language response
 
 1. Python 3.9+
 2. `requests` library (`pip install requests`)
-3. For EVM signing: `eth-account` (`pip install eth-account`)
+3. `purr` CLI with hosted platform wallet credentials for execution commands
 
 > No API key needed — the Agent API uses token-based authentication with built-in headers.
-
-> Solana signing requires **no additional packages** — pure Python Ed25519 and base58 are built into `order_sign.py`.
 
 ### Examples
 
@@ -264,8 +296,8 @@ python3 scripts/bitget-wallet-agent-api.py quote \
 | Arbitrum | ✅ | ✅ | ✅ |
 | Polygon | ✅ | ✅ | ✅ |
 | Morph | ✅ | ✅ | ✅ |
-| Solana | ✅ | ✅ | ✅ |
-| Tron | ✅ | ✅ | ✅ |
+| Solana | Query/planning only | Query/planning only | Out of scope for `purr bitget` execution |
+| Tron | Query/planning only | Query/planning only | Out of scope for `purr bitget` execution |
 
 > Market data commands support 32+ chains. See `docs/market-data.md` for the full list.
 
@@ -273,7 +305,7 @@ python3 scripts/bitget-wallet-agent-api.py quote \
 
 | Direction | Description |
 |-----------|-------------|
-| **Solana Advanced Swaps** | Solana gasless ✅ and cross-chain ✅ now fully supported (same-chain + Sol↔EVM) |
+| **Solana Advanced Swaps** | Solana execution requires platform partial-sign support before enabling in this packaged skill |
 | **On-chain Event Subscription** | WebSocket listeners for large transactions, new pool creation |
 | **Historical Data Cache** | Store K-line + price data in local SQLite to reduce API calls |
 | **Multi-wallet Management** | Support multi-address balance queries and batch quotes |
@@ -325,14 +357,14 @@ Any AI agent that can **read files + run Python + access the internet** should w
 ## Security Notes
 
 - No API keys needed — uses token-based authentication (no secrets to manage)
-- Swap functions generate quotes and transaction data — signing requires explicit wallet access
-- Wallet mnemonic is the only persistent secret; private keys are derived per-operation and discarded
+- Swap functions generate quotes and confirmed routes; supported EVM execution goes through `purr bitget`
+- Do not use local mnemonics, private keys, key files, or Social Login Wallet credentials
 - Large operations require explicit user confirmation (human-in-the-loop)
 - Always run a security audit (`security` command) before interacting with any token
 
 ## Security
 
-- **Zero external dependencies for Solana** — pure Python Ed25519 (RFC 8032) and base58 built into `order_sign.py`. EVM uses `eth_account`. No obscure packages, no supply-chain risk.
+- Query commands use the included Python API wrapper; supported EVM execution uses `purr bitget` with platform-wallet signing
 - Only communicates with `https://copenapi.bgwapi.io` (Agent API) and x402 resource servers — no other external endpoints
 - No `eval()` / `exec()` or dynamic code execution
 - No file system access outside the skill directory
