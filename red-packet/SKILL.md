@@ -21,7 +21,7 @@ running commands or explaining the workflow.
 
 ## Command Groups
 
-| Group | What It Does | Reference |
-|---|---|
-| Send / Sent History | Sends redpackets to `.pie` handles or raw EVM addresses, handles trusted chat-channel metadata, and reviews sent redpacket history. | [send.md](references/send.md) |
-| Pending / Claim | Checks claimable redpackets, claims all pending redpackets, claims by sender, or claims selected envelope ids. | [claim.md](references/claim.md) |
+| Group               | What It Does                                                                                                                        | Reference                       |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| Send / Sent History | Sends redpackets to `.pie` handles or raw EVM addresses, handles trusted chat-channel metadata, and reviews sent redpacket history. | [send.md](references/send.md)   |
+| Pending / Claim     | Checks claimable redpackets, claims all pending redpackets, claims by sender, or claims selected envelope ids.                      | [claim.md](references/claim.md) |
