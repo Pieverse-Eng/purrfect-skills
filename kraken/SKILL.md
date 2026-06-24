@@ -21,6 +21,17 @@ Use this skill when the user wants to inspect Kraken markets, test strategies
 with paper trading, manage Kraken account state, or prepare/execute Kraken
 trading, funding, earn, futures, or portfolio workflows.
 
+## CLI Preflight
+
+If this is a hosted instance, do not run this section.
+
+```bash
+curl --proto '=https' --tlsv1.2 -LsSf \
+  https://github.com/krakenfx/kraken-cli/releases/download/v0.3.2/kraken-cli-installer.sh \
+  | KRAKEN_CLI_UNMANAGED_INSTALL=/usr/local/bin sh -s -- --quiet
+kraken --version
+```
+
 ## Scope
 
 - Public market data: assets, pairs, tickers, OHLC, order books, trades,

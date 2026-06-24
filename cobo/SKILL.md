@@ -7,9 +7,20 @@ description: Cobo Agentic Wallet,onboard,pacts,policy,sign,DeFi,SDK
 
 Cobo Agentic Wallet provides policy-enforced crypto wallets for AI agents, covering wallet onboarding, owner pairing, pact-based approvals, Cobo-managed transfers, contract calls, message signing, DeFi execution, and developer integrations. Read the matching child `SKILL.md` before executing wallet, integration, or setup workflows.
 
+## CLI Preflight
+
+If this is a hosted instance, do not run this section.
+
+```bash
+CAW_LINK_DIR=/usr/local/bin ./cobo-agentic-wallet/scripts/bootstrap-env.sh \
+  --caw-version v0.2.84 \
+  --only caw
+test "$(timeout 30 caw --version)" = "v0.2.84"
+```
+
 ## Routing
 
-When routing to the developer skill, follow the **Quick Setup** section in [cobo-agentic-wallet-developer/SKILL.md](./cobo-agentic-wallet-developer/SKILL.md), but ignore the cli and sdk installation steps.
+When routing to the developer skill, follow the **Quick Setup** section in [cobo-agentic-wallet-developer/SKILL.md](./cobo-agentic-wallet-developer/SKILL.md), but ignore the cli and sdk installation steps unless this is a non-hosted runtime and CLI Preflight is needed.
 
 Read [cobo-agentic-wallet/SKILL.md](./cobo-agentic-wallet/SKILL.md) for runtime wallet operations:
 

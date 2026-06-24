@@ -9,18 +9,38 @@ This is the top-level Gate router. Classify the user's intent, choose the
 matching vendor skill under `vendor/`, then read that vendor `SKILL.md` before
 running commands or explaining a workflow.
 
+## CLI Preflight
+
+If this is a hosted instance, do not run this section.
+
+```bash
+sh vendor/gate-cli-installer/setup.sh --version v0.7.7
+export PATH="$HOME/.local/bin:$HOME/.openclaw/skills/bin:$PATH"
+gate-cli --version
+
+GATE_DEX_ARCH=$(case "$(uname -m)" in
+  x86_64) echo x64 ;;
+  *) echo "Unsupported architecture for gate-dex: $(uname -m)" >&2; exit 1 ;;
+esac)
+curl -fsSL -o /usr/local/bin/gate-dex \
+  "https://gate-dex-cli.gateweb3.cc/v1.0.6/gate-dex-linux-${GATE_DEX_ARCH}"
+chmod +x /usr/local/bin/gate-dex
+test "$(gate-dex --version)" = "1.0.6"
+```
+
 ## Execution Boundary
 
 - Prefer CLI vendor skills whenever CLI and MCP both cover the same capability.
 - Use MCP vendor skills only for capabilities that the CLI vendor skill does not
   cover.
-- Do not run installer workflows from this router. `vendor/gate-cli-installer`
-  and `vendor/gate-mcp-installer` are upstream reference material only.
+- Do not run unpinned installer workflows from this router. For non-hosted
+  runtimes, use only the pinned commands in CLI Preflight. Treat
+  `vendor/gate-mcp-installer` as upstream reference material only.
 - Do not ask the user to paste Gate API secrets, MCP tokens, or private keys
   into chat. Follow the selected vendor skill's local auth/config guidance.
-- If a required CLI or MCP service is missing in the runtime, report the exact
-  environment error and stop. Do not install packages at runtime from this
-  router.
+- If a required CLI or MCP service is missing in a hosted runtime, report the
+  exact environment error and stop. Do not install packages at runtime in hosted
+  instances.
 
 ## Scope
 

@@ -12,6 +12,15 @@ OWS-backed transfer, swap, or step execution flows described in
 skill. Read [Core](references/core.md) before running wallet-scoped or
 secret-bearing commands.
 
+## CLI Preflight
+
+If this is a hosted instance, do not run this section.
+
+```bash
+npm install -g --force @open-wallet-standard/core@1.4.2
+ows --version
+```
+
 ## Read First
 
 Always read:

@@ -15,6 +15,15 @@ Agent skills for interacting with OpenSea: query NFT and token data, trade on th
 
 Use vendored OpenSea instructions for read-only lookups, quotes, schemas, and payload preparation. When the task requires signing or execution, stop following the official OpenSea execution path and use `purr opensea` instead.
 
+## CLI Preflight
+
+If this is a hosted instance, do not run this section.
+
+```bash
+npm install -g @opensea/cli@1.10.0
+opensea --version
+```
+
 ## `purr opensea` Operations
 
 Use `purr opensea` for every OpenSea signing or execution operation. Do not use OpenSea wallet providers, `PRIVATE_KEY`, `--wallet-provider`, `opensea ... execute`, `opensea auth login --private-key`, `npx @opensea/tool-sdk ...` auto-sign commands, or SDK wallet auto-sign helpers.

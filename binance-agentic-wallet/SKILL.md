@@ -20,6 +20,15 @@ metadata:
 
 This skill drives the `baw` CLI to manage a Binance Web3 wallet — sign-in/sign-out, balance and history queries, security settings, token transfers, DEX swaps (market orders), limit orders, order management, prediction market trading, and x402 payments.
 
+## CLI Preflight
+
+If this is a hosted instance, do not run this section.
+
+```bash
+npm install -g @binance/agentic-wallet@1.2.1
+test "$(baw --version)" = "1.2.1"
+```
+
 ## Command Routing
 
 | User Intent                                                          | Command                               | Reference                                         |

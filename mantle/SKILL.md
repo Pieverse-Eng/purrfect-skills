@@ -9,6 +9,15 @@ Mantle is a general skill bundle for working with Mantle L2 across network refer
 
 The bundle is organized as specialized Mantle skills under `vendor/`. Each bundled skill owns a focused part of the Mantle workflow and carries its own guardrails, reference files, and output format. This top-level skill provides the shared catalog and selection guidance so Mantle tasks start from the right specialized workflow.
 
+## CLI Preflight
+
+If this is a hosted instance, do not run this section.
+
+```bash
+npm install -g @mantleio/mantle-cli@0.1.19
+mantle-cli --version
+```
+
 ## Directory Convention
 
 - `mantle/SKILL.md`: general trigger conditions, skill selection guidance, and shared guardrails.

@@ -14,6 +14,26 @@ onchainos skills for AI coding assistants. Provides token search, market data, w
 
 For any concrete OKX task, choose the matching vendored capability below, open its `SKILL.md`, and follow its detailed instructions for command syntax, preflight checks, confirmations, chain support, payment handling, and troubleshooting.
 
+## CLI Preflight
+
+If this is a hosted instance, do not run this section.
+
+```bash
+ONCHAINOS_VERSION=v3.3.13
+ONCHAINOS_TARGET=$(case "$(uname -m)" in
+  x86_64) echo x86_64-unknown-linux-gnu ;;
+  aarch64|arm64) echo aarch64-unknown-linux-gnu ;;
+  i686) echo i686-unknown-linux-gnu ;;
+  armv7l) echo armv7-unknown-linux-gnueabihf ;;
+  *) echo "Unsupported architecture: $(uname -m)" >&2; exit 1 ;;
+esac)
+ONCHAINOS_BINARY="onchainos-${ONCHAINOS_TARGET}"
+curl -fsSL -o /usr/local/bin/onchainos \
+  "https://github.com/okx/onchainos-skills/releases/download/${ONCHAINOS_VERSION}/${ONCHAINOS_BINARY}"
+chmod +x /usr/local/bin/onchainos
+test "$(onchainos --version)" = "onchainos 3.3.13"
+```
+
 ## Prerequisites
 
 Runtime OKX operations generally require OKX API credentials. Apply at the OKX Developer Portal and configure these environment variables:
