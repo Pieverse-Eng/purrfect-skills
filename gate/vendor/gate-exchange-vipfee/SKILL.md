@@ -1,33 +1,112 @@
 ---
 name: gate-exchange-vipfee
-version: "2026.3.11-2"
-updated: "2026-03-11"
-description: "Query Gate VIP tier and trading fee rates. Use this skill whenever the user asks about their VIP level, trading fee rates, spot fees, or futures/contract fees on Gate. Trigger phrases include 'VIP level', 'trading fee', 'fee rate', 'spot fee', 'futures fee'."
-disable-model-invocation: true
+description: "Gate VIP tier and trading fee query skill. Use when the user asks about their fee rates or VIP level. Triggers on 'VIP level', 'trading fee', 'fee rate', 'spot fee', 'futures fee'."
 user-invocable: false
+disable-model-invocation: true
+metadata:
+  openclaw:
+    emoji: "💱"
+    os:
+      - darwin
+      - linux
+    primaryEnv: GATE_API_KEY
+    requires:
+      bins:
+        - gate-cli
+      env:
+        - GATE_API_KEY
+        - GATE_API_SECRET
+
+    install:
+      - kind: download
+        os:
+          - linux
+        url: "https://github.com/gate/gate-cli/releases/download/v0.6.2/gate-cli_0.6.2_linux_amd64.tar.gz"
+        bins:
+          - gate-cli
+        targetDir: "bin"
+        label: "Download gate-cli (Linux x64)"
+      - kind: download
+        os:
+          - linux
+        url: "https://github.com/gate/gate-cli/releases/download/v0.6.2/gate-cli_0.6.2_linux_arm64.tar.gz"
+        bins:
+          - gate-cli
+        targetDir: "bin"
+        label: "Download gate-cli (Linux arm64)"
+      - kind: download
+        os:
+          - darwin
+        url: "https://github.com/gate/gate-cli/releases/download/v0.6.2/gate-cli_0.6.2_darwin_amd64.tar.gz"
+        bins:
+          - gate-cli
+        targetDir: "bin"
+        label: "Download gate-cli (macOS Intel)"
+      - kind: download
+        os:
+          - darwin
+        url: "https://github.com/gate/gate-cli/releases/download/v0.6.2/gate-cli_0.6.2_darwin_arm64.tar.gz"
+        bins:
+          - gate-cli
+        targetDir: "bin"
+        label: "Download gate-cli (macOS Apple Silicon)"
 ---
+
+### Resolving `gate-cli` (binary path)
+
+Resolve **`gate-cli`** in order: **(1)** **`command -v gate-cli`** and **`gate-cli --version`** succeeds; **(2)** **`${HOME}/.local/bin/gate-cli`** if executable; **(3)** **`${HOME}/.openclaw/skills/bin/gate-cli`** if executable. Canonical rules: [`exchange-runtime-rules.md`](https://github.com/gate/gate-skills/blob/master/skills/exchange-runtime-rules.md) §4 (or [`gate-runtime-rules.md`](https://github.com/gate/gate-skills/blob/master/skills/gate-runtime-rules.md) §4).
+
 
 # Gate VIP & Fee Query Assistant
 
 ## General Rules
-Read and follow [`gate-runtime-rules.md`](https://github.com/gate/gate-skills/blob/master/skills/gate-runtime-rules.md) first.
 
----
+⚠️ STOP — You MUST read and strictly follow the shared runtime rules before proceeding.
+Do NOT select or call any tool until all rules are read. These rules have the highest priority.
+→ Read [gate-runtime-rules.md](https://github.com/gate/gate-skills/blob/master/skills/gate-runtime-rules.md)
+- **Only use the `gate-cli` commands explicitly listed in this skill.** Commands not documented here must NOT be run for these workflows, even if other interfaces expose them.
 
-Query the user's Gate VIP tier and trading fee rates, including spot and futures fee information.
+## Skill Dependencies
+
+
+### gate-cli commands used
+
+**Query Operations (Read-only)**
+
+- `gate-cli cex account detail`
+- `gate-cli cex wallet market trade-fee`
+
+### Authentication
+- **Interactive file setup:** when **`GATE_API_KEY`** and **`GATE_API_SECRET`** are **not** both set on the host, run **`gate-cli config init`** to complete the wizard for API key, secret, profiles, and defaults (see [gate-cli](https://github.com/gate/gate-cli)).
+- **Env / flags:** **`gate-cli config init`** is **not** required when credentials are already supplied — e.g. **both** **`GATE_API_KEY`** and **`GATE_API_SECRET`** set on the host, or **`--api-key`** / **`--api-secret`** where supported — never ask the user to paste secrets into chat.
+- **Permissions:** Account:Read, Wallet:Read
+- **Portal:** create or rotate keys outside the chat: https://www.gate.com/myaccount/profile/api-key/manage
+
+### Installation Check
+- **Required:** `gate-cli` (run `sh ./setup.sh` from this skill directory if missing; optional `GATE_CLI_SETUP_MODE=release`).
+- Add `$HOME/.openclaw/skills/bin` to **`PATH`** if you invoke `gate-cli` by name (or the directory where [`setup.sh`](./setup.sh) installs it).
+- **Credentials:** When **`GATE_API_KEY`** and **`GATE_API_SECRET`** are both set (non-empty) for the host, **do not** require **`gate-cli config init`** — that is equivalent valid config for `gate-cli`. When **both** are unset or empty, **remind** the operator to run **`gate-cli config init`** **or** to configure **`GATE_API_KEY`** / **`GATE_API_SECRET`** in the **matching skill** from the skill library (never ask the user to paste secrets into chat).
+- **Sanity check:** Do not proceed with authenticated calls until the CLI behaves as expected (e.g. **`gate-cli --version`** or a read-only **`gate-cli cex ...`** command from this skill); confirm credentials resolve before mutating operations.
+
+## Execution mode
+
+**Read and strictly follow** [`references/gate-cli.md`](./references/gate-cli.md), then execute this skill's VIP/fee query workflow.
+
+- `SKILL.md` keeps intent routing and rendering rules.
+- `references/gate-cli.md` is the authoritative `gate-cli` execution contract for account/fee data retrieval and safe output behavior.
 
 ## Quick Start
 
 Below are the most common prompts to get started quickly:
 
 1. **Query VIP tier**
-   > What is my VIP level?
+ > What is my VIP level?
 
 2. **Query trading fees**
-   > Show me the spot and futures trading fees.
+ > Show me the spot and futures trading fees.
 
 3. **Query VIP tier and fees together**
-   > Check my VIP level and trading fees.
+ > Check my VIP level and trading fees.
 
 ## Domain Knowledge
 
@@ -35,15 +114,15 @@ Below are the most common prompts to get started quickly:
 
 | Group | Tool Calls |
 |-------|------------|
-| Account / VIP tier | `cex_account_get_account_detail` |
-| Trading fee rates | `cex_wallet_get_wallet_fee` |
+| Account / VIP tier | `gate-cli cex account detail` |
+| Trading fee rates | `gate-cli cex wallet market trade-fee` |
 
 ### Key Concepts
 
 - **VIP Tier**: Gate assigns VIP levels (VIP 0 – VIP 16) based on trading volume and asset holdings. Higher VIP tiers unlock lower fee rates.
 - **Spot Fee**: The maker/taker fee rate applied to spot trading pairs.
 - **Futures Fee**: The maker/taker fee rate applied to futures/contract trading, differentiated by settlement currency (BTC, USDT, USD).
-- The `cex_wallet_get_wallet_fee` tool returns fee rates for both spot and futures in a single response. Use the `settle` parameter to query futures-specific fees.
+- The `gate-cli cex wallet market trade-fee` tool returns fee rates for both spot and futures in a single response. Use the `settle` parameter to query futures-specific fees.
 
 ### API Behavior Notes
 
@@ -72,7 +151,7 @@ Key data to extract:
 
 If `query_type` is "vip" or "combined":
 
-Call `cex_account_get_account_detail` with:
+Call `gate-cli cex account detail` with:
 - No parameters required
 
 Key data to extract:
@@ -82,7 +161,7 @@ Key data to extract:
 
 If `query_type` is "fee" or "combined":
 
-Call `cex_wallet_get_wallet_fee` with:
+Call `gate-cli cex wallet market trade-fee` with:
 - `currency_pair` (optional): specify trading pair context (note: fee rates are account-level and do not vary by pair)
 - `settle` (optional): futures settlement currency — affects futures fee fields only
 
@@ -94,7 +173,7 @@ Key data to extract:
 
 ### Step 4: Return Result
 
-Format the response according to the Report Template. The API (`cex_wallet_get_wallet_fee`) always returns the full fee structure (spot + futures + delivery). Filter the output based on the user's original intent:
+Format the response according to the Report Template. The API (`gate-cli cex wallet market trade-fee`) always returns the full fee structure (spot + futures + delivery). Filter the output based on the user's original intent:
 
 - If user asked about **spot fees only** → show only `makerFee` / `takerFee`
 - If user asked about **futures/contract fees only** → show only `futuresMakerFee` / `futuresTakerFee`
@@ -111,13 +190,13 @@ Key data to extract:
 
 | Condition | Action |
 |-----------|--------|
-| User asks about VIP tier/level only | Call `cex_account_get_account_detail`, return VIP level |
-| User asks about trading fees only | Call `cex_wallet_get_wallet_fee`, return spot and futures fee rates |
+| User asks about VIP tier/level only | Call `gate-cli cex account detail`, return VIP level |
+| User asks about trading fees only | Call `gate-cli cex wallet market trade-fee`, return spot and futures fee rates |
 | User asks about both VIP and fees | Call both tools, return combined result |
-| User specifies a trading pair | Pass `currency_pair` parameter to `cex_wallet_get_wallet_fee` |
-| User specifies futures settlement currency | Pass `settle` parameter to `cex_wallet_get_wallet_fee` |
-| User asks about spot fees only | Call `cex_wallet_get_wallet_fee`, return only spot fee portion |
-| User asks about futures/contract fees only | Call `cex_wallet_get_wallet_fee` with `settle` parameter, return only futures fee portion |
+| User specifies a trading pair | Pass `currency_pair` parameter to `gate-cli cex wallet market trade-fee` |
+| User specifies futures settlement currency | Pass `settle` parameter to `gate-cli cex wallet market trade-fee` |
+| User asks about spot fees only | Call `gate-cli cex wallet market trade-fee`, return only spot fee portion |
+| User asks about futures/contract fees only | Call `gate-cli cex wallet market trade-fee` with `settle` parameter, return only futures fee portion |
 | User specifies a `currency_pair` | Append a disclaimer that the API does not validate trading pairs; the returned fee is the account-level default and the pair may not exist |
 | API returns error or empty data | Inform user of the issue and suggest checking account authentication |
 

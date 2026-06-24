@@ -4,11 +4,10 @@ Use this file with `assets/registry.json` to keep address lookups deterministic 
 
 ## Resolution Policy
 
-- Runtime tools in mantle-mcp v0.2:
-  - Use `mantle_resolveToken` for token symbols/names.
-  - Use `mantle_resolveAddress` for contract key/alias/label lookups.
-  - Use `mantle_validateAddress` before returning any final address.
-  - Do not reference `get_contract_address` (not available in v0.2).
+- CLI commands for address resolution (do NOT use MCP server):
+  - Use `mantle-cli token resolve <symbol> --json` for token symbols/names.
+  - Use `mantle-cli registry resolve <identifier> --json` for contract key/alias/label lookups.
+  - Use `mantle-cli registry validate <address> --json` before returning any final address.
 - Prefer machine-readable sources over free text.
 - Treat missing or stale provenance as a safety failure.
 - Fail closed: no verified entry means no address output.
@@ -30,10 +29,13 @@ Each `contracts[]` entry should include:
 - `protocol_id`: optional normalized protocol slug for DeFi entries
 - `contract_role`: optional normalized role such as `router`, `quoter`, `position_manager`, `pool`, or `pool_addresses_provider`
 - `supports`: optional list of supported operations such as `swap`, `add_liquidity`, `remove_liquidity`, `supply`, or `withdraw`
+- `interaction_method`: optional — `function_call_only` if the contract only accepts state changes via named function calls (e.g. Aave Pool). Plain ERC-20 transfers to such a contract must be refused.
+- `reject_plain_transfers`: optional boolean — when `true`, an agent MUST NOT construct an ERC-20 `transfer()` / `transferFrom()` whose recipient is this contract, and MUST NOT build one via `mantle-cli utils encode-call` + `build-tx`.
+- `correct_tools`: optional map from operation name to the dedicated CLI command / tool that should be used. Use these instead of any generic transfer/raw construction path.
 
 ## Lookup Strategy
 
-1. If MCP tools are available, resolve through `mantle_resolveToken`/`mantle_resolveAddress` first.
+1. If CLI is available, resolve through `mantle-cli token resolve`/`mantle-cli registry resolve` first.
 2. Local fallback: exact match on `key`.
 3. For `defi` lookups, if the request includes a protocol and role, filter by exact `protocol_id` + `contract_role`.
 4. Local fallback: exact match on alias/symbol.

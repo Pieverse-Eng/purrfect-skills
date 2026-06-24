@@ -59,14 +59,14 @@ Key changes:
 
 ---
 
-## Osaka (v2.2.x) — Apr 2026 ⚠️ UPCOMING
+## Osaka (v2.2.x) — Apr 2026
 
 | Detail  | Value                                 |
 | ------- | ------------------------------------- |
 | Kairos  | Block #209,134,000 (Feb 11, 2026)     |
-| Mainnet | Block #213,333,000 (est. Apr 7, 2026) |
+| Mainnet | Block #213,333,000 (Apr 7, 2026)      |
 
-**⚠️ Breaking change: Contract code at address(0) will be removed.**
+**Breaking change: Contract code at address(0) was removed on Mainnet.**
 
 Key changes:
 
@@ -79,7 +79,10 @@ Key changes:
 - CLZ opcode (EIP-7939)
 - MODEXP input upper bound (EIP-7823)
 
-**Migration required:** If any contract depends on bytecode at address(0), it must be updated before the hardfork.
+**Migration note:** If any contract or off-chain service depends on bytecode at
+address(0), update it. Since Osaka, address(0) behaves like an EOA without
+code: arbitrary calls return empty data, `isContract(address(0))` is false, and
+KAIA sent to address(0) succeeds and is effectively burned.
 
 ---
 

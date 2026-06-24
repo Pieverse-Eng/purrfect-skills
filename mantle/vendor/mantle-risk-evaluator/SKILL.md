@@ -1,6 +1,7 @@
 ---
 name: mantle-risk-evaluator
-description: Use when a Mantle state-changing intent needs pre-execution slippage, liquidity, address-safety, allowance-scope, or gas/deadline checks.
+version: 0.1.18
+description: "Use when a Mantle state-changing intent needs pre-execution slippage, liquidity, address-safety, allowance-scope, or gas/deadline checks."
 disable-model-invocation: true
 user-invocable: false
 ---
@@ -41,7 +42,6 @@ All of the following MUST be present in the intent. If any is missing, immediate
 ## Checklist
 
 ### 1. Slippage check
-
 - The "proposed slippage" is the slippage tolerance the user (or protocol) has set for this transaction.
 - ALWAYS compare the proposed slippage against the default threshold table below, regardless of whether the user set it themselves.
 - A user choosing a high slippage tolerance does NOT make it safe -- the default thresholds still apply.
@@ -49,39 +49,35 @@ All of the following MUST be present in the intent. If any is missing, immediate
 - Fail when proposed slippage exceeds the fail threshold (> 1.0% by default).
 
 ### 2. Liquidity depth check
-
 - Estimate price impact from quote/simulation context.
 - Warn on moderate impact, fail on severe impact (see thresholds).
 - If liquidity data is unavailable, set warn with note "reduced confidence".
 
 ### 3. Address safety check
-
 - Verify all addresses against trusted registry/tooling.
 - `pass`: trusted and verified source.
 - `warn`: unknown but not explicitly flagged.
 - `fail`: flagged, blacklisted, or malformed address.
 
 ### 4. Allowance scope check
-
 - Detect approvals broader than required for intended amount.
 - `pass`: existing allowance fits intended spend scope.
 - `warn`: allowance materially larger than intended spend.
 - `fail`: new or existing near-unlimited approval without explicit user confirmation. Near-unlimited heuristic: raw allowance `>= 2^255`.
 
 ### 5. Gas and deadline sanity
-
 - Check gas estimate reasonableness versus recent baseline.
 - Check transaction deadline is not stale and not excessively long.
 - Apply thresholds below.
 
 ## Thresholds (defaults when user has not specified)
 
-| Check                       | Warn         | Fail         |
-| --------------------------- | ------------ | ------------ |
-| Slippage                    | > 0.5%       | > 1.0%       |
-| Estimated price impact      | > 2%         | > 5%         |
-| Deadline horizon            | > 20 minutes | > 60 minutes |
-| Gas deviation from baseline | > 20%        | > 40%        |
+| Check | Warn | Fail |
+|---|---|---|
+| Slippage | > 0.5% | > 1.0% |
+| Estimated price impact | > 2% | > 5% |
+| Deadline horizon | > 20 minutes | > 60 minutes |
+| Gas deviation from baseline | > 20% | > 40% |
 
 ## Verdict Rules
 
@@ -90,7 +86,6 @@ All of the following MUST be present in the intent. If any is missing, immediate
 - All checks `pass` => final verdict **pass**.
 
 ### Confidence policy
-
 - `high`: all required signals present and consistent.
 - `medium`: one non-critical signal missing.
 - `low`: key signals missing (e.g., no liquidity data or unresolved address provenance).

@@ -1,14 +1,6 @@
 ---
 name: binance-agentic-wallet
-description: |
-  Use when the user mentions connect/disconnect binance agentic wallet, sign in, sign out, web3 wallet, wallet address,
-  check balance, how much crypto do I have, send BNB/USDT/crypto, transfer tokens, swap tokens,
-  buy/sell token, DEX trade, limit order, market order, cancel order, get a quote, transaction history,
-  wallet settings, daily limit, slippage, MEV protection, supported chains, available networks,
-  prediction market, predict.fun, YES/NO market, place a prediction,
-  redeem winnings, claim payout, prediction portfolio, prediction PnL,
-  x402 payment, HTTP 402 Payment Required, pay a known x402 API,
-  or any on-chain wallet operation.
+description: Binance Agentic Wallet,auth,wallet,send,swap,predict,x402
 metadata:
   author: binance-web3-team
   version: "1.2.0"
@@ -27,6 +19,15 @@ metadata:
 # Binance Agentic Wallet Skill
 
 This skill drives the `baw` CLI to manage a Binance Web3 wallet — sign-in/sign-out, balance and history queries, security settings, token transfers, DEX swaps (market orders), limit orders, order management, prediction market trading, and x402 payments.
+
+## CLI Preflight
+
+If this is a hosted instance, do not run this section.
+
+```bash
+npm install -g @binance/agentic-wallet@1.2.1
+test "$(baw --version)" = "1.2.1"
+```
 
 ## Command Routing
 

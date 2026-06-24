@@ -1,148 +1,272 @@
 ---
 name: bitget-wallet
-description: Bitget Wallet integration for multi-chain swaps, RWA stock trading, and market data.
+description: Bitget Wallet,default swap,balance,risk,alpha,RWA,x402
 ---
 
-# Bitget Wallet (Swap + RWA + Market Data)
+# Bitget Wallet Skill
 
-Implementation skill for Bitget Wallet API. Follows the Bitget order flow (check-swap-token → quote → confirm → makeOrder → sign → send → get-order-details) but replaces the vendor signing scripts (`order_sign.py`, `order_make_sign_send.py`) with `purr wallet sign-transaction` — managed custody instead of local private keys.
+## Overview
 
-**NEVER use or reference**: `order_sign.py`, `order_make_sign_send.py`, `social_order_make_sign_send.py`, `social-wallet.py`, `key_utils.py`, `x402_pay.py`. These do not exist here. All signing goes through `purr wallet sign-transaction`.
+Bitget Wallet API coverage for token discovery, market data, security checks,
+alpha signals, deep token analytics, wallet balance queries, swap quote/route
+confirmation, RWA stock discovery/pricing, order-status lookups, and supported
+EVM execution through `purr bitget`.
 
-**Out of scope**: Social Login Wallet, x402 payments, local mnemonic/private-key management, Tron swaps (no Tron wallet). If the user asks for any of these, explain they are not supported and suggest alternatives.
+Use Bitget's Python client for read, quote, risk-check, confirm, and status
+calls. Use `purr bitget` for supported EVM signing, submit, payment, and
+execution workflows.
 
-## Mandatory Rules
+## Scope
 
-> **First time using this skill?** Read [`vendor/README.md`](vendor/README.md) for capabilities overview and [`vendor/SKILL.md`](vendor/SKILL.md) for market tools architecture, chain identifiers, stablecoin addresses, and common pitfalls.
+Supported operations:
 
-> **ALWAYS read the relevant `vendor/docs/*.md` before any API call.**
-> Do NOT write your own curl/jq commands from memory — the vendor docs contain tested,
-> working commands with correct API endpoints and field names.
+| User needs | Use |
+|---|---|
+| Wallet balances and token holdings | `batch-v2` |
+| Token search, rankings, launches, and token metadata | market-data commands |
+| Token risk, security, dev history, liquidity, and price data | market-data commands |
+| Alpha gems, smart-money/KOL signals, and address discovery | alpha/address commands |
+| Deep token analysis, holders, top-profit, transaction list, comparisons | token-analysis commands |
+| Swap research, risk checks, quote, and route confirmation | `check-swap-token`, `quote`, `confirm` |
+| EVM swap execution after route confirmation | `purr bitget order-execute` |
+| Existing swap order status | `get-order-details` |
+| RWA stock discovery, config, display buy/sell price, K-line, and holdings | RWA commands |
+| EVM RWA buy/sell execution after route confirmation | `purr bitget order-execute` |
+| EVM token transfer or supported EVM gasless transfer | `purr bitget transfer-execute` |
+| Existing transfer order status | `get-transfer-order` |
+| EVM x402 payment or EIP-3009 payment signature | `purr bitget x402-pay` or `purr bitget x402-sign-eip3009` |
 
-> **NEVER handle private keys or mnemonics.** Wallets are managed by the runtime; signing goes through `purr wallet sign-transaction`.
+Out of scope:
 
-> **User confirmation required before any fund-moving action.** Before executing a swap or trade, show the quote details (amounts, gas, slippage) and wait for explicit confirmation ("confirm" / "yes"). Once confirmed, execute all remaining steps (makeOrder → sign → send) without pausing again.
+| Do not use | Reason |
+|---|---|
+| Local mnemonics, private keys, seed phrases, or key files | Use platform wallet signing through `purr` only |
+| Social Login Wallet flows, `.social-wallet-secret`, or `--wallet-id` | Not supported by this packaged skill |
+| Official signing helpers such as `order_sign.py`, `order_make_sign_send.py`, `transfer_make_sign_send.py`, `x402_pay.py`, `key_utils.py`, `social-wallet.py`, `social_order_make_sign_send.py`, or `social_transfer_make_sign_send.py` | Not included; use `purr bitget` |
+| Direct Bitget `send` or `submitTransferOrder` calls with manually signed payloads | Use `purr bitget ...` |
+| Solana partial-sign, Solana x402, Tron execution, or unsupported transfer source types | Out of scope |
 
-> **Always show tx results with explorer links.** After a successful write operation, reply with the transaction hash(es) and clickable explorer links using the chain's explorer URL from the Supported Chains table (e.g. `https://bscscan.com/tx/{txId}`, `https://solscan.io/tx/{txId}`). For cross-chain swaps, show both fromTxId and toTxId links.
+## Domain References
 
-> **Use API-returned values exactly as-is.** When an API response returns a field (e.g. `market.id`, `market.protocol`, `contract`, `orderId`), pass it verbatim to subsequent calls. Never guess or transform these values.
+Before calling a business API, read the matching reference:
 
-## Tools — Read
+| Business domain | Reference | Before calling |
+|---|---|---|
+| Swap planning and EVM execution | [`docs/swap.md`](docs/swap.md) | `check-swap-token`, `quote`, `confirm`, `purr bitget order-execute`, `get-order-details` |
+| Market data and token checks | [`docs/market-data.md`](docs/market-data.md) | token search, price, K-line, liquidity, rankings, security |
+| Alpha intelligence | [`docs/alpha.md`](docs/alpha.md) | alpha gems, alpha signals, smart-money discovery |
+| Token deep analysis | [`docs/token-analyze.md`](docs/token-analyze.md) | holders, top-profit, transaction list, token comparisons |
+| Address discovery | [`docs/address-find.md`](docs/address-find.md) | KOL or smart-money address lookup |
+| RWA stocks | [`docs/rwa.md`](docs/rwa.md) | RWA ticker/config/info/order-price/K-line/holdings and EVM execution through the swap path |
+| EVM transfers and gasless transfers | [`docs/transfer.md`](docs/transfer.md) | `purr bitget transfer-execute`, `get-transfer-order` |
+| EVM x402 payments | [`docs/x402-payments.md`](docs/x402-payments.md) | `purr bitget x402-pay`, `purr bitget x402-sign-eip3009` |
+| Command syntax | [`docs/commands.md`](docs/commands.md) | command flags and examples |
 
-All read operations go through the vendor Python API client directly — no purr involved.
+Use the scripts and docs in this skill as the source of truth. Do not invent
+Bitget endpoint parameters from memory.
+
+## General Workflow
+
+1. Identify the business domain and load the matching doc from the table above.
+2. Use `python3 scripts/bitget-wallet-agent-api.py <command> ...` for read,
+   quote, risk-check, confirm, and status calls.
+3. Show important API results plainly, including chain, contract address,
+   amounts, risk flags, order ids, market/protocol ids, and timestamps.
+4. For supported EVM execution, show the exact parameters, ask for explicit
+   confirmation, then use the matching `purr bitget` command.
+5. Stop for Solana partial-sign, Solana x402, Tron execution, Social Login
+   Wallet flows, local key handling, or unsupported transfer source types.
+
+## Balance Queries
+
+Use `batch-v2` for balance queries. It returns balance, price, and token info in
+one call and supports all chains including Tron.
 
 ```bash
-cd ./skills/bitget-wallet/vendor
-python3 bitget-wallet-agent-api.py <command> [args...]
+python3 scripts/bitget-wallet-agent-api.py batch-v2 --chain bnb --address <wallet> --contract "" --contract <token>
 ```
 
-| Tool | Load First | Commands |
-|------|------------|----------|
-| bgw_token_find | [`vendor/docs/market-data.md`](vendor/docs/market-data.md) | `search-tokens-v3`, `search-tokens`, `launchpad-tokens`, `rankings`, `historical-coins`, `get-token-list` |
-| bgw_token_check | [`vendor/docs/market-data.md`](vendor/docs/market-data.md) | `coin-market-info`, `security`, `coin-dev`, `kline`, `tx-info`, `liquidity`, `token-info`, `token-price`, `batch-token-info` |
-| bgw_token_analyze | [`vendor/docs/token-analyze.md`](vendor/docs/token-analyze.md) | `simple-kline`, `trading-dynamics`, `transaction-list`, `holders-info`, `profit-address-analysis`, `top-profit`, `compare-tokens` |
-| bgw_address_find | [`vendor/docs/address-find.md`](vendor/docs/address-find.md) | `recommend-address-list` |
-| Balance | [`vendor/docs/swap.md`](vendor/docs/swap.md) | `batch-v2` |
-| Risk check | [`vendor/docs/swap.md`](vendor/docs/swap.md) | `check-swap-token` |
-| RWA stock | [`vendor/docs/rwa.md`](vendor/docs/rwa.md) | `rwa-get-user-ticker-selector`, `rwa-stock-info`, `rwa-get-config`, `rwa-stock-order-price`, `rwa-kline`, `rwa-get-my-holdings` |
-| Order status | [`vendor/docs/swap.md`](vendor/docs/swap.md) | `get-order-details` |
-| Command ref | [`vendor/docs/commands.md`](vendor/docs/commands.md) | All subcommands and params |
+For swap planning, include the native token (`--contract ""`) and the intended
+fromToken contract to check both spendable token balance and native gas context.
 
-All token discovery output **must** include **chain** and **contract address** for every token.
+## Swap Planning And EVM Execution
 
-## Execution Flow — Swap (Bitget Order Mode)
+Swap planning uses Bitget's Python client. Supported EVM execution uses
+`purr bitget order-execute`.
 
-**Load [`vendor/docs/swap.md`](vendor/docs/swap.md) before any swap.** It contains pre-trade check details, gasless thresholds, cross-chain limits, per-step response handling, and common pitfalls.
+Allowed flow:
 
-**Vendor docs override:** The vendor docs reference signing scripts (`order_sign.py`, `order_make_sign_send.py`, `social_order_make_sign_send.py`) and mnemonic/private-key workflows. **Ignore all of those.** Steps 6-7-8 below replace the vendor's signing with `purr wallet sign-transaction`. Everything else in the vendor docs (API params, response handling, thresholds, pitfalls) applies as-is.
+1. `batch-v2` to check fromToken and native-token context.
+2. `check-swap-token` for fromToken and toToken risk.
+3. `quote` to list market routes.
+4. `confirm` for the selected market/protocol/slippage.
+5. `purr bitget order-execute` after explicit user confirmation.
+6. `get-order-details` only for an existing order id.
 
-1. `purr wallet address --chain-type ethereum` (or `solana`) → get wallet address
-2. Vendor API `batch-v2` → verify fromToken balance + native gas balance
-3. Vendor API `check-swap-token` → risk check both tokens
-4. Vendor API `quote` → show **all** market results to user, recommend first
-5. Vendor API `confirm` → pass `--feature no_gas` if native balance ≈ 0 (gasless, requires >= ~$5 USD), otherwise `--feature user_gas`. Display outAmount, minAmount, gasTotalAmount; check `recommendFeatures` in response to verify gas mode is viable. **Wait for user confirmation**
-6. Vendor API `make-order` → unsigned txs to file (60s expiry!)
-7. `purr wallet sign-transaction --txs-json "$(cat file)"` → sign txs to file
-8. Vendor API `send --json-file` → submit signed txs
-9. Vendor API `get-order-details` → check result
-10. `purr wallet balance` → confirm result
+Do not call Bitget `send` directly. Do not use local signing scripts.
 
-**Steps 6-7-8 must complete within 60 seconds** (makeOrder expires). **Never copy makeOrder/sign hex data through the conversation — LLMs silently truncate long hex calldata strings, causing on-chain reverts that appear as "slippage" errors. Always redirect output to files and pipe between steps.**
+When showing `confirm` results, include `outAmount`, `minAmount`,
+`gasTotalAmount`, selected `market`, selected `protocol`, `slippage`, and any
+risk or gas warnings.
+
+## Market Tools
+
+### Token Discovery
+
+Use these when the user wants to find tokens, launches, rankings, or token
+metadata.
+
+| Use case | Command |
+|---|---|
+| Scan new pools | `launchpad-tokens` |
+| Search tokens | `search-tokens-v3` |
+| Rankings | `rankings` |
+| New launches | `historical-coins` |
+| Popular token list | `get-token-list` |
+
+Always include chain and contract address for token discovery results.
+
+### Token Checks
+
+Use these when the user wants token safety, price, liquidity, or market context.
+
+| Use case | Command |
+|---|---|
+| Security audit | `security` |
+| Swap risk check | `check-swap-token` |
+| Developer history | `coin-dev` |
+| Market overview | `coin-market-info` |
+| Token info | `token-info` |
+| K-line | `kline` |
+| Transaction stats | `tx-info` |
+| Liquidity | `liquidity` |
+
+Recommended check order: `coin-market-info` -> `security` -> `coin-dev`, then
+`kline` and `tx-info` when chart/flow context is needed.
+
+### Alpha Intelligence
+
+Use these when the user asks for AI-curated opportunities, smart money, KOL
+signals, or address-performance discovery.
+
+| Use case | Command |
+|---|---|
+| Alpha gems | `alpha-gems` |
+| Real-time alpha signals | `alpha-signals` |
+| Smart-money address list | `alpha-hunter-find` |
+| Address score detail | `alpha-hunter-detail` |
+| Agent tag labels | `agent-alpha-tags` |
+| Addresses by Agent tag | `agent-alpha-hunter-find` |
+| Cross-strategy signal | `multi-agent-signal` |
+
+### Token Deep Analysis
+
+| Use case | Command |
+|---|---|
+| K-line with smart-money/KOL signals | `simple-kline` |
+| Buy/sell pressure | `trading-dynamics` |
+| Tagged transaction list | `transaction-list` |
+| Holder distribution | `holders-info` |
+| Profitable address stats | `profit-address-analysis` |
+| Top profitable addresses | `top-profit` |
+| Token comparison | `compare-tokens` |
+
+### Address Discovery
+
+Use `recommend-address-list` to find KOL or smart-money addresses by role,
+chain, win rate, profit, trade count, and recent activity.
+
+## RWA Stocks
+
+RWA support covers discovery, market state, display buy/sell prices, K-lines,
+holdings, quote/order preparation, and supported EVM execution through
+`purr bitget order-execute`.
+
+| Use case | Command |
+|---|---|
+| Search/list RWA tickers | `rwa-get-user-ticker-selector` |
+| Get stablecoin/config context | `rwa-get-config` |
+| Get market state and limits | `rwa-stock-info` |
+| Get display buy/sell price | `rwa-stock-order-price` |
+| Get RWA K-line | `rwa-kline` |
+| Get user holdings | `rwa-get-my-holdings` |
+
+## Chain Identifiers
+
+| Chain | ID | Code |
+|---|---:|---|
+| Ethereum | 1 | `eth` |
+| Solana | 100278 | `sol` |
+| BNB Chain | 56 | `bnb` |
+| Base | 8453 | `base` |
+| Arbitrum | 42161 | `arbitrum` |
+| Polygon | 137 | `matic` |
+| Morph | 100283 | `morph` |
+| Tron | 728126428 | `trx` |
+
+Use empty string `""` for native token contracts such as ETH, SOL, BNB, or TRX.
+
+## Scripts
+
+| Script | Purpose |
+|---|---|
+| `scripts/bitget-wallet-agent-api.py` | Unified Bitget Wallet API client for read, quote, order preparation, and status lookup commands |
+
+## Quick Reference
 
 ```bash
-# Steps 6-8 as one fast sequence:
-cd ./skills/bitget-wallet/vendor
+# Balance
+python3 scripts/bitget-wallet-agent-api.py batch-v2 --chain bnb --address <addr> --contract "" --contract <token>
 
-# 6. makeOrder → file (hex data stays out of conversation)
-python3 bitget-wallet-agent-api.py make-order --order-id <id> \
-  --from-chain bnb --from-contract <addr> --from-symbol USDT \
-  --to-chain bnb --to-contract "" --to-symbol BNB \
-  --from-address <wallet> --to-address <wallet> \
-  --from-amount 5 --slippage 0.03 \
-  --market <market_id> --protocol <protocol> > /tmp/bgw_order.json
+# Token discovery
+python3 scripts/bitget-wallet-agent-api.py launchpad-tokens --chain sol --platforms pump.fun --stage 1 --mc-min 10000 --holder-min 100
+python3 scripts/bitget-wallet-agent-api.py search-tokens-v3 --keyword pepe --chain sol --order-by market_cap
+python3 scripts/bitget-wallet-agent-api.py rankings --name Hotpicks
 
-# 7. Sign unsigned txs ($(cat) reads file in shell, not through LLM)
-purr wallet sign-transaction --txs-json "$(cat /tmp/bgw_order.json)" > /tmp/bgw_signed.json
+# Token checks
+python3 scripts/bitget-wallet-agent-api.py coin-market-info --chain sol --contract <addr>
+python3 scripts/bitget-wallet-agent-api.py security --chain bnb --contract <addr>
+python3 scripts/bitget-wallet-agent-api.py coin-dev --chain sol --contract <addr>
 
-# 8. Send signed txs
-python3 bitget-wallet-agent-api.py send --json-file /tmp/bgw_signed.json
+# Token deep analysis
+python3 scripts/bitget-wallet-agent-api.py trading-dynamics --chain sol --contract <addr>
+python3 scripts/bitget-wallet-agent-api.py holders-info --chain sol --contract <addr>
+python3 scripts/bitget-wallet-agent-api.py top-profit --chain sol --contract <addr>
+
+# Swap planning
+python3 scripts/bitget-wallet-agent-api.py quote --from-chain bnb --from-contract <addr> --from-symbol USDT --from-amount 5 --to-chain bnb --to-contract "" --to-symbol BNB --from-address <wallet> --to-address <wallet>
+python3 scripts/bitget-wallet-agent-api.py confirm --from-chain bnb --from-contract <addr> --from-symbol USDT --from-amount 5 --from-address <wallet> --to-chain bnb --to-contract "" --to-symbol BNB --to-address <wallet> --market <id> --protocol <protocol> --slippage <value> --features user_gas
+purr bitget order-execute --order-id <id> --from-chain bnb --from-contract <addr> --from-symbol USDT --from-address <wallet> --to-chain bnb --to-contract "" --to-symbol BNB --to-address <wallet> --from-amount 5 --slippage <value> --market <id> --protocol <protocol>
+python3 scripts/bitget-wallet-agent-api.py get-order-details --order-id <id>
+
+# RWA
+python3 scripts/bitget-wallet-agent-api.py rwa-get-user-ticker-selector --chain bnb --key-word NVDA
+python3 scripts/bitget-wallet-agent-api.py rwa-stock-info --ticker NVDAon
+python3 scripts/bitget-wallet-agent-api.py rwa-stock-order-price --ticker NVDAon --chain bnb --side buy --tx-coin-contract <stablecoin> --user-address <addr>
+
+# Transfer status only
+python3 scripts/bitget-wallet-agent-api.py get-transfer-order --order-id <id>
+
+# EVM transfer execution
+purr bitget transfer-execute --chain base --contract <token> --from-address <wallet> --to-address <recipient> --amount 10 --gasless true
+
+# EVM x402 payment
+purr bitget x402-pay --url <url> --method POST --data '<json>'
 ```
 
-`purr wallet sign-transaction` accepts raw makeOrder JSON (`{ data: { orderId, txs } }` or `{ orderId, txs }`), signs all txs, returns `{ orderId, txs, address }` with `sig` fields filled. Handles all modes: EVM raw tx, EIP-712, Solana Ed25519, gasPayMaster.
+## Safety Rules
 
-## Execution Flow — RWA Stock Trading
-
-Load [`vendor/docs/rwa.md`](vendor/docs/rwa.md) first. Same swap flow with RWA-specific pre-trade steps:
-
-1. `purr wallet address --chain-type ethereum` → EVM wallet
-2. `purr wallet balance --chain-type ethereum --chain-id 56` → check USDT/USDC (min $20)
-3. Vendor API `rwa-get-user-ticker-selector` → find stock ticker
-4. Vendor API `rwa-stock-info` → check `market_status`, `tx_minimum_buy_usd`
-5. Vendor API `rwa-get-config` → get stablecoin contracts
-6. Vendor API `quote` → stablecoin↔RWA token
-7. Steps 5-10 from swap flow (confirm → makeOrder → sign → send → check)
-
-RWA trades produce 2 tx items (`approve` + `signTypeData`). Both signed by `purr wallet sign-transaction` automatically.
-
-## Supported Chains
-
-| Chain | Code | Chain ID | Explorer |
-|-------|------|----------|----------|
-| Ethereum | eth | 1 | `https://etherscan.io/tx/{txId}` |
-| BNB Chain | bnb | 56 | `https://bscscan.com/tx/{txId}` |
-| Base | base | 8453 | `https://basescan.org/tx/{txId}` |
-| Arbitrum | arbitrum | 42161 | `https://arbiscan.io/tx/{txId}` |
-| Polygon | matic | 137 | `https://polygonscan.com/tx/{txId}` |
-| Morph | morph | 100283 | `https://explorer.morphl2.io/tx/{txId}` |
-| Solana | sol | 100278 | `https://solscan.io/tx/{txId}` |
-| Tron | trx | 728126428 | — |
-
-Wallet types: `ethereum` (all EVM chains) and `solana`. No Tron wallet.
-
-Use `""` for native token contract (ETH, SOL, BNB, etc.). All amounts are **human-readable** (e.g. `0.01` = 0.01 USDT), not wei/lamports.
-
-## Common Stablecoins
-
-| Chain | USDT | USDC |
-|-------|------|------|
-| Ethereum | `0xdAC17F958D2ee523a2206206994597C13D831ec7` | `0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48` |
-| BNB Chain | `0x55d398326f99059fF775485246999027B3197955` | `0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d` |
-| Base | `0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2` | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` |
-| Arbitrum | `0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9` | `0xaf88d065e77c8cC2239327C5EDb3A432268e5831` |
-| Polygon | `0xc2132D05D31c914a87C6611C10748AEb04B58e8F` | `0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359` |
-| Solana | `Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB` | `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` |
-
-## Failure Handling
-
-| Error | Fix |
-|-------|-----|
-| "insufficient balance" | Check `purr wallet balance`, fund wallet first |
-| "no route found" | No liquidity on this chain for the pair |
-| "slippage exceeded" | Increase slippage or reduce amount |
-| "approval failed" | ERC-20 approval reverted, check token contract |
-| Cross-chain minimum $10 | Amount below cross-chain threshold |
-| Gasless not available | Amount below ~$5 USD, use `user_gas` instead |
-| makeOrder expired | Steps 6-7-8 took >60s, re-run from confirm |
-| `error_code: 80000` | Wrong contract address, verify with `token-info` |
-| `40001: Demo trading failed` | Usually insufficient balance — check balance first |
-| Tron swap requested | Tron is **not supported** — no Tron wallet available. Suggest an alternative chain |
+- Never handle mnemonics, private keys, seed phrases, local key files, or signing
+  payloads in this skill.
+- Do not submit signed transactions or payment payloads through official scripts
+  or direct API calls; use `purr bitget`.
+- Treat Solana multi-signer and partial-sign requests, including gasless Solana
+  swap/transfer and Solana x402 payment flows, as out of scope.
+- Treat Tron execution and Social Login Wallet signing flows as out of scope.
+- Present token security and route/risk context before suggesting any user
+  action.
+- Use API-returned values exactly as returned for follow-up calls, including
+  `market`, `protocol`, `contract`, `chain`, and `orderId`.
+- If the user asks to execute a swap, transfer tokens, make an x402 payment, or
+  sign a supported EVM payment/order/transfer, use `purr bitget` after explicit
+  confirmation. For unsupported signing requests, stop and explain the scope.

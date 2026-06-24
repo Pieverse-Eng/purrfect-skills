@@ -21,7 +21,7 @@ There are two reasons to integrate it:
 
 ## Part I — Proof as a generic primitive (self-gating)
 
-Use this path when you need KYC for _your own_ app, independent of Kalshi.
+Use this path when you need KYC for *your own* app, independent of Kalshi.
 
 ### Check verification status
 
@@ -34,7 +34,7 @@ If the wallet isn't verified, redirect the user to Proof's hosted flow. The deep
 - URL: `https://dflow.net/proof?wallet=<addr>&signature=<sig>&timestamp=<ms>&redirect_uri=<url>`
 - Optional: `email`, `projectId`.
 - Signature: user signs the exact message `Proof KYC verification: {timestamp}` (Unix ms, 13 digits) with their wallet; base58-encode the bytes.
-- Full signing snippet and parameter table → docs MCP, or read directly: [`/build/proof/partner-integration`](https://pond.dflow.net/build/proof/partner-integration).
+- Full signing snippet and parameter table → docs MCP, or read directly: [`/resources/proof/partner-integration`](https://pond.dflow.net/resources/proof/partner-integration).
 
 ### Handle the return
 
@@ -55,11 +55,9 @@ Three patterns, each maps to a user intent:
 **Ask if missing:**
 
 1. **What are they using Proof for?** Self-gating their own app / Kalshi PM trading / both.
-
-- **Self-gating** → only `/verify/{address}` + deep-link flow matters. Skip trade-API error handling.
-- **Kalshi trading** → same flow, _plus_ handle `unverified_wallet_not_allowed` / `PROOF_NOT_VERIFIED` + `details.deepLink` at `/order` time.
-- **Both** → superset of the Kalshi path.
-
+  - **Self-gating** → only `/verify/{address}` + deep-link flow matters. Skip trade-API error handling.
+  - **Kalshi trading** → same flow, *plus* handle `unverified_wallet_not_allowed` / `PROOF_NOT_VERIFIED` + `details.deepLink` at `/order` time.
+  - **Both** → superset of the Kalshi path.
 2. **Wallet pubkey** — the address to verify / check.
 3. **App's callback URL** (`redirect_uri`) — where Proof sends the user after verification.
 4. **Web or native mobile** — changes the redirect_uri guidance (universal / app links for mobile; see Gotchas).
@@ -84,16 +82,16 @@ Three patterns, each maps to a user intent:
 - **Embedded wallets work.** Privy, Turnkey, etc., as long as the wallet supports `signMessage`.
 - **One verified identity → unlimited wallets.** No cap. A user who verified on wallet A can link wallet B, C, D, and onward without re-doing ID + liveness — just a fresh ownership signature from each new wallet.
 - **Free + Stripe Identity under the hood.** No fee to builders or users. Users complete Stripe's document + liveness flow.
-- **Proof is not geoblocking.** KYC ≠ jurisdictional restriction. Kalshi PM trading requires _both_ — geoblocking logic lives inline in `dflow-kalshi-trading`, not here.
+- **Proof is not geoblocking.** KYC ≠ jurisdictional restriction. Kalshi PM trading requires *both* — geoblocking logic lives inline in `dflow-kalshi-trading`, not here.
 
 ## When something doesn't fit
 
 Defer to the docs MCP for full reference — specifically:
 
-- [`/build/proof/partner-integration`](https://pond.dflow.net/build/proof/partner-integration) — deep-link code (signature generation, URL building), caching sample, handling edge cases (signature expiration, user cancellation, network errors), security guidance.
-- [`/build/proof/user-journeys`](https://pond.dflow.net/build/proof/user-journeys) — diagrams for new-direct, new-from-partner, and returning-user flows.
-- [`/build/proof-api/verify-address`](https://pond.dflow.net/build/proof-api/verify-address) — the single public endpoint's reference.
-- [`/build/faqs`](https://pond.dflow.net/build/faqs) — Proof + embedded wallets, Proof + dev endpoints, redirect debugging.
+- [`/resources/proof/partner-integration`](https://pond.dflow.net/resources/proof/partner-integration) — deep-link code (signature generation, URL building), caching sample, handling edge cases (signature expiration, user cancellation, network errors), security guidance.
+- [`/resources/proof/user-journeys`](https://pond.dflow.net/resources/proof/user-journeys) — diagrams for new-direct, new-from-partner, and returning-user flows.
+- [`/resources/proof-api/verify-address`](https://pond.dflow.net/resources/proof-api/verify-address) — the single public endpoint's reference.
+- [`/resources/faqs`](https://pond.dflow.net/resources/faqs) — Proof + embedded wallets, Proof + dev endpoints, redirect debugging.
 
 ## Sibling skills
 

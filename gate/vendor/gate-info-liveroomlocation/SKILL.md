@@ -1,15 +1,51 @@
 ---
 name: gate-info-liveroomlocation
-version: "2026.3.13-1"
-updated: "2026-03-13"
-description: The live and replay listing function of Gate Exchange. Use this skill whenever the user asks to find live streams or replays by business type (tag), coin, sort (hottest/newest), or count. Trigger phrases include "最热直播", "live room list", "行情分析直播间", "给我5个SOL相关直播", "latest replays", "tag coin live replay", or any request involving live room location, replay list, or tag/coin/sort filter.
-disable-model-invocation: true
+version: "2026.4.8-1"
+updated: "2026-04-08"
+description: "Gate live stream and replay listing skill. Use when the user asks to find live rooms or replays by tag, coin, or sort. Triggers on 'live room list', '最热直播', 'replay list', 'SOL live stream'."
+required_credentials: []
+required_env_vars: []
+required_permissions: []
 user-invocable: false
+disable-model-invocation: true
 ---
 
 # Gate Info Liveroom Location — Live & Replay Listing
 
-This skill returns a filtered list of live streams and replays on Gate Exchange. Each item is **title + link**. Parameters (tag, coin, sort, limit) are inferred from natural language; use defaults when not specified and do not ask the user for missing params.
+## General Rules
+
+⚠️ STOP — You MUST read and strictly follow the shared runtime rules before proceeding.
+Do NOT select or call any tool until all rules are read. These rules have the highest priority.
+→ Read `./references/gate-runtime-rules.md`
+→ Also read `./references/info-news-runtime-rules.md` for gate-info / gate-news shared rules (tool degradation, report standards, security, and output standards).
+- **Only call MCP tools explicitly listed in this skill.** Tools not documented here must NOT be called, even if they
+  exist in the MCP server.
+
+
+---
+
+## MCP Dependencies
+
+### Required MCP Servers
+| MCP Server | Status |
+|------------|--------|
+| Gate-Info | ✅ Required |
+
+### Authentication
+- API Key Required: No
+- Credentials Source: None; this skill uses read-only Gate Info / Gate News MCP access only.
+
+### Installation Check
+- Required: Gate-Info
+- Install: Use the local Gate MCP installation flow for the current host IDE before continuing.
+- Continue only after the required Gate MCP server is available in the current environment.
+
+## MCP Mode
+
+**Read and strictly follow** [`references/mcp.md`](./references/mcp.md), then execute this skill's live/replay listing workflow.
+
+- `SKILL.md` keeps intent mapping, product behavior, and response semantics.
+- `references/mcp.md` is the authoritative MCP execution layer for parameter extraction, single-endpoint calls, and degradation handling.
 
 ## Workflow
 

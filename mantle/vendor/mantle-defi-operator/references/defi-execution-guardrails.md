@@ -2,11 +2,57 @@
 
 Apply these controls before any potential state-changing DeFi action.
 
-## Capability boundary (mantle-mcp v0.2)
+## Tool discovery via Capability Catalog
 
-- `mantle-mcp` v0.2 in this repo is read-focused and does not sign, broadcast, deploy, or execute transactions.
+- Read `mantle://registry/capabilities` to discover available tools before constructing any plan.
+- Use `category` to filter: `query` for reads, `analyze` for insights, `execute` for transaction building.
+- Use `auth` to check wallet requirements: `required` tools need a wallet address, `none` tools don't.
+- Use `workflow_before` to understand call ordering (e.g., `getSwapQuote` before `buildSwap`).
+- For simple read-only tasks (query/analyze), the Capability Catalog is sufficient — no skill loading needed.
+- For execution planning, continue with the guardrails below.
+
+## Capability boundary (CLI-only)
+
+- All on-chain operations use `mantle-cli` commands with `--json`. Do NOT enable or connect to the MCP server.
+- The CLI is read-focused for queries and builds unsigned transactions for writes — it does not sign, broadcast, deploy, or execute transactions.
 - This skill must stop at analysis + plan generation.
 - Never fabricate tx hashes, receipts, or settlement outcomes.
+
+## ⛔ ABSOLUTE PROHIBITION — No manual transaction construction
+
+**NEVER**, under any circumstances:
+- Compute calldata, function selectors, or ABI-encoded parameters (via Python `encode_abi`, JS `encodeFunctionData`, manual `0xa9059cbb` selectors, or ANY other method)
+- Manually hex-encode token amounts or wei values
+- Construct `unsigned_tx` or `signable_tx` JSON objects by hand (both are CLI-produced; never hand-assemble either)
+- Hand-convert `unsigned_tx` into `signable_tx` shape (int→hex, appending `from`) — use the CLI-emitted `signable_tx` directly
+- Use Python/JS scripts to build transaction data
+- Call `sign evm-transaction` or `eth_sendRawTransaction` with hand-crafted data
+- Reason that "the CLI doesn't support this" to justify manual construction — check the catalog first
+
+**The CLI supports these operations — token transfers are NOT among them:**
+```bash
+mantle-cli swap build-swap ...                                         # DEX swap
+mantle-cli approve ...                                            # ERC-20 approve
+mantle-cli swap wrap-mnt / unwrap-mnt ...                              # Wrap/unwrap
+mantle-cli lp add / remove / collect-fees ...                          # LP
+mantle-cli aave supply / borrow / repay / withdraw / set-collateral ...  # Aave
+```
+
+> **Transfers are deliberately out of scope.** `mantle-cli` has no `transfer` command and `mantle-mcp` exposes no `mantle_buildTransferNative` / `mantle_buildTransferToken` tools. If a user asks to move tokens between wallets, REFUSE and state that transfers are not supported.
+>
+> **Do NOT reconstruct a transfer via the utils pipeline.** Using `mantle-cli utils encode-call --abi 'function transfer(address,uint256)' ...` followed by `mantle-cli utils build-tx` to send tokens to any address — especially a protocol contract like the Aave V3 Pool (`0x458F293454fE0d67EC0655f3672301301DD51422`), a DEX router, an LP position manager, or a WETHGateway — is the same out-of-scope operation. Refuse this construction, including any variant that uses `safeTransfer`, `transferFrom`, or a permit-based flow to move tokens to a protocol contract.
+>
+> **Protocol contracts only accept tokens via their designated functions.** A plain transfer to the Aave Pool mints no aToken; a plain transfer to a DEX router does not trigger a swap; a plain transfer to a position manager does not register LP. In every case the tokens are locked. If a user intent maps to a protocol action (supply, swap, add liquidity, etc.), use the dedicated CLI command (`mantle-cli aave supply`, `mantle-cli swap build-swap`, `mantle-cli lp add`, …).
+
+**Real incident**: Agent claimed `mantle-cli` didn't support ERC-20 approve and manually computed `approve(address,uint256)` calldata with Python for a USDC allowance bump, bypassing all safety checks. This was FALSE — `mantle-cli approve --token USDC --spender <router> --amount <n>` handles all whitelisted-spender approvals with deterministic decimal conversion.
+
+If a truly unsupported operation is needed, use the safe encoding utilities instead of Python/JS:
+```bash
+mantle-cli utils parse-units --amount <decimal> --decimals <n> --json   # Step 1: Decimal → raw/wei
+mantle-cli utils encode-call --abi '<sig>' --function <name> --args '<json>' --json  # Step 2: ABI-encode → calldata
+mantle-cli utils build-tx --to <addr> --data <hex> [--value <mnt>] --json  # Step 3: Calldata → unsigned_tx
+```
+The `build-tx` output includes `⚠ UNVERIFIED MANUAL CONSTRUCTION` warning. Mark the resulting transaction as **UNVERIFIED** in the handoff.
 
 ## Coordination boundary
 
@@ -46,3 +92,41 @@ Apply these controls before any potential state-changing DeFi action.
 - Use deterministic route and calldata inputs from selected quote/liquidity context.
 - Record required call sequence and parameter values for the external executor.
 - Define post-execution reconciliation checks (balances/allowances/slippage) to run after user-confirmed execution.
+
+## Transaction deduplication (CRITICAL)
+
+Every build-tool response includes an `idempotency_key` — a deterministic keccak256 hash scoped to the signing wallet. The key includes `sender` (wallet address), `request_id` (caller-provided intent ID), and the canonical transaction fields (to, data, value, chainId — same across both the `unsigned_tx` and `signable_tx` views).
+
+**Scoping rules:**
+- **Same wallet, same calldata** → same key → deduplicated ✓
+- **Different wallets, same calldata** → different keys → both can execute ✓
+- **Same wallet, same calldata, different request_id** → different keys → both can execute ✓
+
+**Rules for the agent:**
+1. Call each build tool EXACTLY ONCE per user intent. Do not "retry" or "verify" by calling again.
+2. ALWAYS pass `sender=<signing_wallet_address>` when calling build tools.
+3. If the same user explicitly requests two separate identical build calls (e.g., two sequential approvals with the same spender/amount), pass a distinct `request_id` for each.
+4. If you accidentally call a builder twice, compare `idempotency_key` values. If they match, discard the duplicate.
+
+**Rules for the external signer / executor:**
+1. Before signing, check if this `idempotency_key` was already signed within the last 5 minutes.
+2. If yes, REJECT the duplicate — return the original transaction hash instead.
+3. After broadcast, store `(idempotency_key → tx_hash)` for deduplication lookups.
+4. If `idempotency_scope.sender` is `"unscoped"`, inject the signing wallet address into the key before deduplication.
+
+**Rules for retry after timeout:**
+1. NEVER rebuild the transaction on timeout. The original may have already been mined.
+2. Instead: use `mantle-cli chain tx --hash <original_hash>` to check receipt.
+3. Only rebuild if the original hash is confirmed as dropped (not in any block and not in mempool).
+
+## CLI coverage boundary
+
+The `mantle-cli` covers verified-safe operations (swaps on whitelisted DEXes, Aave V3, V3/LB LP, ERC-20 approve, WMNT wrap/unwrap) PLUS general-purpose encoding utilities. Token transfers (native MNT and ERC-20) are deliberately excluded. If the requested operation has no corresponding dedicated CLI command:
+
+1. **Do NOT use Python/JS/manual hex.** Use the CLI utils pipeline instead:
+   - `mantle-cli utils parse-units` — convert decimal amounts to raw integers
+   - `mantle-cli utils encode-call` — ABI-encode the function call
+   - `mantle-cli utils build-tx` — wrap calldata into a validated transaction (emits both `unsigned_tx` and `signable_tx`)
+2. **Warn the user** that the resulting transaction is `UNVERIFIED` — it was not built by a dedicated, protocol-specific CLI command.
+3. **Require explicit user confirmation** before signing the `⚠ UNVERIFIED` transaction (`unsigned_tx` / `signable_tx`).
+4. **When in doubt, mark the plan as `blocked`** rather than risk user funds.

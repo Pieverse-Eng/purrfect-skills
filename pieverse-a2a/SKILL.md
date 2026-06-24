@@ -1,6 +1,6 @@
 ---
 name: pieverse-a2a
-description: Use when the user wants to access a Pieverse A2A payment-gated HTTP resource, handle HTTP 402 Payment Required with a Pieverse paymentRequired body, authorize payment through the hosted wallet, retry with X-Pieverse-Payment, or inspect/challenge strict-mode payment results.
+description: Pieverse A2A,HTTP 402,paymentRequired,authorize,retry
 ---
 
 # Pieverse A2A Payments

@@ -1,6 +1,6 @@
 ---
 name: bnbchain-mcp
-description: BNB Chain MCP server — read-only blockchain data via MCP tools. Blocks, transactions, contracts, ERC20/NFT info, balances, network queries. Use when querying BNB Chain / opBNB / EVM data via MCP.
+description: BNB Chain MCP,read blockchain,blocks,tx,balance,contract
 ---
 
 # BNB Chain MCP Skill (Read-Only)
@@ -8,45 +8,6 @@ description: BNB Chain MCP server — read-only blockchain data via MCP tools. B
 Query BNB Chain / opBNB / EVM blockchain data via the BNB Chain MCP server. This skill covers read-only operations: blocks, transactions, contracts, tokens, NFTs, balances, and network info.
 
 > **Note:** On-chain write operations (transfers, swaps, approvals) should use the platform's wallet and onchain execution flow, not this MCP server.
-
----
-
-## Setup / Pre-flight Checks
-
-Before using this skill, verify the `bnbchain-mcp` server is registered in your agent:
-
-```bash
-if command -v bnbchain-mcp &>/dev/null; then
-  echo "bnbchain-mcp is available globally"
-elif [ -f .mcp.json ] && grep -q '"bnbchain-mcp"' .mcp.json; then
-  echo "bnbchain-mcp is configured in .mcp.json"
-elif [ -f openclaw.json ] && grep -q '"bnbchain-mcp"' openclaw.json; then
-  echo "bnbchain-mcp is pre-configured by the platform"
-else
-  echo "bnbchain-mcp is NOT configured — follow the Setup steps below"
-fi
-```
-
-If it is **not configured**, install and register it:
-
-1. **Install the package globally** (recommended):
-   ```bash
-   npm install -g @bnb-chain/mcp
-   ```
-2. **Register the MCP server** in your agent's MCP settings:
-   - **Claude Code**: Add the following to your project root `.mcp.json` (or user settings):
-     ```json
-     {
-       "mcpServers": {
-         "bnbchain-mcp": {
-           "command": "npx",
-           "args": ["-y", "@bnb-chain/mcp@latest"]
-         }
-       }
-     }
-     ```
-   - **Other agents** (Cursor, Windsurf, etc.): Copy the same `bnbchain-mcp` entry into your agent's MCP configuration panel.
-3. **Reload**: After adding the config, restart or reload your agent so the MCP tools are discovered.
 
 ---
 

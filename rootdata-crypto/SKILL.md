@@ -1,6 +1,6 @@
 ---
 name: rootdata-crypto
-description: RootData crypto intelligence — search projects/investors/people, project details, funding rounds, trending projects, and personnel job changes in Web3.
+description: RootData,crypto projects,investors,funding,trends,jobs
 metadata:
   { "openclaw": { "primaryEnv": "ROOTDATA_SKILL_KEY" } }
 ---

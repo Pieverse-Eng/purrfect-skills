@@ -1,6 +1,6 @@
 ---
 name: ddg-search
-description: Web search without an API key using DuckDuckGo Lite via web_fetch. Use as a fallback when web_search fails with missing_brave_api_key error, or whenever you need to search the web and no search API is configured. Provides titles, URLs, and snippets for research queries. Zero dependencies — works with just the built-in web_fetch tool.
+description: DuckDuckGo web search,no API key,URL snippets,research
 ---
 
 # DuckDuckGo Search via web_fetch

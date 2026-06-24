@@ -1,23 +1,8 @@
 ---
 name: morph
-description: Use when the user wants Morph L2 operations — wallet, explorer, DEX swap, cross-chain bridge, EIP-8004 agent identity & reputation, alt-fee gas payment, EIP-7702 delegation, or x402 USDC payment protocol.
+description: Morph L2,assets,explorer,DEX,bridge,ID,7702,x402
 ---
 
-## Setup / Pre-flight Checks
-
-Before using this skill, verify the required Python packages are available:
-
-```bash
-python3 -c "import requests, eth_account, eth_abi, eth_utils" 2>/dev/null && echo "Python dependencies OK" || echo "Python dependencies missing"
-```
-
-If they are **missing**, install them:
-
-```bash
-pip3 install requests eth-account==0.13.7 eth-abi==5.2.0 eth-utils==6.0.0
-```
-
----
 
 # Morph L2 (Chain ID: 2818)
 
@@ -41,11 +26,6 @@ Write path (helper scripts — for custom tx types & multi-step auth):
 Vendor scripts: `skills/morph/vendor/scripts/morph_api.py`
 Helper scripts: `skills/morph/scripts/`
 
-## Dependencies
-
-```bash
-pip install requests eth_account eth_abi eth_utils
-```
 
 ## Tools — Read
 

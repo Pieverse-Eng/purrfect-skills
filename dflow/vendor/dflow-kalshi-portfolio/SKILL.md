@@ -19,7 +19,7 @@ Read-only views on a wallet's Kalshi activity — holdings, mark-to-market valua
 **There is no `/positions` endpoint.** A portfolio is assembled by hand from onchain wallet balances + metadata joins. Two ways to do it:
 
 - **CLI — `dflow positions`** — one command, dumps spot + outcome tokens for the **active vault wallet** with balances and market labels. Covers "what do I hold right now?" on the CLI, and the stablecoin `uiAmount` already reads as USD. Doesn't carry mark prices for outcome tokens, `redemptionStatus`, or fill history, so outcome-token valuation, redemption checks, and P&L still need the API pipeline. Active-vault only.
-- **API — build-your-own pipeline** — needed whenever the user wants any of: mark-to-market, P&L, activity history, redemption eligibility, _or_ to inspect a wallet that isn't the CLI's active vault.
+- **API — build-your-own pipeline** — needed whenever the user wants any of: mark-to-market, P&L, activity history, redemption eligibility, *or* to inspect a wallet that isn't the CLI's active vault.
 
 ## Quick path: `dflow positions` (CLI)
 
@@ -31,24 +31,9 @@ Output (single JSON envelope, same on every wallet):
   "data": {
     "wallet": "<pubkey>",
     "positions": [
-      {
-        "type": "spot",
-        "mint": "...",
-        "symbol": "USDC",
-        "amount": "1326161",
-        "uiAmount": 1.326161,
-        "decimals": 6
-      },
-      {
-        "type": "outcome",
-        "mint": "...",
-        "symbol": "DFlowYU0192",
-        "amount": "2000000",
-        "uiAmount": 2.0,
-        "decimals": 6,
-        "side": "yes",
-        "market": { "title": "...", "status": "active" }
-      }
+      { "type": "spot",    "mint": "...", "symbol": "USDC", "amount": "1326161", "uiAmount": 1.326161, "decimals": 6 },
+      { "type": "outcome", "mint": "...", "symbol": "DFlowYU0192", "amount": "2000000", "uiAmount": 2.0, "decimals": 6,
+        "side": "yes", "market": { "title": "...", "status": "active" } }
     ]
   }
 }
@@ -60,7 +45,7 @@ Output (single JSON envelope, same on every wallet):
 
 ## Full path: build-your-own (API)
 
-The canonical pipeline, from the DFlow recipe [`/build/recipes/prediction-markets/track-positions`](https://pond.dflow.net/build/recipes/prediction-markets/track-positions):
+The canonical pipeline, from the DFlow recipe [`/prediction-markets/recipes/track-positions`](https://pond.dflow.net/prediction-markets/recipes/track-positions):
 
 1. **Read wallet balances via Solana RPC** — `getParsedTokenAccountsByOwner(wallet, { programId: TOKEN_2022_PROGRAM_ID })`. Outcome tokens are Token-2022. (For stablecoin balances, also query the classic SPL token program.)
 2. **`POST /api/v1/filter_outcome_mints`** — send the wallet's mint list, get back just the PM outcome mints.
@@ -72,20 +57,16 @@ Field-level detail (response envelopes, pagination) → docs MCP.
 ## Views on top of the pipeline
 
 ### Current positions
-
 Output of the pipeline above. Optionally attach current mark price per position (`yesBid` for YES holdings, `noBid` for NO holdings — see mark-to-market below).
 
 ### Unrealized mark-to-market
-
 Value each outcome holding at the **bid on its side** (what you could sell it for), not the ask:
-
 - Long YES → `uiAmount * parseFloat(yesBid)`
 - Long NO → `uiAmount * parseFloat(noBid)`
 
 Sum across positions for a wallet-level unrealized value. Subtract cost basis (below) for unrealized P&L.
 
 ### Realized activity and P&L
-
 `GET /api/v1/onchain-trades?wallet=<pubkey>&sortBy=createdAt&sortOrder=desc&limit=N` — DFlow-indexed view of the wallet's onchain fills.
 
 - **Activity feed**: each row has `createdAt`, `marketTicker`, `side`, `inputAmount`, `outputAmount`, `transactionSignature`.
@@ -93,9 +74,7 @@ Sum across positions for a wallet-level unrealized value. Subtract cost basis (b
 - **Fees**: sum `feeAmount` across fills in the settlement mint.
 
 ### Redeemable sweep
-
 A holding is redeemable iff **all three**:
-
 - market `status` is `determined` or `finalized`,
 - market `redemptionStatus` is `"open"`,
 - the held outcome mint is the **winning** side (from market `result`).
@@ -103,7 +82,6 @@ A holding is redeemable iff **all three**:
 To redeem, hand off to `dflow-kalshi-trading` (redemption is a sell of the winning side back to the settlement mint).
 
 ### Pending order check
-
 If the app submitted the order itself, persist the `orderAddress` returned at submission and poll `GET /order-status?orderAddress=<addr>` until terminal. There's no list-by-wallet endpoint. Most fills terminate well under the CLI's 120s poll budget, so this is rarely a user-facing concern — but outside the maintenance window, don't assume a specific fill time.
 
 ## What to ASK the user (and what NOT to ask)
@@ -115,11 +93,10 @@ If the app submitted the order itself, persist the `orderAddress` returned at su
 
 **Infra — always ask, never infer (HTTP/RPC pipeline only; the `dflow positions` quick path needs neither):**
 
-3. **DFlow API key** (only when the script is hitting the Metadata API directly — `markets/batch`, `onchain-trades`, etc.). The CLI quick path (`dflow positions`) doesn't need one — it uses the CLI's stored config. **For the HTTP pipeline, ask with a clean, neutral question: _"Do you have a DFlow API key?"_** Don't presuppose where the key lives — phrasings like _"do you have it in env?"_ or _"is `DFLOW_API_KEY` set?"_ nudge the user toward env-var defaults they didn't ask for. Surface the choice; don't silently fall back to env or to dev. It's **one DFlow key everywhere** — same `x-api-key` unlocks Metadata + Trade APIs. Yes → prod host `https://prediction-markets-api.dflow.net` with `x-api-key`. No → dev host `https://dev-prediction-markets-api.dflow.net`, rate-limited. Pointer: `https://pond.dflow.net/build/api-key`. **When you generate a script, log the resolved host + key-presence at startup.**
+3. **DFlow API key** (only when the script is hitting the Metadata API directly — `markets/batch`, `onchain-trades`, etc.). The CLI quick path (`dflow positions`) doesn't need one — it uses the CLI's stored config. **For the HTTP pipeline, ask with a clean, neutral question: *"Do you have a DFlow API key?"*** Don't presuppose where the key lives — phrasings like *"do you have it in env?"* or *"is `DFLOW_API_KEY` set?"* nudge the user toward env-var defaults they didn't ask for. Surface the choice; don't silently fall back to env or to dev. It's **one DFlow key everywhere** — same `x-api-key` unlocks Metadata + Trade APIs. Yes → prod host `https://prediction-markets-api.dflow.net` with `x-api-key`. No → dev host `https://dev-prediction-markets-api.dflow.net`, rate-limited. Pointer: `https://pond.dflow.net/get-started/api-key`. **When you generate a script, log the resolved host + key-presence at startup.**
 4. **RPC URL** — **yes, ask here**, unlike spot/PM trading or market-data. The HTTP pipeline reads token accounts directly via RPC; there's no wallet in the loop to do it for you. Recommend [Helius](https://helius.dev). CLI users on the `dflow positions` quick path don't need one — `dflow setup` already configured it.
 
 **Do NOT ask about:**
-
 - Settlement mint, slippage, fees, signing — read-only skill. If the user pivots to acting on a position, hand off to `dflow-kalshi-trading`.
 
 ## Gotchas (the docs MCP won't volunteer these)
@@ -141,7 +118,7 @@ If the app submitted the order itself, persist the `orderAddress` returned at su
 
 For anything not covered above — full response envelopes for `filter_outcome_mints` / `markets/batch` / `onchain-trades`, pagination params, Proof state in the picture, edge cases in `redemptionStatus` transitions, order-status terminal states — query the docs MCP (`search_d_flow`, `query_docs_filesystem_d_flow`). Don't guess.
 
-For runnable reference code, point at [`/build/recipes/prediction-markets/track-positions`](https://pond.dflow.net/build/recipes/prediction-markets/track-positions) (and its Cookbook Repo link).
+For runnable reference code, point at [`/prediction-markets/recipes/track-positions`](https://pond.dflow.net/prediction-markets/recipes/track-positions) (and its Cookbook Repo link).
 
 ## Sibling skills
 

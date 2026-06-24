@@ -1,48 +1,26 @@
 ---
 name: cobo
-description: "Use when the user needs Cobo Agentic Wallet (`caw`) support: wallet onboarding or pairing, pact workflows, Cobo-managed transfers, contract calls, message signing, DeFi execution, or SDK/MCP integrations."
+description: Cobo Agentic Wallet,onboard,pacts,policy,sign,DeFi,SDK
 ---
 
-# Cobo Agentic Wallet Router
+# Cobo Agentic Wallet Overview
 
-This is the top-level routing skill for the vendored Cobo Agentic Wallet skills in this folder. Do not execute wallet, SDK, or setup workflows from this file alone. Read the matching child `SKILL.md` first and follow its instructions exactly.
+Cobo Agentic Wallet provides policy-enforced crypto wallets for AI agents, covering wallet onboarding, owner pairing, pact-based approvals, Cobo-managed transfers, contract calls, message signing, DeFi execution, and developer integrations. Read the matching child `SKILL.md` before executing wallet, integration, or setup workflows.
 
-## Preflight Check
+## CLI Preflight
 
-First decide whether this is a hosted or local instance:
-
-Hosted agents must have:
-
-| Env var | Meaning |
-|---|---|
-| `WALLET_API_URL` | Platform wallet API base URL |
-| `WALLET_API_TOKEN` | Bearer token for this hosted instance |
-| `INSTANCE_ID` | Hosted instance ID |
+If this is a hosted instance, do not run this section.
 
 ```bash
-if test -n "${WALLET_API_URL:-}" \
-  && test -n "${WALLET_API_TOKEN:-}" \
-  && test -n "${INSTANCE_ID:-}"; then
-  cat <<EOF
-Hosted instance detected. Install SDKs in your own application project:
-
-pip install cobo-agentic-wallet==0.1.40          # Python
-npm install @cobo/agentic-wallet@0.1.7           # TypeScript
-EOF
-else
-  if ! command -v caw >/dev/null 2>&1; then
-    CAW_VERSION=v0.2.84 ./cobo-agentic-wallet/scripts/bootstrap-env.sh --only caw
-    export PATH="$HOME/.cobo-agentic-wallet/bin:$PATH"
-  fi
-
-  python3 -m pip install cobo-agentic-wallet==0.1.40
-  npm install @cobo/agentic-wallet@0.1.7
-fi
+CAW_LINK_DIR=/usr/local/bin ./cobo-agentic-wallet/scripts/bootstrap-env.sh \
+  --caw-version v0.2.84 \
+  --only caw
+test "$(timeout 30 caw --version)" = "v0.2.84"
 ```
 
-After preflight completes, follow the **Quick Setup** section in [cobo-agentic-wallet-developer/SKILL.md](./cobo-agentic-wallet-developer/SKILL.md), but ignore the two install steps because preflight already handled local installs or hosted install guidance.
-
 ## Routing
+
+When routing to the developer skill, follow the **Quick Setup** section in [cobo-agentic-wallet-developer/SKILL.md](./cobo-agentic-wallet-developer/SKILL.md), but ignore the cli and sdk installation steps unless this is a non-hosted runtime and CLI Preflight is needed.
 
 Read [cobo-agentic-wallet/SKILL.md](./cobo-agentic-wallet/SKILL.md) for runtime wallet operations:
 
