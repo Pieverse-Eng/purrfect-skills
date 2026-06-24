@@ -16,6 +16,7 @@ This directory contains the Pieverse built-in skills. Each folder is a skill uni
 | Skill | Description |
 |-------|-------------|
 | `aster` | Aster DEX v3 skills — futures/spot API docs, market data, signed futures v3 calls, websocket v3 references, and on-chain deposit step building. |
+| `binance` | Binance CEX via `binance-cli` — Spot, USD-S Futures, and Convert trading + market data (incl. bStocks spot pairs). Requires Binance API keys (auth). |
 | `binance-agentic-wallet` | Binance Web3 Agentic Wallet via `baw` CLI — sign-in, balances, transfers, DEX swaps, limit orders, prediction markets, and x402 payments. |
 | `binance-onchain-pay` | Binance Onchain Pay on-ramp via `purr` — payment methods, quotes, hosted checkout, order status, and reference docs. |
 | `bitget-wallet` | Bitget Wallet integration for multi-chain swaps, RWA stock trading, and market data. |
@@ -40,6 +41,8 @@ This directory contains the Pieverse built-in skills. Each folder is a skill uni
 | `mantle` | Mantle skill bundle — network reference, address lookup, risk evaluation, portfolio analysis, DeFi planning, indexing, debugging, simulation, and smart-contract lifecycle. |
 | `panewslab` | PANewsLab crypto news, Polymarket smart money boards, article publishing, and rendered PANews web pages. |
 | `rootdata-crypto` | RootData crypto intelligence — project / investor / people search, funding rounds, trending projects, and personnel job changes. |
+| `stock-spread` | READ-ONLY cross-venue tokenized-stock price & spread intelligence — resolves an equity to per-venue identifiers and reports the normalized CEX-vs-DEX spread across Gate, Bybit, Binance bStocks, and Solana/Jupiter. Quotes & comparison only; never trades. |
+| `binance-tokenized-securities-info` | READ-ONLY Ondo tokenized US-stock data on Binance Web3 (BNB Chain) — token list, RWA metadata + attestations, market/asset trading status (corporate actions), on-chain price/holders/market-cap, US fundamentals, and K-line. Imported from binance-skills-hub. |
 
 ### Wallet & Infrastructure
 

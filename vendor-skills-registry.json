@@ -188,6 +188,186 @@
 					"name": "binance-agentic-wallet-x402-payment",
 					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/x402-payment.md",
 					"targetPath": "binance-agentic-wallet/references/x402-payment.md"
+				},
+				{
+					"name": "binance-tokenized-securities-info",
+					"upstreamPath": "skills/binance-web3/binance-tokenized-securities-info/SKILL.md",
+					"targetPath": "binance-tokenized-securities-info/SKILL.md"
+				},
+				{
+					"name": "binance-CHANGELOG",
+					"upstreamPath": "skills/binance/binance/CHANGELOG.md",
+					"targetPath": "binance/CHANGELOG.md"
+				},
+				{
+					"name": "binance-LICENSE",
+					"upstreamPath": "skills/binance/binance/LICENSE.md",
+					"targetPath": "binance/LICENSE.md"
+				},
+				{
+					"name": "binance",
+					"upstreamPath": "skills/binance/binance/SKILL.md",
+					"targetPath": "binance/SKILL.md"
+				},
+				{
+					"name": "binance-algo",
+					"upstreamPath": "skills/binance/binance/references/algo.md",
+					"targetPath": "binance/references/algo.md"
+				},
+				{
+					"name": "binance-alpha",
+					"upstreamPath": "skills/binance/binance/references/alpha.md",
+					"targetPath": "binance/references/alpha.md"
+				},
+				{
+					"name": "binance-auth",
+					"upstreamPath": "skills/binance/binance/references/auth.md",
+					"targetPath": "binance/references/auth.md"
+				},
+				{
+					"name": "binance-c2c",
+					"upstreamPath": "skills/binance/binance/references/c2c.md",
+					"targetPath": "binance/references/c2c.md"
+				},
+				{
+					"name": "binance-convert",
+					"upstreamPath": "skills/binance/binance/references/convert.md",
+					"targetPath": "binance/references/convert.md"
+				},
+				{
+					"name": "binance-copy-trading",
+					"upstreamPath": "skills/binance/binance/references/copy-trading.md",
+					"targetPath": "binance/references/copy-trading.md"
+				},
+				{
+					"name": "binance-crypto-loan",
+					"upstreamPath": "skills/binance/binance/references/crypto-loan.md",
+					"targetPath": "binance/references/crypto-loan.md"
+				},
+				{
+					"name": "binance-derivatives-options-streams",
+					"upstreamPath": "skills/binance/binance/references/derivatives-options-streams.md",
+					"targetPath": "binance/references/derivatives-options-streams.md"
+				},
+				{
+					"name": "binance-derivatives-options",
+					"upstreamPath": "skills/binance/binance/references/derivatives-options.md",
+					"targetPath": "binance/references/derivatives-options.md"
+				},
+				{
+					"name": "binance-derivatives-portfolio-margin-pro-streams",
+					"upstreamPath": "skills/binance/binance/references/derivatives-portfolio-margin-pro-streams.md",
+					"targetPath": "binance/references/derivatives-portfolio-margin-pro-streams.md"
+				},
+				{
+					"name": "binance-derivatives-portfolio-margin-pro",
+					"upstreamPath": "skills/binance/binance/references/derivatives-portfolio-margin-pro.md",
+					"targetPath": "binance/references/derivatives-portfolio-margin-pro.md"
+				},
+				{
+					"name": "binance-derivatives-portfolio-margin-streams",
+					"upstreamPath": "skills/binance/binance/references/derivatives-portfolio-margin-streams.md",
+					"targetPath": "binance/references/derivatives-portfolio-margin-streams.md"
+				},
+				{
+					"name": "binance-derivatives-portfolio-margin",
+					"upstreamPath": "skills/binance/binance/references/derivatives-portfolio-margin.md",
+					"targetPath": "binance/references/derivatives-portfolio-margin.md"
+				},
+				{
+					"name": "binance-dual-investment",
+					"upstreamPath": "skills/binance/binance/references/dual-investment.md",
+					"targetPath": "binance/references/dual-investment.md"
+				},
+				{
+					"name": "binance-fiat",
+					"upstreamPath": "skills/binance/binance/references/fiat.md",
+					"targetPath": "binance/references/fiat.md"
+				},
+				{
+					"name": "binance-futures-coin-streams",
+					"upstreamPath": "skills/binance/binance/references/futures-coin-streams.md",
+					"targetPath": "binance/references/futures-coin-streams.md"
+				},
+				{
+					"name": "binance-futures-coin",
+					"upstreamPath": "skills/binance/binance/references/futures-coin.md",
+					"targetPath": "binance/references/futures-coin.md"
+				},
+				{
+					"name": "binance-futures-usds-streams",
+					"upstreamPath": "skills/binance/binance/references/futures-usds-streams.md",
+					"targetPath": "binance/references/futures-usds-streams.md"
+				},
+				{
+					"name": "binance-futures-usds",
+					"upstreamPath": "skills/binance/binance/references/futures-usds.md",
+					"targetPath": "binance/references/futures-usds.md"
+				},
+				{
+					"name": "binance-gift-card",
+					"upstreamPath": "skills/binance/binance/references/gift-card.md",
+					"targetPath": "binance/references/gift-card.md"
+				},
+				{
+					"name": "binance-margin-trading-streams",
+					"upstreamPath": "skills/binance/binance/references/margin-trading-streams.md",
+					"targetPath": "binance/references/margin-trading-streams.md"
+				},
+				{
+					"name": "binance-margin-trading",
+					"upstreamPath": "skills/binance/binance/references/margin-trading.md",
+					"targetPath": "binance/references/margin-trading.md"
+				},
+				{
+					"name": "binance-mining",
+					"upstreamPath": "skills/binance/binance/references/mining.md",
+					"targetPath": "binance/references/mining.md"
+				},
+				{
+					"name": "binance-pay",
+					"upstreamPath": "skills/binance/binance/references/pay.md",
+					"targetPath": "binance/references/pay.md"
+				},
+				{
+					"name": "binance-rebate",
+					"upstreamPath": "skills/binance/binance/references/rebate.md",
+					"targetPath": "binance/references/rebate.md"
+				},
+				{
+					"name": "binance-simple-earn",
+					"upstreamPath": "skills/binance/binance/references/simple-earn.md",
+					"targetPath": "binance/references/simple-earn.md"
+				},
+				{
+					"name": "binance-spot-streams",
+					"upstreamPath": "skills/binance/binance/references/spot-streams.md",
+					"targetPath": "binance/references/spot-streams.md"
+				},
+				{
+					"name": "binance-spot",
+					"upstreamPath": "skills/binance/binance/references/spot.md",
+					"targetPath": "binance/references/spot.md"
+				},
+				{
+					"name": "binance-staking",
+					"upstreamPath": "skills/binance/binance/references/staking.md",
+					"targetPath": "binance/references/staking.md"
+				},
+				{
+					"name": "binance-sub-account",
+					"upstreamPath": "skills/binance/binance/references/sub-account.md",
+					"targetPath": "binance/references/sub-account.md"
+				},
+				{
+					"name": "binance-vip-loan",
+					"upstreamPath": "skills/binance/binance/references/vip-loan.md",
+					"targetPath": "binance/references/vip-loan.md"
+				},
+				{
+					"name": "binance-wallet",
+					"upstreamPath": "skills/binance/binance/references/wallet.md",
+					"targetPath": "binance/references/wallet.md"
 				}
 			]
 		},
@@ -310,7 +490,7 @@
 			"id": "morph",
 			"repo": "https://github.com/morph-l2/morph-skill.git",
 			"commit": "e203bc4b981f13a3c358cff68831f8ca68e16648",
-			"notes": "Morph L2 skill — wallet, explorer, DEX, bridge, altfee, EIP-7702, EIP-8004 identity, x402 payment. Reads via vendor morph_api.py; writes via purr CLI or helper scripts under morph/scripts/.",
+			"notes": "Morph L2 skill \u2014 wallet, explorer, DEX, bridge, altfee, EIP-7702, EIP-8004 identity, x402 payment. Reads via vendor morph_api.py; writes via purr CLI or helper scripts under morph/scripts/.",
 			"skills": [
 				{
 					"name": "morph-wallet",
