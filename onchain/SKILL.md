@@ -10,6 +10,8 @@ description: Address/balance lookup,.pie,transfers,Telegram,chain reads
 This Skill covers wallet addresses, balances, Pie identity lookup, direct
 transfers, and read-only chain checks.
 
+This Skill is not for OWS wallet issues or workflows.
+
 Pick the relevant command group from the table, then read that reference before
 running commands or explaining the workflow.
 
