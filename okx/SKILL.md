@@ -19,7 +19,7 @@ For any concrete OKX task, choose the matching vendored capability below, open i
 If this is a hosted instance, do not run this section.
 
 ```bash
-ONCHAINOS_VERSION=v3.3.13
+ONCHAINOS_VERSION=v4.0.0
 ONCHAINOS_TARGET=$(case "$(uname -m)" in
   x86_64) echo x86_64-unknown-linux-gnu ;;
   aarch64|arm64) echo aarch64-unknown-linux-gnu ;;
@@ -31,7 +31,7 @@ ONCHAINOS_BINARY="onchainos-${ONCHAINOS_TARGET}"
 curl -fsSL -o /usr/local/bin/onchainos \
   "https://github.com/okx/onchainos-skills/releases/download/${ONCHAINOS_VERSION}/${ONCHAINOS_BINARY}"
 chmod +x /usr/local/bin/onchainos
-test "$(onchainos --version)" = "onchainos 3.3.13"
+test "$(onchainos --version)" = "onchainos 4.0.0"
 ```
 
 ## Prerequisites
@@ -54,22 +54,27 @@ X Layer, Solana, Ethereum, Base, BSC, Arbitrum, Polygon, and 20+ other chains de
 
 | Skill | Description | Path |
 |---|---|---|
+| `okx-ai-guide` | OKX.AI onboarding: product intro, supported runtime detection, login and identity checks, and routing into agent identity registration. | `vendor/okx-ai-guide/SKILL.md` |
 | `okx-how-to-play` | Onchain OS onboarding: what it can do, how to start, quick-start menus, and first workflow suggestions. | `vendor/okx-how-to-play/SKILL.md` |
 | `okx-ai-support` | OKX.AI support guidance: contact support, talk to a human, file complaints, provide feedback, find FAQs, and report bugs. | `vendor/okx-ai-support/SKILL.md` |
-| `okx-agentic-wallet` | Wallet lifecycle: auth, account management, balance, assets, portfolio PnL, send, tx history, contract call, message signing, and Solana Gas Station. | `vendor/okx-agentic-wallet/SKILL.md` |
+| `okx-agent-identity` | ERC-8004 agent identity on X Layer: register, update, activate, deactivate, search agents, view ratings, inspect services, and set avatars for User, ASP, and Evaluator roles. | `vendor/okx-agent-identity/SKILL.md` |
+| `okx-agent-task` | OKX.AI task marketplace and A2A task lifecycle: publish, accept, negotiate, deliver, accept/reject, dispute, stake/unstake, browse, draft, close, and handle inbound system or chat envelopes. | `vendor/okx-agent-task/SKILL.md` |
+| `okx-agent-chat` | Routing stub and setup helper for A2A agent-chat envelopes and OKX A2A communication runtime readiness; delegates task handling to `okx-agent-task`. | `vendor/okx-agent-chat/SKILL.md` |
+| `okx-task-watch` | OKX A2A task notification monitor: long-poll task progress, drain unread/history events, and surface outstanding decision requests. | `vendor/okx-task-watch/SKILL.md` |
+| `okx-agentic-wallet` | Wallet lifecycle: auth, account management, balance, assets, portfolio PnL, send, tx history, contract call, message signing, TEE signing, wallet export, and Solana Gas Station. | `vendor/okx-agentic-wallet/SKILL.md` |
 | `okx-wallet-portfolio` | Public address balance, token holdings, portfolio value, and DeFi positions for an explicit wallet address. | `vendor/okx-wallet-portfolio/SKILL.md` |
 | `okx-security` | Security scanning: token risk, DApp phishing, tx pre-execution, signature safety, approval checks, and approval revoke flows. | `vendor/okx-security/SKILL.md` |
-| `okx-dex-market` | Real-time prices, K-line charts, index prices, wallet PnL analysis, address tracker activities, and Market API payment/quota notifications. | `vendor/okx-dex-market/SKILL.md` |
+| `okx-dex-market` | Token prices, K-line/OHLC charts, index prices, wallet PnL analysis, and Market API payment/quota notifications. | `vendor/okx-dex-market/SKILL.md` |
 | `okx-dex-signal` | Smart money, whale, and KOL activity tracking, aggregated buy signals, custom wallet tracking, and leaderboard rankings. | `vendor/okx-dex-signal/SKILL.md` |
 | `okx-dex-trenches` | Meme pump/trenches token scanning, new launches, dev reputation, bundle or sniper detection, bonding curve progress, and aped wallets. | `vendor/okx-dex-trenches/SKILL.md` |
 | `okx-dex-swap` | Token swaps via OKX DEX aggregation across 500+ liquidity sources: quotes, approvals, execution, route comparison, calldata, and slippage controls. | `vendor/okx-dex-swap/SKILL.md` |
 | `okx-dex-strategy` | Agentic Wallet limit orders: place, cancel, list, resume, take profit, stop loss, buy dips, and chase highs. | `vendor/okx-dex-strategy/SKILL.md` |
 | `okx-dex-bridge` | Cross-chain bridge quotes, fee and route comparison, execution, and lifecycle status tracking. | `vendor/okx-dex-bridge/SKILL.md` |
 | `okx-dex-token` | Token search, metadata, market cap, rankings, liquidity pools, hot tokens, advanced info, holder analysis, top traders, trade history, and holder cluster analysis. | `vendor/okx-dex-token/SKILL.md` |
-| `okx-dex-social` | Crypto news, symbol-filtered articles, news search, article detail, source platforms, market sentiment ranking, per-coin sentiment trends, vibe timelines, and TOP50 KOL leaderboard. | `vendor/okx-dex-social/SKILL.md` |
+| `okx-dex-social` | Crypto news, symbol-filtered articles, news search, article detail, source platforms, market sentiment rankings, per-coin sentiment trends, vibe timelines, and KOL leaderboards. | `vendor/okx-dex-social/SKILL.md` |
 | `okx-dex-ws` | WebSocket sessions and real-time streams: start, poll, stop, list sessions, inspect channels, and build WebSocket scripts or bots. | `vendor/okx-dex-ws/SKILL.md` |
 | `okx-onchain-gateway` | Gas estimation, transaction simulation, raw or signed transaction broadcasting, order tracking, and transaction status checks. | `vendor/okx-onchain-gateway/SKILL.md` |
-| `okx-agent-payments-protocol` | Unified payment dispatcher across x402, MPP, and a2a-pay: exact and aggr_deferred schemes, TEE or local-key signing, charge/session intents, vouchers, topups, closes, refunds, payment links, and `a2a_` payment IDs. | `vendor/okx-agent-payments-protocol/SKILL.md` |
+| `okx-agent-payments-protocol` | Unified payment dispatcher across x402, MPP, and a2a-pay: exact, Permit2, upto, aggr_deferred, charge/session intents, vouchers, topups, closes, refunds, payment links, and `a2a_` payment IDs. | `vendor/okx-agent-payments-protocol/SKILL.md` |
 | `okx-defi-invest` | DeFi product discovery and execution: APY/TVL search, prepare, deposit, withdraw, redeem, claim rewards, borrow, repay, and LP actions across supported protocols. | `vendor/okx-defi-invest/SKILL.md` |
 | `okx-defi-portfolio` | DeFi positions and holdings overview across protocols and chains, including position lists and position details. | `vendor/okx-defi-portfolio/SKILL.md` |
 | `okx-dapp-discovery` | Third-party DApp discovery and direct plugin access for named protocols including Polymarket, Aave, Hyperliquid, PancakeSwap, Morpho, Raydium, Curve, Compound, Pendle, Lido, ether.fi, GMX, Kamino, Orca, Meteora, Clanker, pump.fun, and Uniswap. | `vendor/okx-dapp-discovery/SKILL.md` |
@@ -78,8 +83,11 @@ X Layer, Solana, Ethereum, Base, BSC, Arbitrum, Polygon, and 20+ other chains de
 
 ## Skill Workflows
 
-The skills work together in typical DeFi and on-chain flows:
+The skills work together in typical DeFi, on-chain, and OKX.AI flows:
 
+- OKX.AI Onboarding: `okx-ai-guide` (intro and runtime check) -> `okx-agentic-wallet` (login if needed) -> `okx-agent-identity` (register or manage identity)
+- OKX.AI Task Marketplace: `okx-agent-identity` (ensure User/ASP/Evaluator identity) -> `okx-agent-task` (publish, accept, deliver, dispute, or browse tasks) -> `okx-task-watch` (monitor task notifications)
+- A2A Inbound Message: `okx-agent-chat` (communication runtime setup or routing stub) -> `okx-agent-task` (system event or role-specific task handling)
 - Search and Buy: `okx-dex-token` (find token) -> `okx-wallet-portfolio` or `okx-agentic-wallet` (check funds) -> `okx-security` (risk check) -> `okx-dex-swap` (execute trade)
 - Portfolio Overview: `okx-wallet-portfolio` (holdings) -> `okx-dex-token` (enrich with analytics) -> `okx-dex-market` (price charts)
 - Market Research: `okx-dex-token` (trending/rankings) -> `okx-dex-market` (candles/history) -> `okx-dex-social` or `okx-dex-signal` (context)
@@ -90,5 +98,5 @@ The skills work together in typical DeFi and on-chain flows:
 - Follow Smart Money: `okx-dex-signal` (KOL/smart money buys) -> `okx-dex-token` (token details and holder cluster) -> `okx-dex-market` (price chart) -> `okx-dex-swap` (trade)
 - Cross-chain Move: `okx-wallet-portfolio` or `okx-agentic-wallet` (check source funds) -> `okx-dex-bridge` (quote and execute) -> `okx-dex-bridge` or `okx-onchain-gateway` (track status)
 - DeFi Yield: `okx-defi-invest` (discover products) -> `okx-security` (risk check) -> `okx-defi-invest` (deposit/redeem/claim) -> `okx-defi-portfolio` (review positions)
-- Named DApp Action: `okx-dapp-discovery` for specific DApps such as Polymarket, Aave, Hyperliquid, PancakeSwap, Morpho, Raydium, Curve, Lido, GMX, Pendle, or pump.fun.
-- Payment Flow: `okx-agent-payments-protocol` for HTTP 402, x402, MPP charge/session flows, vouchers, payment links, and `a2a_` payment IDs.
+- Named DApp Action: `okx-dapp-discovery` for specific DApps such as Polymarket, Aave, Hyperliquid, PancakeSwap, Morpho, Raydium, Curve, Compound, Pendle, Lido, ether.fi, GMX, Kamino, Orca, Meteora, Clanker, pump.fun, or Uniswap.
+- Payment Flow: `okx-agent-payments-protocol` for HTTP 402, x402 exact/Permit2/upto/aggr_deferred, MPP charge/session flows, vouchers, payment links, and `a2a_` payment IDs.

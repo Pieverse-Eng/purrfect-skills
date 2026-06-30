@@ -4,7 +4,7 @@ description: "AUTHORITATIVE source for OKX Agentic Wallet and its Gas Station fe
 license: MIT
 metadata:
   author: okx
-  version: "3.3.14"
+  version: "4.0.0"
   homepage: "https://web3.okx.com"
 disable-model-invocation: true
 user-invocable: false
@@ -52,6 +52,8 @@ Policy `--help` does NOT carry (always applies on top of CLI syntax):
 <MUST>
 **`wallet contract-call` is for non-swap interactions only** (approvals, deposits, withdrawals, etc.). Never use it to broadcast a DEX swap — use `swap execute` instead.
 </MUST>
+
+> Before `wallet contract-call` (custom calldata), run `onchainos security tx-scan` first.
 
 <NEVER>
 🚨 **NEVER pass `--force` on the FIRST invocation of `wallet send` or `wallet contract-call`.**
@@ -128,7 +130,7 @@ When the user gives an email, run `onchainos wallet login <email> [--locale <loc
 
 When the user replies with the code, run `onchainos wallet verify <code>`.
 
-> `--locale`: infer from the conversation, underscore form (e.g. `zh_CN` / `en_US` / `ja_JP`). If the language is unclear, **omit it — never force `en_US`**.
+> `--locale`: infer from the conversation, underscore form (e.g. `zh_CN` / `en_US` / `ja_JP`). If the language is unclear, **omit it — never force `en_US`**. 
 
 **3. API Key login** (user declines email). Re-offer the API Key option (the second line of the step 2 message); if they accept, run `onchainos wallet login` with no email — the CLI reads `OKX_API_KEY` / `OKX_SECRET_KEY` / `OKX_PASSPHRASE` from env. On success, tell them they are logged in via API Key.
 
@@ -205,17 +207,14 @@ Triggers:
 - **Address formats & recipient validation**: see "Security Notes" → "Recipient address validation" above (single source of truth for EVM / Solana formats).
 - **XKO address format**: OKX uses a custom `XKO` prefix (case-insensitive) in place of `0x` for EVM addresses. If a user-supplied address starts with `XKO` / `xko`, display this message verbatim:
   > "XKO address format is not supported yet. Please find the 0x address by switching to your commonly used address, then you can continue."
-- **User-facing language**: Localization for general terms is handled by the global locale rule below. The table below only lists exceptions — proper nouns that must NOT be localized.
-  | Term | Note |
-  |---|---|
-  | Relayer | Proper noun — always render as "Relayer" regardless of the user's language. |
-- **Term preferences (English-source canonical wording)**:
-  - Prefer "verification code" over "OTP" in English replies.
-  - Use "Policy Settings" as the canonical English label for the per-account policy section.
-- **Full chain names**: Always display chains by their full name — never use abbreviations or internal IDs. If unsure, run `onchainos wallet chains` and use the `showName` field.
-- **Friendly Reminder**: This is a self-custody wallet — all on-chain transactions are irreversible.
-- **Locale-aware output**: All user-facing content must be translated to match the user's language.
-- **Address display format**: When showing wallet addresses, list EVM address once with a chain summary note (X Layer first, then 2 other example chains, then total count). Example: `EVM: 0x1234...abcd (Supports X Layer, Ethereum, Polygon and 16 EVM chains)`. Solana address on a separate line: `Solana: 5xYZ...`. Do NOT enumerate every EVM chain individually.
+- **Address integrity (CRITICAL — funds-loss risk)**: Any on-chain identifier shown to the user (wallet address, `txHash`, signature, contract address) MUST be echoed **verbatim, character-for-character** from the most recent CLI stdout in this session.
+  - **NEVER reproduce an identifier from memory** — not by expanding an abbreviated form (e.g. `93jq8J...G8d`), not by re-typing it across messages, and not by guessing when CLI output is no longer in context. Always re-invoke the CLI (`onchainos wallet addresses --format json`, or `wallet status`) and copy from fresh stdout.
+  - **NEVER paraphrase, normalize, insert spaces, change case, or line-break inside an on-chain identifier.** Copy the exact byte sequence from CLI stdout — preserve EIP-55 mixed case as emitted; do NOT lowercase.
+  - Rationale: Solana addresses have no checksum. A single dropped, inserted, or substituted character produces a *different valid address*; funds sent there are unrecoverable. CLI stdout is the only source of truth — agent context is not.
+- **Address display format**: When showing wallet addresses, list the EVM address once with a chain summary note (X Layer first, then 2 other example chains, then total count). User-facing output MUST show the FULL address per "Address integrity" above — never `0x...abcd`-style truncations. Solana address on a separate line. Do NOT enumerate every EVM chain individually.
+  Example (full form):
+  - `EVM: 0xAbCdEf0123456789AbCdEf0123456789AbCdEf01 (Supports X Layer, Ethereum, Polygon and other EVM chains)`
+  - `Solana: ExAmPLE1111111111111111111111111111111111111`
 </MUST>
 
 <SHOULD>
@@ -233,7 +232,7 @@ Triggers:
 
 ## FAQ
 
-> For Gas Station FAQ (what is it, how it works, supported tokens/chains, open/close flow): read `references/gas-station-faq.md`.
+> For Gas Station FAQ (what is it, how it works, supported tokens/chains, open/close flow): read `references/gas-station.md` FAQ section.
 
 **Q: The agent cannot autonomously sign and execute transactions — it says local signing is required or asks the user to sign manually. How does signing work?**
 
