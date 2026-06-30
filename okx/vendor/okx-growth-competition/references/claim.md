@@ -83,7 +83,7 @@ Suggestions:
 - Do NOT inspect the result for an empty `base58CallData` and conclude the CLI cannot sign a Solana claim — that field is empirically empty for Solana; the CLI/MCP code internally falls back to encoding `tx.data` byte array via base58 and proceeds. Just trust the `succeeded[]` and `failed[]` arrays.
 - Do NOT split into a two-step "fetch calldata then wallet contract-call" flow — that mode no longer exists; the claim command is atomic.
 
-**On claim error (code 11002 `not eligible for reward`):** "You did not win a reward and cannot claim."
+**On claim error (code 11002 `not eligible for reward`):** "You did not win a reward and cannot claim."  
 **On any other error:** "Operation failed. Please contact customer support."
 
 ### Contact collection (top-tier winners only)
