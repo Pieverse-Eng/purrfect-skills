@@ -16,8 +16,9 @@ These addresses are for Robinhood Chain only.
 - Treat these as token contract addresses, not stock trading advice.
 - A token with the same ticker but a different contract address is not the
   canonical Robinhood Stock Token.
-- If the CLI does not resolve a ticker alias, pass the raw contract address with
-  `--token`.
+- The current `purr` CLI resolves these tickers on `--chain-id 4663`; prefer the
+  ticker for common balance/transfer commands and use the raw address when a
+  tool path requires an address.
 - Do not reuse these addresses on other chains.
 
 ## Stock Tokens
@@ -58,7 +59,7 @@ These addresses are for Robinhood Chain only.
 ## Examples
 
 ```bash
-purr wallet balance --chain-id 4663 --token 0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC  # NVDA
-purr wallet balance --chain-id 4663 --token 0x117cc2133c37B721F49dE2A7a74833232B3B4C0C  # SPY
+purr wallet balance --chain-id 4663 --token NVDA
+purr wallet balance --chain-id 4663 --token SPY
+purr wallet balance --chain-id 4663 --token 0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC  # raw NVDA address
 ```
-
