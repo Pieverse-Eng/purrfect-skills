@@ -23,7 +23,7 @@ purr wallet balance [--chain-type <ethereum|solana>] [--chain-id <chain_id>] [--
 | Parameter | Required? | Description |
 | --- | --- | --- |
 | `--chain-type <ethereum|solana>` | Required for Solana and native EVM balances | Selects the wallet family. Use `ethereum` for native EVM balances when a Solana wallet also exists; use `solana` for Solana balances. |
-| `--chain-id <chain_id>` | Required for EVM | Selects the EVM chain by numeric chain ID, such as `56` for BNB Smart Chain or `8453` for Base. |
+| `--chain-id <chain_id>` | Required for EVM | Selects the EVM chain by numeric chain ID, such as `56` for BNB Smart Chain, `8453` for Base, or `4663` for Robinhood Chain. |
 | `--token <ticker_or_address>` | Optional | Selects a token balance instead of the native coin. Accepts a known ticker such as `USDT` or `USDC`, or a raw token contract/mint address. |
 
 ## Commands
@@ -37,6 +37,9 @@ purr wallet balance --chain-type ethereum --chain-id 196                   # nat
 purr wallet balance --token USDT0 --chain-id 196                           # USDT0 on X Layer
 purr wallet balance --token USDC --chain-id 196                            # USDC on X Layer
 purr wallet balance --token USDG --chain-id 196                            # USDG on X Layer
+purr wallet balance --chain-type ethereum --chain-id 4663                  # native ETH on Robinhood Chain
+purr wallet balance --chain-id 4663 --token 0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73  # WETH on Robinhood Chain
+purr wallet balance --chain-id 4663 --token 0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168  # USDG on Robinhood Chain
 purr wallet balance --chain-type solana                                    # native SOL
 purr wallet balance --chain-type solana --token USDC                       # USDC on Solana
 ```

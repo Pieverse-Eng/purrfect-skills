@@ -22,6 +22,7 @@ log inspection, sender tracing, and token state checks.
 | Optimism | `https://optimism-rpc.publicnode.com` |
 | Polygon | `https://polygon-bor-rpc.publicnode.com` |
 | X Layer | `https://rpc.xlayer.tech` |
+| Robinhood Chain | `https://rpc.mainnet.chain.robinhood.com` |
 
 ## Syntax
 

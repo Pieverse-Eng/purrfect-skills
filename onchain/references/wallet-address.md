@@ -1,8 +1,8 @@
 # Wallet Address
 
 Use this section when the user needs their wallet address. Choose EVM for
-EVM-compatible chains such as BSC, Ethereum, Base, Arbitrum, Optimism, and
-Polygon. Choose Solana for Solana.
+EVM-compatible chains such as BSC, Ethereum, Base, Robinhood Chain, Arbitrum,
+Optimism, and Polygon. Choose Solana for Solana.
 
 ## Workflow
 
