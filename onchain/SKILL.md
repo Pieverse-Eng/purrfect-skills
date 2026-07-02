@@ -22,6 +22,7 @@ For EVM chain commands, include `--chain-id`. Common chain IDs:
 | BNB Smart Chain | 56 | BNB |
 | Ethereum | 1 | ETH |
 | Base | 8453 | ETH |
+| Robinhood Chain | 4663 | ETH |
 | Arbitrum One | 42161 | ETH |
 | Polygon | 137 | MATIC |
 | Optimism | 10 | ETH |
@@ -45,6 +46,13 @@ For EVM chain commands, include `--chain-id`. Common chain IDs:
 | USDC | `USDC` | `0x74b7f16337b8972027f6196a17a631ac6de26d22` | 6 | [OKLink](https://www.oklink.com/x-layer/token/0x74b7f16337b8972027f6196a17a631ac6de26d22) |
 | USDG | `USDG` | `0x4ae46a509f6b1d9056937ba4500cb143933d2dc8` | 6 | [OKLink](https://www.oklink.com/x-layer/token/0x4ae46a509f6b1d9056937ba4500cb143933d2dc8) |
 
+### Common Token Addresses (Robinhood Chain, chain ID 4663)
+
+| Token | Symbol on-chain | Address | Decimals | Explorer |
+| --- | --- | --- | ---: | --- |
+| WETH | `WETH` | `0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73` | 18 | [Blockscout](https://robinhoodchain.blockscout.com/token/0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73) |
+| USDG | `USDG` | `0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168` | 6 | [Blockscout](https://robinhoodchain.blockscout.com/token/0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168) |
+
 ## Command Groups
 
 | Group | What It Does | Reference |
@@ -54,4 +62,5 @@ For EVM chain commands, include `--chain-id`. Common chain IDs:
 | Pie Identity / PNS Lookups | Resolves `.pie` handles, paired Telegram accounts, account lists, and profiles. | [pie-identity.md](references/pie-identity.md) |
 | Direct `.pie` Transfers | Sends funds to a `.pie` handle or paired Telegram account. | [pie-transfers.md](references/pie-transfers.md) |
 | Raw Address Transfers | Sends funds directly to a raw EVM or Solana wallet address. | [raw-address-transfers.md](references/raw-address-transfers.md) |
+| Robinhood Stock/ETF Tokens | Looks up canonical Robinhood Chain stock token and tokenized ETF contract addresses. | [robinhood-stock-etf-tokens.md](references/robinhood-stock-etf-tokens.md) |
 | Read-Only Chain Checks | Looks up transactions, receipts, logs, senders, token state, or balances through RPC/explorer workflows. | [read-only-chain-checks.md](references/read-only-chain-checks.md) |

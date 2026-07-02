@@ -22,7 +22,7 @@ purr wallet transfer --to <address> --amount <amount> [--chain-id <chain_id>] [-
 | --- | --- | --- |
 | `--to <address>` | Required | Recipient wallet address. Use a `0x...` address for EVM or a base58 address for Solana. |
 | `--amount <amount>` | Required | Human-readable amount to send, such as `0.01`, `10`, or `100`. |
-| `--chain-id <chain_id>` | Required for EVM | Numeric EVM chain ID, such as `56` for BNB Smart Chain, `8453` for Base, or `196` for X Layer. Not needed for Solana. |
+| `--chain-id <chain_id>` | Required for EVM | Numeric EVM chain ID, such as `56` for BNB Smart Chain, `8453` for Base, `196` for X Layer, or `4663` for Robinhood Chain. Not needed for Solana. |
 | `--chain-type <ethereum|solana>` | Optional | Selects the chain family. Omit for EVM or set `ethereum`; use `solana` for Solana transfers. |
 | `--token <ticker_or_address>` | Optional | Token to send. Omit for the native coin. Accepts a known ticker such as `USDT`, `USDC`, or `USDT0`, or a raw token contract/mint address. |
 | `--decimals <n>` | Optional | Token decimals override when the token needs an explicit decimal value. |
@@ -37,6 +37,9 @@ purr wallet transfer --to 0x... --amount 0.1 --chain-id 196                    #
 purr wallet transfer --to 0x... --amount 0.1 --chain-id 196 --token USDT0      # USDT0 on X Layer
 purr wallet transfer --to 0x... --amount 0.1 --chain-id 196 --token USDC       # USDC on X Layer
 purr wallet transfer --to 0x... --amount 0.1 --chain-id 196 --token USDG       # USDG on X Layer
+purr wallet transfer --to 0x... --amount 0.01 --chain-id 4663                  # native ETH on Robinhood Chain
+purr wallet transfer --to 0x... --amount 0.01 --chain-id 4663 --token 0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73 --decimals 18  # WETH on Robinhood Chain
+purr wallet transfer --to 0x... --amount 1 --chain-id 4663 --token 0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168 --decimals 6       # USDG on Robinhood Chain
 purr wallet transfer --to FuQPd1q... --amount 0.5 --chain-type solana          # native SOL
 purr wallet transfer --to FuQPd1q... --amount 100 --chain-type solana --token USDC  # USDC on Solana
 ```
