@@ -1,7 +1,9 @@
 # Robinhood Stock/ETF Tokens
 
-Use this reference when a user asks for Robinhood Chain stock token or tokenized
-ETF contract addresses, or wants to check balances for one of those assets.
+Use this reference when a user asks for trading Robinhood stock/ETF tokens,
+including quoting, buying, selling, or swapping them on Robinhood Chain, looking
+up Robinhood Chain stock token or tokenized ETF contract addresses, or checking
+balances for one of those assets.
 
 These addresses are for Robinhood Chain only.
 
@@ -13,15 +15,107 @@ These addresses are for Robinhood Chain only.
 
 ## Usage Notes
 
-- Treat these as token contract addresses, not stock trading advice.
-- A token with the same ticker but a different contract address is not the
-  canonical Robinhood Stock Token.
-- The current `purr` CLI resolves these tickers on `--chain-id 4663`; prefer the
-  ticker for common balance/transfer commands and use the raw address when a
-  tool path requires an address.
-- The Name column uses Robinhood Chain token metadata display names with the
-  "Robinhood Token" suffix omitted.
-- Do not reuse these addresses on other chains.
+- Treat these as token contract references for Robinhood Chain, not stock
+  trading advice.
+- Use only the listed Robinhood Chain addresses; the same ticker on another
+  address or chain is not canonical.
+- The current `purr` CLI resolves these tickers on `--chain-id 4663` /
+  `--chain robinhood` for balance, transfer, and `wallet uniswap` commands.
+- Use raw addresses only when a tool path requires an address.
+
+## Swap Workflow
+
+Use `purr wallet uniswap` to quote or execute Robinhood Chain AMM swaps for
+these stock/ETF tokens. The command quotes by default. Add `--execute` only
+after the user confirms the quote.
+
+1. Identify the source asset the wallet holds: native `ETH`, `WETH`, `USDG`,
+   or one of the listed stock/ETF tokens.
+2. Identify the target stock/ETF ticker from the tables below.
+3. Run the quote command without `--execute`.
+4. Show the estimated shares/tokenized shares, minimum shares/tokenized shares,
+   route, and source amount to the user. The quote output is still an ERC-20
+   token amount and can be fractional.
+5. If the user confirms, rerun the same command with `--execute`.
+6. Return the transaction hash, Robinhood Chain explorer link
+   (`https://robinhoodchain.blockscout.com/tx/<tx_hash>`), and final token/ETH
+   balance when execution succeeds.
+
+## Swap Syntax
+
+```bash
+purr wallet uniswap --from <ticker_or_address> --to <ticker_or_address> --amount <decimal_amount> [--chain robinhood|--chain-id 4663] [--execute]
+```
+
+## Swap Parameters
+
+| Parameter | Required? | Description |
+| --- | --- | --- |
+| `--from <ticker_or_address>` | Required | Source asset. Use `ETH`, `WETH`, `USDG`, a stock/ETF ticker, or a raw Robinhood Chain token address. |
+| `--to <ticker_or_address>` | Required | Destination asset. Use `ETH`, `WETH`, `USDG`, a stock/ETF ticker, or a raw Robinhood Chain token address. |
+| `--amount <decimal_amount>` | Required | Human-readable source amount, not wei/base units. For example, `5` USDG, `0.003` ETH, or `0.03` SPCX. |
+| `--chain robinhood` | Recommended | Selects Robinhood Chain by alias. Use `--chain-id 4663` if an explicit numeric chain ID is preferred. |
+| `--execute` | Optional | Executes the swap. Omit this flag for quote-only mode. |
+| `--slippage <percent>` | Optional | Overrides backend default slippage. `0.5` means 0.5%; `1` means 1%. |
+| `--min-amount-out <raw_amount>` | Optional | Advanced protection. Raw base-unit minimum output, usually not needed because execute requotes and applies slippage. |
+| `--dedup-key <key>` | Optional | Advanced idempotency key. Omit for normal use so identical accidental reruns can be deduped by the backend. |
+
+## Swap Commands
+
+```bash
+purr wallet uniswap --from USDG --to SPCX --amount 5 --chain robinhood          # quote 5 USDG -> SPCX
+purr wallet uniswap --from USDG --to SPCX --amount 5 --chain robinhood --execute # execute after user confirmation
+purr wallet uniswap --from ETH --to SPCX --amount 0.003 --chain robinhood       # quote native ETH -> SPCX
+purr wallet uniswap --from SPCX --to ETH --amount 0.03 --chain robinhood        # quote SPCX -> native ETH
+purr wallet uniswap --from SPCX --to ETH --amount 0.03 --chain robinhood --execute
+purr wallet uniswap --from USDG --to SPY --amount 10 --chain-id 4663            # quote 10 USDG -> SPY
+purr wallet uniswap --from SPCX --to AAPL --amount 0.01 --chain robinhood       # quote stock-to-stock via USDG
+```
+
+## Swap Response Shape
+
+Quote mode prints one JSON object to stdout:
+
+```json
+{
+  "provider": "uniswap",
+  "chainId": 4663,
+  "chainType": "ethereum",
+  "from": "0x...",
+  "fromToken": "0x0000000000000000000000000000000000000000",
+  "toToken": "0x4a0E65A3EcceC6dBe60AE065F2e7bb85Fae35eEa",
+  "fromAmount": "0.003",
+  "fromAmountBaseUnits": "3000000000000000",
+  "estimatedToAmountFormatted": "0.031",
+  "minimumToAmountFormatted": "0.030845",
+  "minimumToAmount": "30845000000000000",
+  "quoteSource": "amm",
+  "ammRoute": {
+    "protocol": "router",
+    "steps": []
+  }
+}
+```
+
+Execute mode returns the same quote fields plus transaction fields:
+
+```json
+{
+  "mode": "transaction",
+  "hash": "0x...",
+  "transactionId": "..."
+}
+```
+
+## Swap Response Errors
+
+| Error Message | Meaning |
+| --- | --- |
+| `Unknown token ...` | The ticker is not in the local registry for Robinhood Chain. Use a supported ticker from this file or a raw address. |
+| `purr wallet uniswap currently supports Robinhood Chain only` | The command was called with a chain other than Robinhood Chain. Use `--chain robinhood` or `--chain-id 4663`. |
+| `Latest Uniswap quote is below minAmountOut` | The quote moved below the requested minimum before execution. Requote and ask the user to confirm again. |
+| `Insufficient balance` | The wallet does not have enough source asset or native ETH for gas. |
+| `No route found` | No AMM route is currently available for the requested pair/amount. |
 
 ## Stock Tokens
 
