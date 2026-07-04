@@ -41,6 +41,7 @@ This directory contains the Pieverse built-in skills. Each folder is a skill uni
 | `mantle` | Mantle skill bundle — network reference, address lookup, risk evaluation, portfolio analysis, DeFi planning, indexing, debugging, simulation, and smart-contract lifecycle. |
 | `panewslab` | PANewsLab crypto news, Polymarket smart money boards, article publishing, and rendered PANews web pages. |
 | `rootdata-crypto` | RootData crypto intelligence — project / investor / people search, funding rounds, trending projects, and personnel job changes. |
+| `surf` | Surf crypto intelligence — live prices, wallets, DeFi, on-chain SQL, social analytics, prediction markets, news, search, and fund data via the Surf CLI. |
 | `stock-spread` | READ-ONLY cross-venue tokenized-stock price & spread intelligence — resolves an equity to per-venue identifiers and reports the normalized CEX-vs-DEX spread across Gate, Bybit, Binance bStocks, and Solana/Jupiter. Quotes & comparison only; never trades. |
 | `binance-tokenized-securities-info` | READ-ONLY Ondo tokenized US-stock data on Binance Web3 (BNB Chain) — token list, RWA metadata + attestations, market/asset trading status (corporate actions), on-chain price/holders/market-cap, US fundamentals, and K-line. Imported from binance-skills-hub. |
 

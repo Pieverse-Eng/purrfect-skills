@@ -533,6 +533,19 @@
 					"targetPath": "morph/vendor/morph-x402/SKILL.md"
 				}
 			]
+		},
+		{
+			"id": "surf",
+			"repo": "https://github.com/asksurf-ai/surf-skills.git",
+			"commit": "14144accf962b32c9017130b6dad139525726cc0",
+			"notes": "Official Surf skill reference. Pieverse wraps it as a built-in data skill; the vendor skill owns CLI discovery, endpoint mapping, and Surf-specific gotchas.",
+			"skills": [
+				{
+					"name": "surf-vendor",
+					"upstreamPath": "skills/surf/SKILL.md",
+					"targetPath": "surf/vendor/SKILL.md"
+				}
+			]
 		}
 	]
 }
