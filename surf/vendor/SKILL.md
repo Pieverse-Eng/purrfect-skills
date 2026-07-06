@@ -11,6 +11,8 @@ metadata:
   version: "0.0.6"
 tools:
   - bash
+disable-model-invocation: true
+user-invocable: false
 ---
 
 # Surf — One Skill, All Crypto Data
