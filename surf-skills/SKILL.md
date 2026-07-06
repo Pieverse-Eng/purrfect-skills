@@ -1,6 +1,6 @@
 ---
-name: surf
-description: Use Surf when price,wallet,token,DeFi,social,onchain,news
+name: surf-skills
+description: Use Surf for crypto price,wallet,token,DEX,DeFi,onchain,news
 metadata:
   openclaw:
     primaryEnv: SURF_API_KEY
