@@ -1,9 +1,6 @@
 ---
 name: surf
-description: >-
-  Use whenever the user needs crypto data, asks about prices/wallets/tokens/DeFi,
-  wants to investigate on-chain activity, or is building something that consumes
-  crypto data -- even if they don't say "surf" explicitly.
+description: Crypto price,wallet,token,DeFi,social,onchain,news via Surf
 metadata:
   openclaw:
     primaryEnv: SURF_API_KEY
