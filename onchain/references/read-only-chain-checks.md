@@ -16,6 +16,8 @@ log inspection, sender tracing, and token state checks.
 | Chain | RPC URL |
 | --- | --- |
 | BNB Smart Chain | `https://bsc-rpc.publicnode.com` |
+| Monad | `https://rpc.monad.xyz` |
+| Monad Testnet | `https://testnet-rpc.monad.xyz` |
 | Ethereum | `https://ethereum-rpc.publicnode.com` |
 | Base | `https://base-rpc.publicnode.com` |
 | Arbitrum One | `https://arbitrum-one-rpc.publicnode.com` |

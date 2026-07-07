@@ -23,13 +23,15 @@ purr wallet balance [--chain-type <ethereum|solana>] [--chain-id <chain_id>] [--
 | Parameter | Required? | Description |
 | --- | --- | --- |
 | `--chain-type <ethereum|solana>` | Required for Solana and native EVM balances | Selects the wallet family. Use `ethereum` for native EVM balances when a Solana wallet also exists; use `solana` for Solana balances. |
-| `--chain-id <chain_id>` | Required for EVM | Selects the EVM chain by numeric chain ID, such as `56` for BNB Smart Chain, `8453` for Base, or `4663` for Robinhood Chain. |
+| `--chain-id <chain_id>` | Required for EVM | Selects the EVM chain by numeric chain ID, such as `56` for BNB Smart Chain, `143` for Monad, `8453` for Base, or `4663` for Robinhood Chain. |
 | `--token <ticker_or_address>` | Optional | Selects a token balance instead of the native coin. Accepts a known ticker such as `USDT` or `USDC`, or a raw token contract/mint address. |
 
 ## Commands
 
 ```bash
 purr wallet balance --chain-type ethereum --chain-id 56                    # native BNB on BSC
+purr wallet balance --chain-type ethereum --chain-id 143                   # native MON on Monad
+purr wallet balance --token USDC --chain-id 143                            # USDC on Monad
 purr wallet balance --chain-type ethereum --chain-id 8453                  # native ETH on Base
 purr wallet balance --token USDT --chain-id 56                             # USDT on BSC
 purr wallet balance --token USDC --chain-id 8453                           # USDC on Base
