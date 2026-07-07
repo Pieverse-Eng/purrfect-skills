@@ -20,6 +20,8 @@ For EVM chain commands, include `--chain-id`. Common chain IDs:
 | Chain | Chain ID | Native Token |
 | --- | ---: | --- |
 | BNB Smart Chain | 56 | BNB |
+| Monad | 143 | MON |
+| Monad Testnet | 10143 | MON |
 | Ethereum | 1 | ETH |
 | Base | 8453 | ETH |
 | Robinhood Chain | 4663 | ETH |
@@ -37,6 +39,13 @@ For EVM chain commands, include `--chain-id`. Common chain IDs:
 | USDC | `0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d` |
 | WBNB | `0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c` |
 | CAKE | `0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82` |
+
+### Common Token Addresses (Monad, chain ID 143)
+
+| Token | Address | Decimals |
+| --- | --- | ---: |
+| MON | native | 18 |
+| USDC | `0x754704Bc059F8C67012fEd69BC8A327a5aafb603` | 6 |
 
 ### Common Token Addresses (X Layer, chain ID 196)
 
