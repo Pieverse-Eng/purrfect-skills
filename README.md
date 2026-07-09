@@ -55,6 +55,7 @@ This directory contains the Pieverse built-in skills. Each folder is a skill uni
 
 | Skill | Description |
 |-------|-------------|
+| `bybit` | Bybit Pay merchant integration — accept crypto via QR Payment (one-time scan-to-pay) and Recurring Payments (subscription / on-demand / single-use auto-deduction agreements), with signing, webhook verification, and idempotency guidance. |
 | `instance-renewal` | Hosted instance billing status and renewal through `purr instance`, with preset mapping such as `bsc-usdt` to chain/token identifiers. |
 | `pieverse-a2a` | Pieverse HTTP 402 A2A payment flow — probe, confirm, authorize through the hosted wallet, and retry with `X-Pieverse-Payment`. |
 | `red-packet` | P2P XLayer USDT0 redpackets through `purr redpacket` — send to `.pie`/EVM address, inspect pending, claim, and view sent history. |
