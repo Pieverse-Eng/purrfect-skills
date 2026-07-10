@@ -11,7 +11,7 @@ Manage only this hosted Purrfect Claw through `purr instance`, never a generic w
 
 - Require `WALLET_API_URL`, `WALLET_API_TOKEN`, and `INSTANCE_ID`. If any is missing, explain that this operation requires a hosted instance.
 - Before payment, run `purr instance --help`. Stop if the runtime lacks a billing-capable `purr` CLI.
-- Use only `purr instance`. Never call App S2S/admin/credit-grant APIs, `purr wallet`, `onchain`, contracts, or `curl` for payment.
+- Use only `purr instance`. Never call Pieverse App S2S/admin APIs, credit-grant endpoints, `purr wallet`, `onchain`, contracts, or `curl` for payment.
 - Never ask for or accept a token address on the new flow. Pass a token ID or name to `--token`; the CLI resolves the backend list and rejects ambiguity.
 - Never claim success while the result is `paying` or `confirming`. Report completion only when it is `fulfilled`.
 
