@@ -1,0 +1,4 @@
+interface:
+  display_name: "Instance Billing"
+  short_description: "Manage this hosted Purrfect Claw billing"
+  default_prompt: "Check or manage this Purrfect Claw instance billing with purr instance."

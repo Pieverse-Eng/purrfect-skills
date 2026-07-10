@@ -55,6 +55,7 @@ This directory contains the Pieverse built-in skills. Each folder is a skill uni
 
 | Skill | Description |
 |-------|-------------|
-| `instance-renewal` | Hosted instance billing status and renewal through `purr instance`, with preset mapping such as `bsc-usdt` to chain/token identifiers. |
+| `instance-billing` | Hosted Purrfect Claw plan, credits, payment-method listing, credit top-up, and one-cycle renewal through `purr instance` with canonical token names or IDs. |
+| `instance-renewal` | Non-invocable compatibility stub that redirects historical renewal references to `instance-billing`. |
 | `pieverse-a2a` | Pieverse HTTP 402 A2A payment flow — probe, confirm, authorize through the hosted wallet, and retry with `X-Pieverse-Payment`. |
 | `red-packet` | P2P XLayer USDT0 redpackets through `purr redpacket` — send to `.pie`/EVM address, inspect pending, claim, and view sent history. |
