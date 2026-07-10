@@ -1,6 +1,6 @@
 ---
 name: instance-billing
-description: Use when a hosted Purrfect Claw user asks about plan or expiration, AI credits, payment methods, credit top-up, renewal or extension, billing status, or token payment.
+description: Use when a hosted Purrfect Claw user asks about its plan, expiration, AI credits, payment methods, top-up, renewal, extension, or billing status.
 ---
 
 # Instance Billing
@@ -10,7 +10,7 @@ Manage only this hosted Purrfect Claw through `purr instance`, never a generic w
 ## Guardrails
 
 - Require `WALLET_API_URL`, `WALLET_API_TOKEN`, and `INSTANCE_ID`. If any is missing, explain that this operation requires a hosted instance.
-- Before payment, run `purr instance --help`. Stop if the runtime lacks a billing-capable `purr` CLI.
+- Before paying, run `purr instance --help`. Stop if the runtime lacks billing commands.
 - Use only `purr instance`. Never call Pieverse App S2S/admin APIs, credit-grant endpoints, `purr wallet`, `onchain`, contracts, or `curl` for payment.
 - Never ask for or accept a token address on the new flow. Pass a token ID or name to `--token`; the CLI resolves the backend list and rejects ambiguity.
 - Never claim success while the result is `paying` or `confirming`. Report completion only when it is `fulfilled`.
@@ -31,7 +31,7 @@ Use `credits` for Purrfect Claw AI credits, not AI Gateway balance.
 1. If the user did not state a quantity, ask how many credits to add. Do not request a quote yet.
 2. Require an integer of at least `100`. Reject decimals or smaller values without calling `purr`.
 3. If the user specified a payment token, append `--token <name-or-id>`. Quote `$U` in the shell: `--token '$U'`.
-4. A direct instruction containing a valid quantity, such as "top up 100 credits", is authorization for this one payment. Use `--yes` without asking again.
+4. "Top up 100 credits" authorizes that one payment. Use `--yes` without another confirmation.
 
 ```bash
 purr instance topup --credits 100 --yes
@@ -42,7 +42,7 @@ Use `--dry-run` instead of `--yes` only when the user asks to preview or quote w
 
 ## Renewal
 
-An instruction to renew or extend the instance means one 30-day cycle. A direct renewal instruction is authorization for that one payment.
+Renew or extend means one 30-day cycle and authorizes that payment.
 
 ```bash
 purr instance renew --yes
@@ -56,7 +56,7 @@ If the user chooses a non-PIEVERSE token, honor it and proceed, but briefly ment
 ## Result Handling
 
 - `fulfilled`: state that the top-up or renewal completed.
-- `confirming`: state that payment was broadcast and fulfillment is still pending; include all identifiers returned by the CLI, never invent a missing transaction ID, then use `purr instance billing-status --invoice <invoice-id>` for a later read-only check.
-- `paying`: state that wallet execution has started, do not initiate a second payment, and use `purr instance billing-status --invoice <invoice-id>` to check the same invoice again.
+- `confirming`: report that payment was broadcast but fulfillment is pending. Include only returned identifiers, then poll with `purr instance billing-status --invoice <invoice-id>`.
+- `paying`: if the original command exited without a transaction hash, retry that exact `purr instance renew ... --yes` or `purr instance topup ... --yes` once; stable request IDs resume the same quote. Never change token, invoice, or quote. If still `paying`, poll with `billing-status`.
 - `failed`: surface the reason. Do not improvise another transfer.
 - Insufficient token balance or gas: report the specific shortage and stop.
