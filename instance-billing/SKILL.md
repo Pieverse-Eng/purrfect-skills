@@ -1,17 +1,17 @@
 ---
 name: instance-billing
-description: Use when a hosted Purrfect Claw user asks about their plan, expiration, AI credits, payment methods, credit recharge or top-up, subscription renewal or extension, billing status, or paying with a named token such as PIEVERSE, USDC, USDT, ETH, BNB, or $U.
+description: Use when a hosted Purrfect Claw user asks about plan or expiration, AI credits, payment methods, credit top-up, renewal or extension, billing status, or token payment.
 ---
 
 # Instance Billing
 
-Manage only the current hosted Purrfect Claw through `purr instance`. Treat this as instance billing, never as a generic wallet transfer or ordinary AI Gateway account top-up.
+Manage only this hosted Purrfect Claw through `purr instance`, never a generic wallet transfer or AI Gateway top-up.
 
 ## Guardrails
 
 - Require `WALLET_API_URL`, `WALLET_API_TOKEN`, and `INSTANCE_ID`. If any is missing, explain that this operation requires a hosted instance.
-- Before payment, run `purr instance --help`. If it fails, stop and report that the runtime needs a billing-capable `purr` CLI.
-- Use only `purr instance`. Never call Pieverse App S2S/admin APIs, credit-grant endpoints, `purr wallet`, `onchain`, raw contracts, or `curl` to assemble payment.
+- Before payment, run `purr instance --help`. Stop if the runtime lacks a billing-capable `purr` CLI.
+- Use only `purr instance`. Never call App S2S/admin/credit-grant APIs, `purr wallet`, `onchain`, contracts, or `curl` for payment.
 - Never ask for or accept a token address on the new flow. Pass a token ID or name to `--token`; the CLI resolves the backend list and rejects ambiguity.
 - Never claim success while the result is `paying` or `confirming`. Report completion only when it is `fulfilled`.
 
@@ -49,7 +49,9 @@ purr instance renew --yes
 purr instance renew --token PIEVERSE --yes
 ```
 
-Omit `--token` when none was requested; the CLI selects the lowest-priced affordable quote, with stablecoin preference on ties. Do not use deprecated `--chain-id` or `--token-address` for this workflow.
+Omit `--token` when none was requested; the CLI selects the lowest-priced affordable quote, preferring BSC on ties, then stablecoins, then token IDs. Do not use deprecated `--chain-id` or `--token-address`.
+
+If the user chooses a non-PIEVERSE token, honor it and proceed, but briefly mention that PIEVERSE renewal can receive a lower discounted price. Do not switch tokens or ask again.
 
 ## Result Handling
 
