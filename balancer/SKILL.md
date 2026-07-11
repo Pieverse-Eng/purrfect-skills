@@ -40,8 +40,10 @@ plus proportional, single-token, unbalanced, and recovery removals.
    `purr wallet address --chain-type ethereum`. Check input-token and native gas
    balances with `purr wallet balance --chain-type ethereum --chain-id <id>`.
 3. For liquidity or a user-constrained swap, discover or verify the pool with
-   `purr balancer pools --reviewed-only true`. Let unconstrained swaps use SOR
-   route discovery.
+   `purr balancer pools --reviewed-only true --first 50`. If the user supplies
+   a pool ID, preserve it and verify it through the matching Balancer quote;
+   do not reject it only because it is absent from the first discovery result.
+   Let unconstrained swaps use SOR route discovery.
 4. Run the matching read-only quote command. Quote commands do not need user
    confirmation.
 5. Present the chain, protocol, route or selected pool, input and output, price

@@ -14,9 +14,9 @@ Interpret Platform and CLI errors before deciding whether to retry.
 
 | Code or message | Meaning and action |
 | --- | --- |
-| `POOL_OPERATION_UNSUPPORTED` | The pool deterministically rejects the requested join/exit mode. Choose another reviewed pool or supported mode; do not treat it as a transient RPC error. |
+| `POOL_OPERATION_UNSUPPORTED` | The pool deterministically rejects the requested join/exit mode. If the user did not select that exact pool, try the next compatible reviewed candidate without changing the requested tokens or mode. Otherwise report the limitation; do not treat it as a transient RPC error. |
 | `INVALID_BOOSTED_TOKENS_OUT` | `tokensOut` does not cover every boosted pool position or uses a mismatched wrapped/underlying token. Correct the ordered token selection and quote again. |
-| `DoesNotSupportUnbalancedLiquidity` | Use proportional liquidity or another reviewed pool. |
+| `DoesNotSupportUnbalancedLiquidity` | For a single-token request, try another reviewed pool. Use proportional liquidity only if the user agrees to provide every required token. |
 | `WrapAmountTooSmall` | Increase the amount only with user approval, or choose a non-wrapping route. |
 | Recovery operation unavailable | Verify that the pool supports recovery and is currently in recovery mode. |
 | No SOR path | Try a different reviewed pool, protocol, or amount after explaining the change. Do not retry the same route indefinitely. |

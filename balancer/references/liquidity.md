@@ -16,6 +16,24 @@ Pool contracts can disable otherwise supported modes. Treat the quote as the
 capability check; do not assume every V3 pool supports unbalanced or
 single-token liquidity.
 
+## Pool Discovery and Selection
+
+- V2 pool IDs may be 32-byte values; V3 IDs may be 20-byte addresses. Preserve
+  the ID and do not reject it by length or explorer label.
+- Resolve names with `purr balancer pools --reviewed-only true --first 50`, not
+  web search or direct contract checks. Match the name, all tokens, and protocol.
+- If the user supplies an ID, quote it directly even when discovery omits it. A
+  successful Platform quote confirms the requested operation is supported.
+- For a single-asset add, quote `unbalanced`. If unsupported, try the next
+  compatible reviewed pool without switching to proportional.
+- If no reviewed match exists, report that result or request the pool ID.
+
+## Native Assets
+
+- A WETH pool may accept native ETH; follow the quote's `isNative` value.
+- If true, use ETH and the quoted transaction value without wrapping.
+- If false, use the quoted ERC-20 input. Requote before changing the asset.
+
 ## Add Liquidity
 
 ### Unbalanced
