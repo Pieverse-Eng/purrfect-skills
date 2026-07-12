@@ -5,14 +5,14 @@ description: Use when a hosted Purrfect Claw user asks about its plan, expiratio
 
 # Instance Billing
 
-Manage only this hosted Purrfect Claw through `purr instance`, never a generic wallet transfer or AI Gateway top-up.
+Manage this hosted Purrfect Claw through the standard `purr instance` billing commands.
 
 ## Guardrails
 
 - Require `WALLET_API_URL`, `WALLET_API_TOKEN`, and `INSTANCE_ID`. If any is missing, explain that this operation requires a hosted instance.
 - Before paying, run `purr instance --help`. Stop if the runtime lacks billing commands.
-- Use only `purr instance`. Never call Pieverse App S2S/admin APIs, credit-grant endpoints, `purr wallet`, `onchain`, contracts, or `curl` for payment.
-- Never ask for or accept a token address on the new flow. Pass a token ID or name to `--token`; the CLI resolves the backend list and rejects ambiguity.
+- Run billing transactions only with the `purr instance topup` and `purr instance renew` commands below. The CLI handles quote selection, token resolution, approval, signing, and broadcast; do not construct or send a wallet transaction yourself.
+- Select a payment token by passing its name or ID to `--token`; the CLI resolves the backend list and rejects ambiguity.
 - Never claim success while the result is `paying` or `confirming`. Report completion only when it is `fulfilled`.
 
 ## Read Operations
@@ -24,7 +24,7 @@ purr instance payment-methods
 purr instance billing-status --invoice <invoice-id>
 ```
 
-Use `credits` for Purrfect Claw AI credits, not AI Gateway balance.
+Use `credits` to read the Purrfect Claw's current AI credit balance.
 
 ## Credit Top-Up
 
@@ -49,14 +49,16 @@ purr instance renew --yes
 purr instance renew --token PIEVERSE --yes
 ```
 
-Omit `--token` when none was requested; the CLI selects the lowest-priced affordable quote, preferring BSC on ties, then stablecoins, then token IDs. Do not use deprecated `--chain-id` or `--token-address`.
+Omit `--token` when none was requested; the CLI selects the lowest-priced affordable quote, preferring BSC on ties, then stablecoins, then token IDs.
 
 If the user chooses a non-PIEVERSE token, honor it and proceed, but briefly mention that PIEVERSE renewal can receive a lower discounted price. Do not switch tokens or ask again.
 
 ## Result Handling
 
 - `fulfilled`: state that the top-up or renewal completed.
-- `confirming`: report that payment was broadcast but fulfillment is pending. Include only returned identifiers, then poll with `purr instance billing-status --invoice <invoice-id>`.
-- `paying`: if the original command exited without a transaction hash, retry that exact `purr instance renew ... --yes` or `purr instance topup ... --yes` once; stable request IDs resume the same quote. Never change token, invoice, or quote. If still `paying`, poll with `billing-status`.
+- `confirming`: report that payment was broadcast but fulfillment is pending. Include only returned identifiers, then poll the same Invoice with `purr instance billing-status --invoice <invoice-id>`.
+- Network interruption or unknown timeout with no transaction hash: retry the exact original `purr instance renew ... --yes` or `purr instance topup ... --yes` command once. Stable request IDs resume the same quote. Never change token, invoice, or quote. If the retry still returns no transaction hash, stop and report the result; do not keep polling as if payment is progressing by itself.
+- Deterministic HTTP `4xx`: stop immediately and report the exact response. Do not retry and do not describe `paying` as a background process that will finish on its own.
+- `paying` without the network-interruption or unknown-timeout condition above is not proof of broadcast or completion. Stop and report the returned state; do not retry, poll, or claim success.
 - `failed`: surface the reason. Do not improvise another transfer.
 - Insufficient token balance or gas: report the specific shortage and stop.
