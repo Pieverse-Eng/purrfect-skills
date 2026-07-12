@@ -11,7 +11,8 @@ Manage only this hosted Purrfect Claw through `purr instance`, never a generic w
 
 - Require `WALLET_API_URL`, `WALLET_API_TOKEN`, and `INSTANCE_ID`. If any is missing, explain that this operation requires a hosted instance.
 - Before paying, run `purr instance --help`. Stop if the runtime lacks billing commands.
-- Use only `purr instance`. Never call Pieverse App S2S/admin APIs, credit-grant endpoints, `purr wallet`, `onchain`, contracts, or `curl` for payment.
+- Use only `purr instance`. Never call Pieverse App S2S/admin APIs, credit-grant endpoints, `purr wallet`, `onchain`, contracts, or `curl` for payment. Never replace the billing flow with a manual wallet transfer.
+- Never use legacy or deprecated renewal commands or flags. The supported command is `purr instance renew`.
 - Never ask for or accept a token address on the new flow. Pass a token ID or name to `--token`; the CLI resolves the backend list and rejects ambiguity.
 - Never claim success while the result is `paying` or `confirming`. Report completion only when it is `fulfilled`.
 
@@ -56,7 +57,9 @@ If the user chooses a non-PIEVERSE token, honor it and proceed, but briefly ment
 ## Result Handling
 
 - `fulfilled`: state that the top-up or renewal completed.
-- `confirming`: report that payment was broadcast but fulfillment is pending. Include only returned identifiers, then poll with `purr instance billing-status --invoice <invoice-id>`.
-- `paying`: if the original command exited without a transaction hash, retry that exact `purr instance renew ... --yes` or `purr instance topup ... --yes` once; stable request IDs resume the same quote. Never change token, invoice, or quote. If still `paying`, poll with `billing-status`.
+- `confirming`: report that payment was broadcast but fulfillment is pending. Include only returned identifiers, then poll the same Invoice with `purr instance billing-status --invoice <invoice-id>`.
+- Network interruption or unknown timeout with no transaction hash: retry the exact original `purr instance renew ... --yes` or `purr instance topup ... --yes` command once. Stable request IDs resume the same quote. Never change token, invoice, or quote. If the retry still returns no transaction hash, stop and report the result; do not keep polling as if payment is progressing by itself.
+- Deterministic HTTP `4xx`: stop immediately and report the exact response. Do not retry and do not describe `paying` as a background process that will finish on its own.
+- `paying` without the network-interruption or unknown-timeout condition above is not proof of broadcast or completion. Stop and report the returned state; do not retry, poll, or claim success.
 - `failed`: surface the reason. Do not improvise another transfer.
 - Insufficient token balance or gas: report the specific shortage and stop.
