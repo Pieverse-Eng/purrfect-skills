@@ -10,10 +10,10 @@ Manage this hosted Purrfect Claw through the standard `purr instance` billing co
 ## Guardrails
 
 - Require `WALLET_API_URL`, `WALLET_API_TOKEN`, and `INSTANCE_ID`. If any is missing, explain that this operation requires a hosted instance.
-- Before paying, run `purr instance --help`. Stop if the runtime lacks billing commands.
 - Run billing transactions only with the `purr instance topup` and `purr instance renew` commands below. The CLI handles quote selection, token resolution, approval, signing, and broadcast; do not construct or send a wallet transaction yourself.
 - Select a payment token by passing its name or ID to `--token`; the CLI resolves the backend list and rejects ambiguity.
 - Never claim success while the result is `paying` or `confirming`. Report completion only when it is `fulfilled`.
+- When the user already supplied the credit quantity and optional payment token, run exactly one `topup` or `renew` command. Do not call `payment-methods`, repeat balance checks, inspect the transaction on-chain, or probe CLI help first.
 
 ## Read Operations
 
@@ -25,6 +25,7 @@ purr instance billing-status --invoice <invoice-id>
 ```
 
 Use `credits` to read the Purrfect Claw's current AI credit balance.
+Use `billing-status` only when the user explicitly asks to recheck an existing Invoice. Do not call it automatically after `topup` or `renew`.
 
 ## Credit Top-Up
 
@@ -56,7 +57,8 @@ If the user chooses a non-PIEVERSE token, honor it and proceed, but briefly ment
 ## Result Handling
 
 - `fulfilled`: state that the top-up or renewal completed.
-- `confirming`: report that payment was broadcast but fulfillment is pending. Include only returned identifiers, then poll the same Invoice with `purr instance billing-status --invoice <invoice-id>`.
+- `confirming`: report that payment was broadcast and fulfillment is pending. Include the Invoice ID and transaction hash returned by the command, then end the current turn. Do not rerun the payment command or poll `billing-status` in the same turn.
+- If the user later explicitly asks to recheck a `confirming` payment, run `purr instance billing-status --invoice <invoice-id>` exactly once. If it is still `confirming`, report that state and stop. If it is `fulfilled`, report completion; when this payment is for an active T04 or T06 mission, submit that mission exactly once.
 - Network interruption or unknown timeout with no transaction hash: retry the exact original `purr instance renew ... --yes` or `purr instance topup ... --yes` command once. Stable request IDs resume the same quote. Never change token, invoice, or quote. If the retry still returns no transaction hash, stop and report the result; do not keep polling as if payment is progressing by itself.
 - Deterministic HTTP `4xx`: stop immediately and report the exact response. Do not retry and do not describe `paying` as a background process that will finish on its own.
 - `paying` without the network-interruption or unknown-timeout condition above is not proof of broadcast or completion. Stop and report the returned state; do not retry, poll, or claim success.
