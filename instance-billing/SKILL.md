@@ -12,8 +12,9 @@ Manage this hosted Purrfect Claw through the standard `purr instance` billing co
 - Require `WALLET_API_URL`, `WALLET_API_TOKEN`, and `INSTANCE_ID`. If any is missing, explain that this operation requires a hosted instance.
 - Run billing transactions only with the `purr instance topup` and `purr instance renew` commands below. The CLI handles quote selection, token resolution, approval, signing, and broadcast; do not construct or send a wallet transaction yourself.
 - Select a payment token by passing its name or ID to `--token`; the CLI resolves the backend list and rejects ambiguity.
+- Before any `topup` or `renew` command with `--yes`, summarize the credit quantity or 30-day extension and the requested token or automatic selection, warn that it will initiate a real on-chain payment, and wait for explicit confirmation. Only confirmation in the immediately preceding user turn authorizes one unchanged command; the initial request, any changed payment detail, or an intervening request requires confirmation again.
 - Never claim success while the result is `paying` or `confirming`. Report completion only when it is `fulfilled`.
-- When the user already supplied the credit quantity for a top-up, or asked for a renewal, run exactly one matching command with the optional payment token. Do not call `payment-methods`, repeat balance checks, or probe CLI help first.
+- When the user already supplied the credit quantity for a top-up, or asked for a renewal, prepare exactly one matching command with the optional payment token. Do not call `payment-methods`, repeat balance checks, or probe CLI help before requesting confirmation.
 
 ## Read Operations
 
@@ -32,7 +33,7 @@ Use `billing-status` only when the user explicitly asks to recheck an existing I
 1. If the user did not state a quantity, ask how many credits to add. Do not request a quote yet.
 2. Require an integer of at least `100`. Reject decimals or smaller values without calling `purr`.
 3. If the user specified a payment token, append `--token <name-or-id>`. Quote `$U` in the shell: `--token '$U'`.
-4. "Top up 100 credits" authorizes that one payment. Use `--yes` without another confirmation.
+4. Follow the payment confirmation guardrail above. Only after the user confirms may you run one matching command with `--yes`.
 
 ```bash
 purr instance topup --credits 100 --yes
@@ -43,7 +44,7 @@ Use `--dry-run` instead of `--yes` only when the user asks to preview or quote w
 
 ## Renewal
 
-Renew or extend means one 30-day cycle and authorizes that payment.
+Renew or extend means one 30-day cycle. Follow the payment confirmation guardrail before running a command with `--yes`.
 
 ```bash
 purr instance renew --yes
@@ -52,7 +53,7 @@ purr instance renew --token PIEVERSE --yes
 
 Omit `--token` when none was requested; the CLI selects the lowest-priced affordable quote, preferring BSC on ties, then stablecoins, then token IDs.
 
-If the user chooses a non-PIEVERSE token, honor it and proceed, but briefly mention that PIEVERSE renewal can receive a lower discounted price. Do not switch tokens or ask again.
+If the user chooses a non-PIEVERSE token, honor it and briefly mention in the confirmation summary that PIEVERSE renewal can receive a lower discounted price. Do not switch tokens; payment confirmation is still required.
 
 ## Result Handling
 
