@@ -24,6 +24,7 @@ This directory contains the Pieverse built-in skills. Each folder is a skill uni
 | `dflow` | DFlow Agent CLI — Solana spot swaps, prediction markets, transfers, funding, guardrails, and local vault management. |
 | `fourmeme` | four.meme on BSC — token buy, sell, and creation. |
 | `gate` | Gate.io domain router — covers CEX (spot, futures, earn, staking, dual investment, loans, transfers), DEX (wallet, swaps, market data), intelligence (coin analysis, risk checks, market overview), and news. |
+| `hyperliquid` | Hyperliquid market data, perpetual and spot trading, leverage, collateral moves, Arbitrum USDC deposits and withdrawals, and HIP-3 workflows. |
 | `kraken` | Kraken exchange — spot / xStocks / forex trading, earn, staking, funding, and paper trading. |
 | `lista-vaults` | Lista DAO lending vaults on BSC — deposit, redeem, and withdraw from ERC-4626 yield vaults. |
 | `morph` | Morph L2 domain router — wallet, explorer, DEX swap, cross-chain bridge, EIP-7702 delegation, EIP-8004 agent identity & reputation, and x402 USDC payments. |
