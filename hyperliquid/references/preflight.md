@@ -5,6 +5,10 @@ Use these commands before trading, funding, or explaining balances.
 ## Commands
 
 ```bash
+purr hyperliquid status
+purr hyperliquid snapshot
+purr hyperliquid enable
+purr hyperliquid disable
 purr hyperliquid account
 purr hyperliquid state [--kind perp|spot|both] [--dex <dex>]
 purr hyperliquid builder-fee-status
@@ -14,33 +18,73 @@ purr hyperliquid set-abstraction --mode disabled|unifiedAccount|portfolioMargin
 
 | Command | Purpose |
 | --- | --- |
+| `status` | Whether Hyperliquid Trading is enabled for this instance (integration gate) |
+| `snapshot` | Dashboard-style summary: account value, PnL, margin used, open positions, risk (requires trading enabled) |
+| `enable` | Turn on Hyperliquid Trading so exchange routes work; confirm first |
+| `disable` | Turn off Hyperliquid Trading; blocked while open positions or open orders exist |
 | `account` | Hyperliquid account address, network, and wallet metadata |
 | `state` | Perp margin/positions and/or spot balances for that address |
-| `builder-fee-status` | Whether the fixed 0.05% transaction fee is authorized for perpetual orders |
+| `builder-fee-status` | Whether the fixed 0.05% transaction fee is authorized for orders |
 | `abstraction` | Current Hyperliquid account mode (`default`, `disabled`, `unifiedAccount`, `portfolioMargin`) |
 | `set-abstraction` | Set account mode to `disabled`, `unifiedAccount`, or `portfolioMargin`; confirm first |
+
+## Trading Integration Gate
+
+All exchange routes under the Hyperliquid gateway (`account`, `state`,
+`markets`, `order`, `deposit`, `snapshot`, and the rest) require the trading
+integration to be **enabled**. Only `status`, `enable`, and `disable` remain
+available when trading is disabled.
+
+Run this check silently when starting any Hyperliquid workflow:
+
+```bash
+purr hyperliquid status
+```
+
+| Result | Action |
+| --- | --- |
+| `enabled: true` | Continue |
+| `enabled: false` | Explain that Hyperliquid Trading is off. Confirm → `enable`. Do not enable silently |
+| Error | Report and stop; do not assume enabled |
+
+```bash
+purr hyperliquid enable
+purr hyperliquid disable
+```
+
+- `enable` / `disable` require confirmation (see Confirmation Contract in
+  `SKILL.md`).
+- `disable` fails with `HYPERLIQUID_TRADING_DISABLE_BLOCKED` when any default or
+  builder-dex account has open positions or open orders. Show the `blockers`
+  payload, close/cancel exposure first, then retry disable only after a new
+  confirmation.
+- Prefer `snapshot` for a quick portfolio overview once trading is enabled; use
+  `state` for exact collateral and position details needed to trade.
 
 ## Workflow
 
 Run these checks silently. Do not announce that preflight, market resolution,
 or balance inspection is starting, and do not narrate the remaining steps.
 
-1. Run `purr hyperliquid account` to show the Hyperliquid account address.
-2. Run `purr hyperliquid state --kind both` for a full collateral and position
+1. Run `purr hyperliquid status`. If disabled, stop for confirmation and
+   `enable` before any other exchange command.
+2. Run `purr hyperliquid account` to show the Hyperliquid account address.
+3. Run `purr hyperliquid state --kind both` for a full collateral and position
    snapshot. Use `--kind perp` or `--kind spot` when only one side is needed.
-3. When the user targets a builder dex (for example equity perps on `xyz`),
+   Optionally use `snapshot` when the user wants a high-level summary.
+4. When the user targets a builder dex (for example equity perps on `xyz`),
    also run `state --kind both --dex xyz` (or the relevant dex name).
-4. Before confirming any perpetual order or changing leverage/collateral for
-   it, run `builder-fee-status` and follow **Perpetual Fee Preflight** below. Do
-   not run it for a confirmed spot market.
-5. Check `abstraction` when the user asks about Standard / unified / portfolio
+5. Before confirming **any** order (perpetual or spot) or changing
+   leverage/collateral for it, run `builder-fee-status` and follow **Order Fee
+   Preflight** below.
+6. Check `abstraction` when the user asks about Standard / unified / portfolio
    margin mode. Only call `set-abstraction` after confirmation.
 
-## Perpetual Fee Preflight
+## Order Fee Preflight
 
-First establish that the intended order is perpetual. A resolved symbol with
-`spotPairId` is spot; when the market type is unclear, inspect
-`purr hyperliquid markets --kind perp` and `--kind spot` rather than guessing.
+All orders (perp and spot) require the fixed additional `0.05%` transaction
+fee authorization when it is not already approved. Non-order actions skip this
+check.
 
 ```bash
 purr hyperliquid builder-fee-status
@@ -55,8 +99,7 @@ Handle the result before building the final order confirmation:
 | Error or unknown value | Stop and report it; do not place an order as a status probe |
 
 After successful authorization, continue to the ordinary order summary and
-confirmation. The authorization itself does not submit or fill an order. Spot
-orders skip this check because they do not use this authorization.
+confirmation. The authorization itself does not submit or fill an order.
 
 In user-facing text, say “additional 0.05% transaction fee,” never “builder
 fee.” Command and response names may retain `builder-fee` internally.

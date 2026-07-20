@@ -164,12 +164,14 @@ cloids carelessly.
 
 | Field | Meaning |
 | --- | --- |
-| `a` | Asset id (integer) |
-| `o` | Order id / oid (non-negative integer only; not a cloid) |
-| `f` | Optional; when present must be boolean `true` (fast cancel) |
+| `cancels[].a` | Asset id (integer) |
+| `cancels[].o` | Order id / oid (non-negative integer only; not a cloid) |
+| `f` | Optional **top-level** field; when present must be boolean `true` (fast cancel). Do not put `f` inside each cancel entry |
 
 ```bash
 purr hyperliquid cancel --body-json '{"cancels":[{"a":0,"o":123456789}]}'
+# optional fast cancel:
+purr hyperliquid cancel --body-json '{"cancels":[{"a":0,"o":123456789}],"f":true}'
 ```
 
 ## Cancel By Cloid Body
@@ -214,14 +216,17 @@ purr hyperliquid modify --body-json '{"oid":123456789,"order":{"a":0,"b":true,"p
 
 ## Build Checklist
 
-1. `symbol` → `assetId` (`a`), `szDecimals`, canonical `coin`
-2. Size string does not exceed `szDecimals`
-3. Side `b` matches user intent (buy/sell)
-4. Price `p` from user or recent book/mid — do not invent a “market” without a
+1. Trading integration enabled (`status`) and order fee preflight done when
+   placing orders
+2. `symbol` → `assetId` (`a`), `szDecimals`, canonical `coin`
+3. Size string does not exceed `szDecimals`
+4. Side `b` matches user intent (buy/sell)
+5. Price `p` from user or recent book/mid — do not invent a “market” without a
    typed TIF/trigger
-5. Set `r: true` for reduce-only closes
-6. Validate the complete wrapper → confirm → run with `--body-json`
-7. Verify with `order-status` or `orders`
+6. Set `r: true` for reduce-only closes
+7. Do not mix perpetual and spot `a` values in one batch
+8. Validate the complete wrapper → confirm → run with `--body-json`
+9. Verify with `order-status` or `orders`
 
 ## Anti-Patterns
 

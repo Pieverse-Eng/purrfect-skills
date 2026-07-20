@@ -18,12 +18,16 @@ fills, or balances when an action may have partially applied.
 
 | Code / condition | Meaning | Agent action |
 | --- | --- | --- |
+| `HYPERLIQUID_TRADING_DISABLED` | Hyperliquid Trading integration is off; exchange routes (including `snapshot`) are blocked | Explain; confirm → `enable`; then retry the original read/write after a fresh confirmation for account-changing work |
+| `HYPERLIQUID_TRADING_DISABLE_BLOCKED` | Cannot disable while open positions or open orders exist | Present `blockers` (per dex: positions, open order counts); close/cancel first; re-confirm disable only after exposure is clear |
+| `HYPERLIQUID_TRADING_DISABLE_CHECK_UNAVAILABLE` | Platform could not verify exposure before disable | Report and stop; do not force-disable; retry later or inspect with `state` / `orders` / `snapshot` |
 | `HYPERLIQUID_SYMBOL_AMBIGUOUS` | Multiple markets match the coin | Present `data.candidates`, ask the user to pick, then use the selected candidate directly without resolving again |
 | `HYPERLIQUID_SYMBOL_NOT_FOUND` | No market for coin/dex | Try full `dex:COIN`, `--dex default`, or `markets`; do not invent `assetId` |
 | `HYPERLIQUID_SYMBOL_DEX_MISMATCH` | Coin prefix conflicts with `--dex` | Align prefix and `--dex`, or use only one form |
 | `HYPERLIQUID_SYMBOL_INVALID` | Bad selector (e.g. coin `default:…`) | Use `--dex default` instead of embedding `default:` in coin |
 | `HYPERLIQUID_DEPOSIT_AMOUNT_TOO_SMALL` | Deposit under 5 USDC | Refuse; ask for at least 5 USDC |
-| `HYPERLIQUID_BUILDER_FEE_APPROVAL_REQUIRED` | A perpetual order needs authorization for the fixed additional `0.05%` transaction fee | The order was not submitted. Briefly request authorization using the exact user-facing prompt in `SKILL.md`, run `approve-builder-fee` after consent, then obtain fresh confirmation before retrying the order |
+| `HYPERLIQUID_BUILDER_FEE_APPROVAL_REQUIRED` | An order needs authorization for the fixed additional `0.05%` transaction fee | The order was not submitted. Briefly request authorization using the exact user-facing prompt in `SKILL.md`, run `approve-builder-fee` after consent, then obtain fresh confirmation before retrying the order |
+| `HYPERLIQUID_MIXED_ORDER_ASSET_CLASSES_UNSUPPORTED` | Order batch mixes perpetual and spot assets | Split into separate orders; never mix asset classes in one batch |
 | Fee status check fails or returns an unknown value | Authorization cannot be established safely | Stop before order confirmation; report the status error and do not submit an order as a probe |
 | CLI: `--network is not supported` | Network override attempted | Remove `--network`; mainnet only |
 | `HYPERLIQUID_API_PARTIAL_SUCCESS` | Some batch legs succeeded | Report partial; reconcile with `orders` / `state` / `order-status`; do not resubmit whole batch blindly |
@@ -34,6 +38,16 @@ fills, or balances when an action may have partially applied.
 | Insufficient margin / balance | Not enough HL collateral or Arbitrum USDC | Show `state` and/or Arbitrum USDC balance; propose fund or transfer steps |
 | Pass either `--body-json` or `--body-file` | Both body inputs set | Use exactly one |
 | Invalid boolean / integer flags | Bad CLI args | Correct flag values; re-run only after user intent still holds |
+
+## Integration Failures
+
+- **Disabled trading**: Only `status`, `enable`, and `disable` still work.
+  `snapshot` and all other Hyperliquid commands require enable first. Do not
+  loop on exchange commands while disabled.
+- **Disable blocked**: Use `blockers` to tell the user which dex still has
+  positions or open orders. Flat and cancel, then disable only with a new yes.
+- **Disable check unavailable**: Treat as soft failure; do not claim trading was
+  disabled.
 
 ## Symbol Failures
 
@@ -60,12 +74,13 @@ fills, or balances when an action may have partially applied.
 | Margin insufficient | Show `state`; suggest reduce size, transfer collateral, or deposit |
 | Leverage change rejected | Report; leave leverage as-is unless user chooses another path |
 | Cancel missing oid | Refresh `orders --kind open`; do not invent oids |
+| Mixed perp + spot batch | Split into two requests |
 
 ### Transaction fee authorization required
 
-The primary flow is to run `builder-fee-status` before confirming a perpetual
-order as described in [preflight.md](preflight.md). If an order still returns
-`HYPERLIQUID_BUILDER_FEE_APPROVAL_REQUIRED`:
+The primary flow is to run `builder-fee-status` before confirming any order
+(perp or spot) as described in [preflight.md](preflight.md). If an order still
+returns `HYPERLIQUID_BUILDER_FEE_APPROVAL_REQUIRED`:
 
 1. Stop. The rejected order was not submitted.
 2. Use only the brief transaction-fee wording and exact consent prompt from
@@ -87,6 +102,8 @@ no CLI revoke command.
 ## Reconciliation Cheatsheet
 
 ```bash
+purr hyperliquid status
+purr hyperliquid snapshot
 purr hyperliquid state --kind both [--dex <dex>]
 purr hyperliquid orders --kind open [--dex <dex>]
 purr hyperliquid order-status --oid <oid-or-cloid>

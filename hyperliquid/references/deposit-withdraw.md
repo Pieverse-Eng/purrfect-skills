@@ -1,7 +1,8 @@
 # Deposit and Withdraw
 
 Bridge USDC between **Arbitrum** and Hyperliquid. Confirm every transfer. Minimum
-deposit is **5 USDC**.
+deposit is **5 USDC**. Both commands require the Hyperliquid Trading integration
+to be enabled (see [preflight.md](preflight.md)).
 
 ## Commands
 
