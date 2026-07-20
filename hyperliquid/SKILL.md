@@ -88,7 +88,8 @@ Pick the matching command group below, then read that reference before acting.
 | Market data | Symbol resolve, markets, prices, L2 book, candles, funding | [market-data.md](references/market-data.md) |
 | Trading | Orders, fee authorization, modify, cancel, leverage, status, fills | [trading.md](references/trading.md), [order-wire-format.md](references/order-wire-format.md) |
 | Collateral | Perp↔spot USDC and default↔builder-dex USDC | [collateral.md](references/collateral.md) |
-| Deposit / withdraw | Arbitrum USDC bridge in; withdraw to Arbitrum; withdraw arrival status by nonce | [deposit-withdraw.md](references/deposit-withdraw.md) || Full recipes | First fund, crypto perp, equity perp, spot, close, withdraw | [workflows.md](references/workflows.md) |
+| Deposit / withdraw | Arbitrum USDC bridge in; withdraw to Arbitrum; withdraw arrival status by nonce | [deposit-withdraw.md](references/deposit-withdraw.md) |
+| Full recipes | First fund, crypto perp, equity perp, spot, close, withdraw | [workflows.md](references/workflows.md) |
 | Errors | Codes and stop / reconcile policy | [errors.md](references/errors.md) |
 
 ## Confirmation Contract
