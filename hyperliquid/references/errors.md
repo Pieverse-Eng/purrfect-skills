@@ -62,8 +62,11 @@ fills, or balances when an action may have partially applied.
 | --- | --- |
 | Amount under 5 USDC | Stop before or after platform reject; request valid amount |
 | Insufficient Arbitrum USDC or gas | Report shortage; do not attempt smaller blind retries without user intent |
-| Bridge / broadcast unknown | Report uncertainty; include any `txHash` / request id; **do not redeposit** |
-| Withdraw pending settlement | Report pending; later check Arbitrum USDC only when user asks |
+| Bridge / broadcast unknown | Report uncertainty; include any `txHash` / request id / `nonce`; **do not redeposit or re-withdraw** |
+| Withdraw submit succeeded, settlement unknown | Keep `nonce`; run `withdraw-status --nonce <nonce>` when user asks |
+| `withdraw-status` → `pending` | Report still settling; do **not** re-run withdraw; poll later only if asked |
+| `withdraw-status` → `arrived` | Report `amountUsdc`, `feeUsdc`, `txHash`; optional Arbitrum USDC balance check |
+| Withdraw with no captured `nonce` | Reconcile via `state` + Arbitrum USDC only; never invent a nonce or re-withdraw for a new handle |
 
 ## Order Failures
 
@@ -107,6 +110,7 @@ purr hyperliquid snapshot
 purr hyperliquid state --kind both [--dex <dex>]
 purr hyperliquid orders --kind open [--dex <dex>]
 purr hyperliquid order-status --oid <oid-or-cloid>
+purr hyperliquid withdraw-status --nonce <nonce>
 purr hyperliquid fills --start-time <ms>
 purr wallet balance --chain-type ethereum --chain-id 42161 --token USDC
 ```
