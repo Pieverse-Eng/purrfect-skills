@@ -41,10 +41,11 @@ Pick the matching command group below, then read that reference before acting.
    `assetId`, full `coin`, and `szDecimals` before placing or modifying orders.
    Never guess asset indices.
 4. On symbol ambiguity, list candidates and ask the user; do not pick silently.
-5. Looking up markets, balances, positions, orders, fills, status, and snapshot
-   needs no confirmation. Any action that can change orders, positions, leverage,
-   collateral, account settings, fee authorization, integration enablement, or
-   on-chain funds requires explicit confirmation first (see Confirmation Contract).
+5. Looking up markets, balances, positions, orders, fills, status, snapshot, and
+   withdraw status needs no confirmation. Any action that can change orders,
+   positions, leverage, collateral, account settings, fee authorization,
+   integration enablement, or on-chain funds requires explicit confirmation
+   first (see Confirmation Contract).
 6. Perform market resolution, balance checks, price lookups, and other
    preparation silently. Do not announce tool calls, preflight checks, or the
    upcoming sequence with phrases such as “Let me…” or “What we need to do.”
@@ -61,7 +62,9 @@ Pick the matching command group below, then read that reference before acting.
 10. Do not retry account-changing actions after unknown broadcast, deferred
     policy, or partial success. Reconcile by checking state, orders, or fills.
 11. Do not claim a fill from a submit response alone. Verify with
-    `order-status`, `orders`, `fills`, or `state`.
+    `order-status`, `orders`, `fills`, or `state`. Do not claim a withdraw has
+    arrived on Arbitrum from the withdraw submit alone — keep the returned
+    `nonce` and verify with `withdraw-status` (or balances if nonce is missing).
 12. Never pass `--network`. The CLI and platform are mainnet-only.
 13. After resolving a market for an order (perp **or** spot), check the
     additional fee authorization with `purr hyperliquid builder-fee-status`
@@ -85,7 +88,7 @@ Pick the matching command group below, then read that reference before acting.
 | Market data | Symbol resolve, markets, prices, L2 book, candles, funding | [market-data.md](references/market-data.md) |
 | Trading | Orders, fee authorization, modify, cancel, leverage, status, fills | [trading.md](references/trading.md), [order-wire-format.md](references/order-wire-format.md) |
 | Collateral | Perp↔spot USDC and default↔builder-dex USDC | [collateral.md](references/collateral.md) |
-| Deposit / withdraw | Arbitrum USDC bridge in; withdraw to Arbitrum | [deposit-withdraw.md](references/deposit-withdraw.md) |
+| Deposit / withdraw | Arbitrum USDC bridge in; withdraw to Arbitrum; withdraw arrival status by nonce | [deposit-withdraw.md](references/deposit-withdraw.md) |
 | Full recipes | First fund, crypto perp, equity perp, spot, close, withdraw | [workflows.md](references/workflows.md) |
 | Errors | Codes and stop / reconcile policy | [errors.md](references/errors.md) |
 

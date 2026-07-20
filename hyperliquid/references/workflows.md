@@ -233,11 +233,24 @@ purr hyperliquid state --kind both
 purr hyperliquid withdraw --amount <amount>
 ```
 
-3. Do not re-submit on timeout. Later verify if asked:
+3. Keep the returned **`nonce`**. Do not re-submit on timeout or while status is
+   pending. A successful submit is not the same as Arbitrum arrival.
+
+4. When the user asks for settlement status (or you need to confirm arrival):
+
+```bash
+purr hyperliquid withdraw-status --nonce <nonce>
+```
+
+- `status: pending` → report still settling; do not re-run withdraw.
+- `status: arrived` → report `amountUsdc`, `feeUsdc`, `txHash`; optional:
 
 ```bash
 purr wallet balance --chain-type ethereum --chain-id 42161 --token USDC
 ```
+
+If `nonce` was never captured, reconcile with balances only — never invent a
+nonce or re-withdraw to obtain one. See [deposit-withdraw.md](deposit-withdraw.md).
 
 ## H. Research Only (No Trade)
 
