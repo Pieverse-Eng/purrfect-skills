@@ -6,12 +6,24 @@ Use `--body-json` for ordinary single actions. Perform preparatory queries
 silently and surface only decisions, confirmations, meaningful results, or
 errors that change the workflow.
 
-## Perpetual Order Fee Preflight
+## Order Fee Preflight
 
-At every marked perpetual-order step, follow **Perpetual Fee Preflight** in
-[preflight.md](preflight.md) before any account-changing preparation. Spot
-orders skip it. For `HYPERLIQUID_BUILDER_FEE_APPROVAL_REQUIRED`, follow the 428
+At every marked order step (perpetual **or** spot), follow **Order Fee
+Preflight** in [preflight.md](preflight.md) before any account-changing
+preparation. For `HYPERLIQUID_BUILDER_FEE_APPROVAL_REQUIRED`, follow the 428
 fallback in [errors.md](errors.md); never authorize or retry automatically.
+
+## Integration Gate
+
+At the start of any exchange workflow, ensure trading is enabled:
+
+```bash
+purr hyperliquid status
+```
+
+If `enabled` is false, explain, confirm → `enable`, then continue. Only
+`status`, `enable`, and `disable` work while disabled; every other Hyperliquid
+command (including `snapshot`) requires trading enabled.
 
 ## Symbol Ambiguity
 
@@ -29,9 +41,11 @@ later order confirmation is still required.
 
 ## A. First-Time Fund and Status
 
-1. Identity and on-chain funding:
+1. Integration and identity:
 
 ```bash
+purr hyperliquid status
+# if disabled: confirm → enable
 purr hyperliquid account
 purr wallet balance --chain-type ethereum --chain-id 42161 --token USDC
 ```
@@ -52,7 +66,7 @@ purr hyperliquid state --kind both
 
 ## B. Crypto Perp Open (Example: ETH)
 
-1. Resolve market:
+1. Ensure trading enabled (`status`; enable if needed). Resolve market:
 
 ```bash
 purr hyperliquid symbol --coin ETH
@@ -64,7 +78,7 @@ purr hyperliquid symbol --coin ETH
 purr hyperliquid state --kind perp
 ```
 
-3. Run the **Perpetual Order Fee Preflight** above.
+3. Run the **Order Fee Preflight** above.
 
 4. If leverage must change, include it in the final trade confirmation; do not
    run it yet:
@@ -99,7 +113,8 @@ purr hyperliquid state --kind perp
 
 ## C. Equity / HIP-3 Perp (Example: TSLA on `xyz`)
 
-1. Resolve with dex (avoid bare ambiguous tickers when possible):
+1. Ensure trading enabled. Resolve with dex (avoid bare ambiguous tickers when
+   possible):
 
 ```bash
 purr hyperliquid symbol --coin TSLA --dex xyz
@@ -110,8 +125,8 @@ purr hyperliquid symbol --coin xyz:TSLA
 2. If ambiguous, follow **Symbol Ambiguity** above. Use the selected candidate
    directly; do not resolve it again.
 
-3. Run the **Perpetual Order Fee Preflight** above before any leverage or
-   collateral change for this order.
+3. Run the **Order Fee Preflight** above before any leverage or collateral
+   change for this order.
 
 4. Optional: check account mode if the user cares about unified / portfolio
    margin (`purr hyperliquid abstraction`). Builder-dex collateral still uses
@@ -149,7 +164,7 @@ purr hyperliquid funding --coin xyz:TSLA --start-time <ms>
 
 ## D. Spot Buy
 
-1. Balances:
+1. Ensure trading enabled. Balances:
 
 ```bash
 purr hyperliquid state --kind both
@@ -161,22 +176,23 @@ purr hyperliquid state --kind both
 purr hyperliquid usd-class-transfer --amount <amount> --to-perp false
 ```
 
-3. Resolve the spot market (`markets --kind spot` or `symbol`), build order with
+3. Run the **Order Fee Preflight** above (spot orders use the same fee
+   authorization as perps).
+
+4. Resolve the spot market (`markets --kind spot` or `symbol`), build order with
    that spot `assetId`, confirm → `order`.
 
-   Spot orders do not require this fee authorization.
-
-4. Re-check `state --kind spot` and fills/orders.
+5. Re-check `state --kind spot` and fills/orders.
 
 ## E. Close or Reduce Position
 
-1. Check the position:
+1. Ensure trading enabled. Check the position:
 
 ```bash
 purr hyperliquid state --kind perp [--dex <dex>]
 ```
 
-2. Run the **Perpetual Order Fee Preflight** above.
+2. Run the **Order Fee Preflight** above.
 
 3. Prefer reduce-only opposite-side order (`r: true`) sized to the position (or
    the portion the user wants to close). Confirm → `order`.
@@ -225,7 +241,12 @@ purr wallet balance --chain-type ethereum --chain-id 42161 --token USDC
 
 ## H. Research Only (No Trade)
 
+Trading must still be **enabled** for market-data and account reads through the
+gateway. If disabled, enable after confirmation first (or explain that research
+via these commands requires trading on).
+
 ```bash
+purr hyperliquid status
 purr hyperliquid symbol --coin <coin> [--dex <dex>]
 purr hyperliquid markets --kind both [--dex <dex>]
 purr hyperliquid prices [--dex <dex>]
@@ -251,9 +272,34 @@ Clear an existing schedule (confirm clear intent first):
 purr hyperliquid schedule-cancel
 ```
 
+## J. Disable Trading Integration
+
+1. Inspect exposure:
+
+```bash
+purr hyperliquid status
+purr hyperliquid snapshot
+purr hyperliquid state --kind both
+purr hyperliquid orders --kind open
+```
+
+2. If any open positions or open orders remain, close/cancel them first (with
+   confirmations). Disable will fail while exposure remains.
+
+3. Confirm →:
+
+```bash
+purr hyperliquid disable
+```
+
+4. On `HYPERLIQUID_TRADING_DISABLE_BLOCKED`, present blockers, clear exposure,
+   and obtain a new confirmation before retrying.
+
 ## Agent Habits
 
 - One account-changing action per confirmation.
+- Check `status` before exchange work.
 - Symbol resolve every new market.
+- Fee preflight for every order, including spot.
 - Re-read state after funding, collateral moves, and trades.
 - Complete in-memory wire payloads with the required request wrapper.

@@ -5,6 +5,10 @@ every action that changes orders, positions, or leverage. Always resolve
 `assetId` first — see
 [order-wire-format.md](order-wire-format.md) for the raw order JSON schema.
 
+Trading integration must be enabled first (see
+[preflight.md](preflight.md)). Exchange commands fail with
+`HYPERLIQUID_TRADING_DISABLED` when it is off.
+
 ## Inspect Orders and Fills
 
 ```bash
@@ -50,6 +54,8 @@ or list the internal execution plan. The first message should be a required fee
 or collateral confirmation, an actionable ambiguity/error, or the final trade
 confirmation that includes any leverage change.
 
+0. Ensure trading is enabled (`status`; confirm → `enable` if needed).
+
 1. Resolve the market:
 
 ```bash
@@ -68,15 +74,15 @@ Use the target dex's `withdrawable` / available collateral when deciding
 whether the order is funded. Never count default perp collateral as available
 to a non-default dex.
 
-3. For a perpetual market, check fee authorization before any
+3. For **every** order (perpetual or spot), check fee authorization before any
    account-changing preparation or order confirmation:
 
 ```bash
 purr hyperliquid builder-fee-status
 ```
 
-Follow **Perpetual Fee Preflight** in [preflight.md](preflight.md) if the result
-is `approval_required`. Confirmed spot markets skip this check.
+Follow **Order Fee Preflight** in [preflight.md](preflight.md) if the result
+is `approval_required`.
 
 4. Before leverage or order submission, estimate required margin from the
    intended size, current price, and leverage. For a non-default dex, if the
@@ -103,7 +109,8 @@ purr hyperliquid l2 --coin <canonical-coin>
 7. Build the complete wire-format body in memory using `assetId` and
    `szDecimals` (see [order-wire-format.md](order-wire-format.md)). Validate
    that an order request contains the top-level `orders` array and `grouping`
-   before asking for confirmation.
+   before asking for confirmation. Do not mix perpetual and spot assets in one
+   batch.
 
 8. Confirm with the user: market, side, size, price/TIF or trigger, reduce-only,
    leverage/margin mode if changed, approximate notional. State clearly that
@@ -197,3 +204,4 @@ Do you want to execute this Hyperliquid action with these parameters? (Yes/No)
   retrying larger risk.
 - After `HYPERLIQUID_API_PARTIAL_SUCCESS`, reconcile with order and state
   checks; do not resubmit the same batch blindly.
+- Never mix perpetual and spot orders in one request.
