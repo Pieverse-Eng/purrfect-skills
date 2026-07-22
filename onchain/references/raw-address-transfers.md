@@ -22,7 +22,7 @@ purr wallet transfer --to <address> --amount <amount> [--chain-id <chain_id>] [-
 | --- | --- | --- |
 | `--to <address>` | Required | Recipient wallet address. Use a `0x...` address for EVM or a base58 address for Solana. |
 | `--amount <amount>` | Required | Human-readable amount to send, such as `0.01`, `10`, or `100`. |
-| `--chain-id <chain_id>` | Required for EVM | Numeric EVM chain ID, such as `56` for BNB Smart Chain, `143` for Monad, `8453` for Base, `196` for X Layer, or `4663` for Robinhood Chain. Not needed for Solana. |
+| `--chain-id <chain_id>` | Required for EVM | Numeric EVM chain ID, such as `56` for BNB Smart Chain, `10` for OP Mainnet, `130` for Unichain, `143` for Monad, `8453` for Base, `196` for X Layer, or `4663` for Robinhood Chain. Not needed for Solana. |
 | `--chain-type <ethereum|solana>` | Optional | Selects the chain family. Omit for EVM or set `ethereum`; use `solana` for Solana transfers. |
 | `--token <ticker_or_address>` | Optional | Token to send. Omit for the native coin. Accepts a known ticker such as `USDT`, `USDC`, or `USDT0`, or a raw token contract/mint address. |
 | `--decimals <n>` | Optional | Token decimals override when the token needs an explicit decimal value. |
@@ -34,6 +34,8 @@ purr wallet transfer --to 0x... --amount 0.01 --chain-id 56                    #
 purr wallet transfer --to 0x... --amount 10 --chain-id 56 --token USDT         # USDT on BSC
 purr wallet transfer --to 0x... --amount 0.01 --chain-id 143                   # native MON on Monad
 purr wallet transfer --to 0x... --amount 5 --chain-id 143 --token USDC         # USDC on Monad
+purr wallet transfer --to 0x... --amount 0.01 --chain-id 10                    # native ETH on OP Mainnet
+purr wallet transfer --to 0x... --amount 0.01 --chain-id 130                   # native ETH on Unichain
 purr wallet transfer --to 0x... --amount 5 --chain-id 8453 --token USDC        # USDC on Base
 purr wallet transfer --to 0x... --amount 0.1 --chain-id 196                    # native OKB on X Layer
 purr wallet transfer --to 0x... --amount 0.1 --chain-id 196 --token USDT0      # USDT0 on X Layer

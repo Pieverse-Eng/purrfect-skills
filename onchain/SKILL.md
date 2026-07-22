@@ -27,7 +27,8 @@ For EVM chain commands, include `--chain-id`. Common chain IDs:
 | Robinhood Chain | 4663 | ETH |
 | Arbitrum One | 42161 | ETH |
 | Polygon | 137 | MATIC |
-| Optimism | 10 | ETH |
+| OP Mainnet (Optimism) | 10 | ETH |
+| Unichain | 130 | ETH |
 | X Layer | 196 | OKB |
 | Solana | use `--chain-type solana` | SOL |
 

@@ -21,7 +21,8 @@ log inspection, sender tracing, and token state checks.
 | Ethereum | `https://ethereum-rpc.publicnode.com` |
 | Base | `https://base-rpc.publicnode.com` |
 | Arbitrum One | `https://arbitrum-one-rpc.publicnode.com` |
-| Optimism | `https://optimism-rpc.publicnode.com` |
+| OP Mainnet | `https://optimism-rpc.publicnode.com` |
+| Unichain | `https://mainnet.unichain.org` |
 | Polygon | `https://polygon-bor-rpc.publicnode.com` |
 | X Layer | `https://rpc.xlayer.tech` |
 | Robinhood Chain | `https://rpc.mainnet.chain.robinhood.com` |

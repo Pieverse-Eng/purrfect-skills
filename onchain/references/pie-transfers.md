@@ -25,7 +25,7 @@ purr .pie transfer --channel telegram --account <telegram_username> --amount <am
 | `--channel telegram` | Required when not using `--pie` | Selects Telegram account lookup for the recipient. |
 | `--account <telegram_username>` | Required with `--channel telegram` | The Telegram username paired to the recipient Pie identity, with or without `@`. |
 | `--amount <amount>` | Required | Human-readable amount to send, such as `0.01` or `10`. |
-| `--chain-id <chain_id>` | Required | Numeric EVM chain ID, such as `56` for BNB Smart Chain, `143` for Monad, `196` for X Layer, or `4663` for Robinhood Chain. |
+| `--chain-id <chain_id>` | Required | Numeric EVM chain ID, such as `56` for BNB Smart Chain, `10` for OP Mainnet, `130` for Unichain, `143` for Monad, `196` for X Layer, or `4663` for Robinhood Chain. |
 | `--token <ticker_or_address>` | Optional | Token to send. Omit for the native coin. Accepts a known ticker such as `USDT`, or a raw token contract address. |
 | `--decimals <n>` | Optional | Token decimals override when the token needs an explicit decimal value. |
 | `--chain-type ethereum` | Optional | Direct `.pie` transfers currently target EVM recipients; omit this unless you need to be explicit. |
@@ -37,6 +37,8 @@ purr .pie transfer --pie <handle>.pie --amount 0.01 --chain-id 56               
 purr .pie transfer --pie <handle>.pie --amount 10 --chain-id 56 --token USDT              # USDT on BSC to a Pie handle
 purr .pie transfer --pie <handle>.pie --amount 0.01 --chain-id 143                        # native MON on Monad to a Pie handle
 purr .pie transfer --pie <handle>.pie --amount 5 --chain-id 143 --token USDC              # USDC on Monad to a Pie handle
+purr .pie transfer --pie <handle>.pie --amount 0.01 --chain-id 10                         # native ETH on OP Mainnet to a Pie handle
+purr .pie transfer --pie <handle>.pie --amount 0.01 --chain-id 130                        # native ETH on Unichain to a Pie handle
 purr .pie transfer --pie <handle>.pie --amount 0.01 --chain-id 4663                       # native ETH on Robinhood Chain to a Pie handle
 purr .pie transfer --pie <handle>.pie --amount 1 --chain-id 4663 --token 0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168 --decimals 6  # USDG on Robinhood Chain to a Pie handle
 purr .pie transfer --channel telegram --account <username> --amount 0.01 --chain-id 56    # native BNB on BSC to a Telegram-paired Pie identity
