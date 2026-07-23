@@ -48,9 +48,9 @@ Amounts must be raw integer token units, not decimal strings.
 | `balances` | Show the wallet's Osero token balances. | `purr osero balances --chain <chain>` |
 | `ssr` | Read the Sky Savings Rate value. | `purr osero ssr --chain <chain>` |
 | `apy` | Read the current sUSDS APY from Osero/Sky data. | `purr osero apy --chain <chain>` |
-| `preview` | Estimate output and route shape without building transactions. | `purr osero preview --action <action> --chain <chain> --amount <raw-amount> [--receiver <address>] [--slippage-bps <bps>] [--referral-code <raw-int>]` |
-| `plan` | Build the transaction plan without broadcasting. | `purr osero plan --action <action> --chain <chain> --amount <raw-amount> [--receiver <address>] [--slippage-bps <bps>] [--referral-code <raw-int>]` |
-| `execute` | Sign and broadcast the planned transactions through the hosted wallet. | `purr osero execute --action <action> --chain <chain> --amount <raw-amount> [--receiver <address>] [--slippage-bps <bps>] [--referral-code <raw-int>]` |
+| `preview` | Estimate output and route shape without building transactions. | `purr osero preview --action <action> --chain <chain> --amount <raw-amount> [--slippage-bps <bps>]` |
+| `plan` | Build the transaction plan without broadcasting. | `purr osero plan --action <action> --chain <chain> --amount <raw-amount> [--slippage-bps <bps>]` |
+| `execute` | Sign and broadcast the planned transactions through the hosted wallet. | `purr osero execute --action <action> --chain <chain> --amount <raw-amount> [--slippage-bps <bps>]` |
 
 ## Actions
 
@@ -76,14 +76,13 @@ Amounts must be raw integer token units, not decimal strings.
    `purr wallet balance --chain-type ethereum --chain-id <resolved-chain-id>`.
 5. Run `preview` first for user-facing estimates. For execution requests, also
    run `plan` and summarize the action, chain, raw input amount, estimated
-   output, receiver, approval steps, main transaction steps, and wallet policy
+   output, approval steps, main transaction steps, and wallet policy
    implications.
 6. Ask exactly:
    `Do you want to execute this Osero action with these parameters? (Yes/No)`
 7. Execute only after an explicit yes in the immediately preceding user turn and
    only if the parameters are unchanged. If the quote, plan, chain, amount,
-   receiver, slippage, or referral code changed, re-run preview/plan and ask for
-   confirmation again.
+   or slippage changed, re-run preview/plan and ask for confirmation again.
 8. After `execute`, report the final transaction hash, per-step transaction
    hashes, chain, receipt status, gas used or block number when returned, and
    final balances from `purr osero balances --chain <chain>`.
@@ -97,11 +96,11 @@ Amounts must be raw integer token units, not decimal strings.
   broadcasts transactions from the hosted wallet.
 - Never request, generate, or pass an idempotency key, deduplication key, UUID,
   or client-provided replay key. Platform manages request deduplication.
-- Never guess token decimals, raw amounts, receiver addresses, slippage, chain
-  IDs, or contract addresses. Use Osero CLI output or ask the user.
-- Keep the receiver as the hosted instance wallet unless the user explicitly
-  provides another address. If a custom receiver is used, include it in the
-  confirmation summary.
+- Never guess token decimals, raw amounts, slippage, chain IDs, or contract
+  addresses. Use Osero CLI output or ask the user.
+- Do not pass a custom receiver to Osero commands. If the user asks to send
+  output to another address, explain that hosted Osero does not support custom
+  receivers and stop before previewing, planning, or executing.
 - Do not bypass wallet policy. If policy denies or defers an Osero action,
   report the decision and stop.
 - Do not retry an execution automatically after timeout, network error,
@@ -144,6 +143,7 @@ purr osero execute --action redeem-susds --chain base --amount <susds_raw_balanc
 | Insufficient token balance | Show the relevant balance from `purr osero balances --chain <chain>` and ask for a smaller amount or funding. |
 | Insufficient native gas | Show native gas from `purr wallet balance --chain-type ethereum --chain-id <resolved-chain-id>` and ask the user to fund gas before executing. |
 | Wallet policy denied or deferred | Report the policy result and do not bypass it or repackage the transaction. |
+| Custom receiver requested | Explain that hosted Osero does not support custom receivers; do not pass `--receiver` or execute. |
 | Slippage, stale quote, or reverted route | Re-run `preview` and `plan`; ask for confirmation again before executing. |
 | Timeout, network error, or `broadcast_unknown` | Treat the outcome as uncertain. Check balances and transaction hashes before any retry. |
 | Partial success in a multi-step plan | Report successful step hashes, check balances and approvals, and do not resubmit the full action blindly. |
