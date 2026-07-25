@@ -20,21 +20,35 @@
       "suffix": "X",
       "pair": "{BASE}_USDT",
       "settlement": "USDT",
-      "enumerate": "GET /api/v4/spot/currency_pairs -> base_name contains 'xStock' & trade_status tradable"
+      "enumerate": "GET /api/v4/spot/currency_pairs -> base_name contains 'xStock' & trade_status tradable",
+      "wrapper": "backed-xstocks"
     },
     "bybit": {
       "kind": "xstocks",
       "suffix": "X",
       "pair": "{BASE}USDT",
       "settlement": "USDT",
-      "enumerate": "GET /v5/market/instruments-info?category=spot -> symbolType=='xstocks'"
+      "enumerate": "GET /v5/market/instruments-info?category=spot -> symbolType=='xstocks'",
+      "wrapper": "backed-xstocks"
     },
     "binance_bstocks": {
       "kind": "bstocks",
       "suffix": "B",
       "pair": "{BASE}USDT",
       "settlement": "USDT",
-      "enumerate": "GET /api/v3/exchangeInfo -> validate {UNDERLYING}BUSDT exists & status TRADING"
+      "enumerate": "GET /api/v3/exchangeInfo -> validate {UNDERLYING}BUSDT exists & status TRADING",
+      "wrapper": "binance-bstocks"
+    },
+    "bitget": {
+      "kind": "bitget-r",
+      "prefix": "r",
+      "pair": "R{BASE}USDT",
+      "settlement": "USDT",
+      "wrapper": "bitget-r",
+      "chain": "arbitrum",
+      "enumerate": "GET /api/v2/spot/public/symbols -> baseCoin matches ^r[A-Z][A-Z0-9.]*$ AND areaSymbol=='yes' AND quoteCoin=='USDT' AND status=='online'",
+      "wrapper_note": "NOT Backed xStocks. Bitget lists a different tokenization (baseCoin rTSLA, Arbitrum ERC-20, e.g. rTSLA = 0xf912911c9c8d5131929c758e66e6dc54e65cf3ba). Same underlying equity exposure, DIFFERENT issuer/redemption and counterparty risk - a price gap vs an xStocks leg is not necessarily an arbitrageable spread.",
+      "region_note": "Bitget marks these symbols areaSymbol='yes' (region-restricted availability). Quotes are public and keyless, but tradability is not universal."
     }
   },
   "_underlyings_generated_by": "catalog.py --refresh (enumerated from venue instrument lists + Jupiter mint, issuer-authority verified). Do not hand-edit; regenerate.",
@@ -51,7 +65,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "bybit instruments-info symbolType=xstocks"
+          "source": "bybit instruments-info symbolType=xstocks",
+          "wrapper": "backed-xstocks"
         },
         "gate": {
           "id": "AAPLX_USDT",
@@ -59,7 +74,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "XsbEhLAtcf6HdfpFZ5xEMdqW8nfAvcsP5bdudRLJzJp",
@@ -69,7 +85,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RAAPLUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -81,7 +108,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "XswbinNKyPmzTa5CskMbCPvMW6G5CMnZXZEeQSSQoie",
@@ -91,7 +119,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RABBVUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -103,7 +142,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "XsHtf5RpxsQ7jeJ9ivNewouZKJHbPxhPoEy6yYvULr7",
@@ -113,7 +153,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RABTUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -125,7 +176,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "Xs5UJzmCRQ8DWZjskExdSQDnbE6iLkRu2jjrRAB1JSU",
@@ -135,7 +187,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RACNUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -147,7 +210,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "bybit instruments-info symbolType=xstocks"
+          "source": "bybit instruments-info symbolType=xstocks",
+          "wrapper": "backed-xstocks"
         },
         "gate": {
           "id": "AMZNX_USDT",
@@ -155,7 +219,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "Xs3eBt7uRfJX8QUs4suhyU8p2M6DoUDrJyWBa8LLZsg",
@@ -165,7 +230,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RAMZNUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -177,7 +253,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "XsgSaSvNSqLTtFuyWPBhK9196Xb9Bbdyjj4fH3cPJGo",
@@ -187,7 +264,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RAVGOUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -199,7 +287,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "Xs3ZFkPYT2BN7qBMqf1j1bfTeTm1rFzEFSsQ1z3wAKU",
@@ -209,7 +298,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RAZNUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -221,7 +321,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "XsvKCaNsxg2GN8jjUmq71qukMJr7Q1c5R2Mk9P8kcS8",
@@ -231,7 +332,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RCMCSAUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -243,7 +355,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "bybit instruments-info symbolType=xstocks"
+          "source": "bybit instruments-info symbolType=xstocks",
+          "wrapper": "backed-xstocks"
         },
         "gate": {
           "id": "COINX_USDT",
@@ -251,7 +364,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "Xs7ZdzSHLU9ftNJsii5fCeJhoRWSC32SQGzGQtePxNu",
@@ -261,7 +375,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RCOINUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -273,7 +398,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "bybit instruments-info symbolType=xstocks"
+          "source": "bybit instruments-info symbolType=xstocks",
+          "wrapper": "backed-xstocks"
         },
         "gate": {
           "id": "CRCLX_USDT",
@@ -281,7 +407,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "binance_bstocks": {
           "id": "CRCLBUSDT",
@@ -289,7 +416,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "binance exchangeInfo validated"
+          "source": "binance exchangeInfo validated",
+          "wrapper": "binance-bstocks"
         },
         "solana_jupiter": {
           "id": "XsueG8BtpquVJX9LVLLEGuViXUungE6WmK5YZ3p3bd1",
@@ -299,7 +427,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RCRCLUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -311,7 +450,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "Xs7xXqkcK7K8urEqGg52SECi79dRp2cEKKuYjUePYDw",
@@ -321,7 +461,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RCRWDUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -333,7 +484,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "Xsr3pdLQyXvDJBFgpR5nexCEZwXvigb8wbPYp4YoNFf",
@@ -343,7 +495,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RCSCOUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -355,7 +518,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "Xs2yquAgsHByNzx68WJC55WHjHBvG9JsMB7CWjTLyPy",
@@ -365,7 +529,8 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
         }
       }
     },
@@ -377,7 +542,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "Xseo8tgCZfkHxWS9xbFYeKFyMSbWEvZGFV1Gh53GtCV",
@@ -387,7 +553,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RDHRUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -399,7 +576,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "Xsv9hRk1z5ystj9MhnA7Lq4vjSsLwzL2nxrwmwtD3re",
@@ -409,7 +587,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RGLDUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -421,7 +610,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "bybit instruments-info symbolType=xstocks"
+          "source": "bybit instruments-info symbolType=xstocks",
+          "wrapper": "backed-xstocks"
         },
         "gate": {
           "id": "GOOGLX_USDT",
@@ -429,7 +619,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "XsCPL9dNWBMvFtTmwcCA5v3xWPSMEBCszbQdiLLq6aN",
@@ -439,7 +630,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RGOOGLUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -451,7 +653,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "XszjVtyhowGjSC5odCqBpW1CtXXwXjYokymrk7fGKD3",
@@ -461,7 +664,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RHDUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -473,7 +687,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "XsRbLZthfABAPAfumWNEJhPyiKDW6TvDVeAeW7oKqA2",
@@ -483,7 +698,8 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
         }
       }
     },
@@ -495,7 +711,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "bybit instruments-info symbolType=xstocks"
+          "source": "bybit instruments-info symbolType=xstocks",
+          "wrapper": "backed-xstocks"
         },
         "gate": {
           "id": "HOODX_USDT",
@@ -503,7 +720,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "XsvNBAYkrDRNhA7wPHQfX3ZUXZyZLdnCQDfHZ56bzpg",
@@ -513,7 +731,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RHOODUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -525,7 +754,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "XsaBXg8dU5cPM6ehmVctMkVqoiRG2ZjMo1cyBJ3AykQ",
@@ -535,7 +765,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RKOUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -547,7 +788,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "Xsnuv4omNoHozR6EEW5mXkw8Nrny5rB3jVfLqi6gKMH",
@@ -557,7 +799,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RLLYUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -569,7 +822,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "XsApJFV9MAktqnAc6jqzsHVujxkGm9xcSUffaBoYLKC",
@@ -579,7 +833,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RMAUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -591,7 +856,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "bybit instruments-info symbolType=xstocks"
+          "source": "bybit instruments-info symbolType=xstocks",
+          "wrapper": "backed-xstocks"
         },
         "gate": {
           "id": "MCDX_USDT",
@@ -599,7 +865,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "XsqE9cRRpzxcGKDXj1BJ7Xmg4GRhZoyY1KpmGSxAWT2",
@@ -609,7 +876,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RMCDUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -621,7 +899,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "bybit instruments-info symbolType=xstocks"
+          "source": "bybit instruments-info symbolType=xstocks",
+          "wrapper": "backed-xstocks"
         },
         "gate": {
           "id": "METAX_USDT",
@@ -629,7 +908,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "Xsa62P5mvPszXL1krVUnU5ar38bBSVcWAB6fmPCo5Zu",
@@ -639,7 +919,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RMETAUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -651,7 +942,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "XsP7xzNPvEHS1m6qfanPUGjNmdnmsLKEoNAnHjdxxyZ",
@@ -661,7 +953,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RMSTRUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -673,7 +976,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "XsEH7wWfJJu2ZT3UCFeVfALnVA6CP5ur7Ee11KmzVpL",
@@ -683,7 +987,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RNFLXUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -695,7 +1010,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "bybit instruments-info symbolType=xstocks"
+          "source": "bybit instruments-info symbolType=xstocks",
+          "wrapper": "backed-xstocks"
         },
         "gate": {
           "id": "NVDAX_USDT",
@@ -703,7 +1019,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "binance_bstocks": {
           "id": "NVDABUSDT",
@@ -711,7 +1028,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "binance exchangeInfo validated"
+          "source": "binance exchangeInfo validated",
+          "wrapper": "binance-bstocks"
         },
         "solana_jupiter": {
           "id": "Xsc9qvGR1efVDFGLrVsmkzv3qi45LTBjeUKSPmx9qEh",
@@ -721,7 +1039,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RNVDAUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -733,7 +1062,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "Xsv99frTRUeornyvCfvhnDesQDWuvns1M852Pez91vF",
@@ -743,7 +1073,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RPEPUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -755,7 +1096,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "XsYdjDjNUygZ7yGKfQaB6TxLh2gC6RRjzLtLAGJrhzV",
@@ -765,7 +1107,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RPGUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -777,7 +1130,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "Xsba6tUnSjDae2VcopDB6FGGDaxRrewFCDa5hKn5vT3",
@@ -787,7 +1141,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RPMUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -799,7 +1164,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "bybit instruments-info symbolType=xstocks"
+          "source": "bybit instruments-info symbolType=xstocks",
+          "wrapper": "backed-xstocks"
         },
         "binance_bstocks": {
           "id": "SPCXBUSDT",
@@ -807,7 +1173,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "binance exchangeInfo validated"
+          "source": "binance exchangeInfo validated",
+          "wrapper": "binance-bstocks"
         },
         "solana_jupiter": {
           "id": "Xs3oZwbHvqis4NYcf4YKWmEia2eC84wSiVrcYcTqpH8",
@@ -817,7 +1184,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RSPCXUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -829,7 +1207,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "XsoCS1TfEyfFhfvj8EtZ528L3CaKBDBRqRapnBbDF2W",
@@ -839,7 +1218,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RSPYUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -851,7 +1241,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "XsjQP3iMAaQ3kQScQKthQpx9ALRbjKAjQtHg6TFomoc",
@@ -861,7 +1252,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RTQQQUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -873,7 +1275,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "bybit instruments-info symbolType=xstocks"
+          "source": "bybit instruments-info symbolType=xstocks",
+          "wrapper": "backed-xstocks"
         },
         "gate": {
           "id": "TSLAX_USDT",
@@ -881,7 +1284,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "binance_bstocks": {
           "id": "TSLABUSDT",
@@ -889,7 +1293,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "binance exchangeInfo validated"
+          "source": "binance exchangeInfo validated",
+          "wrapper": "binance-bstocks"
         },
         "solana_jupiter": {
           "id": "XsDoVfqeBukxuZHWhdvWHBhgEHjGNst4MLodqsJHzoB",
@@ -899,7 +1304,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RTSLAUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -911,7 +1327,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "XszvaiXGPwvk2nwb3o9C1CX4K6zH8sez11E6uyup6fe",
@@ -921,7 +1338,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RUNHUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     },
@@ -933,7 +1361,8 @@
           "type": "cex",
           "verified": true,
           "live": true,
-          "source": "gate currency_pairs base_name~xStock"
+          "source": "gate currency_pairs base_name~xStock",
+          "wrapper": "backed-xstocks"
         },
         "solana_jupiter": {
           "id": "XsssYEQjzxBCFgvYFFNuhJFBeHNdLWYeUSP8F45cDr9",
@@ -943,7 +1372,18 @@
           "chain": "solana",
           "verified": true,
           "live": true,
-          "source": "jupiter search + issuer-authority verified"
+          "source": "jupiter search + issuer-authority verified",
+          "wrapper": "backed-xstocks"
+        },
+        "bitget": {
+          "id": "RVTIUSDT",
+          "settlement": "USDT",
+          "type": "cex",
+          "wrapper": "bitget-r",
+          "chain": "arbitrum",
+          "verified": true,
+          "live": true,
+          "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"
         }
       }
     }

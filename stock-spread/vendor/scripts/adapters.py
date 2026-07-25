@@ -8,7 +8,20 @@ so the gate (`--selftest`) is deterministic over recorded real responses while
 ready to pipe into `spread.py`.
 
 Live keyless venues (probe-verified 2026-06-20): gate, bybit, binance_bstocks, solana_jupiter.
-Deferred (no keyless public read): kraken (xStocks not on public AssetPairs), bitget (keyed wallet API).
+                                  (probe-verified 2026-07-25): bitget.
+
+Deferred (no keyless public read):
+  kraken — re-probed 2026-07-25 and STILL unavailable, but note the reason is stronger than
+    "needs a key": public `AssetPairs` (1518 pairs) and `Assets` (819 assets) contain NO equity
+    at all, and `Ticker?pair=TSLAxUSD` returns `EQuery:Unknown asset pair`. A key would not help
+    — those endpoints are the venue's tradable universe, so the asset simply is not there.
+
+Note on `bitget` (added 2026-07-25): the earlier "keyed wallet API" deferral conflated Bitget
+  *Wallet* (on-chain, keyed) with the Bitget *exchange* spot API, which is public and keyless.
+  Bitget lists tokenized equities under a DIFFERENT wrapper than the xStocks/bStocks venues:
+  baseCoin is `r<TICKER>` (e.g. `rTSLA`) on Arbitrum, not Backed's Solana xStocks. Identifier is
+  venue-verified, but the issuer differs — see `wrapper` in symbology and the cross-wrapper
+  warning emitted by spread.py.
 
 Usage:
     python3 adapters.py --live <UNDERLYING>     # fetch live venues -> spread.py payload (stdout)
@@ -32,7 +45,7 @@ except Exception:  # tzdata unavailable -> market state unknown (fail-safe to un
     _ET = None
 
 DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "symbology.json")
-LIVE_VENUES = ("gate", "bybit", "binance_bstocks", "solana_jupiter")
+LIVE_VENUES = ("gate", "bybit", "binance_bstocks", "bitget", "solana_jupiter")
 
 
 def us_equity_market_open(now_ms):
@@ -81,6 +94,28 @@ def parse_bybit(raw):
             "settlement": "USDT", "price_type": "mid"}
 
 
+def parse_bitget(raw):
+    if raw.get("code") not in (None, "00000"):
+        raise ValueError(f"bitget non-success code {raw.get('code')!r}: {raw.get('msg')!r}")
+    rows = raw.get("data") or []
+    if not rows:
+        raise ValueError("bitget empty data (unknown symbol?)")
+    row = rows[0]
+    bid, ask = float(row["bidPr"]), float(row["askPr"])
+    if bid <= 0 or ask <= 0:
+        raise ValueError("bitget one-sided/empty book (non-positive bid or ask)")
+    q = {"venue": "bitget", "price": round((bid + ask) / 2, 6), "bid": bid, "ask": ask,
+         "settlement": "USDT", "price_type": "mid"}
+    # Bitget stamps the book itself; prefer it over our wall-clock so freshness is venue-truth.
+    ts = row.get("ts")
+    if ts is not None:
+        try:
+            q["venue_ts_ms"] = int(ts)
+        except (TypeError, ValueError):
+            pass
+    return q
+
+
 def parse_binance(raw):
     return {"venue": "binance_bstocks", "price": float(raw["price"]),
             "settlement": "USDT", "price_type": "mid", "note": "last-trade price (no bid/ask via this endpoint)"}
@@ -115,6 +150,10 @@ def fetch_binance(sym):
     return parse_binance(_get(f"https://api.binance.com/api/v3/ticker/price?symbol={sym}"))
 
 
+def fetch_bitget(sym):
+    return parse_bitget(_get(f"https://api.bitget.com/api/v2/spot/market/tickers?symbol={sym}"))
+
+
 def fetch_jupiter(mint, decimals, usdc_mint, usdc_decimals):
     amount = 10 ** decimals  # quote 1.0 token
     raw = _get(f"https://lite-api.jup.ag/swap/v1/quote?inputMint={mint}&outputMint={usdc_mint}"
@@ -144,9 +183,15 @@ def live_payload(underlying):
                 q = fetch_bybit(info["id"])
             elif v == "binance_bstocks":
                 q = fetch_binance(info["id"])
+            elif v == "bitget":
+                q = fetch_bitget(info["id"])
             elif v == "solana_jupiter":
                 q = fetch_jupiter(info["id"], info["decimals"], usdc["mint"], usdc["decimals"])
             q.update({"timestamp_ms": now_ms, "verified": info.get("verified", False), "market_open": market_open})
+            # tokenization wrapper (issuer) — legs from different wrappers are NOT the same
+            # redemption claim, so spread.py warns when a comparison spans wrappers.
+            if info.get("wrapper"):
+                q["wrapper"] = info["wrapper"]
             quotes.append(q)
         except (URLError, HTTPError, KeyError, ValueError, IndexError) as e:
             errors.append({"venue": v, "error": str(e)})
@@ -174,6 +219,16 @@ _FIX_GATE = [{"currency_pair": "TSLAX_USDT", "last": "402.68", "lowest_ask": "40
 _FIX_BYBIT = {"retCode": 0, "result": {"category": "spot", "list": [
     {"symbol": "TSLAXUSDT", "bid1Price": "402.6", "ask1Price": "402.7", "lastPrice": "402.55"}]}}
 _FIX_BINANCE = {"symbol": "TSLABUSDT", "price": "402.43000000"}
+# recorded real bitget response (probe 2026-07-25)
+_FIX_BITGET = {"code": "00000", "msg": "success", "requestTime": 1784983322373, "data": [
+    {"open": "321.58", "symbol": "RTSLAUSDT", "high24h": "314.31", "low24h": "306.53",
+     "lastPr": "311.5", "baseVolume": "42635736.6937", "ts": "1784983320925",
+     "bidPr": "311.47", "askPr": "311.5", "bidSz": "0.8098", "askSz": "9.9331"}]}
+# error-shaped bitget responses the parser must reject rather than mis-price
+_FIX_BITGET_EMPTY = {"code": "00000", "msg": "success", "data": []}
+_FIX_BITGET_ERR = {"code": "40034", "msg": "Parameter symbol does not exist", "data": None}
+_FIX_BITGET_ONESIDED = {"code": "00000", "msg": "success", "data": [
+    {"symbol": "RTSLAUSDT", "bidPr": "0", "askPr": "311.5", "ts": "1784983320925"}]}
 _FIX_JUPITER = {"inputMint": "XsDoVfqeBukxuZHWhdvWHBhgEHjGNst4MLodqsJHzoB", "inAmount": "100000000",
                 "outputMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", "outAmount": "401273174",
                 "swapMode": "ExactIn", "slippageBps": 50, "priceImpactPct": "0.000735096", "swapUsdValue": "401.273174"}
@@ -195,6 +250,20 @@ def _selftest():
     bn = parse_binance(_FIX_BINANCE)
     check("binance price = 402.43", abs(bn["price"] - 402.43) < 1e-6)
     check("binance settlement USDT", bn["settlement"] == "USDT")
+
+    bg = parse_bitget(_FIX_BITGET)
+    check("bitget price = mid(311.47,311.5) = 311.485", abs(bg["price"] - 311.485) < 1e-6)
+    check("bitget settlement USDT / mid", bg["settlement"] == "USDT" and bg["price_type"] == "mid")
+    check("bitget carries venue book timestamp", bg.get("venue_ts_ms") == 1784983320925)
+    # bitget wraps errors in a 200 body — a naive parser would read data[0] off a failure
+    # response (or off an empty list) and either crash or invent a price. Reject explicitly.
+    for label, fixture in (("empty-data", _FIX_BITGET_EMPTY), ("error-code", _FIX_BITGET_ERR),
+                           ("zero-bid", _FIX_BITGET_ONESIDED)):
+        try:
+            parse_bitget(fixture)
+            check(f"bitget {label} rejected", False)
+        except ValueError:
+            check(f"bitget {label} rejected", True)
 
     USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
     j = parse_jupiter(_FIX_JUPITER, 8, USDC)

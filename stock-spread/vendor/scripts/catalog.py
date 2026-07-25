@@ -148,6 +148,29 @@ def binance_trading_symbols():
     return {s["symbol"] for s in raw["symbols"] if s.get("status") == "TRADING"}
 
 
+# Bitget tokenized equities are `r<TICKER>` baseCoins (e.g. rTSLA) — a LOWERCASE `r` prefix.
+# Matching on the uppercase symbol prefix instead would sweep in RENDER / RAY / RONIN / RARE etc.,
+# so the discriminator is the baseCoin pattern AND the venue's own `areaSymbol` marker.
+_BITGET_EQUITY_BASE = re.compile(r"^r([A-Z][A-Z0-9.]*)$")
+
+
+def parse_bitget_universe(raw, collisions=None):
+    """symbols payload -> {UNDERLYING: symbol}. Online USDT pairs only."""
+    out = {}
+    for r in raw.get("data") or []:
+        m = _BITGET_EQUITY_BASE.match(r.get("baseCoin") or "")
+        if not m:
+            continue
+        if r.get("areaSymbol") != "yes" or r.get("quoteCoin") != "USDT" or r.get("status") != "online":
+            continue
+        _add_universe(out, m.group(1), r["symbol"], collisions, "bitget")
+    return out
+
+
+def enumerate_bitget(collisions=None):
+    return parse_bitget_universe(_get("https://api.bitget.com/api/v2/spot/public/symbols"), collisions=collisions)
+
+
 def resolve_mint_live(underlying, auth):
     raw = _get("https://lite-api.jup.ag/tokens/v2/search?query=" + quote(f"{underlying}x", safe=""))
     return verify_mint(raw, underlying, auth["freeze"], auth.get("mint"))
@@ -174,6 +197,26 @@ def build_catalog(verbose=False, collisions=None):
         if sym in bn:
             add(u, "binance_bstocks", {"id": sym, "settlement": "USDT", "type": "cex", "verified": True, "live": True, "source": "binance exchangeInfo validated"})
 
+    # Bitget: attach to underlyings the xStocks venues already established, mirroring the
+    # binance step (validate, don't widen the universe). Bitget lists FAR more tickers than
+    # the xStocks venues do, but a Bitget-only ticker has no second leg to price against, so
+    # adding it here would grow symbology without ever producing a spread. The surplus is
+    # reported rather than silently dropped — widening the universe is a product decision.
+    bgu = enumerate_bitget(collisions)
+    for u in list(underlyings):
+        if u in bgu:
+            add(u, "bitget", {"id": bgu[u], "settlement": rules["bitget"]["settlement"], "type": "cex",
+                              "wrapper": rules["bitget"]["wrapper"], "chain": rules["bitget"]["chain"],
+                              "verified": True, "live": True,
+                              "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"})
+    if collisions is not None:
+        extra = sorted(set(bgu) - set(underlyings))
+        if extra:
+            collisions.append(
+                f"bitget: {len(extra)} tokenized equities listed on bitget but NOT on any xStocks/bStocks "
+                f"venue — not added (single-venue tickers cannot produce a cross-venue spread); "
+                f"first 10: {extra[:10]}")
+
     for i, u in enumerate(list(underlyings)):
         if i:
             time.sleep(1)  # be gentle with Jupiter lite-api
@@ -199,6 +242,16 @@ _FX_BYBIT = {"result": {"list": [
 _FX_GATE = [
     {"id": "TSLAX_USDT", "base": "TSLAX", "base_name": "Tesla xStock", "trade_status": "tradable"},
     {"id": "BTC_USDT", "base": "BTC", "base_name": "Bitcoin", "trade_status": "tradable"}]
+# bitget: real-shaped rows. RENDER/RAY are the trap — uppercase-R symbols that are NOT equities.
+_FX_BITGET = {"code": "00000", "data": [
+    {"symbol": "RTSLAUSDT", "baseCoin": "rTSLA", "quoteCoin": "USDT", "status": "online", "areaSymbol": "yes"},
+    {"symbol": "RCOINUSDT", "baseCoin": "rCOIN", "quoteCoin": "USDT", "status": "online", "areaSymbol": "yes"},
+    {"symbol": "RNKEUSDT", "baseCoin": "rNKE", "quoteCoin": "USDT", "status": "online", "areaSymbol": "yes"},
+    {"symbol": "RENDERUSDT", "baseCoin": "RENDER", "quoteCoin": "USDT", "status": "online", "areaSymbol": "no"},
+    {"symbol": "RAYUSDT", "baseCoin": "RAY", "quoteCoin": "USDT", "status": "online", "areaSymbol": "no"},
+    {"symbol": "RONINUSDT", "baseCoin": "RONIN", "quoteCoin": "USDT", "status": "online", "areaSymbol": "no"},
+    {"symbol": "ROFFUSDT", "baseCoin": "rOFF", "quoteCoin": "USDT", "status": "offline", "areaSymbol": "yes"},
+    {"symbol": "RAAPLUSD", "baseCoin": "rAAPL", "quoteCoin": "USD", "status": "online", "areaSymbol": "yes"}]}
 _FX_JUP_GOOD = [{"id": "XsDoVfqeBukxuZHWhdvWHBhgEHjGNst4MLodqsJHzoB", "symbol": "TSLAx", "decimals": 8,
                  "freezeAuthority": "JDq14BWvqCRFNu1krb12bcRpbGtJZ1FLEakMw6FdxJNs"}]
 _FX_JUP_SCAM = [{"id": "FAKEmintaddr1111111111111111111111111111111", "symbol": "TSLAx", "decimals": 6,
@@ -228,6 +281,15 @@ def _selftest():
 
     ga = parse_gate_universe(_FX_GATE)
     check("gate enumerate xStock only (no BTC)", set(ga) == {"TSLA"})
+
+    bg = parse_bitget_universe(_FX_BITGET)
+    check("bitget enumerate r-prefixed equities only", set(bg) == {"TSLA", "COIN", "NKE"})
+    check("bitget symbol mapped", bg.get("TSLA") == "RTSLAUSDT")
+    # the whole point of the lowercase-r rule: uppercase-R coins must NOT become equities
+    check("bitget rejects RENDER/RAY/RONIN look-alikes",
+          not ({"ENDER", "AY", "ONIN", "RENDER", "RAY", "RONIN"} & set(bg)))
+    check("bitget rejects offline symbol", "OFF" not in bg)
+    check("bitget rejects non-USDT quote", "AAPL" not in bg)
 
     # collision + no-op-strip handling (review repro: MAX vs MA)
     cols = []
