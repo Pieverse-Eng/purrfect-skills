@@ -179,10 +179,20 @@ def resolve_mint_live(underlying, auth):
 def build_catalog(verbose=False, collisions=None):
     cfg = _load()
     rules, auth = cfg["cex_rules"], cfg["issuer_authority"]["xstocks"]
+    wrappers = cfg["venue_wrappers"]
     underlyings = {}
 
     def add(u, venue, info):
-        underlyings.setdefault(u, {"venues": {}})["venues"][venue] = info
+        # A venue entry without a `wrapper` silently disables spread.py's cross-wrapper
+        # warning (one distinct wrapper => nothing to warn about), so a missing mapping
+        # must fail the refresh loudly instead of shipping a quietly-degraded catalog.
+        wrapper = wrappers.get(venue)
+        if not wrapper:
+            raise KeyError(
+                f"venue {venue!r} has no entry in symbology.json `venue_wrappers` — "
+                f"add one before enabling it, or the cross-wrapper guard goes silent"
+            )
+        underlyings.setdefault(u, {"venues": {}})["venues"][venue] = {**info, "wrapper": wrapper}
 
     by = enumerate_bybit(collisions)
     for u, sym in by.items():
@@ -206,7 +216,7 @@ def build_catalog(verbose=False, collisions=None):
     for u in list(underlyings):
         if u in bgu:
             add(u, "bitget", {"id": bgu[u], "settlement": rules["bitget"]["settlement"], "type": "cex",
-                              "wrapper": rules["bitget"]["wrapper"], "chain": rules["bitget"]["chain"],
+                              "chain": rules["bitget"]["chain"],
                               "verified": True, "live": True,
                               "source": "bitget spot/public/symbols baseCoin=r<TICKER> areaSymbol=yes"})
     if collisions is not None:
@@ -290,6 +300,21 @@ def _selftest():
           not ({"ENDER", "AY", "ONIN", "RENDER", "RAY", "RONIN"} & set(bg)))
     check("bitget rejects offline symbol", "OFF" not in bg)
     check("bitget rejects non-USDT quote", "AAPL" not in bg)
+
+    # regression: --refresh must not strip wrapper from the non-bitget venues. Before this,
+    # only the bitget add() carried `wrapper`, so a refresh left one distinct wrapper in the
+    # catalog and spread.py's cross-wrapper warning went silent.
+    _cfg = _load()
+    _wrappers = _cfg.get("venue_wrappers", {})
+    check("venue_wrappers covers every live venue",
+          {"gate", "bybit", "binance_bstocks", "bitget", "solana_jupiter"} <= set(_wrappers))
+    check("wrappers are not all identical (cross-wrapper guard has something to compare)",
+          len(set(_wrappers.values())) >= 2)
+    _built = {u: e for u, e in _cfg["underlyings"].items()}
+    _missing = sorted(
+        f"{u}.{v}" for u, e in _built.items() for v, i in e["venues"].items() if not i.get("wrapper")
+    )
+    check("every catalogued venue entry carries a wrapper", not _missing)
 
     # collision + no-op-strip handling (review repro: MAX vs MA)
     cols = []

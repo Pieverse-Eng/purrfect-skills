@@ -187,7 +187,15 @@ def live_payload(underlying):
                 q = fetch_bitget(info["id"])
             elif v == "solana_jupiter":
                 q = fetch_jupiter(info["id"], info["decimals"], usdc["mint"], usdc["decimals"])
-            q.update({"timestamp_ms": now_ms, "verified": info.get("verified", False), "market_open": market_open})
+            # Freshness must reflect the BOOK, not our fetch. Where a venue stamps its own
+            # book (bitget `ts`), that timestamp wins: stamping fetch-time over it would make
+            # an arbitrarily stale quote look fresh and let it into a "reliable" spread.
+            # Venues that publish no timestamp keep fetch-time (the best available).
+            q.update({"timestamp_ms": q.get("venue_ts_ms") or now_ms,
+                      "verified": info.get("verified", False), "market_open": market_open})
+            if q.get("venue_ts_ms"):
+                q["fetched_at_ms"] = now_ms
+                q["book_lag_ms"] = now_ms - q["venue_ts_ms"]
             # tokenization wrapper (issuer) — legs from different wrappers are NOT the same
             # redemption claim, so spread.py warns when a comparison spans wrappers.
             if info.get("wrapper"):
@@ -255,6 +263,15 @@ def _selftest():
     check("bitget price = mid(311.47,311.5) = 311.485", abs(bg["price"] - 311.485) < 1e-6)
     check("bitget settlement USDT / mid", bg["settlement"] == "USDT" and bg["price_type"] == "mid")
     check("bitget carries venue book timestamp", bg.get("venue_ts_ms") == 1784983320925)
+    # regression: a stale bitget book must NOT be re-stamped with fetch time. Before this
+    # guard a 10-minute-old book passed the freshness window and produced a "reliable"
+    # 3.26% spread out of thin air.
+    _stale = parse_bitget({"code": "00000", "data": [
+        {"symbol": "RTSLAUSDT", "bidPr": "300.0", "askPr": "300.1", "ts": "1784982720925"}]})
+    _now = 1784983320925
+    _stamped = {**_stale, "timestamp_ms": _stale.get("venue_ts_ms") or _now}
+    check("stale bitget book keeps its own timestamp (not fetch time)",
+          _stamped["timestamp_ms"] == 1784982720925 and _now - _stamped["timestamp_ms"] == 600_000)
     # bitget wraps errors in a 200 body — a naive parser would read data[0] off a failure
     # response (or off an empty list) and either crash or invent a price. Reject explicitly.
     for label, fixture in (("empty-data", _FIX_BITGET_EMPTY), ("error-code", _FIX_BITGET_ERR),

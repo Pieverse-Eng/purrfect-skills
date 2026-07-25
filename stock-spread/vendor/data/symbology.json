@@ -14,6 +14,14 @@
       "note": "Backed-controlled SPL authority shared by ALL xStocks \u2014 used to verify a Jupiter-resolved mint is genuine and reject pump.fun look-alikes."
     }
   },
+  "venue_wrappers": {
+    "gate": "backed-xstocks",
+    "bybit": "backed-xstocks",
+    "solana_jupiter": "backed-xstocks",
+    "binance_bstocks": "binance-bstocks",
+    "bitget": "bitget-r"
+  },
+  "_venue_wrappers_note": "Tokenization wrapper (issuer) per venue. REQUIRED for every venue: catalog.py fails the refresh rather than emitting an entry without one, because a missing wrapper silently disables spread.py's cross-wrapper warning.",
   "cex_rules": {
     "gate": {
       "kind": "xstocks",
