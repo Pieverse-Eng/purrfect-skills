@@ -70,7 +70,8 @@ Never ask the user to paste an API private key into chat.
 | `LIGHTER_DEPOSIT_CHAIN_UNSUPPORTED` | Check `deposit-networks` |
 | `LIGHTER_DEPOSIT_ALREADY_IN_PROGRESS` | **This same request** is already in flight; check `deposits`, wait |
 | `LIGHTER_CROSS_CHAIN_DEPOSIT_ALREADY_IN_PROGRESS` | A **different** cross-chain (CCTP) deposit is mid-bridge; that leg must finish first. Not the same as the line above — do not start another. |
-| `LIGHTER_DEPOSIT_NOT_FOUND` / `LIGHTER_DEPOSIT_REQUIRED` | Wrong request id, or no funds deposited yet |
+| `LIGHTER_DEPOSIT_NOT_FOUND` | **404 — that deposit request id does not exist.** You looked up an unknown or mistyped id. Re-read `deposits` for the real ids; do not treat it as "the deposit failed". |
+| `LIGHTER_DEPOSIT_REQUIRED` | **No first deposit has been made — the account does not exist yet.** Nothing is wrong; guide the first deposit (it creates the account). This is the `deposit_required` readiness state, and the sibling of `LIGHTER_INITIALIZING`, which is what you get once a deposit *is* crediting. |
 | `LIGHTER_INTENT_ADDRESS_INVALID` | Bad destination; stop |
 | `LIGHTER_SEND_TX_REJECTED` | Chain rejected it; report the reason, do not blind-retry |
 | `LIGHTER_SELF_TRANSFER_NOT_REQUIRED` | You transferred to your own account index. Lighter accounts are **unified** — there is no perp↔spot transfer to make. Only transfer to a *different* account index. |
