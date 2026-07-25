@@ -84,11 +84,20 @@ Pick the matching command group below, then read that reference before acting.
 13. **Lighter orders carry no additional platform transaction fee.** Do not
     prompt for fee authorization and do not copy the Hyperliquid fee flow —
     there is no builder-fee approval step on Lighter.
-14. The agent cannot provision Lighter API credentials. If credentials are
-    missing or unverified (`LIGHTER_CREDENTIAL_NOT_FOUND`,
-    `LIGHTER_CREDENTIAL_UNVERIFIED`), stop and tell the user to configure them
-    on the platform side — do not attempt a CLI workaround.
-15. Read commands use a 20s client timeout; write commands wait for the platform
+14. **`purr lighter account` is the readiness call — read it before concluding
+    anything is broken.** On a fresh instance the onboarding sequence is
+    `deposit_required` → `initializing` → `account_discovered` → `verifying_key`
+    → `ready`. A first USDC deposit *creates* the account, and once it is
+    discovered the **next write registers the API key automatically**. So
+    `LIGHTER_CREDENTIAL_NOT_FOUND` during onboarding is an expected state, not a
+    failure. Only treat a credential error as terminal when the account is
+    already `ready`/`error` — then it is platform-side, and you must never ask
+    the user to paste an API private key into chat. See
+    [preflight.md](references/preflight.md).
+15. **Deposit minimums are per-chain**: Ethereum mainnet (`1`) is 1 USDC; every
+    other chain bridges via CCTP at 5 USDC. Read `minAmount` from
+    `deposit-networks` rather than quoting a remembered figure.
+16. Read commands use a 20s client timeout; write commands wait for the platform
     response. A read timeout is safe to retry, a write timeout is not (rule 10).
 
 ## Command Groups

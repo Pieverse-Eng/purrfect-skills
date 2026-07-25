@@ -28,13 +28,25 @@ purr lighter deposit-networks                    # supported chains — read thi
 purr lighter deposit --amount 25 --source-chain-id 42161 [--route-type perps]
 ```
 
-- `--amount` is decimal USDC. **Minimum 1 USDC** — smaller is rejected with
-  `LIGHTER_DEPOSIT_AMOUNT_TOO_SMALL`.
-- `--source-chain-id` must be one the platform supports. Call
-  `deposit-networks` rather than trusting a memorized list; at time of writing
-  it covers Ethereum (`1`), Arbitrum One (`42161`), Base (`8453`),
-  Avalanche (`43114`), and HyperEVM (`999`). An unsupported chain returns
-  `LIGHTER_DEPOSIT_CHAIN_UNSUPPORTED`.
+- `--amount` is decimal USDC.
+- **The minimum depends on the source chain.** Ethereum mainnet goes by a direct
+  route; every other chain bridges via CCTP and has a higher floor:
+
+  | Source chain | `--source-chain-id` | Route | Minimum |
+  | --- | ---: | --- | ---: |
+  | Ethereum mainnet | `1` | `ethereum_direct` | **1 USDC** |
+  | Arbitrum One | `42161` | `cctp` | **5 USDC** |
+  | Base | `8453` | `cctp` | **5 USDC** |
+  | Avalanche | `43114` | `cctp` | **5 USDC** |
+  | HyperEVM | `999` | `cctp` | **5 USDC** |
+
+  Below the floor the platform rejects with `LIGHTER_DEPOSIT_AMOUNT_TOO_SMALL`.
+  Quoting a flat "1 USDC minimum" is wrong for four of the five chains and will
+  get a 4 USDC Base deposit rejected.
+
+- `deposit-networks` returns `minAmount` per network — treat that as the source
+  of truth and read it before quoting a figure, rather than trusting the table
+  above. An unsupported chain returns `LIGHTER_DEPOSIT_CHAIN_UNSUPPORTED`.
 - The USDC must already be on that chain in the instance wallet. Bridging from
   elsewhere is a different skill — do it first.
 

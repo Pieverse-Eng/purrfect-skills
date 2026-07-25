@@ -6,19 +6,35 @@ any account-changing step. Silent preparation, speak at decisions.
 ## 1. First-time funding
 
 ```bash
-purr lighter status                       # enabled? if not, confirm + enable
-purr lighter sdk-status                   # credentials/signer ready?
-purr lighter deposit-networks             # which chains are supported
-purr lighter balances                     # current state
+purr lighter status                       # 1. enabled? if not, confirm + enable
+purr lighter account                      # 2. readiness — branch on .status
+purr lighter deposit-networks             # 3. chains + per-network minAmount
 # confirm with user →
-purr lighter deposit --amount 100 --source-chain-id 42161
+purr lighter deposit --amount 10 --source-chain-id 42161
 purr lighter deposits --limit 5           # track it
-purr lighter balances                     # verify it landed
+purr lighter account                      # 4. re-read: initializing -> account_discovered
 ```
 
-Minimum 1 USDC. The USDC must already sit on the source chain in the instance
-wallet. If a `LIGHTER_APPROVAL_*` code appears, follow the approval leg via
-`requests` — do not resubmit the deposit.
+`account` is the readiness call — run it **before** `sdk-status` / `balances`,
+which answer narrower questions and won't tell you which onboarding step is
+outstanding. Branch on `.status`:
+
+- `deposit_required` → the first deposit **creates** the account. Say so.
+- `initializing` → wait, poll `deposits` / `requests`; do not resubmit.
+- `account_discovered` → normal; the **next write registers the API key
+  automatically**.
+- `verifying_key` → wait, re-read `account`.
+- `ready` → trade.
+- `error` → stop, report the returned `state`.
+
+**Minimum depends on the chain:** Ethereum mainnet (`1`) is 1 USDC; Arbitrum,
+Base, Avalanche and HyperEVM go via CCTP at **5 USDC**. Read `minAmount` from
+`deposit-networks` rather than quoting a remembered number — a 4 USDC Base
+deposit is rejected. The USDC must already sit on the source chain in the
+instance wallet.
+
+If a `LIGHTER_APPROVAL_*` code appears, follow the approval leg via `requests` —
+do not resubmit the deposit.
 
 ## 2. Perp long
 

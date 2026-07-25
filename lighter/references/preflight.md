@@ -29,22 +29,49 @@ purr lighter system-config
 `LIGHTER_INITIALIZING` means the signer is still starting: wait and re-read,
 do not resubmit a write.
 
-## Credentials — the agent cannot provision these
+## First use — read `account`, then branch on its status
 
-Lighter authenticates with an account index, API key index, and API private key
-held by the platform. **`purr lighter` has no command to set them** — the CLI
-exposes only `status` / `enable` / `disable` for integration state.
+**`purr lighter account` is the readiness call**, not just a balance view. On a
+fresh instance it tells you exactly which onboarding step is outstanding. Run
+this before `sdk-status` or `balances` — those answer narrower questions and
+will not tell you *why* trading is unavailable.
 
-If you see `LIGHTER_CREDENTIAL_NOT_FOUND`, `LIGHTER_CREDENTIAL_UNVERIFIED`, or
-`LIGHTER_CREDENTIAL_VERIFY_FAILED`:
+```bash
+purr lighter status            # 1. integration enabled?
+purr lighter account           # 2. readiness — branch on .status
+purr lighter deposit-networks  # 3. only when a first deposit is needed
+```
 
-1. Stop. Do not attempt a workaround, and do not ask the user to paste a private
-   key into chat — it must never appear in a message.
-2. Tell the user the Lighter API credentials need to be configured or
-   re-verified on the platform side for this instance.
-3. Re-check with `purr lighter sdk-status` / `status` afterwards.
+| `account.status` | What it means | What to do |
+| --- | --- | --- |
+| `deposit_required` | No Lighter account for this TEE wallet yet | Tell the user a **first USDC deposit creates the account**. The response carries `requiresFirstDeposit`, `nextAction: deposit`, and `minimumDeposit` (`ethereumMainnet: 1`, `crossChain: 5`). |
+| `initializing` | Deposit seen, account still being created | Wait; poll `deposits` / `requests`. Do **not** resubmit. |
+| `account_discovered` | Account exists, no API key registered yet | Normal. The **next write registers the key automatically** — no manual credential step. |
+| `verifying_key` | Key registered, verification pending | Wait and re-read `account`. |
+| `ready` | Credential verified | Trading is available. |
+| `error` | Key registration failed | Stop and report; check the returned `state` for the reason. |
 
-`LIGHTER_API_KEY_SLOTS_EXHAUSTED` likewise needs platform-side attention.
+The key point: `account_discovered` and `verifying_key` are **normal states in
+the onboarding sequence**, not failures. Do not tell the user something is
+broken because a credential is not yet verified — say which step is pending.
+
+## When a credential error *is* terminal
+
+`purr lighter` exposes no command to set an account index, API key index, or API
+private key — the CLI has only `status` / `enable` / `disable`. So if a
+credential error appears **outside** the onboarding sequence above — the account
+is `ready` or `error` and you still get `LIGHTER_CREDENTIAL_VERIFY_FAILED`,
+`LIGHTER_CREDENTIAL_VERIFY_UNAVAILABLE`, `LIGHTER_WALLET_MISMATCH`, or
+`LIGHTER_API_KEY_SLOTS_EXHAUSTED` — it needs platform-side attention:
+
+1. Stop. Do not attempt a CLI workaround, and **never** ask the user to paste a
+   private key into chat.
+2. Say which state you observed from `account` and what needs configuring.
+3. Re-check with `purr lighter account` afterwards.
+
+Seeing `LIGHTER_CREDENTIAL_NOT_FOUND` while `account.status` is
+`account_discovered` is *expected* — proceed with the write that registers it,
+after the usual confirmation.
 
 ## Account reads (no confirmation needed)
 
@@ -70,12 +97,14 @@ large one. Read commands use a 20s client timeout and are safe to retry.
 ## Before an order — the short checklist
 
 1. `status` — integration enabled?
-2. `market --market <SYM> --market-type <perp|spot>` — market exists, and note
+2. `account` — is `.status` `ready`? If not, resolve the onboarding step above
+   before promising the user a trade.
+3. `market --market <SYM> --market-type <perp|spot>` — market exists, and note
    its size/price decimals.
-3. `order-book-depth --market <SYM> --market-type <t>` — derive the price bound
+4. `order-book-depth --market <SYM> --market-type <t>` — derive the price bound
    (mandatory for market orders; see [trading.md](trading.md)).
-4. `balances` / `positions` — is there collateral for this, and does it change
+5. `balances` / `positions` — is there collateral for this, and does it change
    an existing position?
-5. Confirm with the user, then submit.
+6. Confirm with the user, then submit.
 
 There is **no fee-authorization step on Lighter**. Do not prompt for one.

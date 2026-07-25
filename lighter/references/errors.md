@@ -28,12 +28,16 @@ content — do not "fix" it by mutating parameters and retrying; investigate.
 
 ## Gating and credentials
 
+**Read `purr lighter account` before concluding a credential error is terminal.**
+During onboarding these codes are expected states, not failures — see the
+readiness table in [preflight.md](preflight.md).
+
 | Code | Action |
 | --- | --- |
 | `LIGHTER_TRADING_DISABLED` | Integration off → confirm, then `enable`. Do not retry the original command first. |
-| `LIGHTER_CREDENTIAL_NOT_FOUND` | Credentials not configured → platform-side task, stop |
-| `LIGHTER_CREDENTIAL_UNVERIFIED` | Configured but unverified → platform-side, stop |
-| `LIGHTER_CREDENTIAL_VERIFY_FAILED` / `_UNAVAILABLE` | Verification failing → platform-side, stop |
+| `LIGHTER_CREDENTIAL_NOT_FOUND` | If `account.status` is `account_discovered`, this is **normal** — the next write registers the key. Only terminal if the account is already `ready`/`error`. |
+| `LIGHTER_CREDENTIAL_UNVERIFIED` | Matches `verifying_key` → wait and re-read `account`, don't escalate |
+| `LIGHTER_CREDENTIAL_VERIFY_FAILED` / `_UNAVAILABLE` | Verification genuinely failing → platform-side, stop |
 | `LIGHTER_API_KEY_SLOTS_EXHAUSTED` | No key slots left → platform-side, stop |
 | `LIGHTER_WALLET_MISMATCH` | Wallet does not match the credential → stop, escalate |
 
@@ -63,7 +67,7 @@ Never ask the user to paste an API private key into chat.
 
 | Code | Action |
 | --- | --- |
-| `LIGHTER_DEPOSIT_AMOUNT_TOO_SMALL` | Below the 1 USDC minimum |
+| `LIGHTER_DEPOSIT_AMOUNT_TOO_SMALL` | Below the **chain's** minimum — Ethereum mainnet (`1`) is 1 USDC, every other chain is 5 USDC via CCTP. Read `minAmount` from `deposit-networks`; do not assume a flat 1 USDC. |
 | `LIGHTER_DEPOSIT_CHAIN_UNSUPPORTED` | Check `deposit-networks` |
 | `LIGHTER_DEPOSIT_ALREADY_IN_PROGRESS` | One in flight; check `deposits`, wait |
 | `LIGHTER_DEPOSIT_NOT_FOUND` / `LIGHTER_DEPOSIT_REQUIRED` | Wrong request id, or no funds deposited yet |
