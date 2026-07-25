@@ -176,6 +176,23 @@ def resolve_mint_live(underlying, auth):
     return verify_mint(raw, underlying, auth["freeze"], auth.get("mint"))
 
 
+def venue_entry(venue, info, wrappers):
+    """Build one catalogued venue entry, injecting its tokenization wrapper. Pure, so
+    the selftest exercises the REAL injection instead of inspecting already-generated JSON.
+
+    A venue entry without a `wrapper` silently disables spread.py's cross-wrapper warning
+    (one distinct wrapper => nothing to warn about), so a missing mapping fails the refresh
+    loudly instead of shipping a quietly-degraded catalog.
+    """
+    wrapper = wrappers.get(venue)
+    if not wrapper:
+        raise KeyError(
+            f"venue {venue!r} has no entry in symbology.json `venue_wrappers` — "
+            f"add one before enabling it, or the cross-wrapper guard goes silent"
+        )
+    return {**info, "wrapper": wrapper}
+
+
 def build_catalog(verbose=False, collisions=None):
     cfg = _load()
     rules, auth = cfg["cex_rules"], cfg["issuer_authority"]["xstocks"]
@@ -183,16 +200,7 @@ def build_catalog(verbose=False, collisions=None):
     underlyings = {}
 
     def add(u, venue, info):
-        # A venue entry without a `wrapper` silently disables spread.py's cross-wrapper
-        # warning (one distinct wrapper => nothing to warn about), so a missing mapping
-        # must fail the refresh loudly instead of shipping a quietly-degraded catalog.
-        wrapper = wrappers.get(venue)
-        if not wrapper:
-            raise KeyError(
-                f"venue {venue!r} has no entry in symbology.json `venue_wrappers` — "
-                f"add one before enabling it, or the cross-wrapper guard goes silent"
-            )
-        underlyings.setdefault(u, {"venues": {}})["venues"][venue] = {**info, "wrapper": wrapper}
+        underlyings.setdefault(u, {"venues": {}})["venues"][venue] = venue_entry(venue, info, wrappers)
 
     by = enumerate_bybit(collisions)
     for u, sym in by.items():
@@ -301,20 +309,35 @@ def _selftest():
     check("bitget rejects offline symbol", "OFF" not in bg)
     check("bitget rejects non-USDT quote", "AAPL" not in bg)
 
-    # regression: --refresh must not strip wrapper from the non-bitget venues. Before this,
+    # regression: --refresh must not strip wrapper from the non-bitget venues. Before the fix
     # only the bitget add() carried `wrapper`, so a refresh left one distinct wrapper in the
-    # catalog and spread.py's cross-wrapper warning went silent.
+    # catalog and spread.py's cross-wrapper warning went silent. These call the REAL injector
+    # used by build_catalog — asserting over already-generated JSON would stay green if the
+    # production path regressed.
     _cfg = _load()
     _wrappers = _cfg.get("venue_wrappers", {})
     check("venue_wrappers covers every live venue",
           {"gate", "bybit", "binance_bstocks", "bitget", "solana_jupiter"} <= set(_wrappers))
+    _entries = {v: venue_entry(v, {"id": "X"}, _wrappers)
+                for v in ("gate", "bybit", "binance_bstocks", "bitget", "solana_jupiter")}
+    check("every venue gets a wrapper injected (not just bitget)",
+          all(e.get("wrapper") for e in _entries.values()))
+    check("non-bitget venues keep their own wrapper",
+          _entries["gate"].get("wrapper") == "backed-xstocks"
+          and _entries["binance_bstocks"].get("wrapper") == "binance-bstocks"
+          and _entries["bitget"].get("wrapper") == "bitget-r")
     check("wrappers are not all identical (cross-wrapper guard has something to compare)",
-          len(set(_wrappers.values())) >= 2)
-    _built = {u: e for u, e in _cfg["underlyings"].items()}
-    _missing = sorted(
-        f"{u}.{v}" for u, e in _built.items() for v, i in e["venues"].items() if not i.get("wrapper")
-    )
-    check("every catalogued venue entry carries a wrapper", not _missing)
+          len({e.get("wrapper") for e in _entries.values() if e.get("wrapper")}) >= 2)
+    try:
+        venue_entry("newvenue", {"id": "X"}, _wrappers)
+        check("unknown venue fails closed", False)
+    except KeyError:
+        check("unknown venue fails closed", True)
+
+    # and the generated catalog on disk must actually be wrapper-complete
+    _missing = sorted(f"{u}.{v}" for u, e in _cfg["underlyings"].items()
+                      for v, i in e["venues"].items() if not i.get("wrapper"))
+    check("committed catalog is wrapper-complete", not _missing)
 
     # collision + no-op-strip handling (review repro: MAX vs MA)
     cols = []

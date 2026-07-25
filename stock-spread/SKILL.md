@@ -27,11 +27,14 @@ description: "READ-ONLY cross-venue price & spread intelligence for tokenized st
 | Solana / Jupiter | DEX (executable) | USDC | Backed xStocks | ✅ |
 | Kraken | CEX | USD | — | ⛔ unavailable — see below |
 
-**Kraken is not a key problem — the asset is absent.** Re-probed 2026-07-25: public `AssetPairs`
-(1518 pairs) and `Assets` (819 assets) contain no equity whatsoever, and `Ticker?pair=TSLAxUSD`
-returns `EQuery:Unknown asset pair`. Those endpoints *are* Kraken's tradable universe, so adding
-an API key would not surface anything — there is nothing to read. Do not add a Kraken adapter
-until the venue exposes the instruments publicly.
+**Kraken: absent from the current public Spot REST surface, not key-gated.** Re-probed
+2026-07-25 against `api.kraken.com/0/public`: `AssetPairs` (1518 pairs) and `Assets`
+(819 assets) contain no equity, and `Ticker?pair=TSLAxUSD` returns
+`EQuery:Unknown asset pair`. Those endpoints are the tradable universe *of that surface*, so an
+API key would not reveal more of it — the instrument simply is not there to read. This says
+nothing about whether Kraken offers tokenized equities through some other product, region, or
+API; it scopes only what this skill can read today. Do not add a Kraken adapter until the
+instruments appear on a public endpoint we can actually query.
 
 ⚠️ **Wrappers are not fungible.** Bitget lists a *different tokenization* from the xStocks venues:
 baseCoin `r<TICKER>` (e.g. `rTSLA`, Arbitrum ERC-20 `0xf912911c9c8d5131929c758e66e6dc54e65cf3ba`),
