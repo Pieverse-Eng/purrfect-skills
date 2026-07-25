@@ -47,10 +47,13 @@ Pick the matching command group below, then read that reference before acting.
    "Use `--market-type` for Lighter market filtering". Passing `--type perp` is
    always a bug.
 5. **`--price` is REQUIRED on every order, including market orders.** For a
-   market order the price is the *worst acceptable* fill price — a slippage
-   bound, not an estimate. Derive it from the live book
-   (`order-book-depth`), never from a guess, and state it in the confirmation.
-   See [trading.md](references/trading.md).
+   market order the price is the *worst acceptable* fill — a slippage bound, not
+   an estimate. **Walk cumulative `order-book-depth` for the exact requested
+   size**, compute projected VWAP and the worst level reached, and put the exact
+   bound plus its bps distance from touch and VWAP in the confirmation. If depth
+   is insufficient, stop. **If the user gave no slippage tolerance, ask them for
+   an exact cap — never pick a default buffer**, which would silently authorise
+   loss they never agreed to. See [trading.md](references/trading.md).
 6. Resolve markets with `purr lighter market --market <SYM> --market-type <t>`
    and use the returned size/price decimals before sizing an order. Never
    invent precision; `LIGHTER_DECIMAL_PRECISION_UNSUPPORTED` means the venue
@@ -99,6 +102,21 @@ Pick the matching command group below, then read that reference before acting.
     `deposit-networks` rather than quoting a remembered figure.
 16. Read commands use a 20s client timeout; write commands wait for the platform
     response. A read timeout is safe to retry, a write timeout is not (rule 10).
+17. **`disable` cancels nothing and closes nothing.** It flips the integration
+    flag, after which only `status`/`enable`/`disable` work — so live orders and
+    positions remain open on Lighter while becoming unreadable here. List
+    `active-orders`, `positions` and `requests` first, and get acknowledgement of
+    that specific exposure before disabling.
+18. **`balances` and `positions` are the same call as `account`.** Before the
+    account is `ready` they return a readiness object, not collections — an empty
+    result is *not* evidence the user has no funds or no positions.
+19. **`order-preview` is non-mutating** (`POST /order/preview` only computes) and
+    needs no execution confirmation. **`place-orders` is not a batch** — it
+    submits a single order through the same handler as `order`.
+20. **Manual wallet-policy approval ≠ on-chain ERC-20 approval.** `POLICY_DEFERRED`
+    and most `LIGHTER_APPROVAL_*` codes park a request for a *human* to approve;
+    the agent can only observe via `requests` and must never retry or re-create
+    the write. Only `LIGHTER_APPROVAL_TX_HASH_MISSING` is the on-chain leg.
 
 ## Command Groups
 

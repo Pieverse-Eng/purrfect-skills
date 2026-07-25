@@ -33,15 +33,19 @@ Base, Avalanche and HyperEVM go via CCTP at **5 USDC**. Read `minAmount` from
 deposit is rejected. The USDC must already sit on the source chain in the
 instance wallet.
 
-If a `LIGHTER_APPROVAL_*` code appears, follow the approval leg via `requests` —
-do not resubmit the deposit.
+If `POLICY_DEFERRED` or a `LIGHTER_APPROVAL_*` code appears, do **not** resubmit
+the deposit. Most of those are **wallet-policy manual approval** — a human must
+approve the parked request; `requests` lets you observe it but the agent cannot
+approve anything. Only `LIGHTER_APPROVAL_TX_HASH_MISSING` is the on-chain ERC-20
+leg. See [errors.md](errors.md).
 
 ## 2. Perp long
 
 ```bash
+purr lighter account                                       # .status ready?
 purr lighter market --market SOL --market-type perp        # decimals
-purr lighter order-book-depth --market SOL --market-type perp --limit 50
-purr lighter balances
+purr lighter order-book-depth --market SOL --market-type perp --limit 100
+purr lighter balances                                      # readiness object if not ready
 purr lighter positions                                     # existing exposure?
 # optional leverage change — separate or bundled confirmation:
 purr lighter update-leverage --market SOL --market-type perp --leverage 5 --margin-mode cross
@@ -51,8 +55,14 @@ purr lighter trades                                        # did it fill?
 purr lighter positions                                     # net effect
 ```
 
-For a market order the `--price` is the **worst acceptable fill**, derived from
-the book. Say so in the confirmation. See [trading.md](trading.md).
+For a market order the `--price` is the **worst acceptable fill**. Walk
+cumulative depth for the exact size, compute projected VWAP and worst level, and
+if the user gave no tolerance, present those numbers and ask them to pick the
+cap — do not apply a default buffer. See [trading.md](trading.md).
+
+Note `balances` / `positions` return a readiness object rather than collections
+until `account.status` is `ready` — an empty-looking result is a state, not an
+empty portfolio.
 
 ## 3. Resting limit order
 
@@ -136,3 +146,19 @@ purr lighter requests --limit 10
 
 Report what you observed and ask how to proceed. **Do not resubmit.** See
 [errors.md](errors.md).
+
+## 9. Disabling the integration safely
+
+```bash
+purr lighter active-orders        # what is resting
+purr lighter positions            # what is open
+purr lighter requests --limit 10  # unresolved deposits/withdrawals
+# state the exposure back, get acknowledgement of THAT list →
+purr lighter disable
+```
+
+`disable` cancels nothing and closes nothing — it only flips the flag, and
+afterwards only `status`/`enable`/`disable` work. Live orders and positions stay
+open on Lighter while becoming invisible to the agent and dashboard. Either
+resolve the exposure first, or make sure the user has acknowledged the specific
+list before flipping it.

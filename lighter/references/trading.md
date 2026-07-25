@@ -1,7 +1,14 @@
 # Trading — orders, cancel, modify, leverage, margin
 
-Every command here is account-changing and needs the Confirmation Contract in
-`SKILL.md` first. There is **no fee-authorization step on Lighter**.
+`order`, `place-orders`, `cancel`, `cancel-all`, `modify`, `update-leverage` and
+`update-margin` are account-changing and need the Confirmation Contract in
+`SKILL.md` first.
+
+**`order-preview` is not.** It POSTs to `/order/preview`, which only computes —
+it submits nothing and changes no state. Treat it as a read: run it freely, no
+execution confirmation. Never present a preview result as a placed order.
+
+There is **no fee-authorization step on Lighter**.
 
 ## Placing an order
 
@@ -19,7 +26,12 @@ purr lighter order \
   [non-IOC only: --expires-in 30m | --expires-at <iso> | --order-expiry <unix-ms>]
 ```
 
-`place-orders` takes the same flags and posts to the batch endpoint.
+**`place-orders` is not a batch command.** It takes the same flags and submits
+**one** order: the CLI maps it to `/orders`, and that route validates the same
+singular `orderBodySchema` and calls the same `submitLighterOrder()` as `/order`.
+The plural name is the only difference. To place several orders, issue several
+confirmed commands — and never describe `place-orders` to the user as "submitting
+them all at once", because it will place exactly one.
 
 `order-preview` is body-only — it does **not** accept the flags above:
 
@@ -38,17 +50,36 @@ the **worst acceptable fill price** — a slippage bound, not a hint.
   Absurdly high → you accept an awful fill.
 - **Sell market:** the lowest price you accept.
 
-Derive it from the live book and show the user your reasoning:
+**There is no default buffer. Do not invent one.** A "best ask × 1.02" rule of
+thumb silently authorises up to 200 bps of the user's money on a number they
+never agreed to, and it ignores the size being traded — the same 2% is trivial
+on 1 SOL and severe on 1000.
+
+Derive the bound from the book, for the **exact size requested**:
 
 ```bash
-purr lighter order-book-depth --market SOL --market-type perp --limit 50
+purr lighter order-book-depth --market SOL --market-type perp --limit 100
 ```
 
-A defensible default is the far touch plus a small buffer (for a buy: best ask
-× 1.0x–1.02x depending on depth and volatility). State the bound and the implied
-slippage in the confirmation. Never submit a market order with a price you did
-not derive from the current book, and never describe it to the user as "the
-price you will pay" — it is the worst price you would tolerate.
+1. **Walk cumulative depth** for the requested size, level by level, on the side
+   you will hit (a buy consumes asks).
+2. **Compute the projected VWAP** and the **marginal (worst) level** the order
+   would reach.
+3. **If the returned depth cannot fill the size, stop.** Do not extrapolate past
+   the end of the book and do not pad a bound to "make it work" — report the
+   depth available and let the user resize.
+4. **If the user gave no slippage tolerance, ask for one.** Present what the
+   book actually implies — projected VWAP, worst level, bps versus the touch —
+   and have them choose an exact cap. Do not choose it for them.
+5. **Put the exact bound in the confirmation**, with its bps distance from both
+   the touch and the projected VWAP.
+
+Never submit a market order with a price you did not derive from the current
+book for that size, and never describe the bound to the user as "the price you
+will pay" — it is the worst price you would tolerate.
+
+When the user *does* supply a tolerance ("within 0.5%"), apply it to the
+reference you name explicitly (touch or VWAP) and show both numbers.
 
 ### Size and precision
 

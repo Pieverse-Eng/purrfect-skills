@@ -58,10 +58,17 @@ purr lighter deposit-status --request-id <id>
 purr lighter reconcile-deposit --request-id <id>    # account-changing
 ```
 
-`LIGHTER_DEPOSIT_ALREADY_IN_PROGRESS` means a deposit is mid-flight — check
-`deposits` and wait; do not start another. Deposits may need an on-chain
-approval step; `LIGHTER_APPROVAL_*` codes belong to that flow (see
-[errors.md](errors.md)) and are not a reason to resubmit the deposit.
+`LIGHTER_DEPOSIT_ALREADY_IN_PROGRESS` means **this same request** is mid-flight;
+`LIGHTER_CROSS_CHAIN_DEPOSIT_ALREADY_IN_PROGRESS` means a **different** CCTP
+bridge leg is still settling. Both mean check `deposits` and wait — neither is a
+reason to start another deposit.
+
+⚠️ **Two different approval lifecycles — do not merge them.**
+`POLICY_DEFERRED`, `LIGHTER_APPROVAL_NOT_APPROVED`, `_INVALID`, `_UNAVAILABLE`
+and `_RESUME_IN_PROGRESS` are **wallet-policy manual approval**: a human must
+approve a parked request, and the agent cannot approve anything — `requests`
+only observes. Only `LIGHTER_APPROVAL_TX_HASH_MISSING` refers to the on-chain
+ERC-20 approval transaction. Full recovery path in [errors.md](errors.md).
 
 ## Withdraw
 
@@ -86,9 +93,21 @@ purr lighter transfer --to-account-index <id> --amount-base-units 10000000 \
   [--from-route-type perps|spot] [--to-route-type perps|spot]
 ```
 
-Account-to-account move. `--to-account-index` must be a **different** account.
-Both route types default to `perps`; set them explicitly when moving between
-perp and spot balances so the user can see the direction in the confirmation.
+**Transfer moves funds to a different account — it is not how you move money
+between perp and spot.** Lighter accounts are unified, so there is no perp↔spot
+migration to perform. Sending to your own account index is rejected:
+
+```
+LIGHTER_SELF_TRANSFER_NOT_REQUIRED — "Lighter unified accounts do not require
+transfers between perps and spot; transfer to a different account index"
+```
+
+If a user asks to "move USDC from perp to spot", the answer is that Lighter does
+not need it — do not construct a self-transfer to satisfy the request.
+
+`--from-route-type` / `--to-route-type` describe the source and destination
+routes on **different account indexes**, not two pockets of one account. Both
+default to `perps`.
 
 Transfers are irreversible and go to an account index, not a human-readable
 name — read the destination back to the user digit by digit before confirming.

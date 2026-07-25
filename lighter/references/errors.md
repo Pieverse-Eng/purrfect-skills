@@ -35,8 +35,7 @@ readiness table in [preflight.md](preflight.md).
 | Code | Action |
 | --- | --- |
 | `LIGHTER_TRADING_DISABLED` | Integration off → confirm, then `enable`. Do not retry the original command first. |
-| `LIGHTER_CREDENTIAL_NOT_FOUND` | If `account.status` is `account_discovered`, this is **normal** — the next write registers the key. Only terminal if the account is already `ready`/`error`. |
-| `LIGHTER_CREDENTIAL_UNVERIFIED` | Matches `verifying_key` → wait and re-read `account`, don't escalate |
+| `LIGHTER_CREDENTIAL_NOT_FOUND` / `LIGHTER_CREDENTIAL_UNVERIFIED` | Run the five-step `account.status` branch in [preflight.md](preflight.md): `deposit_required` → guide deposit; `initializing`/`account_discovered`/`verifying_key` → wait and reconcile; escalate **only** if already `ready`/`error`; never ask for a private key. Users do not normally configure credentials at all. |
 | `LIGHTER_CREDENTIAL_VERIFY_FAILED` / `_UNAVAILABLE` | Verification genuinely failing → platform-side, stop |
 | `LIGHTER_API_KEY_SLOTS_EXHAUSTED` | No key slots left → platform-side, stop |
 | `LIGHTER_WALLET_MISMATCH` | Wallet does not match the credential → stop, escalate |
@@ -47,7 +46,7 @@ Never ask the user to paste an API private key into chat.
 
 | Code | Action |
 | --- | --- |
-| `LIGHTER_INITIALIZING` | Signer starting; wait, re-read status. Do **not** resubmit a write. |
+| `LIGHTER_INITIALIZING` | Deposit crediting, account discovery, key registration **or** signer setup still in progress — not just "signer starting". Read `account` + `deposits --limit 5` + `requests --limit 5` to see which, then wait. Do **not** resubmit a write. |
 | `LIGHTER_SIGNER_UNAVAILABLE` / `LIGHTER_SIGNER_ERROR` | Signer trouble; re-read state before any retry |
 | `LIGHTER_REQUEST_TIMEOUT` on a **read** | Safe to retry (reads are 20s, idempotent) |
 
@@ -69,11 +68,38 @@ Never ask the user to paste an API private key into chat.
 | --- | --- |
 | `LIGHTER_DEPOSIT_AMOUNT_TOO_SMALL` | Below the **chain's** minimum — Ethereum mainnet (`1`) is 1 USDC, every other chain is 5 USDC via CCTP. Read `minAmount` from `deposit-networks`; do not assume a flat 1 USDC. |
 | `LIGHTER_DEPOSIT_CHAIN_UNSUPPORTED` | Check `deposit-networks` |
-| `LIGHTER_DEPOSIT_ALREADY_IN_PROGRESS` | One in flight; check `deposits`, wait |
+| `LIGHTER_DEPOSIT_ALREADY_IN_PROGRESS` | **This same request** is already in flight; check `deposits`, wait |
+| `LIGHTER_CROSS_CHAIN_DEPOSIT_ALREADY_IN_PROGRESS` | A **different** cross-chain (CCTP) deposit is mid-bridge; that leg must finish first. Not the same as the line above — do not start another. |
 | `LIGHTER_DEPOSIT_NOT_FOUND` / `LIGHTER_DEPOSIT_REQUIRED` | Wrong request id, or no funds deposited yet |
-| `LIGHTER_APPROVAL_NOT_APPROVED` / `_INVALID` / `_UNAVAILABLE` / `_TX_HASH_MISSING` / `_RESUME_IN_PROGRESS` | On-chain approval leg; check `requests`, do not resubmit the deposit |
 | `LIGHTER_INTENT_ADDRESS_INVALID` | Bad destination; stop |
 | `LIGHTER_SEND_TX_REJECTED` | Chain rejected it; report the reason, do not blind-retry |
+| `LIGHTER_SELF_TRANSFER_NOT_REQUIRED` | You transferred to your own account index. Lighter accounts are **unified** — there is no perp↔spot transfer to make. Only transfer to a *different* account index. |
+
+## Manual approval is not the on-chain approval
+
+These are two different things and must not be merged into one recovery path:
+
+| Code | Which lifecycle |
+| --- | --- |
+| `POLICY_DEFERRED` | **Wallet-policy manual approval** — a human must approve the parked request |
+| `LIGHTER_APPROVAL_NOT_APPROVED` | wallet-policy manual approval |
+| `LIGHTER_APPROVAL_INVALID` | wallet-policy manual approval |
+| `LIGHTER_APPROVAL_UNAVAILABLE` | wallet-policy manual approval |
+| `LIGHTER_APPROVAL_RESUME_IN_PROGRESS` | wallet-policy manual approval |
+| `LIGHTER_APPROVAL_TX_HASH_MISSING` | **the only on-chain one** — the ERC-20 approval transaction |
+
+On a wallet-policy deferral the platform parks the request with status
+`policy_deferred` and stores `{requestId, reason, expiresAt, matchedRuleId,
+matchedPolicyId}`. Recovery:
+
+1. Surface the **reason, request id and expiry** to the user.
+2. Do **not** create another write, and do not retry on a timer. A second
+   attempt parks a second request.
+3. Observe with `purr lighter requests` / `request-status`. **`requests` only
+   observes — it cannot approve.** The agent has no approval capability at all;
+   a human or the platform approval flow decides.
+4. After approval, replay only the **identical** parked request. Changed
+   parameters are a new request and a new approval.
 
 ## Reporting to the user
 
