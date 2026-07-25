@@ -35,9 +35,13 @@ instance wallet.
 
 If `POLICY_DEFERRED` or a `LIGHTER_APPROVAL_*` code appears, do **not** resubmit
 the deposit. Most of those are **wallet-policy manual approval** — a human must
-approve the parked request; `requests` lets you observe it but the agent cannot
-approve anything. Only `LIGHTER_APPROVAL_TX_HASH_MISSING` is the on-chain ERC-20
-leg. See [errors.md](errors.md).
+approve the parked request, and the agent cannot approve anything. Observe a
+parked *deposit* with `deposits` / `deposit-status` (**not** `requests`, which
+is the action ledger). Only `LIGHTER_APPROVAL_TX_HASH_MISSING` is the on-chain
+ERC-20 leg.
+
+⚠️ Even after approval, **do not re-run `deposit`** — the CLI has no resume
+surface, so a re-run creates a second request. See [errors.md](errors.md).
 
 ## 2. Perp long
 

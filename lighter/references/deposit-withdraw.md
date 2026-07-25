@@ -66,9 +66,14 @@ reason to start another deposit.
 ⚠️ **Two different approval lifecycles — do not merge them.**
 `POLICY_DEFERRED`, `LIGHTER_APPROVAL_NOT_APPROVED`, `_INVALID`, `_UNAVAILABLE`
 and `_RESUME_IN_PROGRESS` are **wallet-policy manual approval**: a human must
-approve a parked request, and the agent cannot approve anything — `requests`
-only observes. Only `LIGHTER_APPROVAL_TX_HASH_MISSING` refers to the on-chain
-ERC-20 approval transaction. Full recovery path in [errors.md](errors.md).
+approve a parked request, and the agent cannot approve anything. Only
+`LIGHTER_APPROVAL_TX_HASH_MISSING` refers to the on-chain ERC-20 approval
+transaction.
+
+For a **deposit**, observe the parked row with `deposits` / `deposit-status` —
+**not** `requests`, which lists the action ledger. And after approval do **not**
+re-run `deposit`: there is no resume surface in the CLI, so a re-run creates a
+second deposit request. Full recovery path in [errors.md](errors.md).
 
 ## Withdraw
 

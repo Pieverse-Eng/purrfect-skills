@@ -105,8 +105,9 @@ something. Run the branch:
    `LIGHTER_CREDENTIAL_VERIFY_FAILED`, `LIGHTER_CREDENTIAL_VERIFY_UNAVAILABLE`,
    `LIGHTER_WALLET_MISMATCH` and `LIGHTER_API_KEY_SLOTS_EXHAUSTED`.
 5. **Never ask the user for an API private key**, and never accept one pasted
-   into chat. `purr lighter` has no command to set one — the CLI exposes only
-   `status` / `enable` / `disable`.
+   into chat. `purr lighter` has **no credential-set command** at all; the
+   *integration-config* surface is limited to `status` / `enable` / `disable`
+   (the CLI as a whole has many other read and write commands).
 
 When you do escalate, say which `account.status` you observed and what needs
 attention, then re-check with `purr lighter account`.

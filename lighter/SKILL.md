@@ -115,8 +115,12 @@ Pick the matching command group below, then read that reference before acting.
     submits a single order through the same handler as `order`.
 20. **Manual wallet-policy approval ≠ on-chain ERC-20 approval.** `POLICY_DEFERRED`
     and most `LIGHTER_APPROVAL_*` codes park a request for a *human* to approve;
-    the agent can only observe via `requests` and must never retry or re-create
-    the write. Only `LIGHTER_APPROVAL_TX_HASH_MISSING` is the on-chain leg.
+    only `LIGHTER_APPROVAL_TX_HASH_MISSING` is the on-chain leg. Observe on the
+    matching ledger — **actions via `requests`, deposits via `deposits`** — and
+    never retry or re-create the write. ⚠️ **After approval the agent cannot
+    resume it either**: the CLI sends no idempotency key and offers no resume
+    flag, so re-running creates a *second* write. That is platform-side
+    recovery — say so rather than implying a retry works.
 
 ## Command Groups
 

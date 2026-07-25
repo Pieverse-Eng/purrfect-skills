@@ -92,14 +92,29 @@ On a wallet-policy deferral the platform parks the request with status
 `policy_deferred` and stores `{requestId, reason, expiresAt, matchedRuleId,
 matchedPolicyId}`. Recovery:
 
-1. Surface the **reason, request id and expiry** to the user.
+1. Surface the **reason, policy request id and expiry** to the user. Note there
+   are **two different ids** in play — the wallet-policy request id and the
+   Lighter action/deposit request id. Say which one you are quoting.
 2. Do **not** create another write, and do not retry on a timer. A second
    attempt parks a second request.
-3. Observe with `purr lighter requests` / `request-status`. **`requests` only
-   observes — it cannot approve.** The agent has no approval capability at all;
-   a human or the platform approval flow decides.
-4. After approval, replay only the **identical** parked request. Changed
-   parameters are a new request and a new approval.
+3. Observe on the right ledger — they are not the same one:
+   - **actions** (order/cancel/modify/leverage/margin/withdraw/transfer) →
+     `purr lighter requests` / `request-status`
+   - **deposits** → `purr lighter deposits` / `deposit-status`
+
+   **These commands only observe. Neither the agent nor the CLI can approve.**
+4. ⚠️ **After approval, do NOT re-run the command from `purr`.** There is no
+   resume surface: the CLI sends no `Idempotency-Key`, no write takes an
+   `--idempotency-key` or resume flag, and the platform's `getWriteContext()`
+   passes no key to the service. The parked row is keyed on an idempotency key
+   that a fresh CLI invocation never reproduces, so re-running **creates a new
+   request and a second write** rather than resuming the approved one —
+   precisely the double-execution this whole section exists to prevent.
+   `reconcile-deposit` has no policy-deferred resume branch either.
+
+   Report it as **platform-side recovery**: the approved request must be
+   resumed by the platform, and the current CLI exposes no way for the agent to
+   do it. Say that plainly instead of implying a retry will work.
 
 ## Reporting to the user
 
