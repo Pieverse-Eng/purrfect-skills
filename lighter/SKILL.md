@@ -105,8 +105,8 @@ Pick the matching command group below, then read that reference before acting.
 17. **`disable` cancels nothing and closes nothing.** It flips the integration
     flag, after which only `status`/`enable`/`disable` work — so live orders and
     positions remain open on Lighter while becoming unreadable here. List
-    `active-orders`, `positions` and `requests` first, and get acknowledgement of
-    that specific exposure before disabling.
+    `active-orders`, `positions`, `deposits` and `requests` first, and get
+    acknowledgement of that specific exposure before disabling.
 18. **`balances` and `positions` are the same call as `account`.** Before the
     account is `ready` they return a readiness object, not collections — an empty
     result is *not* evidence the user has no funds or no positions.

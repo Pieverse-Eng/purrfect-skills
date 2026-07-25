@@ -27,13 +27,15 @@ Before disabling:
 ```bash
 purr lighter active-orders
 purr lighter positions
-purr lighter requests --limit 10   # unresolved deposits/withdrawals
+purr lighter deposits --limit 10   # unresolved deposits
+purr lighter requests --limit 10   # unresolved trading/withdraw/transfer requests
 ```
 
 Then either resolve the exposure first, or state it back explicitly — "you have
-N open orders and a position of X; disabling cancels and closes nothing, and
-you will not be able to see or manage them here until you re-enable" — and get
-acknowledgement of that specific list before running `disable`.
+N open orders, a position of X, Y pending deposits and Z unresolved requests;
+disabling cancels and closes nothing, and you will not be able to see or manage
+them here until you re-enable" — and get acknowledgement of that specific list
+before running `disable`.
 
 If any gateway command returns `LIGHTER_TRADING_DISABLED`, stop and go through
 the enable flow — do not retry the original command first.

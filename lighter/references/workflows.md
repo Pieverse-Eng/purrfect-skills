@@ -152,13 +152,14 @@ Report what you observed and ask how to proceed. **Do not resubmit.** See
 ```bash
 purr lighter active-orders        # what is resting
 purr lighter positions            # what is open
-purr lighter requests --limit 10  # unresolved deposits/withdrawals
+purr lighter deposits --limit 10  # unresolved deposits
+purr lighter requests --limit 10  # unresolved trading/withdraw/transfer requests
 # state the exposure back, get acknowledgement of THAT list →
 purr lighter disable
 ```
 
 `disable` cancels nothing and closes nothing — it only flips the flag, and
-afterwards only `status`/`enable`/`disable` work. Live orders and positions stay
-open on Lighter while becoming invisible to the agent and dashboard. Either
-resolve the exposure first, or make sure the user has acknowledged the specific
-list before flipping it.
+afterwards only `status`/`enable`/`disable` work. Live orders, positions,
+pending deposits and unresolved requests stay on Lighter/platform while becoming
+invisible to the agent and dashboard. Either resolve the exposure first, or make
+sure the user has acknowledged the specific list before flipping it.
