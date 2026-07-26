@@ -102,6 +102,7 @@ def compare(payload):
             "price_type": q.get("price_type", "mid"),
             "size_usd": q.get("size_usd"),
             "price_impact_pct": q.get("price_impact_pct"),
+            "wrapper": q.get("wrapper"),
         })
 
     result = {"underlying": underlying, "normalized": normalized, "excluded": excluded, "warnings": warnings}
@@ -138,8 +139,23 @@ def compare(payload):
     mid = (max(prices) + min(prices)) / 2.0
     spread_pct = (dearest["price_usd"] - cheapest["price_usd"]) / mid * 100.0 if mid else None
 
+    # Cross-wrapper check: the same underlying can be tokenized by different issuers
+    # (Backed xStocks / Binance bStocks / Bitget r-line). Those are separate redemption
+    # claims with separate counterparty risk, so a price gap between them can persist
+    # legitimately and is NOT necessarily capturable. Reported, not used to flip
+    # `reliable` — the existing xStocks-vs-bStocks comparison predates this field and
+    # downgrading it silently would change certified behaviour for every caller.
+    wrappers = sorted({n["wrapper"] for n in normalized if n.get("wrapper")})
+    if len(wrappers) > 1:
+        warnings.append(
+            "comparison spans different tokenization wrappers (" + ", ".join(wrappers) + ") — "
+            "these are distinct issuers/redemption claims, so part of the gap may be issuer risk "
+            "rather than a capturable spread; compare within one wrapper for a clean arb read"
+        )
+
     basis = "executable" if price_types == {"executable"} else ("mid" if price_types == {"mid"} else "mixed")
     result.update({
+        "wrappers": wrappers,
         "cheapest": {"venue": cheapest["venue"], "price_usd": cheapest["price_usd"]},
         "dearest": {"venue": dearest["venue"], "price_usd": dearest["price_usd"]},
         "spread_pct": round(spread_pct, 4) if spread_pct is not None else None,
@@ -176,6 +192,25 @@ def _selftest():
     check("clean: reliable", r1["reliable"] is True)
     check("clean: spread ~0.995%", abs(r1["spread_pct"] - 0.995024) < 0.01)
     check("clean: cheapest=solana", r1["cheapest"]["venue"] == "solana_jupiter")
+
+    # cross-wrapper: same underlying, two different issuers -> must warn (but stay reliable,
+    # since nothing about freshness/settlement/market-state is wrong)
+    rw = compare({"underlying": "TSLA", "now_ms": NOW, "pegs": {"USDC": 1.0, "USDT": 1.0}, "quotes": [
+        {"venue": "gate", "price": 250.0, "settlement": "USDT", "price_type": "mid", "wrapper": "backed-xstocks",
+         "timestamp_ms": NOW - 1000, "verified": True, "market_open": True},
+        {"venue": "bitget", "price": 252.5, "settlement": "USDT", "price_type": "mid", "wrapper": "bitget-r",
+         "timestamp_ms": NOW - 1000, "verified": True, "market_open": True}]})
+    check("cross-wrapper: warns", any("tokenization wrappers" in w for w in rw["warnings"]))
+    check("cross-wrapper: reports both wrappers", rw["wrappers"] == ["backed-xstocks", "bitget-r"])
+    check("cross-wrapper: still reliable (not silently downgraded)", rw["reliable"] is True)
+
+    # same-wrapper comparison must NOT emit the cross-wrapper warning
+    rs = compare({"underlying": "TSLA", "now_ms": NOW, "pegs": {"USDT": 1.0}, "quotes": [
+        {"venue": "gate", "price": 250.0, "settlement": "USDT", "price_type": "mid", "wrapper": "backed-xstocks",
+         "timestamp_ms": NOW - 1000, "verified": True, "market_open": True},
+        {"venue": "bybit", "price": 250.4, "settlement": "USDT", "price_type": "mid", "wrapper": "backed-xstocks",
+         "timestamp_ms": NOW - 1000, "verified": True, "market_open": True}]})
+    check("same-wrapper: no cross-wrapper warning", not any("tokenization wrappers" in w for w in rs["warnings"]))
 
     # 2. THE fake-spread case: USDT depeg → naive ~3% must normalize to ~0% + peg warning
     r2 = compare(_FAKE_SPREAD_DEMO)

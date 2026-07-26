@@ -8,7 +8,21 @@ so the gate (`--selftest`) is deterministic over recorded real responses while
 ready to pipe into `spread.py`.
 
 Live keyless venues (probe-verified 2026-06-20): gate, bybit, binance_bstocks, solana_jupiter.
-Deferred (no keyless public read): kraken (xStocks not on public AssetPairs), bitget (keyed wallet API).
+                                  (probe-verified 2026-07-25): bitget.
+
+Deferred (no keyless public read):
+  kraken — re-probed 2026-07-25 against `api.kraken.com/0/public` and still unavailable, but the
+    reason is not "needs a key": `AssetPairs` (1518 pairs) and `Assets` (819 assets) contain NO
+    equity, and `Ticker?pair=TSLAxUSD` returns `EQuery:Unknown asset pair`. A key would not help
+    — that surface's tradable universe simply does not include the instrument. Scoped claim: it
+    covers the current public Spot REST surface only, not other Kraken products or regions.
+
+Note on `bitget` (added 2026-07-25): the earlier "keyed wallet API" deferral conflated Bitget
+  *Wallet* (on-chain, keyed) with the Bitget *exchange* spot API, which is public and keyless.
+  Bitget lists tokenized equities under a DIFFERENT wrapper than the xStocks/bStocks venues:
+  baseCoin is `r<TICKER>` (e.g. `rTSLA`) on Arbitrum, not Backed's Solana xStocks. Identifier is
+  venue-verified, but the issuer differs — see `wrapper` in symbology and the cross-wrapper
+  warning emitted by spread.py.
 
 Usage:
     python3 adapters.py --live <UNDERLYING>     # fetch live venues -> spread.py payload (stdout)
@@ -32,7 +46,7 @@ except Exception:  # tzdata unavailable -> market state unknown (fail-safe to un
     _ET = None
 
 DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "symbology.json")
-LIVE_VENUES = ("gate", "bybit", "binance_bstocks", "solana_jupiter")
+LIVE_VENUES = ("gate", "bybit", "binance_bstocks", "bitget", "solana_jupiter")
 
 
 def us_equity_market_open(now_ms):
@@ -81,6 +95,28 @@ def parse_bybit(raw):
             "settlement": "USDT", "price_type": "mid"}
 
 
+def parse_bitget(raw):
+    if raw.get("code") not in (None, "00000"):
+        raise ValueError(f"bitget non-success code {raw.get('code')!r}: {raw.get('msg')!r}")
+    rows = raw.get("data") or []
+    if not rows:
+        raise ValueError("bitget empty data (unknown symbol?)")
+    row = rows[0]
+    bid, ask = float(row["bidPr"]), float(row["askPr"])
+    if bid <= 0 or ask <= 0:
+        raise ValueError("bitget one-sided/empty book (non-positive bid or ask)")
+    q = {"venue": "bitget", "price": round((bid + ask) / 2, 6), "bid": bid, "ask": ask,
+         "settlement": "USDT", "price_type": "mid"}
+    # Bitget stamps the book itself; prefer it over our wall-clock so freshness is venue-truth.
+    ts = row.get("ts")
+    if ts is not None:
+        try:
+            q["venue_ts_ms"] = int(ts)
+        except (TypeError, ValueError):
+            pass
+    return q
+
+
 def parse_binance(raw):
     return {"venue": "binance_bstocks", "price": float(raw["price"]),
             "settlement": "USDT", "price_type": "mid", "note": "last-trade price (no bid/ask via this endpoint)"}
@@ -115,11 +151,36 @@ def fetch_binance(sym):
     return parse_binance(_get(f"https://api.binance.com/api/v3/ticker/price?symbol={sym}"))
 
 
+def fetch_bitget(sym):
+    return parse_bitget(_get(f"https://api.bitget.com/api/v2/spot/market/tickers?symbol={sym}"))
+
+
 def fetch_jupiter(mint, decimals, usdc_mint, usdc_decimals):
     amount = 10 ** decimals  # quote 1.0 token
     raw = _get(f"https://lite-api.jup.ag/swap/v1/quote?inputMint={mint}&outputMint={usdc_mint}"
                f"&amount={amount}&slippageBps=50")
     return parse_jupiter(raw, decimals, usdc_mint, usdc_decimals)
+
+
+def stamp_quote(q, info, now_ms, market_open):
+    """Attach freshness/provenance to a parsed quote. Pure, so the selftest can
+    exercise the REAL stamping rule instead of restating it.
+
+    Freshness must reflect the BOOK, not our fetch. Where a venue stamps its own
+    book (bitget `ts`), that timestamp wins: stamping fetch-time over it would make
+    an arbitrarily stale quote look fresh and let it into a "reliable" spread.
+    Venues that publish no timestamp keep fetch-time (the best available).
+    """
+    q.update({"timestamp_ms": q.get("venue_ts_ms") or now_ms,
+              "verified": info.get("verified", False), "market_open": market_open})
+    if q.get("venue_ts_ms"):
+        q["fetched_at_ms"] = now_ms
+        q["book_lag_ms"] = now_ms - q["venue_ts_ms"]
+    # tokenization wrapper (issuer) — legs from different wrappers are NOT the same
+    # redemption claim, so spread.py warns when a comparison spans wrappers.
+    if info.get("wrapper"):
+        q["wrapper"] = info["wrapper"]
+    return q
 
 
 def live_payload(underlying):
@@ -144,9 +205,11 @@ def live_payload(underlying):
                 q = fetch_bybit(info["id"])
             elif v == "binance_bstocks":
                 q = fetch_binance(info["id"])
+            elif v == "bitget":
+                q = fetch_bitget(info["id"])
             elif v == "solana_jupiter":
                 q = fetch_jupiter(info["id"], info["decimals"], usdc["mint"], usdc["decimals"])
-            q.update({"timestamp_ms": now_ms, "verified": info.get("verified", False), "market_open": market_open})
+            stamp_quote(q, info, now_ms, market_open)
             quotes.append(q)
         except (URLError, HTTPError, KeyError, ValueError, IndexError) as e:
             errors.append({"venue": v, "error": str(e)})
@@ -174,6 +237,16 @@ _FIX_GATE = [{"currency_pair": "TSLAX_USDT", "last": "402.68", "lowest_ask": "40
 _FIX_BYBIT = {"retCode": 0, "result": {"category": "spot", "list": [
     {"symbol": "TSLAXUSDT", "bid1Price": "402.6", "ask1Price": "402.7", "lastPrice": "402.55"}]}}
 _FIX_BINANCE = {"symbol": "TSLABUSDT", "price": "402.43000000"}
+# recorded real bitget response (probe 2026-07-25)
+_FIX_BITGET = {"code": "00000", "msg": "success", "requestTime": 1784983322373, "data": [
+    {"open": "321.58", "symbol": "RTSLAUSDT", "high24h": "314.31", "low24h": "306.53",
+     "lastPr": "311.5", "baseVolume": "42635736.6937", "ts": "1784983320925",
+     "bidPr": "311.47", "askPr": "311.5", "bidSz": "0.8098", "askSz": "9.9331"}]}
+# error-shaped bitget responses the parser must reject rather than mis-price
+_FIX_BITGET_EMPTY = {"code": "00000", "msg": "success", "data": []}
+_FIX_BITGET_ERR = {"code": "40034", "msg": "Parameter symbol does not exist", "data": None}
+_FIX_BITGET_ONESIDED = {"code": "00000", "msg": "success", "data": [
+    {"symbol": "RTSLAUSDT", "bidPr": "0", "askPr": "311.5", "ts": "1784983320925"}]}
 _FIX_JUPITER = {"inputMint": "XsDoVfqeBukxuZHWhdvWHBhgEHjGNst4MLodqsJHzoB", "inAmount": "100000000",
                 "outputMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", "outAmount": "401273174",
                 "swapMode": "ExactIn", "slippageBps": 50, "priceImpactPct": "0.000735096", "swapUsdValue": "401.273174"}
@@ -195,6 +268,45 @@ def _selftest():
     bn = parse_binance(_FIX_BINANCE)
     check("binance price = 402.43", abs(bn["price"] - 402.43) < 1e-6)
     check("binance settlement USDT", bn["settlement"] == "USDT")
+
+    bg = parse_bitget(_FIX_BITGET)
+    check("bitget price = mid(311.47,311.5) = 311.485", abs(bg["price"] - 311.485) < 1e-6)
+    check("bitget settlement USDT / mid", bg["settlement"] == "USDT" and bg["price_type"] == "mid")
+    check("bitget carries venue book timestamp", bg.get("venue_ts_ms") == 1784983320925)
+    # regression: a stale bitget book must NOT be re-stamped with fetch time. Before the fix
+    # a 10-minute-old book passed the freshness window and produced a "reliable" 3.26% spread
+    # out of thin air. This calls the REAL stamping helper used by live_payload — restating
+    # the rule inside the test would stay green if production regressed.
+    _now = 1784983320925
+    _stale = parse_bitget({"code": "00000", "data": [
+        {"symbol": "RTSLAUSDT", "bidPr": "300.0", "askPr": "300.1", "ts": "1784982720925"}]})
+    _stamped = stamp_quote(_stale, {"verified": True, "wrapper": "bitget-r"}, _now, True)
+    check("stale bitget book keeps its own timestamp (not fetch time)",
+          _stamped["timestamp_ms"] == 1784982720925)
+    check("stale bitget book reports its lag", _stamped["book_lag_ms"] == 600_000)
+    check("stamped quote carries the wrapper", _stamped["wrapper"] == "bitget-r")
+    # a venue with no book timestamp must still get fetch-time (the best available)
+    _nots = stamp_quote({"venue": "gate", "price": 1.0}, {"verified": True}, _now, True)
+    check("timestamp-less venue falls back to fetch time", _nots["timestamp_ms"] == _now)
+    check("timestamp-less venue reports no lag", "book_lag_ms" not in _nots)
+    # end-to-end through spread.py: the stale leg must actually be excluded
+    import spread as _spread
+    _r = _spread.compare({"underlying": "TSLA", "now_ms": _now, "pegs": {"USDT": 1.0}, "quotes": [
+        dict(_stamped),
+        {"venue": "gate", "price": 310.0, "settlement": "USDT", "price_type": "mid",
+         "timestamp_ms": _now, "verified": True, "market_open": True, "wrapper": "backed-xstocks"}]})
+    check("stale bitget leg is excluded by spread.py",
+          any(e["venue"] == "bitget" for e in _r["excluded"]))
+    check("no fabricated spread survives the stale leg", _r["spread_pct"] is None)
+    # bitget wraps errors in a 200 body — a naive parser would read data[0] off a failure
+    # response (or off an empty list) and either crash or invent a price. Reject explicitly.
+    for label, fixture in (("empty-data", _FIX_BITGET_EMPTY), ("error-code", _FIX_BITGET_ERR),
+                           ("zero-bid", _FIX_BITGET_ONESIDED)):
+        try:
+            parse_bitget(fixture)
+            check(f"bitget {label} rejected", False)
+        except ValueError:
+            check(f"bitget {label} rejected", True)
 
     USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
     j = parse_jupiter(_FIX_JUPITER, 8, USDC)

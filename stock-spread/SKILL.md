@@ -1,6 +1,6 @@
 ---
 name: stock-spread
-description: "READ-ONLY cross-venue price & spread intelligence for tokenized stocks (xStocks / Binance bStocks). Use when the user wants to compare an equity's price across venues, find where a tokenized stock is cheapest/dearest, see the CEX-vs-DEX spread, or look up tokenized-stock quotes — e.g. 'compare TSLA across venues', 'where is AAPLx cheapest', 'tokenized Tesla price', 'xStocks spread for NVDA'. NEVER trades, swaps, transfers, or signs — quotes and comparison only."
+description: "READ-ONLY cross-venue price & spread intelligence for tokenized stocks (xStocks / Binance bStocks / Bitget r-line). Use when the user wants to compare an equity's price across venues, find where a tokenized stock is cheapest/dearest, see the CEX-vs-DEX spread, or look up tokenized-stock quotes — e.g. 'compare TSLA across venues', 'where is AAPLx cheapest', 'tokenized Tesla price', 'xStocks spread for NVDA'. NEVER trades, swaps, transfers, or signs — quotes and comparison only."
 ---
 
 # Stock Spread — Cross-Venue Tokenized-Stock Price Intelligence (READ-ONLY)
@@ -18,16 +18,38 @@ description: "READ-ONLY cross-venue price & spread intelligence for tokenized st
 - Non-stock crypto prices → use the relevant DEX/CEX market skill (e.g. `gate-dex-market`, `okx-dex-market`).
 
 ## Coverage (v1)
-| Venue | Type | Settlement | Live keyless read |
-|---|---|---|---|
-| Gate | CEX | USDT | ✅ |
-| Bybit | CEX | USDT | ✅ |
-| Binance bStocks | CEX | USDT | ✅ |
-| Solana / Jupiter | DEX (executable) | USDC | ✅ |
-| Kraken | CEX | USD | ⛔ deferred — xStocks not on public `AssetPairs` |
-| Bitget | wallet | USDT | ⛔ deferred — keyed wallet API |
+| Venue | Type | Settlement | Wrapper (issuer) | Live keyless read |
+|---|---|---|---|---|
+| Gate | CEX | USDT | Backed xStocks | ✅ |
+| Bybit | CEX | USDT | Backed xStocks | ✅ |
+| Binance bStocks | CEX | USDT | Binance bStocks | ✅ |
+| Bitget | CEX | USDT | Bitget `r`-line (Arbitrum) | ✅ |
+| Solana / Jupiter | DEX (executable) | USDC | Backed xStocks | ✅ |
+| Kraken | CEX | USD | — | ⛔ unavailable — see below |
+
+**Kraken: absent from the current public Spot REST surface, not key-gated.** Re-probed
+2026-07-25 against `api.kraken.com/0/public`: `AssetPairs` (1518 pairs) and `Assets`
+(819 assets) contain no equity, and `Ticker?pair=TSLAxUSD` returns
+`EQuery:Unknown asset pair`. Those endpoints are the tradable universe *of that surface*, so an
+API key would not reveal more of it — the instrument simply is not there to read. This says
+nothing about whether Kraken offers tokenized equities through some other product, region, or
+API; it scopes only what this skill can read today. Do not add a Kraken adapter until the
+instruments appear on a public endpoint we can actually query.
+
+⚠️ **Wrappers are not fungible.** Bitget lists a *different tokenization* from the xStocks venues:
+baseCoin `r<TICKER>` (e.g. `rTSLA`, Arbitrum ERC-20 `0xf912911c9c8d5131929c758e66e6dc54e65cf3ba`),
+not Backed's Solana xStocks. Same underlying equity exposure, **different issuer, redemption path
+and counterparty risk** — so a price gap between wrappers can persist legitimately and is not
+automatically an arb. `spread.py` reports a `wrappers` list and warns whenever a comparison spans
+more than one. Bitget also marks these symbols `areaSymbol=yes` (region-restricted availability);
+quotes are public, tradability is not universal.
 
 Covered underlyings + exact per-venue identifiers live in `vendor/data/symbology.json` — **generated** by `catalog.py --refresh` (enumerated from each venue's own instrument list + Jupiter, with Solana mints verified against the Backed issuer `freezeAuthority`). ~36 underlyings auto-discovered; **not hand-maintained**. Unverified identifiers / unresolved mints are surfaced as warnings and never traded on.
+
+> Bitget lists far more tokenized equities (~568) than the xStocks/bStocks venues do. `catalog.py`
+> attaches Bitget only to underlyings another venue already established, because a single-venue
+> ticker cannot produce a cross-venue spread. The surplus is **reported** in the refresh
+> collisions list, never silently dropped — widening the universe is a product decision.
 
 **Spot-vs-perp basis** is available where an on-chain equity perp exists — currently Hyperliquid's `xyz` builder dex (trade.xyz HIP-3): TSLA, NVDA, AAPL, COIN, CRCL, HOOD, … Read-only mark + funding; the basis is a **signal**, not a capturable trade (funding-driven convergence, no anonymous redemption).
 
@@ -45,6 +67,9 @@ Covered underlyings + exact per-venue identifiers live in `vendor/data/symbology
 - If `reliable: false`, do **not** present the spread as actionable — explain the reason from `warnings` (e.g. **US market closed/unknown** — tokens trade 24/7 but off-hours the cross-venue spread is *shown but not certified*; timestamp skew; non-positive price excluded; fewer than 2 comparable venues).
 - The DEX (`executable`) leg is a quote for a **small clip (~1 token)** — read its `size_usd` and `price_impact_pct`; a thin-liquidity name can show high impact, so don't treat it as fillable at size without checking.
 - Always surface `warnings`, `excluded`, and `skipped` to the user; never silently drop a venue.
+- If `wrappers` holds more than one entry, say so plainly: the cheap leg and the dear leg are
+  **different issuers' tokens**, so part of the gap is issuer/redemption risk rather than edge.
+  For a clean arb read, compare within a single wrapper.
 
 ## Safety rules
 1. **Read-only (no financial/on-chain writes).** Never trade, swap, transfer, or sign; no API keys, no wallet. The *only* filesystem write is `catalog.py --refresh` regenerating the local `symbology.json` cache.
