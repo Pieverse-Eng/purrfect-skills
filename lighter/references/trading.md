@@ -7,8 +7,9 @@ and `update-margin` are account-changing. Follow the Confirmation Contract in
 `order-preview` is non-mutating: it only computes. No execution confirmation.
 
 Trading integration must be enabled and `account.status` should be `ready`
-before writes. When partner attribution is configured, complete
-[Partner Fee Authorization](../SKILL.md#partner-fee-authorization) first.
+before writes. Complete
+[Transaction Fee Authorization](../SKILL.md#transaction-fee-authorization)
+first when required.
 
 ## Inspect orders and activity
 
@@ -154,12 +155,16 @@ Silent preparation:
 
 1. `status` → enable if needed (confirmed).
 2. `account` → must reach `ready` (open-account / wait otherwise).
-3. `partner-fee-status` → approve if required (confirmed).
+3. `partner-fee-status` → if needed, user consent for the 0.05% transaction fee,
+   then `approve-partner-fee` (confirmed).
 4. `market` resolve + `order-book-depth` + `positions` / `balances`.
 5. User confirmation with full parameters.
 6. `order` (or leverage then `order`).
 7. Verify with `active-orders` / `trades` / `positions` — never claim fill from
-   submit alone.
+   submit alone. If the submit (or later `request-status`) includes `txHash`,
+   add
+   `https://app.lighter.xyz/explorer/logs/<txHash>`
+   to the user summary (see Explorer Links in `SKILL.md`).
 
 ## Idempotency and recovery
 

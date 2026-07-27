@@ -18,7 +18,8 @@ If `account.status` is not `ready`, follow first-open or wait paths before
 promising a trade.
 
 For every order path: after the account is ready, run
-`purr lighter partner-fee-status` and complete partner fee consent when required.
+`purr lighter partner-fee-status` and complete 0.05% transaction fee consent
+when required.
 
 ## A. First open and fund
 
@@ -50,6 +51,8 @@ purr lighter deposits --limit 5
 ```
 
 4. Summarize L1 address, account status, remaining source-chain USDC and gas.
+   If `depositTxHash` / `approvalTxHash` are present, add source-chain explorer
+   links (see Explorer Links in `SKILL.md`), not the Lighter logs URL.
 
 ## B. Add funds after open
 
@@ -63,6 +66,8 @@ purr lighter deposit --amount 50 --source-chain-id 42161
 
 4. Track `deposit-status` / `deposits` until credited; then `balances`. Do not
    re-run deposit on policy deferred or unknown — observe the same request.
+   Link any L1 `depositTxHash` / `approvalTxHash` with the source-chain
+   explorer for that `sourceChainId`.
 
 ## C. Crypto perp open (example: long SOL)
 
@@ -98,6 +103,9 @@ purr lighter positions
 purr lighter trades --market SOL --market-type perp --limit 5
 ```
 
+If the order (or leverage) response has `txHash`, include
+`https://app.lighter.xyz/explorer/logs/<txHash>` in the result summary.
+
 ## D. Spot buy (example: LIT)
 
 1. Gates + fee status.
@@ -122,7 +130,8 @@ purr lighter order --market SOL --market-type perp --side sell --type market \
   --size <position-size> --price <worst-acceptable> --reduce-only true
 ```
 
-3. Verify positions are flat; cancel leftover orders if needed.
+3. Verify positions are flat; cancel leftover orders if needed. Include the
+   Lighter explorer link when `txHash` is present.
 
 ## F. Cancel working orders
 

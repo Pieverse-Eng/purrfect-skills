@@ -110,7 +110,9 @@ purr lighter deposits --limit 5
 Ordinary `deposit` before open fails with `LIGHTER_ACCOUNT_NOT_READY`; the CLI
 suggests the matching `open-account` command.
 
-## Partner fee
+## Transaction fee
+
+Fixed additional **0.05%** transaction fee on orders.
 
 ```bash
 purr lighter partner-fee-status
@@ -119,14 +121,15 @@ purr lighter approve-partner-fee
 
 | Status | Meaning |
 | --- | --- |
-| `not_configured` | Platform has no integrator index; orders do not require this approval |
-| `approval_required` | Approval missing or insufficient for the fixed 5 bps fee |
+| `not_configured` | Fee authorization not required for orders |
+| `approval_required` | Approval missing or insufficient for the fixed 0.05% fee |
 | `approved` | Current approval covers maker/taker spot and perp |
 | `expired` | Prior approval past `approvalExpiry` |
 
-When configured, check fee status **before** order confirmation or any
+When required, check status **before** order confirmation or any
 account-changing preparation for an order. Consent language lives in
-`SKILL.md`. `approve-partner-fee` is account-changing and needs its own yes.
+`SKILL.md` (Transaction Fee Authorization). `approve-partner-fee` is
+account-changing and needs its own yes.
 
 ## Portfolio reads
 

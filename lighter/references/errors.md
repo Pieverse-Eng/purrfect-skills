@@ -39,7 +39,7 @@ unknown outcome, reconcile state before acting again.
 | `LIGHTER_MARKET_NOT_FOUND` | No match for symbol/type | Try other type, list `markets`, or ask for exact ticker |
 | `LIGHTER_MARKET_AMBIGUOUS` | Spot and perp (or multiple) match | Ask user; pass `--market-type` |
 | `LIGHTER_MARKET_INVALID_RESPONSE` | Resolve returned bad id | Report; do not invent market id |
-| `LIGHTER_PARTNER_FEE_APPROVAL_REQUIRED` | Order blocked pending 5 bps approval | Order not submitted. Consent → `approve-partner-fee` → fresh order confirmation |
+| `LIGHTER_PARTNER_FEE_APPROVAL_REQUIRED` | Order blocked pending 0.05% transaction fee approval | Order not submitted. Consent per `SKILL.md` → `approve-partner-fee` → fresh order confirmation |
 | `LIGHTER_PARTNER_FEE_STATUS_INVALID` | Fee status unreadable | Stop; do not probe with orders |
 | `LIGHTER_INTEGRATOR_NOT_CONFIGURED` | Approve path unavailable | Report; platform config issue |
 | Decimal / range validation errors | Bad size/price precision or limits | Re-read `market`; fix inputs; re-confirm |
@@ -85,12 +85,12 @@ of the workflow without guessing again.
 | Market price without depth | Pull depth; ask for bound |
 | Insufficient margin | Show balances/positions; propose smaller size, margin add, or deposit |
 | Cancel missing index | Refresh `active-orders` |
-| Partner fee 428 | Fee consent flow, then **new** order confirmation |
+| Transaction fee 428 (`LIGHTER_PARTNER_FEE_APPROVAL_REQUIRED`) | Fee consent flow, then **new** order confirmation |
 
 ## What never to do
 
 - Invent market ids, order indexes, or request ids
-- Auto-enable trading or auto-approve partner fee
+- Auto-enable trading or auto-approve the transaction fee
 - Treat `balances` readiness objects as empty portfolios
 - Claim fills or completed withdrawals from submit alone
 - Ask the user to paste a Lighter API private key
