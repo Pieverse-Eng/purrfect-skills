@@ -1,0 +1,251 @@
+---
+name: lighter
+description: Use when the user asks to trade or manage Lighter (lighter.xyz) — e.g. check my Lighter balance, open a long on SOL perp, buy LIT spot, set leverage to 5x, cancel my Lighter orders, open a Lighter account, deposit USDC to Lighter, withdraw from Lighter, fast withdraw, update margin, what is funding on BTC, enable Lighter trading, approve the Lighter transaction fee, or other Lighter account, market-data, order, margin, or deposit/withdraw requests.
+---
+
+# Lighter
+
+## Overview
+
+Lighter (lighter.xyz) mainnet trading through the platform gateway and
+`purr lighter`. Covers market research, perpetual and spot orders, leverage and
+margin controls, order lifecycle, multi-chain USDC funding, secure and fast
+withdrawals, and account readiness (including first-time `open-account`).
+
+Access has two independent gates:
+
+1. **Lighter Trading integration** — `status` / `enable` / `disable`
+2. **Account readiness** — TEE wallet must open a Lighter account; the platform
+   then generates and registers the API key. Agents never handle private keys.
+
+Pick the matching command group below, then read that reference before acting.
+
+## Scope
+
+| In scope | Out of scope |
+| --- | --- |
+| Market data, orders, leverage, margin on Lighter mainnet | Direct Lighter REST/SDK calls or hand-built signatures |
+| Perp and spot markets | Testnet or invented network flags |
+| Multi-chain USDC open-account and deposit | Bridging USDC onto a source chain (use another skill first) |
+| Secure withdraw (Ethereum) and fast withdraw (Arbitrum) | Account-to-account transfers (CLI does not support them) |
+| Fixed 0.05% transaction fee status / approval | Pasting or configuring Lighter API private keys |
+| Enable/disable Lighter Trading | Cross-venue arb execution |
+
+## Core Rules
+
+1. Use `purr lighter <command>` for every Lighter action. Do not call Lighter
+   APIs or construct signatures yourself.
+2. Before any gateway read or write, ensure trading is enabled. Run
+   `purr lighter status` when unsure. If disabled, explain and obtain
+   confirmation, then `enable` — never enable silently. Only `status`,
+   `enable`, and `disable` work while trading is off.
+3. Treat `purr lighter account` as the readiness call. Branch on
+   `status` (`account_opening_required` → `initializing` →
+   `account_discovered` → `verifying_key` → `ready` / `error`). First use is
+   **`open-account`**, not a normal deposit. Ordinary deposits fail with
+   `LIGHTER_ACCOUNT_NOT_READY` until the account is open.
+4. **`--market-type` is effectively mandatory** whenever you pass `--market`.
+   Several tickers exist as both spot and perp (`ETH`, `LIT`, `LDO`, `LINK`,
+   `AAVE`, `UNI`, `SKY`, `AZTEC`, …). Prefer `--market-type perp|spot`. On
+   ambiguity the CLI returns `LIGHTER_MARKET_AMBIGUOUS` — ask the user; never
+   pick silently.
+5. **`--type` ≠ `--market-type`.** `--market-type` filters perp vs spot.
+   `--type` is only for `order` / `place-orders` (order type) and `trades`
+   (side filter). Passing `--type perp` is always wrong.
+6. Resolve markets with
+   `purr lighter market --market <SYM> --market-type <perp|spot>` (or
+   `--market-id`) and use the returned decimals / market id. Never invent
+   market ids or precision.
+7. **`--price` is required on every order, including market orders.** For a
+   market order it is the worst acceptable fill (slippage bound). Walk
+   `order-book-depth` for the exact size, put the bound and its distance from
+   touch/VWAP in the confirmation, and stop if depth is insufficient. If the
+   user gave no slippage tolerance, ask — never invent a default buffer.
+8. Looking up status, markets, books, candles, funding, account, balances,
+   positions, orders, trades, pnl, deposits, requests, and previews needs no
+   confirmation. Anything that can change orders, positions, leverage, margin,
+   funds, fee authorization, or integration state requires confirmation first
+   (see Confirmation Contract).
+9. Prepare silently. Do not narrate tool calls or announce the remaining steps
+   with “Let me…”. Speak when a user decision is needed, when an action
+   finishes, or when an error changes the workflow.
+10. Prefer CLI flags for ordinary single orders. Use `--body-json` /
+    `--body-file` only for `order-preview` (and other body-only paths). Do not
+    write payload files under `/tmp`.
+11. **Amounts are decimal USDC strings** on `open-account`, `deposit`,
+    `withdraw`, and `fast-withdraw` (for example `--amount 25`). There is no
+    `--amount-base-units` flag in this CLI.
+12. Do not retry account-changing actions after unknown submit, client timeout
+    on a write, or deferred policy. Reconcile with `requests`,
+    `deposit-status`, `active-orders`, `trades`, or `positions`. The only
+    intentional funding re-run is `open-account` when the response has
+    `nextAction: "resume_account_opening"` — see
+    [deposit-withdraw.md](references/deposit-withdraw.md).
+13. Do not claim a fill from a submit response alone. Verify with
+    `active-orders`, `inactive-orders`, `trades`, or `positions`. Do not claim
+    a withdraw has arrived from submit alone — keep any `request_id` and check
+    `request-status` / balances.
+14. When a write returns a hash, include a clickable explorer link in the user
+    summary (see Explorer Links): L2 `txHash` → Lighter logs URL; deposit /
+    open-account `depositTxHash` / `approvalTxHash` → source-chain explorer.
+    Never invent a hash. If no hash is present, omit the link.
+15. Mainnet only. Pass only documented flags; the platform rejects unknown
+    query/body keys.
+16. Before confirming **any** order (or modify that can re-apply fee checks),
+    run `purr lighter partner-fee-status` when the account is ready. If status
+    is `approval_required` or `expired`, follow Transaction Fee Authorization.
+    If `not_configured`, continue without prompting. Never use an order as a
+    fee-status probe.
+17. `balances` and `positions` hit the same readiness handler as `account`.
+    Before `status: ready`, treat the payload as a readiness object — not an
+    empty portfolio.
+18. `place-orders` submits **one** order (same body as `order`). It is not a
+    batch. `order-preview` is non-mutating and needs no execution confirmation.
+19. Withdrawals: without `--yes`, `withdraw` / `fast-withdraw` only **preview**.
+    With `--yes`, the CLI confirms and executes (fast withdraw re-quotes fees).
+    Secure withdraw minimum is **1 USDC** (destination Ethereum). Fast withdraw
+    minimum is **4 USDC after fee** (destination Arbitrum).
+20. Deposit minimums are per chain: Ethereum mainnet **1 USDC**; Arbitrum, Base,
+    Avalanche, HyperEVM **5 USDC**. Prefer `deposit-networks` / response
+    `minAmount` over memorized numbers.
+21. `disable` is blocked until the Lighter account is empty (no open orders,
+    positions, non-USDC spot, or active requests). Resolve exposure first;
+    never imply disable cancels or closes anything for you.
+22. Never ask the user for a Lighter API private key. Credential setup is
+    platform-managed during `open-account`.
+
+## Command Groups
+
+| Group | What it does | Reference |
+| --- | --- | --- |
+| Integration / readiness | status, enable/disable, account, open-account, transaction fee, balances, positions | [preflight.md](references/preflight.md) |
+| Market data | markets, books, depth, trades, candles, funding | [market-data.md](references/market-data.md) |
+| Symbols | Dual spot/perp tickers and `--market-type` rule | [symbols.md](references/symbols.md) |
+| Trading | order, preview, cancel, modify, leverage, margin | [trading.md](references/trading.md) |
+| Deposit / withdraw | multi-chain deposit, secure + fast withdraw, reconcile | [deposit-withdraw.md](references/deposit-withdraw.md) |
+| Full recipes | first open, fund, perp, spot, close, withdraw | [workflows.md](references/workflows.md) |
+| Errors | codes and stop / reconcile policy | [errors.md](references/errors.md) |
+
+## Explorer Links
+
+Never invent hashes. Prefer a labeled link (`Transaction: <url>`) over a bare
+hash. Use each hash **exactly** as returned (do not invent `0x` prefixing).
+
+### Lighter L2 (`txHash`)
+
+Successful L2 account actions may return `txHash` on the write response (also
+on `request-status` after reconcile). When present:
+
+```text
+https://app.lighter.xyz/explorer/logs/<txHash>
+```
+
+| Command | May return Lighter `txHash` |
+| --- | --- |
+| `order`, `place-orders` | yes |
+| `cancel`, `cancel-all` | yes |
+| `modify` | yes |
+| `update-leverage`, `update-margin` | yes |
+| `withdraw --yes`, `fast-withdraw --yes` | yes |
+| `approve-partner-fee` | yes |
+| `order-preview`, reads, previews without `--yes` | no |
+
+Example after a verified close:
+
+```text
+Position closed successfully.
+• Sold: 0.209 SOL
+• Exit: $76.448
+• Realized trading PnL: +$0.0017 before fees
+• SOL position: 0
+• No active orders
+• Transaction: https://app.lighter.xyz/explorer/logs/2ecb8bb98aee246c42a04c18a7d22137a2e5dfbd06d2a5de17166a9e4d32763545e5631b8bda2693
+```
+
+### Source-chain L1 (deposits / open-account)
+
+`open-account` and `deposit` do **not** use the Lighter logs URL. Responses and
+`deposit-status` may include **source-chain** fields such as:
+
+| Field | Meaning |
+| --- | --- |
+| `depositTxHash` | USDC transfer / gateway deposit tx on the source chain |
+| `approvalTxHash` | ERC-20 approve tx on the source chain (when present) |
+
+Never put these hashes under `app.lighter.xyz/explorer/logs/`. Link with the
+source chain explorer for `--source-chain-id` (or `sourceChainId` on the
+request). Prefer an `explorer` base from `purr lighter deposit-networks` when
+the network object includes one; otherwise use:
+
+| `--source-chain-id` | Explorer tx URL |
+| ---: | --- |
+| `1` (Ethereum) | `https://etherscan.io/tx/<hash>` |
+| `42161` (Arbitrum) | `https://arbiscan.io/tx/<hash>` |
+| `8453` (Base) | `https://basescan.org/tx/<hash>` |
+| `43114` (Avalanche) | `https://snowtrace.io/tx/<hash>` |
+| `999` (HyperEVM) | `https://hyperevmscan.io/tx/<hash>` |
+
+If only one hash is present, link that one. If both approval and deposit hashes
+exist, label them separately (e.g. `Approval:` / `Deposit:`). An L1 link proves
+the source-chain broadcast — not that Lighter has finished crediting; still
+track `deposit-status` / `account` for credit readiness.
+
+## Confirmation Contract
+
+Before any account-changing action (`enable`, `disable`, `open-account`,
+`deposit`, `order`, `place-orders`, `cancel`, `cancel-all`, `modify`,
+`update-leverage`, `update-margin`, `withdraw` with `--yes`, `fast-withdraw`
+with `--yes`, `approve-partner-fee`, `reconcile-deposit`):
+
+1. Summarize the concrete parameters: market **and market type**, side, size,
+   price (for market orders, state that price is the worst acceptable fill),
+   order type / TIF, chain and amount for funding, destination for withdraws,
+   and any margin or leverage impact.
+2. Ask exactly:
+   `Do you want to execute this Lighter action with these parameters? (Yes/No)`
+3. Run only after an explicit yes on the immediately preceding user turn for
+   that unchanged action. The initial request, any changed detail, or an
+   intervening request requires confirmation again.
+
+One confirmation authorizes one action. The sole exception is a leverage change
+immediately followed by its order: one final confirmation may authorize both
+when the summary includes the leverage value, margin mode, and full order
+parameters. Execute leverage first; submit the order only after it succeeds.
+Transaction fee approval always requires its own consent prompt.
+
+## Transaction Fee Authorization
+
+**Orders** require authorization for a fixed additional **0.05%** transaction
+fee on executed notional (maker and taker, spot and perp). Non-order actions do
+not carry this fee.
+
+Check status before order confirmation:
+
+```bash
+purr lighter partner-fee-status
+```
+
+| Status | Action |
+| --- | --- |
+| `not_configured` | Continue; do not prompt for fee consent |
+| `approved` | Continue; do not re-prompt |
+| `approval_required` or `expired` | Request consent with the prompt below, then `purr lighter approve-partner-fee` |
+| Error / unknown | Stop; do not submit an order as a probe |
+
+User-facing message when approval is needed (keep to these two sentences):
+
+`Lighter trades include an additional 0.05% transaction fee.`
+
+Then ask exactly:
+
+`Do you approve the additional 0.05% transaction fee for future Lighter trades? (Yes/No)`
+
+Keep the explanation brief. Do not expose fee implementation details, fee unit
+integers, or internal error codes unless the user asks. After successful
+authorization, report only that the `0.05% transaction fee` was authorized,
+then continue preparation silently until the next confirmation.
+
+Only an explicit yes on the immediately preceding turn authorizes
+`approve-partner-fee`. On no, status-check failure, or unknown status, stop. If
+an order returns `LIGHTER_PARTNER_FEE_APPROVAL_REQUIRED`, follow the 428 path in
+[errors.md](references/errors.md); never auto-retry the order.
