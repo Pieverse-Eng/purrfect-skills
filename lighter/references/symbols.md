@@ -1,33 +1,60 @@
-# Lighter market symbols
+# Symbols and market types
 
-Authoritative list supplied by the platform team. **Always cross-check against
-`purr lighter markets --market-type <perp|spot>` before ordering** — listings
-change and this file is a snapshot, not the source of truth. If a symbol here is
-missing live, trust the live response and say so.
+Lighter exposes both **perp** and **spot** markets. The CLI resolves
+`--market <symbol>` against live `markets` data. Always pass
+`--market-type perp|spot` when the user’s intent is known.
 
-## The `--market-type` rule (read this before any order)
+## Rules
 
-`--market` takes the **base symbol**, never the pair. Pass `ETH`, not `ETH/USDC`.
+1. Prefer symbols from a live resolve:
+   `purr lighter market --market <SYM> --market-type <t>`.
+2. Spot display names look like `ETH/USDC`; pass the **base** as `--market ETH`
+   with `--market-type spot`.
+3. Perp display symbols usually match `--market` (for example `SOL`, `BTC`,
+   `TSLA`).
+4. If a ticker exists on both books, omitting `--market-type` (or using `all`)
+   often yields `LIGHTER_MARKET_AMBIGUOUS`. Ask the user; never pick silently.
+5. `1000`-prefixed perps (for example `1000PEPE`, `1000BONK`) are **per-1000
+   units** of the underlying — size and PnL scale accordingly.
+6. Market lists change. Treat the tables below as orientation, not a guarantee.
+   When in doubt, list:
 
-`--market-type` is **required in practice**: eight symbols exist in *both* books.
-Omitting it on these makes the CLI fail with
-`Lighter market "<SYM>" is ambiguous. Pass --market-type perp or spot.`
+```bash
+purr lighter markets --market-type perp
+purr lighter markets --market-type spot
+```
 
-**Dual-listed (spot *and* perp):** `AAVE` · `AZTEC` · `ETH` · `LDO` · `LINK` ·
-`LIT` · `SKY` · `UNI`
+## Dual-listed tickers (spot and perp)
 
-Treat that error as a genuine fork in intent — a spot buy and a perp long are
-different trades with different risk. Ask the user which they meant; never pick
-one to make the command succeed.
+These commonly collide — **always** pass `--market-type`:
 
-Do not confuse `--market-type` (perp vs spot) with `--type` (order type:
-`limit`, `market`, …). The CLI rejects `--type perp` explicitly.
+| Symbol | Spot pair (typical) | Also perp |
+| --- | --- | --- |
+| `ETH` | ETH/USDC | yes |
+| `LIT` | LIT/USDC | yes |
+| `LDO` | LDO/USDC | yes |
+| `LINK` | LINK/USDC | yes |
+| `AAVE` | AAVE/USDC | yes |
+| `UNI` | UNI/USDC | yes |
+| `SKY` | SKY/USDC | yes |
+| `AZTEC` | AZTEC/USDC | yes |
 
-## Spot markets (8)
+Example:
 
-`--market-type spot`. The market displays as a `/USDC` pair; pass only the base.
+```bash
+# Wrong if both exist — may be ambiguous
+purr lighter order --market ETH --side buy --size 0.1 --price 4000
 
-| Spot market | `--market` value |
+# Correct
+purr lighter order --market ETH --market-type perp --side buy --size 0.1 --price 4000
+purr lighter order --market ETH --market-type spot --side buy --size 0.1 --price 4000
+```
+
+## Spot markets (orientation)
+
+Pass `--market-type spot`. `--market` is the base asset:
+
+| Spot name | `--market` |
 | --- | --- |
 | ETH/USDC | `ETH` |
 | AZTEC/USDC | `AZTEC` |
@@ -38,60 +65,26 @@ Do not confuse `--market-type` (perp vs spot) with `--type` (order type:
 | SKY/USDC | `SKY` |
 | LIT/USDC | `LIT` |
 
-## Perp markets (219)
+## Perp markets (orientation)
 
-`--market-type perp`. The displayed symbol is the `--market` value.
-
-Note the mix: crypto, tokenized equities (`AAPL`, `NVDA`, `TSLA`, `MSTR`,
-`GOOGL`, `COIN`, …), indices (`SPX`, `US500`, `US100`, `QQQ`, `SPY`, `IWM`),
-FX (`EURUSD`, `USDJPY`, `GBPUSD`, `AUDUSD`, `USDKRW`, `USDHKD`, `USDCHF`,
-`USDCAD`, `NZDUSD`), commodities (`XAU`, `XAG`, `XPT`, `XPD`, `XCU`, `WTI`,
-`BRENTOIL`, `NATGAS`, `WHEAT`), and pre-IPO/thematic names (`OPENAI`,
-`ANTHROPIC`, `SPACEX`). Equity and index perps track markets with real trading
-hours even though the perp trades 24/7 — mention that when a user opens one
-outside US market hours.
-
-Symbols prefixed `1000` (`1000PEPE`, `1000BONK`, `1000SHIB`, `1000FLOKI`,
-`1000NOT`, `1000TOSHI`) are quoted per 1000 tokens. Size accordingly.
-
-| | | | | | | | |
-|---|---|---|---|---|---|---|---|
-| `0G` | `1000BONK` | `1000FLOKI` | `1000NOT` | `1000PEPE` | `1000SHIB` | `1000TOSHI` | `2Z` |
-| `AAOI` | `AAPL` | `AAVE` | `ADA` | `ADI` | `AERO` | `AI16Z` | `AMD` |
-| `AMZN` | `ANTHROPIC` | `APEX` | `APT` | `ARB` | `ARC` | `ARM` | `ASML` |
-| `ASTER` | `AUDUSD` | `AVAX` | `AVGO` | `AVNT` | `AXS` | `AZTEC` | `BABA` |
-| `BB` | `BCH` | `BE` | `BERA` | `BIO` | `BIRB` | `BMNR` | `BNB` |
-| `BOT` | `BOTZ` | `BRENTOIL` | `BTC` | `BYD` | `CAP` | `CBRS` | `CC` |
-| `CHIP` | `COIN` | `CRCL` | `CRO` | `CRV` | `CRWV` | `CTR` | `CXMT` |
-| `DASH` | `DATA` | `DELL` | `DIA` | `DOGE` | `DOLO` | `DOT` | `DRAM` |
-| `DUSK` | `DYDX` | `EDEN` | `EDGE` | `EIGEN` | `ENA` | `ETH` | `ETHFI` |
-| `EURUSD` | `EWY` | `FARTCOIN` | `FF` | `FIL` | `FOGO` | `FOLKS` | `GBPUSD` |
-| `GEV` | `GME` | `GMX` | `GOOGL` | `GRAM` | `GRASS` | `H100` | `HANMI` |
-| `HBAR` | `HOOD` | `HYPE` | `HYUNDAI` | `HYUNDAIUSD` | `IBM` | `ICP` | `INTC` |
-| `IWM` | `JTO` | `JUP` | `KAITO` | `KRCOMP` | `LAUNCHCOIN` | `LDO` | `LINEA` |
-| `LINK` | `LIT` | `LITE` | `LTC` | `MAGS` | `MEGA` | `MET` | `META` |
-| `MINIMAX` | `MKR` | `MNT` | `MON` | `MORPHO` | `MRVL` | `MSFT` | `MSTR` |
-| `MU` | `MYX` | `NATGAS` | `NBIS` | `NEAR` | `NMR` | `NOK` | `NOW` |
-| `NVDA` | `NZDUSD` | `ONDO` | `OP` | `OPENAI` | `ORCL` | `PAXG` | `PENDLE` |
-| `PENGU` | `PIPPIN` | `PLTR` | `POL` | `POPCAT` | `POPMART` | `PROVE` | `PUMP` |
-| `PYTH` | `QCOM` | `QNT` | `QQQ` | `RAIL` | `RESOLV` | `RIVER` | `RKLB` |
-| `ROBO` | `S` | `SAMSUNG` | `SAMSUNGUSD` | `SEI` | `SKHY` | `SKHYNIX` | `SKHYNIXUSD` |
-| `SKR` | `SKY` | `SMIC` | `SNDK` | `SOL` | `SOXL` | `SOXX` | `SPACEX` |
-| `SPCX` | `SPX` | `SPY` | `STABLE` | `STBL` | `STRC` | `STRK` | `SUI` |
-| `SYRUP` | `TAO` | `TENCENT` | `TIA` | `TRUMP` | `TRX` | `TSLA` | `TSM` |
-| `TTWO` | `UNI` | `URA` | `US100` | `US500` | `USDCAD` | `USDCHF` | `USDHKD` |
-| `USDJPY` | `USDKRW` | `USELESS` | `VIRTUAL` | `VVV` | `WEN` | `WHEAT` | `WIF` |
-| `WLD` | `WLFI` | `WTI` | `XAG` | `XAU` | `XCU` | `XIAOMI` | `XLM` |
-| `XMR` | `XPD` | `XPL` | `XPT` | `XRP` | `YZY` | `ZEC` | `ZHIPU` |
-| `ZK` | `ZORA` | `ZRO` | | | | | |
-
-## Sizing
-
-Size and price precision come from the market itself, not from this file:
+Pass `--market-type perp`. The list is long and includes crypto, equity-style,
+FX, and commodity symbols (for example `BTC`, `SOL`, `TSLA`, `NVDA`, `EURUSD`,
+`WTI`, `1000PEPE`). Prefer:
 
 ```bash
-purr lighter market --market SOL --market-type perp
+purr lighter markets --market-type perp --market <SYM>
+purr lighter market --market <SYM> --market-type perp
 ```
 
-Use the returned size/price decimals. A rounding the venue does not accept
-returns `LIGHTER_DECIMAL_PRECISION_UNSUPPORTED` or `LIGHTER_DECIMAL_INVALID`.
+Do not hard-code market ids from memory; ids can differ by deployment/meta
+updates. Always take `market_id` / `marketId` from a fresh resolve when needed.
+
+## Flag hygiene
+
+| Flag | Used for |
+| --- | --- |
+| `--market-type perp\|spot\|all` | Which book to query or trade |
+| `--type` on `order` / `place-orders` | Order type (`limit`, `market`, …) |
+| `--type` on `trades` | Side filter (`buy`, `sell`, `all`) |
+
+Never pass `--type perp` or `--type spot`.

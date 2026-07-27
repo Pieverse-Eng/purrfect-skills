@@ -1,77 +1,97 @@
 # Market data
 
-All read-only. No confirmation needed. 20s client timeout; safe to retry.
+Public and account-scoped Lighter market data through `purr lighter`. These
+commands only inspect data. Confirmation is not required. Trading integration
+must still be enabled.
 
-Every command below that takes `--market <symbol>` also takes
-`--market-type perp|spot|all` — pass it explicitly. See
-[symbols.md](symbols.md) for why (eight symbols are dual-listed).
-
-You may address a market either way:
-
-- `--market <SYMBOL> --market-type <perp|spot>` — preferred, readable
-- `--market-id <id>` — only when you already hold an id from a prior response
-
-Never hardcode a market id in a workflow; resolve the symbol each time.
-
-## Listing and resolving
+## Commands
 
 ```bash
-purr lighter markets --market-type perp            # all perp markets
-purr lighter markets --market-type spot            # all spot markets
+purr lighter markets [--market-type perp|spot|all] [--market-id <id> | --market <symbol>]
+purr lighter market (--market-id <id> | --market <symbol> [--market-type perp|spot|all])
+purr lighter order-books [--market-type perp|spot|all] [--market-id <id> | --market <symbol>]
+purr lighter order-book-depth (--market-id <id> | --market <symbol> [--market-type perp|spot|all]) [--limit <n>]
+purr lighter recent-trades (--market-id <id> | --market <symbol> [--market-type perp|spot|all]) [--limit <n>]
+purr lighter trades [--market-id <id> | --market <symbol> [--market-type perp|spot|all]] [--limit <n>]
+purr lighter candles (--market-id <id> | --market <symbol> [--market-type perp|spot|all]) \
+  --resolution <1m|5m|15m|30m|1h|4h|12h|1d|1w> \
+  --start-at <rfc3339> --end-at <rfc3339> --count-back <n>
+purr lighter funding-rates [--market-id <id> | --market <symbol> [--market-type perp|spot|all]]
+```
+
+| Command | Purpose |
+| --- | --- |
+| `markets` | List or filter markets |
+| `market` | Resolve one market (symbol → market id, decimals, type) |
+| `order-books` | Book summaries |
+| `order-book-depth` | L2 depth for sizing and market-order price bounds |
+| `recent-trades` | Recent public trades for a market |
+| `trades` | Account/public trade query (supports extra filters) |
+| `candles` | OHLCV; times are RFC 3339 with timezone |
+| `funding-rates` | Perp funding |
+
+## Symbol resolution
+
+Always resolve before placing or modifying an order:
+
+```bash
 purr lighter market --market SOL --market-type perp
+purr lighter market --market LIT --market-type spot
 purr lighter market --market-id 12
 ```
 
-`market` is the call that gives you **size and price decimals**. Read them
-before sizing an order — see [trading.md](trading.md).
+Prefer explicit `--market-type` whenever you use `--market`. Matching rules:
 
-Unknown symbol → `LIGHTER_MARKET_NOT_FOUND`. Do not retry with a guessed
-variant; check `markets` and report what actually exists.
+- Case-insensitive symbol match
+- Spot pair names may look like `ETH/USDC`; `--market ETH` matches the base
+- If multiple markets match, CLI errors with `LIGHTER_MARKET_AMBIGUOUS`
+- If none match, `LIGHTER_MARKET_NOT_FOUND`
 
-## Books and depth
+Once resolved, keep the returned **market id** and decimal metadata for the rest
+of the turn. You may pass either `--market-id` or `--market` on later commands;
+do not invent ids.
 
-```bash
-purr lighter order-books --market-type perp
-purr lighter order-book-depth --market SOL --market-type perp [--limit 100]
-```
+See [symbols.md](symbols.md) for dual-listed tickers and `1000*` contracts.
 
-`order-book-depth` is what you use to derive a market order's price bound.
-`--limit` is 1–250 (default 100).
+## Candles
 
-## Trades and candles
+Required flags: `--resolution`, `--start-at`, `--end-at`, `--count-back`.
 
-```bash
-purr lighter recent-trades --market SOL --market-type perp [--limit 100]
-purr lighter trades [--market SOL --market-type perp] [--limit 100]
-purr lighter candles --market SOL --market-type perp --resolution 1h --start-timestamp <unix> [--end-timestamp <unix>] [--count-back <n>]
-```
+Allowed resolutions: `1m`, `5m`, `15m`, `30m`, `1h`, `4h`, `12h`, `1d`, `1w`.
 
-`candles` requires `--resolution` and `--start-timestamp`. `--count-back` is
-1–5000.
-
-`trades` without a market returns your account's trades — that is the call for
-"did my order fill?", not the submit response.
-
-⚠️ On `trades`, `--type` means **side** (`buy` / `sell` / `all`), not order
-type. `--type` is accepted on only three commands: `order`, `place-orders`
-(order type) and `trades` (side). Everywhere else it errors — use
-`--market-type` for perp/spot.
-
-## Funding
+Timestamps must include timezone, for example:
 
 ```bash
-purr lighter funding-rates                                  # all markets
-purr lighter funding-rates --market BTC --market-type perp  # one market
+purr lighter candles --market BTC --market-type perp \
+  --resolution 1h \
+  --start-at 2026-07-01T00:00:00Z \
+  --end-at 2026-07-02T00:00:00Z \
+  --count-back 24
 ```
 
-Funding applies to perps only. When a user asks "what is funding on X", quote
-the rate with its sign and say which side pays: a positive rate means longs pay
-shorts. Do not annualize unless asked, and if you do, state the assumption.
+`--start-at` must be ≤ `--end-at`. Invalid ranges may return
+`LIGHTER_CANDLE_TIME_RANGE_INVALID`.
 
-## Reporting
+## Depth and pricing
 
-- Equity, index, and FX perps trade 24/7 on Lighter while their underlying
-  market has real trading hours. Off-hours prices can be thin and gap at the
-  open — say so rather than presenting a quiet book as a firm price.
-- Quote the book, not a single last price, when the user is about to trade.
-- `1000`-prefixed symbols are per-1000-token quotes ([symbols.md](symbols.md)).
+For market orders and large limits, always pull depth for the **exact size**:
+
+```bash
+purr lighter order-book-depth --market SOL --market-type perp --limit 100
+```
+
+Walk cumulative levels on the hit side (buys take asks). If depth cannot fill
+the size, stop and ask the user to resize — do not invent liquidity past the
+book. See [trading.md](trading.md) for how that bound becomes `--price`.
+
+## Trades filters (optional)
+
+`trades` accepts additional query flags when needed: `--order-index`,
+`--sort-by`, `--sort-dir`, `--from`, `--role`, `--type` (buy/sell/all),
+`--limit`, `--aggregate`. Keep filters minimal; large order indexes are decimal
+strings, not floats.
+
+## Timeouts
+
+Market-data reads use the 20s client timeout. Safe to retry on
+`LIGHTER_REQUEST_TIMEOUT` for pure reads.

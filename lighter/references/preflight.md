@@ -1,4 +1,4 @@
-# Preflight — integration, credentials, account
+# Preflight — integration, readiness, account
 
 Everything under the Lighter gateway requires the trading integration to be
 enabled. Only `status`, `enable`, and `disable` work while it is off.
@@ -6,159 +6,162 @@ enabled. Only `status`, `enable`, and `disable` work while it is off.
 ## Integration
 
 ```bash
-purr lighter status      # current integration state
-purr lighter enable      # account-changing — confirm first
-purr lighter disable     # account-changing — confirm first, see below
+purr lighter status
+purr lighter enable
+purr lighter disable
 ```
 
-`status` is the correct first call whenever you are unsure. Never `enable`
-silently: state what enabling does, get an explicit yes, then run it.
+| Command | Purpose |
+| --- | --- |
+| `status` | Whether Lighter Trading is enabled for this instance |
+| `enable` | Turn on Lighter Trading so gateway routes work; confirm first |
+| `disable` | Turn off Lighter Trading; blocked until the account is empty |
 
-### `disable` strands live exposure — check before you flip it
+Run `status` silently at the start of any Lighter workflow.
 
-`disable` only flips the integration flag. It does **not** cancel orders, does
-**not** close positions, and does **not** settle anything. Afterwards only
-`status` / `enable` / `disable` work, so the agent and dashboard can no longer
-read those orders and positions — the exposure stays live on Lighter while you
-lose the ability to see or manage it through this gateway.
+| Result | Action |
+| --- | --- |
+| `enabled: true` | Continue |
+| `enabled: false` | Explain, confirm → `enable`. Never enable silently |
+| Error | Report and stop; do not assume enabled |
 
-Before disabling:
+### Disable requires an empty account
+
+The platform refuses disable while the Lighter account still has:
+
+- open / active orders
+- open positions
+- non-USDC spot balances
+- non-terminal deposit or account-action requests
+
+Accounts that have never been opened can be disabled directly.
+
+Before proposing disable, inspect:
 
 ```bash
 purr lighter active-orders
 purr lighter positions
-purr lighter deposits --limit 10   # unresolved deposits
-purr lighter requests --limit 10   # unresolved trading/withdraw/transfer requests
+purr lighter balances
+purr lighter deposits --limit 10
+purr lighter requests --limit 10
 ```
 
-Then either resolve the exposure first, or state it back explicitly — "you have
-N open orders, a position of X, Y pending deposits and Z unresolved requests;
-disabling cancels and closes nothing, and you will not be able to see or manage
-them here until you re-enable" — and get acknowledgement of that specific list
-before running `disable`.
+Present blockers from `LIGHTER_DISABLE_REQUIRES_EMPTY_ACCOUNT` or
+`LIGHTER_DISABLE_HAS_ACTIVE_REQUESTS`, flatten exposure, then re-confirm disable.
+`disable` does not cancel or close anything for you.
 
-If any gateway command returns `LIGHTER_TRADING_DISABLED`, stop and go through
-the enable flow — do not retry the original command first.
-
-## Readiness
+## Account readiness
 
 ```bash
-purr lighter sdk-status        # signer/SDK readiness
-purr lighter system-status     # venue status
+purr lighter account
+purr lighter sdk-status
+purr lighter system-status
 purr lighter system-info
 purr lighter system-config
+purr lighter layer1-basic-info
+purr lighter withdrawal-delay
 ```
 
-`LIGHTER_INITIALIZING` is **not** only "the signer is starting". The platform
-uses it while any of these is still in progress: deposit crediting, account
-discovery, API-key registration, or signer setup. Recover by reading state, not
-by retrying:
+**`account` is the readiness call.** On a fresh instance it tells you which
+onboarding step is outstanding. Prefer it before promising any trade or
+interpreting empty balances.
 
-```bash
-purr lighter account            # which onboarding step is outstanding
-purr lighter deposits --limit 5
-purr lighter requests --limit 5
-```
-
-Then wait. **Do not resubmit the write** — see [errors.md](errors.md).
-
-## First use — read `account`, then branch on its status
-
-**`purr lighter account` is the readiness call**, not just a balance view. On a
-fresh instance it tells you exactly which onboarding step is outstanding. Run
-this before `sdk-status` or `balances` — those answer narrower questions and
-will not tell you *why* trading is unavailable.
-
-```bash
-purr lighter status            # 1. integration enabled?
-purr lighter account           # 2. readiness — branch on .status
-purr lighter deposit-networks  # 3. only when a first deposit is needed
-```
-
-| `account.status` | What it means | What to do |
+| `account.status` | Meaning | Next step |
 | --- | --- | --- |
-| `deposit_required` | No Lighter account for this TEE wallet yet | Tell the user a **first USDC deposit creates the account**. The response carries `requiresFirstDeposit`, `nextAction: deposit`, and `minimumDeposit` (`ethereumMainnet: 1`, `crossChain: 5`). |
-| `initializing` | Deposit seen, account still being created | Wait; poll `deposits` / `requests`. Do **not** resubmit. |
-| `account_discovered` | Account exists, no API key registered yet | Normal. The **next write registers the key automatically** — no manual credential step. |
-| `verifying_key` | Key registered, verification pending | Wait and re-read `account`. |
-| `ready` | Credential verified | Trading is available. |
-| `error` | Key registration failed | Stop and report; check the returned `state` for the reason. |
+| `account_opening_required` | No Lighter account for this TEE wallet | Confirm → `open-account` with initial USDC. Response includes `nextAction: "open_account"` and `minimumDeposit` |
+| `initializing` | Opening deposit / registration still reconciling | Wait; poll `account`, `deposits`, `requests`. Do not resubmit blindly |
+| `account_discovered` | Account exists; key registration can continue | Platform continues registration; wait / resume open if `nextAction` says so |
+| `verifying_key` | API key registration or verification in progress | Wait and re-read `account` |
+| `ready` | Account + credential ready | Trading and funding routes work |
+| `error` | Last automatic step failed | Report `state` / error; escalate platform recovery — never ask for API keys |
 
-The key point: `account_discovered` and `verifying_key` are **normal states in
-the onboarding sequence**, not failures. Do not tell the user something is
-broken because a credential is not yet verified — say which step is pending.
+When opening is still in progress, async responses may include
+`nextAction: "resume_account_opening"` and (from the CLI) a `resumeCommand`.
+Re-run the same `open-account` parameters only when the platform/CLI indicates
+resume — identical active operations resume rather than double-funding.
 
-## Credential errors — the five-step branch
-
-Normal users never configure Lighter API credentials; the platform generates and
-registers the key itself. So on **`LIGHTER_CREDENTIAL_NOT_FOUND` or
-`LIGHTER_CREDENTIAL_UNVERIFIED`**, do not tell the user to go configure
-something. Run the branch:
-
-1. `purr lighter account`.
-2. `deposit_required` → guide the first deposit (it creates the account).
-3. `initializing` / `account_discovered` / `verifying_key` → **wait and
-   reconcile** (`deposits`, `requests`). `account_discovered` is the normal
-   pre-key state: the next confirmed write registers the key automatically.
-4. Only if `account.status` is already `ready` or `error` **and** the credential
-   still fails → escalate as platform-side recovery. That also covers
-   `LIGHTER_CREDENTIAL_VERIFY_FAILED`, `LIGHTER_CREDENTIAL_VERIFY_UNAVAILABLE`,
-   `LIGHTER_WALLET_MISMATCH` and `LIGHTER_API_KEY_SLOTS_EXHAUSTED`.
-5. **Never ask the user for an API private key**, and never accept one pasted
-   into chat. `purr lighter` has **no credential-set command** at all; the
-   *integration-config* surface is limited to `status` / `enable` / `disable`
-   (the CLI as a whole has many other read and write commands).
-
-When you do escalate, say which `account.status` you observed and what needs
-attention, then re-check with `purr lighter account`.
-
-## ⚠️ `balances` and `positions` are the same call as `account`
-
-`GET /balances` and `GET /positions` both route to the **same
-account-readiness handler** as `account`. Before the account is `ready` they
-return a readiness object, not a balance or position collection:
-
-```json
-{ "status": "deposit_required", "nextAction": "deposit" }
-```
-
-So an agent that reads `balances` on a fresh instance and sees no array must not
-conclude "the user has no funds" or "no open positions" — it has been handed a
-*state*, not an empty portfolio. Check `.status` first; only trust
-balance/position contents once it is `ready`.
-
-## Account reads (no confirmation needed)
+## First use: open-account
 
 ```bash
-purr lighter account          # account summary
+purr lighter deposit-networks
+purr wallet balance --chain-type ethereum --chain-id <source> --token USDC
+purr wallet balance --chain-type ethereum --chain-id <source>   # native gas
+purr lighter open-account --amount <USDC> --source-chain-id <1|42161|8453|43114|999> [--route-type perps]
+```
+
+- `open-account` owns **initial funding + credential setup**. It is not the same
+  as a later `deposit`.
+- USDC **and native gas** must already sit on the chosen source chain in the
+  instance TEE wallet.
+- Minimums: Ethereum mainnet (`1`) **1 USDC**; other chains **5 USDC**. Confirm
+  with `deposit-networks` / `minAmount`.
+- `--route-type` currently defaults to `perps` (platform only accepts `perps`).
+- Re-run only when `nextAction` is `resume_account_opening`. Policy deferred →
+  observe deposits; never open a second funding request. Details in
+  [deposit-withdraw.md](deposit-withdraw.md).
+
+After open succeeds (or while initializing), re-check:
+
+```bash
+purr lighter account
+purr lighter deposits --limit 5
+```
+
+Ordinary `deposit` before open fails with `LIGHTER_ACCOUNT_NOT_READY`; the CLI
+suggests the matching `open-account` command.
+
+## Partner fee
+
+```bash
+purr lighter partner-fee-status
+purr lighter approve-partner-fee
+```
+
+| Status | Meaning |
+| --- | --- |
+| `not_configured` | Platform has no integrator index; orders do not require this approval |
+| `approval_required` | Approval missing or insufficient for the fixed 5 bps fee |
+| `approved` | Current approval covers maker/taker spot and perp |
+| `expired` | Prior approval past `approvalExpiry` |
+
+When configured, check fee status **before** order confirmation or any
+account-changing preparation for an order. Consent language lives in
+`SKILL.md`. `approve-partner-fee` is account-changing and needs its own yes.
+
+## Portfolio reads
+
+```bash
 purr lighter balances
 purr lighter positions
-purr lighter limits           # account limits
-purr lighter pnl [--resolution 1h] [--start-timestamp <unix>] [--end-timestamp <unix>] [--count-back <n>]
+purr lighter limits
+purr lighter pnl --resolution <1h|1d> --start-at <rfc3339> --end-at <rfc3339> --count-back <n>
 purr lighter orders
 purr lighter active-orders
 purr lighter inactive-orders
 purr lighter transactions [--offset <n>] [--limit <n>]
 purr lighter transaction --tx-hash <hash>
-purr lighter l1-transaction --l1-tx-hash <hash>
+purr lighter l1-transaction --l1-tx-hash <ethereum-l1-tx-hash>
 purr lighter requests [--limit <n>]
 purr lighter request-status --request-id <id>
 ```
 
-Check `balances` and `positions` before sizing any order, and `limits` before a
-large one. Read commands use a 20s client timeout and are safe to retry.
+Notes:
 
-## Before an order — the short checklist
+- `balances` / `positions` share the account readiness handler. Before `ready`,
+  inspect `.status` instead of treating the payload as empty holdings.
+- **`orders` and `active-orders` are the same call** (live working orders only).
+  Prefer one of them. Past fills / completed orders: `inactive-orders` and
+  `trades` — not `orders`.
+- PnL resolutions accepted on mainnet today: **`1h`**, **`1d`** only. Timestamps
+  must be RFC 3339 with timezone (`Z` or offset).
+- Read paths use a **20s** client timeout and are safe to retry. Writes wait for
+  the platform and must not be auto-retried after timeout.
 
-1. `status` — integration enabled?
-2. `account` — is `.status` `ready`? If not, resolve the onboarding step above
-   before promising the user a trade.
-3. `market --market <SYM> --market-type <perp|spot>` — market exists, and note
-   its size/price decimals.
-4. `order-book-depth --market <SYM> --market-type <t>` — derive the price bound
-   (mandatory for market orders; see [trading.md](trading.md)).
-5. `balances` / `positions` — is there collateral for this, and does it change
-   an existing position?
-6. Confirm with the user, then submit.
+## Silent preflight checklist
 
-There is **no fee-authorization step on Lighter**. Do not prompt for one.
+Run without narrating the plan:
+
+1. `status` — enable if needed (with confirmation).
+2. `account` — if not `ready`, follow open / wait / escalate branches above.
+3. For orders: resolve market, depth, balances/positions, partner-fee-status.
+4. Confirm the user-facing action, then submit.
