@@ -30,8 +30,6 @@ checkout, or contract details.
 ```bash
 purr binance-onchain-pay pre-order \
   [--idempotency-key <key>] \
-  --merchant-code <code> \
-  --merchant-name <name> \
   [--fiat <fiat>] \
   [--fiat-amount <amount>] \
   [--crypto <crypto>] \
@@ -61,8 +59,6 @@ purr binance-onchain-pay pre-order \
 | Parameter | Required? | Description |
 | --- | --- | --- |
 | `--idempotency-key <key>` | Retry only | Omit on the first attempt. Reuse the key returned by a failed attempt only when explicitly retrying the exact same request. |
-| `--merchant-code <code>` | Yes | Merchant code provided by the user. |
-| `--merchant-name <name>` | Yes | Merchant display name provided by the user. |
 | `--fiat <fiat>` | No | Fiat currency code. |
 | `--fiat-amount <amount>` | Required if not using requested amount | Fiat amount to spend. |
 | `--crypto <crypto>` | No | Crypto asset code. |
@@ -90,8 +86,6 @@ purr binance-onchain-pay pre-order \
 
 ```bash
 purr binance-onchain-pay pre-order \
-  --merchant-code <code> \
-  --merchant-name <name> \
   --fiat USD \
   --crypto USDT \
   --requested-amount 50 \
@@ -128,8 +122,6 @@ asks to retry the exact unchanged request, reuse the returned key with
 
 | Error Message | Meaning |
 | --- | --- |
-| `Pre-order requires --merchant-code or BINANCE_CONNECT_MERCHANT_CODE` | Ask the user for the merchant code and pass `--merchant-code`. |
-| `Pre-order requires --merchant-name or BINANCE_CONNECT_MERCHANT_NAME` | Ask the user for the merchant name and pass `--merchant-name`. |
 | `Pre-order requires --fiat-amount or both --requested-amount and --amount-type` | Add a fiat amount or a requested amount with amount type. |
 | `Pre-order externalOrderId and timestamp are platform-managed; use --idempotency-key for safe retries` | Remove caller-supplied `--external-order-id` or `--ts`. |
 | `Missing required credentials: ...` | Hosted platform authentication is unavailable. |

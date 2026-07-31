@@ -56,14 +56,6 @@ in user flows.
 | `WALLET_API_TOKEN` | Per-instance platform bearer token |
 | `INSTANCE_ID` | Hosted instance identifier used to scope broker requests |
 
-The following pre-order values are not authentication secrets or
-runtime-provided defaults. The user must supply them when creating a pre-order:
-
-| CLI option | Official usage |
-| --- | --- |
-| `--merchant-code` | User-provided `merchantCode` for the pre-order |
-| `--merchant-name` | User-provided `merchantName` for the pre-order |
-
 ## Command Groups
 
 | Group | What It Does | Reference |
