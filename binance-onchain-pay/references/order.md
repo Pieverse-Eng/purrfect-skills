@@ -32,19 +32,18 @@ purr binance-onchain-pay order --external-order-id <externalOrderId>
 ## Commands
 
 ```bash
-purr binance-onchain-pay order --external-order-id oc_<instanceId>_<timestamp>_<random>
+purr binance-onchain-pay order --external-order-id <externalOrderId>
 ```
 
 ## Response Shape
 
-Success prints raw Binance Onchain Pay JSON to stdout. The response usually
-contains the order status and order details returned by Binance.
+Success prints the sanitized broker response to stdout. The response usually
+contains the order status and permitted order details returned by Binance.
 
 ## Response Errors
 
 | Error Message | Meaning |
 | --- | --- |
 | `Missing required arg --external-order-id` | The order ID was not provided. |
-| `Missing env vars: ...` | Binance Onchain Pay runtime credentials are not configured. |
-| `Binance Onchain Pay error <code>: ...` | Binance returned an API-level error. |
-| `Binance Onchain Pay HTTP <status>: ...` | The HTTP request failed. Check runtime base URL, partner credentials, and Binance service availability. |
+| `Missing required credentials: ...` | Hosted platform authentication is unavailable. |
+| `Binance Connect order lookup failed` | The platform broker or Binance Connect lookup failed. |

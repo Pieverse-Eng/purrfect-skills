@@ -60,7 +60,7 @@ purr binance-onchain-pay estimated-quote \
 
 ## Response Shape
 
-Success prints raw Binance Onchain Pay JSON to stdout. The response usually
+Success prints the sanitized broker response to stdout. The response usually
 contains rate, fees, requested amount, and estimated crypto amount.
 
 ## Response Errors
@@ -68,6 +68,5 @@ contains rate, fees, requested amount, and estimated crypto amount.
 | Error Message | Meaning |
 | --- | --- |
 | `Estimated quote requires --amount-type` | Add `--amount-type 1` for fiat amount or `--amount-type 2` for crypto amount. |
-| `Missing env vars: ...` | Binance Onchain Pay runtime credentials are not configured. |
-| `Binance Onchain Pay error <code>: ...` | Binance returned an API-level error. |
-| `Binance Onchain Pay HTTP <status>: ...` | The HTTP request failed. Check runtime base URL, partner credentials, and Binance service availability. |
+| `Missing required credentials: ...` | Hosted platform authentication is unavailable. |
+| `Binance Connect <operation> failed` | The platform broker or Binance Connect operation failed. |

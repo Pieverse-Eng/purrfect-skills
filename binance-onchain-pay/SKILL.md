@@ -1,9 +1,6 @@
 ---
 name: binance-onchain-pay
 description: Binance Onchain Pay,fiat,send,checkout,order,contract
-metadata:
-  openclaw:
-    primaryEnv: BINANCE_CONNECT_CLIENT_ID
 ---
 
 # Binance Onchain Pay
@@ -42,30 +39,22 @@ reference before running commands or explaining the workflow.
 
 ## Runtime Credentials
 
-The runtime provides Binance Onchain Pay partner credentials through environment
-variables. If required env vars are missing, report that Binance Onchain Pay
-runtime credentials are not configured. Keep authentication details for
-troubleshooting only; never request or expose partner secrets in user-facing
-flows.
+The runtime provides instance-scoped platform credentials for Binance Onchain
+Pay requests. The platform broker holds the Binance partner credentials and
+performs request signing. If required platform credentials are missing, report
+that Binance Onchain Pay runtime authentication is not configured. Keep
+authentication details for troubleshooting only; never request or expose
+partner secrets in user-facing flows.
 
-For credential/signing troubleshooting only, see
+For platform authentication troubleshooting only, see
 [authentication.md](references/authentication.md). Do not manually sign requests
 in user flows.
 
-| Runtime env | Official usage |
+| Runtime env | Platform usage |
 | --- | --- |
-| `BINANCE_CONNECT_CLIENT_ID` | Partner client ID |
-| `BINANCE_CONNECT_ACCESS_TOKEN` | Sign access token |
-| `BINANCE_CONNECT_PRIVATE_KEY` | RSA private key material used by the CLI |
-| `BINANCE_CONNECT_BASE_URL` | Binance API base URL |
-
-These are not authentication secrets, but pre-order defaults supplied by the
-runtime:
-
-| Runtime env | Official usage |
-| --- | --- |
-| `BINANCE_CONNECT_MERCHANT_CODE` | Default `merchantCode` for pre-orders |
-| `BINANCE_CONNECT_MERCHANT_NAME` | Default `merchantName` for pre-orders |
+| `WALLET_API_URL` | Platform API base URL |
+| `WALLET_API_TOKEN` | Per-instance platform bearer token |
+| `INSTANCE_ID` | Hosted instance identifier used to scope broker requests |
 
 ## Command Groups
 
@@ -134,7 +123,7 @@ Examples:
 - Enable "Pay with Crypto" checkout flow.
 - Process subscription payments with crypto.
 
-Command groups: Pre-Order with `externalOrderId` tracking.
+Command groups: Pre-Order with the returned `externalOrderId` for tracking.
 
 ### 5. Smart Contract Interaction / Onchain-Pay Easy
 
