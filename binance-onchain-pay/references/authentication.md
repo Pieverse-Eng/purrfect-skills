@@ -1,48 +1,41 @@
 # Authentication
 
-Use this reference only for credential or signing troubleshooting. User-facing
-execution should use `purr binance-onchain-pay`; do not manually sign requests
-or ask users for Binance partner secrets.
+Use this reference only for platform authentication troubleshooting.
+User-facing execution should use `purr binance-onchain-pay`; do not manually
+sign requests or ask users for Binance partner secrets.
 
 ## Overview
 
-Binance Onchain Pay requests are signed by the CLI with partner credentials from
-runtime environment variables.
+The CLI authenticates to the instance-scoped platform API. The platform broker
+holds the Binance partner credentials, signs the Binance request, and returns a
+sanitized response.
 
 ## Workflow
 
-1. Confirm the runtime provides Binance Onchain Pay credentials.
-2. Confirm the request body is compact JSON, or empty string when the endpoint
-   has no body.
-3. Confirm the timestamp is in milliseconds.
-4. Confirm the signature payload is `JSON_BODY + TIMESTAMP`.
-5. Confirm the signed request includes the required Binance headers.
+1. Confirm the hosted runtime provides `WALLET_API_URL`, `WALLET_API_TOKEN`, and
+   `INSTANCE_ID`.
+2. Confirm the CLI can authenticate to the platform API for that instance.
+3. Confirm the platform broker operation is available.
+4. Do not inspect or reproduce Binance signing in the tenant runtime.
 
-## Signing Summary
+## Signing Boundary
 
-1. Payload = `JSON_BODY + TIMESTAMP` in milliseconds.
-2. Sign payload with RSA SHA256 using the PEM private key.
-3. Base64 encode the signature as a single line.
-4. Send requests as POST with headers:
-   - `X-Tesla-ClientId`
-   - `X-Tesla-SignAccessToken`
-   - `X-Tesla-Signature`
-   - `X-Tesla-Timestamp`
-   - `Content-Type: application/json`
+1. The CLI sends only a fixed supported operation to the platform broker.
+2. The platform generates the Binance timestamp and signature.
+3. Binance credentials and reusable signatures never return to the tenant.
+4. The platform sanitizes upstream responses and errors.
 
-## Runtime Mapping
+## Hosted Runtime Mapping
 
-| Runtime env | Binance usage |
+| Runtime env | Platform usage |
 | --- | --- |
-| `BINANCE_CONNECT_CLIENT_ID` | `X-Tesla-ClientId` |
-| `BINANCE_CONNECT_ACCESS_TOKEN` | `X-Tesla-SignAccessToken` |
-| `BINANCE_CONNECT_PRIVATE_KEY` | PEM private key used for RSA SHA256 signing |
-| `BINANCE_CONNECT_BASE_URL` | Binance API base URL |
+| `WALLET_API_URL` | Platform API base URL |
+| `WALLET_API_TOKEN` | Per-instance platform bearer token |
+| `INSTANCE_ID` | Hosted instance identifier used to scope broker requests |
 
 ## Response Errors
 
 | Error Message | Meaning |
 | --- | --- |
-| `Missing env vars: ...` | Runtime credentials are not configured. |
-| `Binance Onchain Pay HTTP 401/403: ...` | Partner credentials, base URL, or signing details may be invalid. |
-| `Binance Onchain Pay error <code>: ...` | Binance accepted the signed request but rejected it at API level. |
+| `Missing required credentials: ...` | Hosted platform authentication is unavailable. |
+| `Binance Connect <operation> failed` | The platform broker or Binance Connect operation failed. Report the error without exposing credentials or raw upstream data. |

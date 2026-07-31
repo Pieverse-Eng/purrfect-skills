@@ -59,7 +59,7 @@ purr binance-onchain-pay payment-method-list \
 
 ## Response Shape
 
-Success prints raw Binance Onchain Pay JSON to stdout. The response usually
+Success prints the sanitized broker response to stdout. The response usually
 contains payment method codes, names, supported amounts, and limits.
 
 ## Response Errors
@@ -67,6 +67,5 @@ contains payment method codes, names, supported amounts, and limits.
 | Error Message | Meaning |
 | --- | --- |
 | `Payment method lookup requires --fiat, --crypto, --total-amount, and --amount-type when using pair-specific filters` | Pair-specific lookup is missing required fields. |
-| `Missing env vars: ...` | Binance Onchain Pay runtime credentials are not configured. |
-| `Binance Onchain Pay error <code>: ...` | Binance returned an API-level error. |
-| `Binance Onchain Pay HTTP <status>: ...` | The HTTP request failed. Check runtime base URL, partner credentials, and Binance service availability. |
+| `Missing required credentials: ...` | Hosted platform authentication is unavailable. |
+| `Binance Connect <operation> failed` | The platform broker or Binance Connect operation failed. |
