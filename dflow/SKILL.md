@@ -66,6 +66,25 @@ asset by symbol:
 For tokens not listed here, resolve the exact mint through the vendor workflow
 or an official source before building an order. Do not guess from symbol alone.
 
+## `--params-json` Rules
+
+Add `--params-json '<dflow-order-params-json>'` only when the vendor workflow
+requires extra DFlow `/order` **request** parameters (for example slippage,
+platform fees, or route options). Add `--api-key "$DFLOW_API_KEY"` only when
+`DFLOW_API_KEY` is available.
+
+`purr` always sends `dynamicComputeUnitLimit=true` on `/order`. Do not put
+compute-unit fields in `--params-json`.
+
+Never include these keys in `--params-json`:
+
+| Key | Reason |
+|---|---|
+| `userPublicKey`, `inputMint`, `outputMint`, `amount` | Managed by `purr` CLI flags / wallet |
+| `dynamicComputeUnitLimit` | Always set to `true` by `purr` |
+| `computeUnitLimit` | Response field only, not a request parameter |
+| `sponsor`, `sponsorExec`, `predictionMarketInitPayer` | Multi-signer / gasless flows (out of scope) |
+
 ## Execution Workflow
 
 For spot swaps, Kalshi buys, sells, redeems, and any other supported DFlow
@@ -79,7 +98,8 @@ For spot swaps, Kalshi buys, sells, redeems, and any other supported DFlow
 purr wallet address --chain-type solana
 ```
 
-3. Build an order:
+3. Build a **preview** order. Default output is summary-only: it includes
+   `summary` and omits the full `order` payload (no serialized transaction):
 
 ```bash
 purr dflow order \
@@ -88,21 +108,52 @@ purr dflow order \
   --amount <atomic-amount>
 ```
 
-Add `--params-json '<dflow-order-params-json>'` only when the vendor workflow
-requires extra DFlow `/order` parameters. Add `--api-key "$DFLOW_API_KEY"`
-only when `DFLOW_API_KEY` is available.
+Include the same `--params-json` / `--api-key` you will use at execution time
+when they apply.
 
-4. Show the user the order summary: input, output, minimum/threshold, price
-   impact, slippage, priority fee, execution mode, and order address when
-   present.
+4. Present the `summary` object to the user. Typical fields:
+
+   - `inAmount`, `outAmount`, `otherAmountThreshold`
+   - `priceImpactPct`, `slippageBps`
+   - `prioritizationFeeLamports`, `prioritizationType`
+   - `executionMode`, `orderAddress`, `hasTransaction`
+
 5. Ask for explicit confirmation before execution.
-6. Execute only after confirmation:
+6. After confirmation, execute with the **same** order args (preferred path).
+   Do not try to recover `order` from a non-`--raw` preview response:
+
+```bash
+purr dflow order \
+  --input-mint <input-mint> \
+  --output-mint <output-mint> \
+  --amount <atomic-amount> \
+  --execute true \
+  --poll true
+```
+
+Reuse the same `--params-json` and `--api-key` from the preview when used.
+
+Two-step execute only when you must hold the order JSON (for example debugging
+or delayed signing). Build with `--raw true`, then pass the raw `.order`
+object:
+
+```bash
+purr dflow order \
+  --input-mint <input-mint> \
+  --output-mint <output-mint> \
+  --amount <atomic-amount> \
+  --raw true
+```
 
 ```bash
 purr dflow execute-order \
-  --order-json '<order-json-from-purr-dflow-order>' \
+  --order-json '<order-object-from-raw-output.order>' \
   --poll true
 ```
+
+`--order-file /tmp/dflow-order.json` is also accepted. Never pass
+`--order-json` built from a default (non-`--raw`) order response — that output
+omits `order`.
 
 If execution returns an RPC error, report the error plainly. Do not switch to
 manual signing or ask for a private key.
@@ -125,7 +176,8 @@ multiple signers, stop and explain that the DFlow flow is unsupported.
 Read `vendor/dflow-spot-trading/SKILL.md` for token/mint selection, atomic
 units, slippage, priority fee, route errors, and DFlow `/order` semantics.
 
-Use `purr dflow order` + `purr dflow execute-order` instead of `dflow quote`,
+Use `purr dflow order` (preview) then `purr dflow order --execute true` (or
+`--raw true` + `execute-order` when needed) instead of `dflow quote`,
 `dflow trade`, Keypair signing, wallet adapter signing, or direct
 `sendRawTransaction` code.
 
@@ -137,8 +189,8 @@ co-signer.
 Read `vendor/dflow-kalshi-trading/SKILL.md` for market ledger, settlement rail,
 YES/NO side, amount units, KYC, geoblock, maintenance, and async fill rules.
 
-Use `purr dflow order` + `purr dflow execute-order` for buy, sell, and redeem
-orders.
+Use `purr dflow order` + `purr dflow order --execute true` (or the raw
+two-step path) for buy, sell, and redeem orders.
 
 Do not use official `dflow trade`. Do not use `sponsor`, `sponsorExec`, or
 `predictionMarketInitPayer`; those require unsupported multi-signer flows.
@@ -189,17 +241,18 @@ Use the returned Solana signature in the Proof deep link.
 
 Read `vendor/dflow-platform-fees/SKILL.md`. Platform fees are DFlow `/order`
 parameters, so include them in `--params-json` when building an order with
-`purr dflow order`.
-
-Do not include reserved fields in `--params-json`: `userPublicKey`,
-`inputMint`, `outputMint`, or `amount`.
+`purr dflow order`. Still obey the `--params-json` rules above (managed,
+auto-set, response-only, and multi-signer keys stay out).
 
 ## Operational Checklist
 
 1. Identify the user intent and read the matching vendor skill.
 2. Use `purr wallet address --chain-type solana` for wallet-scoped context.
 3. For read-only data, follow the vendor HTTP/RPC/WebSocket workflow.
-4. For DFlow `/order` execution, build with `purr dflow order`.
-5. Show the order summary and ask for explicit confirmation.
-6. Execute with `purr dflow execute-order --order-json '<order-json-from-purr-dflow-order>' --poll true`.
+4. For DFlow `/order` execution, preview with `purr dflow order` (default
+   summary-only output).
+5. Show `summary` and ask for explicit confirmation.
+6. After confirmation, run the same `purr dflow order` args with
+   `--execute true --poll true`. Use `--raw true` + `execute-order` only when
+   you must hold the order JSON.
 7. Return transaction signature, order status, order address, and any next step.
