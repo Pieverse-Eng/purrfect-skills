@@ -41,9 +41,11 @@ Never print or log the key value itself — only presence/absence.
   - Without `DFLOW_API_KEY`, some DFlow features may be unavailable, rate-limited,
     or limited to **dev** endpoints where supported.
   - Production Trade / Metadata APIs generally expect a key.
-  - Apply for a key: https://pond.dflow.net/get-started/api-key
-  - After they set it (export / shell profile / runtime env), re-check presence,
-    then continue.
+  - To configure: open the **Claw dashboard → Capabilities tab → Built-in
+    skills** section, find the DFlow skill, and set `DFLOW_API_KEY` there.
+  - Apply for a key if they do not have one yet:
+    https://pond.dflow.net/get-started/api-key
+  - After they configure it, re-check presence, then continue.
 
 `DFLOW_API_KEY` remains optional for light/dev paths, but do not silently skip
 the check or hide the limitation. If the user wants to proceed without a key,
@@ -276,8 +278,9 @@ auto-set, response-only, and multi-signer keys stay out).
 
 1. Identify the user intent and read the matching vendor skill.
 2. Check `DFLOW_API_KEY` presence (see above). If missing, warn the user that
-   some features may not work / may be rate-limited, and point them at
-   https://pond.dflow.net/get-started/api-key.
+   some features may not work / may be rate-limited, and send them to
+   **Claw dashboard → Capabilities → Built-in skills** to configure DFlow
+   (`DFLOW_API_KEY`). Key application: https://pond.dflow.net/get-started/api-key.
 3. Use `purr wallet address --chain-type solana` for wallet-scoped context.
 4. For read-only data, follow the vendor HTTP/RPC/WebSocket workflow.
 5. For DFlow `/order` execution, preview with `purr dflow order` (default
