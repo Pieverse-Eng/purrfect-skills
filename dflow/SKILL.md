@@ -20,9 +20,9 @@ workflow-specific commands, code, or API calls.
 
 ### Check `DFLOW_API_KEY` first
 
-Before any DFlow workflow (Trade API, Metadata API, market scan, portfolio
-HTTP, or `purr dflow` with production hosts), check whether `DFLOW_API_KEY` is
-configured. Do this once per session before the first DFlow action:
+Before any DFlow workflow that uses `purr dflow` (order preview, execute, or
+status) or authenticated Trade API hosts, check whether `DFLOW_API_KEY` is
+configured. Do this once per session before the first such action:
 
 ```bash
 if [ -n "${DFLOW_API_KEY:-}" ]; then
@@ -34,29 +34,31 @@ fi
 
 Never print or log the key value itself — only presence/absence.
 
-- **Present** — use production DFlow hosts. Pass the key to `purr dflow`
-  commands with `--api-key "$DFLOW_API_KEY"`, and to direct HTTP/WebSocket
-  clients as `x-api-key`.
-- **Missing** — tell the user clearly before continuing:
-  - Without `DFLOW_API_KEY`, some DFlow features may be unavailable, rate-limited,
-    or limited to **dev** endpoints where supported.
-  - Production Trade / Metadata APIs generally expect a key.
-  - To configure: open the **Claw dashboard → Capabilities tab → Built-in
-    skills** section, find the DFlow skill, and set `DFLOW_API_KEY` there.
-  - Apply for a key if they do not have one yet:
+- **Present** — proceed. `purr dflow` reads `DFLOW_API_KEY` from the
+  environment. Pass `--api-key "$DFLOW_API_KEY"` only if the runtime does not
+  inject the env into the command. For direct HTTP/WebSocket clients that need
+  auth, send `x-api-key`.
+- **Missing** — **do not** run `purr dflow order`, `purr dflow execute-order`,
+  or `purr dflow status`. Those commands **require** a key and fail with
+  `Missing required DFlow API key` (there is **no** silent dev Trade API
+  fallback). Tell the user clearly:
+  - Configure `DFLOW_API_KEY` in **Claw dashboard → Capabilities tab →
+    Built-in skills** (DFlow skill).
+  - Apply for a key if they do not have one:
     https://pond.dflow.net/get-started/api-key
   - After they configure it, re-check presence, then continue.
 
-`DFLOW_API_KEY` remains optional for light/dev paths, but do not silently skip
-the check or hide the limitation. If the user wants to proceed without a key,
-continue only on paths that work without it and keep the warning in mind when
-errors look like auth or rate-limit failures.
+Vendor docs may still mention “no key → dev Metadata API” for some read-only
+HTTP paths. That does **not** apply to `purr dflow order|execute-order|status`,
+which always need `DFLOW_API_KEY` and default to the production Trade API
+(`https://quote-api.dflow.net` unless `DFLOW_TRADE_API_BASE_URL` / `--base-url`
+overrides the host).
 
 ### On DFlow errors: stop and report — do not pivot
 
-If any DFlow step fails (timeout, HTTP error, route not found, no quote,
-RPC failure, multi-signer rejection, non-zero exit from `purr dflow`, or any
-other error from this skill's workflow):
+If any DFlow step fails (missing API key, timeout, HTTP error, route not found,
+no quote, RPC failure, multi-signer rejection, non-zero exit from `purr dflow`,
+or any other error from this skill's workflow):
 
 1. **Stop.** Do not retry with different venues, skills, or tools.
 2. **Do not** call other skills (for example Surf, AgentKey, Chainbase,
@@ -65,7 +67,12 @@ other error from this skill's workflow):
    token is pump.fun so try X" investigations.
 4. **Report the error plainly** to the user: what command/step failed, the
    error message (or timeout), and that the DFlow flow stopped. Optionally
-   suggest they retry later or provide a different mint/amount — then wait.
+   suggest they retry later, reconfigure the key, or provide a different
+   mint/amount — then wait.
+
+If the error is `Missing required DFlow API key`, only report that and send the
+user to **Claw dashboard → Capabilities → Built-in skills**. Do not treat it as
+a timeout or routing problem.
 
 At most **one** identical retry of the same `purr dflow` command is allowed
 when the failure is clearly a transient timeout/network blip. After that, stop
@@ -117,8 +124,7 @@ or an official source before building an order. Do not guess from symbol alone.
 
 Add `--params-json '<dflow-order-params-json>'` only when the vendor workflow
 requires extra DFlow `/order` **request** parameters (for example slippage,
-platform fees, or route options). Add `--api-key "$DFLOW_API_KEY"` only when
-`DFLOW_API_KEY` is available.
+platform fees, or route options).
 
 `purr` always sends `dynamicComputeUnitLimit=true` on `/order`. Do not put
 compute-unit fields in `--params-json`.
@@ -137,8 +143,9 @@ Never include these keys in `--params-json`:
 For spot swaps, Kalshi buys, sells, redeems, and any other supported DFlow
 `/order` transaction:
 
-1. Confirm `DFLOW_API_KEY` presence (Mandatory Rules). If missing, warn the
-   user first, then only continue if they accept the limits.
+1. Confirm `DFLOW_API_KEY` is present (Mandatory Rules). If missing, **stop**
+   and send the user to Claw dashboard configuration — do not preview or
+   execute. Preview, execute, and status all require the key.
 2. Read the matching vendor skill to determine mints, amount units, market
    fields, KYC gates, maintenance windows, slippage, and status expectations.
 3. Get the Solana address:
@@ -157,8 +164,8 @@ purr dflow order \
   --amount <atomic-amount>
 ```
 
-Include the same `--params-json` / `--api-key` you will use at execution time
-when they apply.
+Include the same `--params-json` (and `--api-key` if the env is not injected)
+you will use at execution time when they apply.
 
 5. Present the `summary` object to the user. Typical fields:
 
@@ -166,6 +173,9 @@ when they apply.
    - `priceImpactPct`, `slippageBps`
    - `prioritizationFeeLamports`, `prioritizationType`
    - `executionMode`, `orderAddress`, `hasTransaction`
+
+   `orderAddress` is informational only. Do **not** use it for
+   `purr dflow status`.
 
 6. Ask for explicit confirmation before execution.
 7. After confirmation, execute with the **same** order args (preferred path).
@@ -180,7 +190,13 @@ purr dflow order \
   --poll true
 ```
 
-Reuse the same `--params-json` and `--api-key` from the preview when used.
+Reuse the same `--params-json` (and `--api-key` if needed) from the preview.
+
+With `--poll true`, read the result for:
+
+- transaction **signature** (from `execution` / broadcast result)
+- polled order **status** when present
+- `summary` amounts
 
 Two-step execute only when you must hold the order JSON (for example debugging
 or delayed signing). Build with `--raw true`, then pass the raw `.order`
@@ -205,15 +221,16 @@ purr dflow execute-order \
 omits `order`.
 
 If preview, execute, status, or any other DFlow step fails (including quote
-timeouts and route errors), stop and report the error. Do not call other
-skills or tools to work around it (see Mandatory Rules). Do not switch to
-manual signing or ask for a private key.
+timeouts, missing API key, and route errors), stop and report the error. Do not
+call other skills or tools to work around it (see Mandatory Rules). Do not
+switch to manual signing or ask for a private key.
 
-To check a submitted async order:
+To check a submitted async order after broadcast, use the **transaction
+signature** from execution — **not** `orderAddress`:
 
 ```bash
 purr dflow status \
-  --order-address <order-address> \
+  --signature <transaction-signature> \
   --poll true
 ```
 
@@ -232,6 +249,9 @@ Use `purr dflow order` (preview) then `purr dflow order --execute true` (or
 `dflow trade`, Keypair signing, wallet adapter signing, or direct
 `sendRawTransaction` code.
 
+Ignore vendor wording about official CLI `dflow setup` auth or silent dev Trade
+API fallback for `purr dflow` — use `DFLOW_API_KEY` as above.
+
 Sponsored / gasless spot flows are out of scope when they require a sponsor
 co-signer.
 
@@ -241,7 +261,9 @@ Read `vendor/dflow-kalshi-trading/SKILL.md` for market ledger, settlement rail,
 YES/NO side, amount units, KYC, geoblock, maintenance, and async fill rules.
 
 Use `purr dflow order` + `purr dflow order --execute true` (or the raw
-two-step path) for buy, sell, and redeem orders.
+two-step path) for buy, sell, and redeem orders. Prefer `--poll true` on
+execute for async fills; follow up with `purr dflow status --signature ...`
+using the broadcast signature when needed.
 
 Do not use official `dflow trade`. Do not use `sponsor`, `sponsorExec`, or
 `predictionMarketInitPayer`; those require unsupported multi-signer flows.
@@ -253,7 +275,7 @@ read-only HTTP/WebSocket workflows and do not need wallet signing unless the
 user pivots into execution.
 
 When a scan leads to a trade, use the scanner result to identify the correct
-market fields, then execute with `purr dflow` as described above.
+market fields, then execute with `purr dflow` as described above (key required).
 
 ### Portfolio
 
@@ -298,18 +320,22 @@ auto-set, response-only, and multi-signer keys stay out).
 ## Operational Checklist
 
 1. Identify the user intent and read the matching vendor skill.
-2. Check `DFLOW_API_KEY` presence (see above). If missing, warn the user that
-   some features may not work / may be rate-limited, and send them to
-   **Claw dashboard → Capabilities → Built-in skills** to configure DFlow
-   (`DFLOW_API_KEY`). Key application: https://pond.dflow.net/get-started/api-key.
+2. Check `DFLOW_API_KEY` presence. If missing, **block** all `purr dflow`
+   order/execute/status paths, send the user to **Claw dashboard →
+   Capabilities → Built-in skills** to configure DFlow, and point at
+   https://pond.dflow.net/get-started/api-key for a new key.
 3. Use `purr wallet address --chain-type solana` for wallet-scoped context.
-4. For read-only data, follow the vendor HTTP/RPC/WebSocket workflow.
+4. For read-only Metadata/Proof data, follow the vendor HTTP/RPC/WebSocket
+   workflow (separate from `purr dflow` auth rules).
 5. For DFlow `/order` execution, preview with `purr dflow order` (default
-   summary-only output). Pass `--api-key "$DFLOW_API_KEY"` when the key is set.
+   summary-only output; requires API key).
 6. Show `summary` and ask for explicit confirmation.
 7. After confirmation, run the same `purr dflow order` args with
    `--execute true --poll true`. Use `--raw true` + `execute-order` only when
    you must hold the order JSON.
-8. Return transaction signature, order status, order address, and any next step.
+8. Return the transaction **signature**, polled status when present, and any
+   next step. For a later status check use
+   `purr dflow status --signature <tx-sig> --poll true` — never
+   `--order-address`.
 9. On any failure: stop and report the error. Do not pivot to other skills or
    tools.
