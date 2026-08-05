@@ -18,11 +18,37 @@ address lookup, signing, and transaction execution.
 Read this file first, then read the matching vendor `SKILL.md` before
 workflow-specific commands, code, or API calls.
 
-`DFLOW_API_KEY` is optional. Use it for production DFlow APIs; without it,
-DFlow API calls may use dev/rate-limited endpoints where supported. Apply for a
-DFlow API key at https://pond.dflow.net/get-started/api-key.
-When `DFLOW_API_KEY` is available, pass it to DFlow API commands with
-`--api-key "$DFLOW_API_KEY"`.
+### Check `DFLOW_API_KEY` first
+
+Before any DFlow workflow (Trade API, Metadata API, market scan, portfolio
+HTTP, or `purr dflow` with production hosts), check whether `DFLOW_API_KEY` is
+configured. Do this once per session before the first DFlow action:
+
+```bash
+if [ -n "${DFLOW_API_KEY:-}" ]; then
+  echo "DFLOW_API_KEY=present"
+else
+  echo "DFLOW_API_KEY=missing"
+fi
+```
+
+Never print or log the key value itself — only presence/absence.
+
+- **Present** — use production DFlow hosts. Pass the key to `purr dflow`
+  commands with `--api-key "$DFLOW_API_KEY"`, and to direct HTTP/WebSocket
+  clients as `x-api-key`.
+- **Missing** — tell the user clearly before continuing:
+  - Without `DFLOW_API_KEY`, some DFlow features may be unavailable, rate-limited,
+    or limited to **dev** endpoints where supported.
+  - Production Trade / Metadata APIs generally expect a key.
+  - Apply for a key: https://pond.dflow.net/get-started/api-key
+  - After they set it (export / shell profile / runtime env), re-check presence,
+    then continue.
+
+`DFLOW_API_KEY` remains optional for light/dev paths, but do not silently skip
+the check or hide the limitation. If the user wants to proceed without a key,
+continue only on paths that work without it and keep the warning in mind when
+errors look like auth or rate-limit failures.
 
 Ignore the Install section in `vendor/README.md`; this repository already
 includes the vendored DFlow skills.
@@ -90,15 +116,17 @@ Never include these keys in `--params-json`:
 For spot swaps, Kalshi buys, sells, redeems, and any other supported DFlow
 `/order` transaction:
 
-1. Read the matching vendor skill to determine mints, amount units, market
+1. Confirm `DFLOW_API_KEY` presence (Mandatory Rules). If missing, warn the
+   user first, then only continue if they accept the limits.
+2. Read the matching vendor skill to determine mints, amount units, market
    fields, KYC gates, maintenance windows, slippage, and status expectations.
-2. Get the Solana address:
+3. Get the Solana address:
 
 ```bash
 purr wallet address --chain-type solana
 ```
 
-3. Build a **preview** order. Default output is summary-only: it includes
+4. Build a **preview** order. Default output is summary-only: it includes
    `summary` and omits the full `order` payload (no serialized transaction):
 
 ```bash
@@ -111,15 +139,15 @@ purr dflow order \
 Include the same `--params-json` / `--api-key` you will use at execution time
 when they apply.
 
-4. Present the `summary` object to the user. Typical fields:
+5. Present the `summary` object to the user. Typical fields:
 
    - `inAmount`, `outAmount`, `otherAmountThreshold`
    - `priceImpactPct`, `slippageBps`
    - `prioritizationFeeLamports`, `prioritizationType`
    - `executionMode`, `orderAddress`, `hasTransaction`
 
-5. Ask for explicit confirmation before execution.
-6. After confirmation, execute with the **same** order args (preferred path).
+6. Ask for explicit confirmation before execution.
+7. After confirmation, execute with the **same** order args (preferred path).
    Do not try to recover `order` from a non-`--raw` preview response:
 
 ```bash
@@ -247,12 +275,15 @@ auto-set, response-only, and multi-signer keys stay out).
 ## Operational Checklist
 
 1. Identify the user intent and read the matching vendor skill.
-2. Use `purr wallet address --chain-type solana` for wallet-scoped context.
-3. For read-only data, follow the vendor HTTP/RPC/WebSocket workflow.
-4. For DFlow `/order` execution, preview with `purr dflow order` (default
-   summary-only output).
-5. Show `summary` and ask for explicit confirmation.
-6. After confirmation, run the same `purr dflow order` args with
+2. Check `DFLOW_API_KEY` presence (see above). If missing, warn the user that
+   some features may not work / may be rate-limited, and point them at
+   https://pond.dflow.net/get-started/api-key.
+3. Use `purr wallet address --chain-type solana` for wallet-scoped context.
+4. For read-only data, follow the vendor HTTP/RPC/WebSocket workflow.
+5. For DFlow `/order` execution, preview with `purr dflow order` (default
+   summary-only output). Pass `--api-key "$DFLOW_API_KEY"` when the key is set.
+6. Show `summary` and ask for explicit confirmation.
+7. After confirmation, run the same `purr dflow order` args with
    `--execute true --poll true`. Use `--raw true` + `execute-order` only when
    you must hold the order JSON.
-7. Return transaction signature, order status, order address, and any next step.
+8. Return transaction signature, order status, order address, and any next step.
