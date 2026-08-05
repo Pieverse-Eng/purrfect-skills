@@ -52,6 +52,25 @@ the check or hide the limitation. If the user wants to proceed without a key,
 continue only on paths that work without it and keep the warning in mind when
 errors look like auth or rate-limit failures.
 
+### On DFlow errors: stop and report — do not pivot
+
+If any DFlow step fails (timeout, HTTP error, route not found, no quote,
+RPC failure, multi-signer rejection, non-zero exit from `purr dflow`, or any
+other error from this skill's workflow):
+
+1. **Stop.** Do not retry with different venues, skills, or tools.
+2. **Do not** call other skills (for example Surf, AgentKey, Chainbase,
+   CoinMarketCap, Jupiter wrappers, or other swap skills).
+3. **Do not** invent alternate swap paths, liquidity lookups, or "maybe this
+   token is pump.fun so try X" investigations.
+4. **Report the error plainly** to the user: what command/step failed, the
+   error message (or timeout), and that the DFlow flow stopped. Optionally
+   suggest they retry later or provide a different mint/amount — then wait.
+
+At most **one** identical retry of the same `purr dflow` command is allowed
+when the failure is clearly a transient timeout/network blip. After that, stop
+and report. Never expand the tool surface to diagnose the failure.
+
 Ignore the Install section in `vendor/README.md`; this repository already
 includes the vendored DFlow skills.
 
@@ -185,7 +204,9 @@ purr dflow execute-order \
 `--order-json` built from a default (non-`--raw`) order response — that output
 omits `order`.
 
-If execution returns an RPC error, report the error plainly. Do not switch to
+If preview, execute, status, or any other DFlow step fails (including quote
+timeouts and route errors), stop and report the error. Do not call other
+skills or tools to work around it (see Mandatory Rules). Do not switch to
 manual signing or ask for a private key.
 
 To check a submitted async order:
@@ -290,3 +311,5 @@ auto-set, response-only, and multi-signer keys stay out).
    `--execute true --poll true`. Use `--raw true` + `execute-order` only when
    you must hold the order JSON.
 8. Return transaction signature, order status, order address, and any next step.
+9. On any failure: stop and report the error. Do not pivot to other skills or
+   tools.
