@@ -61,9 +61,8 @@ is paused — do not print `paused: false` when things are fine.
 
 Required before every `--execute` (stake, withdraw, withdraw-batch).
 
-Present a compact Markdown table (OpenClaw richMessages turns this into a
-native rich table). **Do not use code fences.** Do not show raw calldata,
-contract addresses, plan JSON, or internal execution chain IDs.
+Present a compact Markdown table. **Do not use code fences.** Do not show raw
+calldata, contract addresses, plan JSON, or internal execution chain IDs.
 
 ### Stake example
 
