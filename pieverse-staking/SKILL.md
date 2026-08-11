@@ -31,6 +31,27 @@ Only these fixed terms are valid:
 | `180d` | 180 days |
 | `365d` | 365 days |
 
+## Amount Units
+
+CLI `--amount-wei` is raw integer wei only (PIEVERSE has **18 decimals**). Never
+pass a human decimal string as `--amount-wei`.
+
+| User says | Convert to `--amount-wei` |
+| --- | --- |
+| `1` or `1 PIEVERSE` | `1000000000000000000` |
+| `0.5` | `500000000000000000` |
+| `10` | `10000000000000000000` |
+
+Rules:
+
+1. If the user gives a human amount, convert:  
+   `wei = human_amount × 10^18` (integer string, no scientific notation).
+2. If the user already gives a raw integer wei string, use it as-is.
+3. Before confirmation / `--execute`, always show **both** human amount and wei,
+   for example: `1 PIEVERSE (= 1000000000000000000 wei)`.
+4. Never round a displayed decimal back into wei by guessing; convert from the
+   exact amount the user agreed to.
+
 ## Stake Status
 
 `positions` returns only **open** stakes (`active` and `matured`). Closed stakes
@@ -82,6 +103,7 @@ Each entry: `chainId`, `pieverse`, `staking`, `durations`.
 Required for every `--execute` (stake, withdraw, withdraw-batch).
 
 1. Summarize the action (chain, amount or stake id(s), duration if staking).
+   For stake, include both human amount and wei (see Amount Units).
 2. Ask exactly: `Proceed with execute? (Yes/No)`
 3. Run `--execute` only if the user answers **Yes** in the immediately
    preceding turn and parameters are unchanged.
@@ -128,8 +150,8 @@ tx hash alone.
    ```
 
    Stop if `paused` is true or `pieverseBalanceWei` is too low for the amount.
-3. **Agree amount and duration** — amount is wei (18 decimals); duration from
-   Durations above.
+3. **Agree amount and duration** — convert human amount to wei per Amount Units;
+   duration from Durations above. Show both human amount and wei to the user.
 4. **Optional plan** (no confirmation):
 
    ```bash
@@ -139,7 +161,8 @@ tx hash alone.
      --chain-id <chainId>
    ```
 
-5. **Confirm and execute** — follow Execution Confirmation, then:
+5. **Confirm and execute** — follow Execution Confirmation (include human amount
+   and wei), then:
 
    ```bash
    purr pieverse staking stake \
@@ -292,6 +315,7 @@ purr pieverse staking withdraw-batch \
 | User picks non-matured id | Refuse; re-list matured |
 | Low token balance | Show `pieverseBalanceWei` from positions |
 | Low gas | `purr wallet balance --chain-type ethereum --chain-id <id>` |
+| Human amount given as `--amount-wei` | Convert with 18 decimals first; never pass `1` for 1 PIEVERSE |
 | Invalid duration | Use only `90d` / `180d` / `365d` |
 | Duplicate batch ids | Fix the list before executing |
 | Contract paused | Stop stake and withdraw |
