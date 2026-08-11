@@ -102,14 +102,33 @@ Each entry: `chainId`, `pieverse`, `staking`, `durations`.
 
 Required for every `--execute` (stake, withdraw, withdraw-batch).
 
-1. Summarize the action (chain, amount or stake id(s), duration if staking).
-   For stake, include both human amount and wei (see Amount Units).
+1. Summarize only what the user must confirm (see Presentation below).
 2. Ask exactly: `Proceed with execute? (Yes/No)`
 3. Run `--execute` only if the user answers **Yes** in the immediately
    preceding turn and parameters are unchanged.
 4. If No, parameters change, or another request intervenes — do not execute;
    re-summarize and ask again if they still want to proceed.
-5. Steps-only (no `--execute`) does not need confirmation.
+5. Steps-only (no `--execute`) does not need confirmation. Do not dump raw
+   plan JSON to the user unless they ask for technical details.
+
+### Confirmation presentation
+
+User-facing confirmation must stay short and readable:
+
+- Use a **title**, **bullets**, and **inline code** for values
+  (amounts, chain ids, stake ids, durations).
+- Show only decision fields the user needs:
+  - stake: network, amount (human + wei), duration, wallet (short if long)
+  - withdraw / batch: network, stake id(s), amounts, wallet
+- Do **not** format transaction steps as Markdown tables or fenced code
+  blocks in the confirmation message.
+- Do **not** paste full plan JSON, calldata, or step arrays into the main
+  confirmation body.
+- Put contract addresses (`pieverse`, `staking`) in a **collapsed details**
+  block (for example HTML `<details>` / “Technical details”), not in the
+  primary bullets.
+- Optional plan output is for the agent; when speaking to the user, convert
+  it into the same title + bullets form, not a code dump.
 
 ## After Execute: Explorer Links
 
