@@ -14,10 +14,10 @@ stakes through the hosted wallet.
 
 ## Supported Networks
 
-| Network | Chain ID |
-| --- | ---: |
-| Ethereum | `1` |
-| BNB Chain | `56` |
+| Network | Chain ID | Explorer tx URL |
+| --- | ---: | --- |
+| Ethereum | `1` | `https://etherscan.io/tx/<hash>` |
+| BNB Chain | `56` | `https://bscscan.com/tx/<hash>` |
 
 If the user does not name a network, ask which one before any chain-specific step.
 
@@ -89,6 +89,35 @@ Required for every `--execute` (stake, withdraw, withdraw-batch).
    re-summarize and ask again if they still want to proceed.
 5. Steps-only (no `--execute`) does not need confirmation.
 
+## After Execute: Explorer Links
+
+After every successful on-chain write (`--execute` on stake, withdraw, or
+withdraw-batch), always return explorer links to the user. Do not stop at a raw
+tx hash alone.
+
+1. Parse the execute JSON. For each entry in `results[]` that has a non-empty
+   `hash` and `status` is not `skipped`, build a link from the command's
+   public chain id (`1` or `56`):
+
+   | Chain ID | Link |
+   | ---: | --- |
+   | `1` | `https://etherscan.io/tx/<hash>` |
+   | `56` | `https://bscscan.com/tx/<hash>` |
+
+2. Present every successful step with its label (if any) and full URL, for
+   example:
+
+   ```text
+   Approve: https://etherscan.io/tx/0x...
+   Stake: https://etherscan.io/tx/0x...
+   ```
+
+3. Multi-step runs (approve + stake) must list a link per broadcast step.
+4. Skip empty hashes (`status: skipped` with no hash). If no hash is returned
+   for a step that should have broadcast, report that the explorer link is
+   unavailable and do not invent a hash.
+5. Then re-check positions as usual.
+
 ## Workflow: Stake
 
 1. **Resolve chain** — Ethereum (`1`) or BNB Chain (`56`).
@@ -120,7 +149,9 @@ Required for every `--execute` (stake, withdraw, withdraw-batch).
      --execute
    ```
 
-6. **Verify** — re-run positions; show the new stake in `stakes`.
+6. **Report explorer links** — follow After Execute: Explorer Links for every
+   non-skipped hash in the execute result.
+7. **Verify** — re-run positions; show the new stake in `stakes`.
 
 ## Workflow: List → Choose → Withdraw
 
@@ -160,7 +191,9 @@ several.
      --execute
    ```
 
-7. **Verify** — re-run positions; withdrawn ids should no longer appear in
+7. **Report explorer links** — follow After Execute: Explorer Links for every
+   non-skipped hash in the execute result.
+8. **Verify** — re-run positions; withdrawn ids should no longer appear in
    `stakes`; report `pieverseBalanceWei`.
 
 ## Command Reference
@@ -240,6 +273,8 @@ purr pieverse staking withdraw-batch \
 ## Safety
 
 - Never use `--execute` without explicit Yes in the immediately preceding turn.
+- After every successful `--execute`, always return explorer tx links (see
+  After Execute: Explorer Links). Never leave the user with only a bare hash.
 - Only withdraw `matured` stakes.
 - Stake ids only from the latest positions result for that chain.
 - If `paused` is true, do not stake or withdraw.
