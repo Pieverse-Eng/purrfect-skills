@@ -152,24 +152,85 @@ with only a bare hash. Then re-check positions.
 
 ## Commands
 
+### Help
+
 ```bash
 purr pieverse staking help
+```
+
+### Contracts
+
+```bash
+# Both networks
 purr pieverse staking contracts
+
+# One network
 purr pieverse staking contracts --chain-id 1
+purr pieverse staking contracts --chain-id 56
+```
+
+### Positions
+
+Agent wallet PIEVERSE balance and open stakes (wallet resolved automatically).
+
+```bash
 purr pieverse staking positions --chain-id 1
 purr pieverse staking positions --chain-id 56
+```
 
+### Stake
+
+Amount is wei (convert from human amount first). Durations: `90d` | `180d` | `365d`.
+
+```bash
+# Plan only (no broadcast) — no user confirmation
+purr pieverse staking stake \
+  --amount-wei 1000000000000000000 \
+  --duration 90d \
+  --chain-id 1
+
+# Execute only after Yes
 purr pieverse staking stake \
   --amount-wei 1000000000000000000 \
   --duration 90d \
   --chain-id 1 \
   --execute
-
-purr pieverse staking withdraw --stake-id 0 --chain-id 1 --execute
-purr pieverse staking withdraw-batch --stake-ids 0,1,2 --chain-id 56 --execute
 ```
 
-Omit `--execute` to plan only (agent use). Positions auto-uses the agent wallet.
+### Withdraw one
+
+```bash
+# Plan only
+purr pieverse staking withdraw \
+  --stake-id 0 \
+  --chain-id 1
+
+# Execute only after Yes
+purr pieverse staking withdraw \
+  --stake-id 0 \
+  --chain-id 1 \
+  --execute
+```
+
+### Withdraw batch
+
+Comma-separated stake IDs; no duplicates.
+
+```bash
+# Plan only
+purr pieverse staking withdraw-batch \
+  --stake-ids 0,1,2 \
+  --chain-id 56
+
+# Execute only after Yes
+purr pieverse staking withdraw-batch \
+  --stake-ids 0,1,2 \
+  --chain-id 56 \
+  --execute
+```
+
+Omit `--execute` to print steps for agent use only. Do not dump those steps to
+the user as code fences or tables in the confirmation message.
 
 ## Safety
 
