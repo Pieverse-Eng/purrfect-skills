@@ -37,9 +37,15 @@ CLI needs `--amount-wei` (18 decimals). Convert human amounts for commands:
 
 | User says | `--amount-wei` |
 | --- | --- |
+| `0.01` | `10000000000000000` |
 | `1` | `1000000000000000000` |
+| `1.23` | `1230000000000000000` |
 | `0.5` | `500000000000000000` |
 | `10` | `10000000000000000000` |
+
+Accept at most 2 decimal places with a minimum increment of `0.01 PIEVERSE`.
+If the user provides more precision, ask for a new amount. Never round or
+truncate it. Convert an accepted human amount to wei exactly.
 
 In **user-facing** text, show human amounts only (for example `100 PIEVERSE`).
 Do not print wei next to the human amount in confirmations or summaries.
@@ -117,7 +123,9 @@ with only a bare hash. Then re-check positions.
 1. Resolve chain (`1` or `56`).
 2. `purr pieverse staking positions --chain-id <chainId>` — stop if paused or
    available balance is too low.
-3. Agree human amount and duration; convert to wei only for the CLI command.
+3. Agree a human amount in `0.01 PIEVERSE` increments and a duration. If the
+   amount has more than 2 decimal places, ask for a new amount; never round or
+   truncate it. Convert the accepted amount to wei only for the CLI command.
 4. Confirm with the stake table above, then after Yes:
 
    ```bash
@@ -179,7 +187,8 @@ purr pieverse staking positions --chain-id 56
 
 ### Stake
 
-Amount is wei (convert from human amount first). Durations: `90d` | `180d` | `365d`.
+Amount is wei (convert an amount with at most 2 decimal places from human units
+first). Durations: `90d` | `180d` | `365d`.
 
 ```bash
 # Plan only (no broadcast) — no user confirmation
@@ -234,6 +243,7 @@ the user as code fences or tables in the confirmation message.
 ## Safety
 
 - Explicit Yes required before `--execute`.
+- Accept stake amounts in `0.01 PIEVERSE` increments; never round or truncate.
 - Only withdraw `matured` stakes.
 - Public chains only: `1`, `56`.
 - Do not auto-retry after timeout, unknown broadcast, or partial failure —
@@ -249,6 +259,7 @@ the user as code fences or tables in the confirmation message.
 | Non-matured id | Refuse; re-list matured |
 | Low balance | Show available PIEVERSE (human) |
 | Low gas | Check native balance on that chain |
+| More than 2 amount decimal places | Ask for a new amount; do not round or execute |
 | Bad duration | Only `90d` / `180d` / `365d` |
 | Paused | Stop stake and withdraw |
 | Duplicate batch ids | Fix list before execute |
