@@ -49,11 +49,13 @@ as `serializedTransaction`:
 
 ## Status
 
-If the order response includes `orderAddress`, poll status after broadcast:
+After broadcast, poll with the transaction signature — not `orderAddress`.
+Pass `--last-valid-block-height` only when the order payload includes one:
 
 ```bash
-purr dflow status \
-  --order-address "$(jq -r '.order.orderAddress // .order.order_address' /tmp/dflow-order.json)" \
+purr dflow prediction-order-status \
+  --signature <broadcast-signature> \
+  --last-valid-block-height <lastValidBlockHeight> \
   --poll true
 ```
 
