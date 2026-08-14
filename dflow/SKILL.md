@@ -158,7 +158,7 @@ purr dflow order \
 To revisit an async order, use its transaction signature, not `orderAddress`:
 
 ```bash
-purr dflow status \
+purr dflow prediction-order-status \
   --signature <transaction-signature> \
   --last-valid-block-height <optional-block-height> \
   --poll true
