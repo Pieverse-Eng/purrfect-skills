@@ -1,0 +1,9 @@
+{
+  "name": "predictclaw-erc-mandated-runtime",
+  "private": true,
+  "type": "module",
+  "description": "One-shot Node helper for @erc-mandated/sdk pure plan/encode calls used by the predictclaw skill.",
+  "dependencies": {
+    "@erc-mandated/sdk": "0.3.1"
+  }
+}
