@@ -160,6 +160,11 @@ With `--poll true`, read the result for:
 - polled order **status** when present
 - `summary` amounts
 
+If execution returns `statusError`, the transaction was already broadcast and
+confirmed but the prediction-order status lookup failed. Report the signature
+and the status error. Retry only `purr dflow prediction-order-status` with that
+signature; never rebuild or execute the order again.
+
 Two-step execute only when you must hold the order JSON (for example debugging
 or delayed signing). Build with `--raw true`, then pass the raw `.order`
 object:
@@ -326,5 +331,8 @@ auto-set, response-only, and multi-signer keys stay out).
    next step. For a later status check use
    `purr dflow prediction-order-status --signature <tx-sig> --poll true` —
    never `--order-address`.
-8. On any failure: stop and report the error. Do not pivot to other skills or
-   tools.
+8. If execution returns `statusError`, report that the transaction is already
+   confirmed and retry only the status command with its signature. Never rerun
+   the order or `execute-order`.
+9. On any other failure: stop and report the error. Do not pivot to other
+   skills or tools.
