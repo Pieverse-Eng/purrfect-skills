@@ -72,8 +72,27 @@ Run preparatory queries silently.
    `warnings`. If balance or approvals fail, stop and fix that first.
 7. Confirm, then `order-execute --preview-id <previewId>` immediately.
 
-Verify with `order --order-hash <preview.orderHash>`. Use `orders --status
-OPEN` when you expect a resting LIMIT or a partial fill.
+### Verify a MARKET fill
+
+Predict.fun REST can lag a fill by a few seconds. `order` may still show
+`OPEN` / 0 filled while `positions` or `balances` already moved. That is
+upstream eventual consistency, not an unfilled order.
+
+After `order-execute`:
+
+1. `order --order-hash <preview.orderHash>`
+2. `positions --market-id <id>`
+3. If the order is `OPEN` / 0 filled and `positions` or `balances` already
+   moved:
+   - `matches --market-id <id>`
+   - `activity`
+   - wait a few seconds, then `order --order-hash <preview.orderHash>` again
+4. Check leftover shares with `balances --market-id <id>`. `positions` can
+   omit dust below the tradable floor.
+
+Say the order is unfilled only when it is still `OPEN`, `matches` has no
+fill, and `balances` is unchanged. Use `orders --status OPEN` for a resting
+LIMIT.
 
 ## Cancel vs remove-from-book
 

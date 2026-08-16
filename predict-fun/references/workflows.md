@@ -54,6 +54,11 @@ purr predict-fun order --order-hash <preview.orderHash>
 purr predict-fun positions --market-id <id>
 ```
 
+If `order` is still `OPEN` / 0 filled and `positions` or `balances` already
+moved, follow
+**Verify a MARKET fill** in [trading.md](trading.md) (`matches`, `activity`,
+re-read the order, `balances --market-id`).
+
 If the book cannot fill it, `PREDICT_INSUFFICIENT_LIQUIDITY` — reduce size or
 switch to LIMIT. Amount floors are in [trading.md](trading.md).
 

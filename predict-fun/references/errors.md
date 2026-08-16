@@ -18,6 +18,9 @@ Prefer stopping and explaining over inventing retries.
 5. On an invalid `--sort`, `--status`, `--market-variant`, or `--resolution`,
    use the tables in this skill or `purr predict-fun help`, then retry that
    command once. A CLI-local reject means no HTTP request was sent.
+6. After a MARKET execute, `order` showing `OPEN` / 0 filled while
+   `positions` or `balances` already moved is Predict REST lag. Follow
+   **Verify a MARKET fill** in [trading.md](trading.md).
 
 ## Common codes
 
@@ -29,6 +32,7 @@ Prefer stopping and explaining over inventing retries.
 | `PREDICT_PREVIEW_ACTION_MISMATCH` / `PREDICT_PREVIEW_SCOPE_MISMATCH` | Execute route or cancel/approval mode does not match the preview | Use the matching `*-execute` for that preview |
 | `PREDICT_ORDER_BELOW_MINIMUM` | Qty &lt; 0.01, value &lt; 0.9 USDT, or MARKET BUY spend &lt; 1 | Ask for a valid size |
 | `PREDICT_INSUFFICIENT_LIQUIDITY` | Book cannot support the MARKET size/value | Show the book; reduce size or use LIMIT |
+| `order` is `OPEN` / 0 filled, `positions` or `balances` already moved | Predict REST lag after a fill | `matches --market-id`, `activity`, wait a few seconds, re-read `order`. Check dust with `balances --market-id` |
 | `PREDICT_INSUFFICIENT_BALANCE` | Not enough USDT or outcome tokens | Show `readiness` / `positions`; ask to fund or reduce |
 | `PREDICT_APPROVAL_REQUIRED` | Protocol allowance/operator missing | Approval preview → confirm → execute; then new order/position preview |
 | `PREDICT_APPROVAL_ALREADY_SET` | Requested allowance/operator already matches | Treat as approved |
