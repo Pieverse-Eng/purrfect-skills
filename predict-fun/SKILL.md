@@ -42,9 +42,11 @@ Before `set-referral`, `order-execute`, `cancel-execute`, `cancel-all-execute`,
 `position-execute`:
 
 1. Summarize the concrete parameters from the latest preview (or, for
-   referral, the five-character code). Include market id and title, outcome,
-   side, strategy, decimal amounts or price, readiness warnings, expiry, and
-   any on-chain effect (approval, cancel, split/merge/redeem/convert).
+   referral, the five-character code). Include market id and title, the
+   outcome display name plus its `indexSet` and CLI `--outcome` (see
+   [discovery.md](references/discovery.md)), side, strategy, decimal amounts
+   or price, readiness warnings, expiry, and any on-chain effect (approval,
+   cancel, split/merge/redeem/convert).
 2. Ask exactly:
    `Do you want to execute this Predict.fun action with these parameters? (Yes/No)`
 3. Run only after an explicit yes on the immediately preceding user turn for
@@ -55,3 +57,14 @@ One confirmation authorizes one execute (or one `set-referral`). Approvals and
 the order they enable are separate confirmations. Remove-from-book must also
 state that it does **not** invalidate the signature on-chain and can strand
 collateral.
+
+When an execute response includes a transaction `hash` (on-chain cancel,
+approval, approval-revoke, or position action), include a BscScan link using
+that hash exactly:
+
+```text
+https://bscscan.com/tx/<hash>
+```
+
+`order-execute` and `remove-from-book-execute` submit off-chain; they return
+an order hash, not a BNB transaction.

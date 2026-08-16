@@ -56,11 +56,14 @@ the full outcome balance; add `--amount` only when `market` shows `isNegRisk`.
 
 1. `readiness` and `positions` (and `balances --market-id` when useful).
 2. `approval-preview` for the same operation if `positions` / a later position
-   preview reports unsatisfied approvals. Confirm and execute approvals first.
+   preview reports unsatisfied approvals. Confirm and execute approvals first,
+   and include `https://bscscan.com/tx/<hash>` for each returned transaction
+   hash.
 3. `position-preview` with the action-specific flags only.
 4. Confirm from `previewId`, `amount`, `requiredApprovals`, `estimatedGas`,
    and `warnings`.
-5. `position-execute --preview-id <previewId>`.
+5. `position-execute --preview-id <previewId>`. Include
+   `https://bscscan.com/tx/<hash>` for each returned transaction hash.
 6. Re-read `positions` / `balances`. JSON `status` `broadcasted`,
    `chain_confirmed`, or `upstream_pending` is not terminal — resume the same
    execute.

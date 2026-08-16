@@ -39,6 +39,7 @@ If approvals are missing:
 purr predict-fun approval-preview --operation TRADE --market-id <id> --side BUY --amount <spend>
 # confirm →
 purr predict-fun approval-execute --preview-id <uuid>
+# include https://bscscan.com/tx/<hash> from the response
 purr predict-fun approvals --market-id <id> --operation TRADE --side BUY
 ```
 
@@ -74,6 +75,7 @@ purr predict-fun orders --status OPEN
 purr predict-fun cancel-preview --order-hashes <hash>[,<hash>]
 # confirm →
 purr predict-fun cancel-execute --preview-id <uuid>
+# include https://bscscan.com/tx/<hash> from the response
 purr predict-fun order --order-hash <hash>
 ```
 
@@ -99,6 +101,7 @@ purr predict-fun position-preview --action REDEEM --market-id <id> --outcome <YE
 purr predict-fun position-preview --action CONVERT --category-slug <slug> --market-ids <id,id> --amount <decimal>
 # each action: confirm →
 purr predict-fun position-execute --preview-id <uuid>
+# include https://bscscan.com/tx/<hash> from the response
 purr predict-fun positions --market-id <id>
 ```
 

@@ -87,7 +87,8 @@ If `cancel-all-preview` returns `PREDICT_CANCEL_ALL_REQUIRES_BATCHING`, page
 After a confirmed cancel, an order can still show
 `chain_confirmed` / `upstream_pending` until Predict REST is terminal. Re-run
 the **same** `cancel-execute` with the **same** `previewId`, or re-read
-`order`.
+`order`. Include `https://bscscan.com/tx/<hash>` for each returned transaction
+hash.
 
 **Remove-from-book** is a different operation. It does not invalidate the
 signature on-chain, does not go through wallet-policy, and can strand
