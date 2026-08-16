@@ -1,6 +1,6 @@
 ---
 name: predict-fun
-description: Use when the user asks to trade or inspect Predict.fun — e.g. list open markets, buy YES, sell NO, quote a market, check Predict positions or orders, cancel Predict orders, approve trading, split merge or redeem shares, convert a category position, set a referral, or stream the Predict orderbook. Use `purr predict-fun` for Predict.fun on BNB Chain, not DFlow/Kalshi or other prediction venues.
+description: Use when the user asks to trade or inspect Predict.fun — e.g. list open markets, buy YES, sell NO, quote a market, check Predict positions or orders, cancel Predict orders, approve trading, split merge or redeem shares, convert a category position, set a referral, or stream the Predict orderbook.
 ---
 
 # Predict.fun
@@ -15,6 +15,11 @@ resolves, winning shares redeem for collateral.
 Use it to find markets, read quotes and order books, check balances and
 positions, place or cancel orders, approve the protocol, split / merge /
 redeem / convert shares, set a referral, and follow live updates.
+
+## Out of scope
+
+- Other prediction venues (DFlow, Kalshi, Binance prediction)
+- Testnet or chains other than BNB Chain mainnet
 
 ## Command Groups
 
