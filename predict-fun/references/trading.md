@@ -14,7 +14,7 @@ purr predict-fun order-preview \
   [--expires-at <ISO-8601>] \
   [--fill-or-kill true|false] [--post-only true|false] \
   [--self-trade-prevention CANCEL_MAKER|CANCEL_TAKER|CANCEL_BOTH] \
-  [--reserved-balance-policy <policy>]
+  [--reserved-balance-policy REJECT_MARKET_ORDER|SKIP_RESERVED_BALANCE_CHECKS]
 purr predict-fun order-execute --preview-id <uuid>
 
 purr predict-fun cancel-preview --order-hashes <0x-hash,0x-hash,...>
@@ -28,8 +28,10 @@ purr predict-fun remove-from-book-execute --preview-id <uuid> --acknowledge-risk
 
 `--order-hashes` is 1–25 `0x`-prefixed 32-byte hashes.
 
-`--reserved-balance-policy` is forwarded as given. Pass a value the user or a
-prior payload supplied; do not invent one.
+`--reserved-balance-policy` is `REJECT_MARKET_ORDER` or
+`SKIP_RESERVED_BALANCE_CHECKS`. Omit it by default. Pass
+`SKIP_RESERVED_BALANCE_CHECKS` only when the user asks to skip reserved-balance
+checks.
 
 `fill-or-kill` and `post-only` cannot both be true.
 
@@ -50,9 +52,8 @@ Floors (platform-enforced):
 `--expires-at` is LIMIT-only and must be at least 30 seconds in the future.
 `--slippage-bps` is 0–5000 (MARKET).
 
-Empty or shallow books return `PREDICT_INSUFFICIENT_LIQUIDITY` rather than a
-generic server error. Do not invent a default spend or slippage to “make it
-work.”
+Empty or shallow books return `PREDICT_INSUFFICIENT_LIQUIDITY`. Ask the user
+for a smaller size or a LIMIT order.
 
 ## Place-order workflow
 
@@ -61,7 +62,9 @@ Run preparatory queries silently.
 1. Resolve `--market-id` and confirm `tradingStatus` is `OPEN`
    ([discovery.md](discovery.md)).
 2. `readiness --market-id <id>` and, for a SELL, `positions`.
-3. `market-quote` or `orderbook --outcome <YES|NO>` for the intended side.
+3. Map the user's side with the `indexSet` table in
+   [discovery.md](discovery.md), then `market-quote` and
+   `orderbook --outcome YES|NO`.
 4. If readiness or a later preview warns that approvals are missing, follow
    [positions.md](positions.md) and confirm the approval **before** the order.
 5. `order-preview` with the exact flags you will honor at execute time.
@@ -70,8 +73,7 @@ Run preparatory queries silently.
 7. Confirm, then `order-execute --preview-id <previewId>` immediately.
 
 Verify with `order --order-hash <preview.orderHash>`. Use `orders --status
-OPEN` only when you expect a resting LIMIT or a partial fill. Do not treat
-submit `status: succeeded` as a fill.
+OPEN` when you expect a resting LIMIT or a partial fill.
 
 ## Cancel vs remove-from-book
 
@@ -79,15 +81,13 @@ submit `status: succeeded` as a fill.
 `cancel-execute` / `cancel-all-execute`) is the default. It invalidates the
 order on-chain.
 
-If `cancel-all-preview` returns `PREDICT_CANCEL_ALL_REQUIRES_BATCHING`, do not
-retry cancel-all. Page `orders`, then `cancel-preview` with explicit hashes
-(max 25).
+If `cancel-all-preview` returns `PREDICT_CANCEL_ALL_REQUIRES_BATCHING`, page
+`orders` and `cancel-preview` with explicit hashes (max 25).
 
 After a confirmed cancel, an order can still show
 `chain_confirmed` / `upstream_pending` until Predict REST is terminal. Re-run
 the **same** `cancel-execute` with the **same** `previewId`, or re-read
-`order`. Do not preview a second cancel for hashes that may already be in
-flight.
+`order`.
 
 **Remove-from-book** is a different operation. It does not invalidate the
 signature on-chain, does not go through wallet-policy, and can strand
@@ -96,4 +96,4 @@ book without on-chain cancel. The confirmation must state that risk.
 `--acknowledge-risk true` is required on execute; the CLI refuses without it.
 
 Rejected removals are per-hash (`PREDICT_REMOVE_FROM_BOOK_REJECTED`). Report
-each hash; do not call a partial removal a success.
+each hash.

@@ -24,11 +24,10 @@ Exact ERC-20 allowance requires `--amount` unless `--unlimited true`. Prefer
 an exact amount. If the preview warns about unlimited allowance or ERC-1155
 operator access, put that warning in the confirmation.
 
-`--step-ids` (1–20) must come from a preview or `approvals` payload. Do not
-invent step ids.
+`--step-ids` (1–20) come from a preview or `approvals` payload.
 
 `PREDICT_APPROVAL_ALREADY_SET` means every requested step already matches.
-Do not execute. Treat it as done.
+Treat it as done.
 
 `PREDICT_NO_APPROVAL_REQUIRED` means that operation has no approval steps.
 
@@ -49,9 +48,9 @@ purr predict-fun position-execute --preview-id <uuid>
 | `REDEEM` | Winning shares → collateral after resolution | `--market-id` `--outcome`. Add `--amount` only when `market` shows `isNegRisk` |
 | `CONVERT` | Category conversion across related markets | `--category-slug` `--market-ids` (1–25) `--amount` |
 
-Do not pass `--outcome` on SPLIT/MERGE. Do not pass `--market-id` on CONVERT.
-The CLI rejects the extra flag. Standard (non-NegRisk) markets redeem the
-full outcome balance and reject `--amount`.
+SPLIT/MERGE take `--market-id` and `--amount`. CONVERT takes
+`--category-slug`, `--market-ids`, and `--amount`. Standard markets redeem
+the full outcome balance; add `--amount` only when `market` shows `isNegRisk`.
 
 ## Position workflow
 

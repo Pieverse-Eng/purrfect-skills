@@ -5,15 +5,23 @@ silently. Surface only decisions, results, or errors that change the path.
 
 ## A. Find a market and quote it
 
+Named event:
+
 ```bash
 purr predict-fun search --query "<text>" --limit 10
 purr predict-fun market --market-id <id>
 purr predict-fun market-quote --market-id <id>
-purr predict-fun orderbook --market-id <id> --outcome YES
 ```
 
-Report title, status, and quote `bestBid` / `bestAsk` with
-`updateTimestampMs`. Do not trade yet.
+Latest trending (open markets, highest 24h volume):
+
+```bash
+purr predict-fun markets --status OPEN --sort VOLUME_24H_DESC --first 10
+purr predict-fun market-quotes --market-ids <ids>
+```
+
+Other list mappings are in [discovery.md](discovery.md). Report title, status,
+and the quote. Then stop unless the user asked to trade.
 
 ## B. First trade (MARKET BUY YES)
 

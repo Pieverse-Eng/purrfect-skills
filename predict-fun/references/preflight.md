@@ -11,10 +11,10 @@ purr predict-fun account
 purr predict-fun balances [--market-id <id>]
 purr predict-fun readiness [--market-id <id>]
 purr predict-fun approvals [--market-id <id>] [--operation TRADE|SPLIT|MERGE|REDEEM|CONVERT] [--side BUY|SELL]
-purr predict-fun orders [--first <1-100>] [--after <cursor>] [--status <status>]
+purr predict-fun orders [--first <1-100>] [--after <cursor>] [--status OPEN|FILLED]
 purr predict-fun order --order-hash <0x-hash>
-purr predict-fun positions [--first <1-100>] [--after <cursor>] [--market-id <id>] [--sort <sort>]
-purr predict-fun address-positions --address <0x-address> [--first <1-100>] [--after <cursor>] [--market-id <id>] [--sort <sort>]
+purr predict-fun positions [--first <1-100>] [--after <cursor>] [--market-id <id>] [--sort AMOUNT_DESC|EVENT_BLOCK_ASC|EVENT_BLOCK_DESC|SHARES_VALUE_DESC|RETURN_DESC]
+purr predict-fun address-positions --address <0x-address> [--first <1-100>] [--after <cursor>] [--market-id <id>] [--sort AMOUNT_DESC|EVENT_BLOCK_ASC|EVENT_BLOCK_DESC|SHARES_VALUE_DESC|RETURN_DESC]
 purr predict-fun activity [--first <1-100>] [--after <cursor>]
 purr predict-fun matches [--first <1-100>] [--after <cursor>] [--market-id <id>] [--minimum-value <decimal>]
 purr predict-fun referral
@@ -37,6 +37,11 @@ purr predict-fun set-referral --code <5-char-code>
 
 Paged commands return `{ data, cursor }`. Pass `--after` with the previous
 cursor. `--first` is 1–100.
+
+`orders --status` is `OPEN` or `FILLED` only.
+
+`positions` and `address-positions` share the same `--sort`: `AMOUNT_DESC`,
+`EVENT_BLOCK_ASC`, `EVENT_BLOCK_DESC`, `SHARES_VALUE_DESC`, `RETURN_DESC`.
 
 `approvals` does not accept `--operation ALL`. Use `ALL` only on approval
 preview/execute — see [positions.md](positions.md).
