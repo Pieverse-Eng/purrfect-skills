@@ -33,17 +33,19 @@ purr predict-fun approvals --market-id <id> --operation TRADE --side BUY
 
 If USDT or BNB is short, stop and use the `onchain` skill to fund chain `56`.
 
-If approvals are missing:
+If `approvals` is missing, ask exact vs unlimited (`SKILL.md`), then:
 
 ```bash
 purr predict-fun approval-preview --operation TRADE --market-id <id> --side BUY --amount <spend>
-# confirm →
+# or --unlimited true after the user picks option 2
+# confirm this approval only →
 purr predict-fun approval-execute --preview-id <uuid>
 # include https://bscscan.com/tx/<hash> from the response
 purr predict-fun approvals --market-id <id> --operation TRADE --side BUY
 ```
 
-Then the order:
+On `PREDICT_APPROVAL_ALREADY_SET`, skip `approval-execute`. Then a **new**
+`order-preview` (the pre-approval order preview is spent):
 
 ```bash
 purr predict-fun orderbook --market-id <id> --outcome YES
@@ -110,9 +112,10 @@ purr predict-fun position-execute --preview-id <uuid>
 purr predict-fun positions --market-id <id>
 ```
 
-Approve the matching operation first when the preview warns. On a standard
-market, omit `--amount` on REDEEM; pass it only when `market` shows
-`isNegRisk`.
+If a position preview needs approval: `approval-preview` → confirm →
+`approval-execute` → **new** `position-preview` → confirm →
+`position-execute`. On a standard market, omit `--amount` on REDEEM; pass it
+only when `market` shows `isNegRisk`.
 
 ## F. Watch a book
 

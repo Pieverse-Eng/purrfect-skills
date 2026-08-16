@@ -66,11 +66,19 @@ Run preparatory queries silently.
    [discovery.md](discovery.md), then `market-quote` and
    `orderbook --outcome YES|NO`.
 4. If readiness or a later preview warns that approvals are missing, follow
-   [positions.md](positions.md) and confirm the approval **before** the order.
+   [positions.md](positions.md). Path:
+
+   `approval-preview` → confirm → `approval-execute` → reconcile → **new**
+   `order-preview` → confirm → `order-execute`
+
+   On `PREDICT_APPROVAL_ALREADY_SET`, skip `approval-execute` and run the new
+   `order-preview`. The pre-approval order preview is not reusable. One
+   confirmation per execute (see `SKILL.md`).
 5. `order-preview` with the exact flags you will honor at execute time.
 6. Read `previewId`, `expiresAt`, `amounts`, `orderHash`, `readiness`, and
    `warnings`. If balance or approvals fail, stop and fix that first.
-7. Confirm, then `order-execute --preview-id <previewId>` immediately.
+7. Confirm that order only, then `order-execute --preview-id <previewId>`
+   immediately.
 
 ### Verify a MARKET fill
 

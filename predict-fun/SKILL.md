@@ -37,26 +37,46 @@ disagree with the installed CLI.
 
 ## Confirmation Contract
 
-Before `set-referral`, `order-execute`, `cancel-execute`, `cancel-all-execute`,
-`remove-from-book-execute`, `approval-execute`, `approval-revoke-execute`, or
-`position-execute`:
+Each user yes authorizes **one** `*-execute` (or one `set-referral`). Ask
+only about the action you will run next. There is no “Approve + Buy”,
+“Approve + Sell”, or “Yes, proceed with both” — that is one confirmation,
+not two.
 
-1. Summarize the concrete parameters from the latest preview (or, for
-   referral, the five-character code). Include market id and title, the
-   outcome display name plus its `indexSet` and CLI `--outcome` (see
-   [discovery.md](references/discovery.md)), side, strategy, decimal amounts
-   or price, readiness warnings, expiry, and any on-chain effect (approval,
-   cancel, split/merge/redeem/convert).
-2. Ask exactly:
-   `Do you want to execute this Predict.fun action with these parameters? (Yes/No)`
-3. Run only after an explicit yes on the immediately preceding user turn for
-   that unchanged action. The initial request, any changed detail, an expired
-   preview, or an intervening request requires confirmation again.
+Keep the question short and only about this action. Include the outcome
+display name plus `indexSet` and CLI `--outcome` when the action is a trade
+(see [discovery.md](references/discovery.md)).
 
-One confirmation authorizes one execute (or one `set-referral`). Approvals and
-the order they enable are separate confirmations. Remove-from-book must also
-state that it does **not** invalidate the signature on-chain and can strand
-collateral.
+Approval (BUY, exact amount):
+
+```text
+Approve a <amount> USDT allowance for Predict.fun?
+
+1. Approve only <amount> USDT
+2. Approve unlimited
+```
+
+Use option 2 only when the user picks it and understands it is a standing
+max allowance. Then `approval-preview` with `--amount <amount>` or
+`--unlimited true`. After they confirm that preview, `approval-execute`.
+
+After the approval is done, ask the order separately:
+
+```text
+Buy <amount> USDT of <outcome-name> on this market?
+```
+
+`<outcome-name>` is the display name from `outcomes` after the `indexSet` map.
+
+Fixed trade path:
+
+`approval-preview` → confirm → `approval-execute` → reconcile → **new**
+`order-preview` → confirm → `order-execute`
+
+On `PREDICT_APPROVAL_ALREADY_SET`, skip `approval-execute` and go to the new
+`order-preview`. The pre-approval order preview is not reusable.
+
+Remove-from-book confirmation must also state that it does not invalidate
+the signature on-chain and can strand collateral.
 
 When an execute response includes a transaction `hash` (on-chain cancel,
 approval, approval-revoke, or position action), include a BscScan link using

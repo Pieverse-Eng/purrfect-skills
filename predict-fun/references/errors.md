@@ -34,8 +34,8 @@ Prefer stopping and explaining over inventing retries.
 | `PREDICT_INSUFFICIENT_LIQUIDITY` | Book cannot support the MARKET size/value | Show the book; reduce size or use LIMIT |
 | `order` is `OPEN` / 0 filled, `positions` or `balances` already moved | Predict REST lag after a fill | `matches --market-id`, `activity`, wait a few seconds, re-read `order`. Check dust with `balances --market-id` |
 | `PREDICT_INSUFFICIENT_BALANCE` | Not enough USDT or outcome tokens | Show `readiness` / `positions`; ask to fund or reduce |
-| `PREDICT_APPROVAL_REQUIRED` | Protocol allowance/operator missing | Approval preview → confirm → execute; then new order/position preview |
-| `PREDICT_APPROVAL_ALREADY_SET` | Requested allowance/operator already matches | Treat as approved |
+| `PREDICT_APPROVAL_REQUIRED` | Protocol allowance/operator missing | `approval-preview` → confirm → `approval-execute` → **new** order/position preview → confirm → execute |
+| `PREDICT_APPROVAL_ALREADY_SET` | Requested allowance/operator already matches | Skip `approval-execute`. Run a new order or position preview |
 | `PREDICT_APPROVAL_AMOUNT_REQUIRED` | Exact ERC-20 approve needs `--amount` | Add amount or, only if the user asked, `--unlimited true` |
 | `PREDICT_NO_APPROVAL_REQUIRED` | That operation has no steps | Continue without an approval execute |
 | `PREDICT_MARKET_NOT_OPEN` / `PREDICT_INVALID_MARKET` | Market closed or payload unusable | Report the error, list candidates, and wait for the user to choose |

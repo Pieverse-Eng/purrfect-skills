@@ -20,14 +20,21 @@ purr predict-fun approval-revoke-execute --preview-id <uuid>
 `TRADE`, `SPLIT`, `MERGE`, `REDEEM`, and `CONVERT` require `--market-id`.
 `ALL` does not.
 
-Exact ERC-20 allowance requires `--amount` unless `--unlimited true`. Prefer
-an exact amount. If the preview warns about unlimited allowance or ERC-1155
-operator access, put that warning in the confirmation.
+### BUY vs SELL approval
+
+| Side | What it sets | After a fill |
+| --- | --- | --- |
+| `BUY` | Exact ERC-20 USDT allowance (`--amount`) | Allowance is consumed; a later buy may need another approval |
+| `SELL` | ERC-1155 `setApprovalForAll` | Standing operator grant. If `approvals` already shows it true for this contract, skip another SELL approval |
+
+Ask exact vs unlimited before `approval-preview` (two options in `SKILL.md`).
+`--unlimited true` only when the user picks it and understands the standing
+max allowance. Exact ERC-20 allowance uses `--amount`.
 
 `--step-ids` (1–20) come from a preview or `approvals` payload.
 
-`PREDICT_APPROVAL_ALREADY_SET` means every requested step already matches.
-Treat it as done.
+`PREDICT_APPROVAL_ALREADY_SET`: skip `approval-execute`. Go to a **new**
+order or position preview.
 
 `PREDICT_NO_APPROVAL_REQUIRED` means that operation has no approval steps.
 
@@ -55,10 +62,10 @@ the full outcome balance; add `--amount` only when `market` shows `isNegRisk`.
 ## Position workflow
 
 1. `readiness` and `positions` (and `balances --market-id` when useful).
-2. `approval-preview` for the same operation if `positions` / a later position
-   preview reports unsatisfied approvals. Confirm and execute approvals first,
-   and include `https://bscscan.com/tx/<hash>` for each returned transaction
-   hash.
+2. If approvals are missing: `approval-preview` → confirm →
+   `approval-execute` → reconcile → **new** `position-preview`. Include
+   `https://bscscan.com/tx/<hash>` for each approval transaction hash. On
+   `PREDICT_APPROVAL_ALREADY_SET`, skip execute and go to the new preview.
 3. `position-preview` with the action-specific flags only.
 4. Confirm from `previewId`, `amount`, `requiredApprovals`, `estimatedGas`,
    and `warnings`.
