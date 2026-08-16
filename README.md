@@ -32,6 +32,7 @@ This directory contains the Pieverse built-in skills. Each folder is a skill uni
 | `okx` | OKX domain router — token research, market data, WebSocket streams, portfolio analysis, smart-money signals, meme scanning, security checks, DEX swaps, cross-chain bridging, DeFi invest (APY/TVL discovery + deposit/redeem/stake/lend), DeFi portfolio view, wallet ops, and x402 payments. |
 | `opensea` | OpenSea entry point — execute NFT buy/sell via `purr opensea`, and route read operations to `opensea-vendor`. |
 | `pancake` | PancakeSwap planning and BSC execution — swaps, liquidity, farms, LP fees, rewards, and PCS Hub handoffs. |
+| `predict-fun` | Predict.fun YES/NO markets on BNB Chain — discovery, quotes, orders, approvals, position actions, and streaming through `purr predict-fun`. |
 
 ### Data & Intelligence
 
