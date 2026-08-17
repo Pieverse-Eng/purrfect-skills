@@ -32,7 +32,7 @@ purr predict-fun stream --topics <topic,topic,...> [--max-events <1-10000>] [--t
 | `market-quote` | One market top of book |
 | `market-quotes` | Up to 500 market ids in one request |
 | `orderbook` | Normalized book for one outcome |
-| `timeseries-latest` / `timeseries` | Chance series (`--from` is unix seconds) |
+| `timeseries-latest` / `timeseries` | Chance series. `--from` is unix seconds; span under 365 days |
 | `stream` | SSE over a platform-owned Predict WebSocket |
 
 Paged list commands return `{ data, cursor }`. Use these tables (or
@@ -80,6 +80,16 @@ Comma-separated numeric IDs from `purr predict-fun tags`.
 ### `--resolution` (timeseries)
 
 `1m`, `5m`, `1h`, `1d`, `1w`, `1M`.
+
+### Timeseries window
+
+`--from` is required unix seconds. `--to` is optional and defaults to now.
+`--from` must be before `--to`. The span must be **under 365 days** (364 days
+works; a full 365 days is rejected). Older history is fine when the span
+itself is under 365 days.
+
+For a recent chart, use `timeseries-latest` or `--from` within the last 7–30
+days. `--limit` is 1–1000.
 
 ### Intent → command
 

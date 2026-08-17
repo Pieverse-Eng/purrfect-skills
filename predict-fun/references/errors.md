@@ -55,6 +55,7 @@ Prefer stopping and explaining over inventing retries.
 | `PREDICT_TIMEOUT` / `PREDICT_NETWORK_ERROR` / `PREDICT_UPSTREAM_ERROR` | Transport / Predict down | If pre-execute: may retry the **read or preview**. If execute may have started: reconcile only |
 | Unsupported / duplicate / positional argument | CLI rejected before HTTP | Fix flags from the skill tables or `purr predict-fun help` |
 | Invalid `--sort` / `--status` / `--market-variant` / `--resolution` | Enum is not on that command | Use the table in [discovery.md](discovery.md) or [preflight.md](preflight.md), or `purr predict-fun help`, then retry once |
+| `PREDICT_REQUEST_REJECTED` range too wide | `timeseries` `--from`/`--to` span is 365 days or more | Retry with a span under 365 days, or use `timeseries-latest` |
 
 ## Policy deferred
 
