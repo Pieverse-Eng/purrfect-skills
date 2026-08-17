@@ -24,6 +24,9 @@ redeem / convert shares, set a referral, and follow live updates.
 Use the enum tables in this skill, or `purr predict-fun help` if they
 disagree with the installed CLI.
 
+Never mention CLI commands, flags, or parameter names in the user-facing
+conversation. Speak in product language only.
+
 ## Command Groups
 
 | Group | What it does | Reference |
