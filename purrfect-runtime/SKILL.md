@@ -33,7 +33,7 @@ OKX plugin SKILL.md files include a `Pre-flight Dependencies` block. Skip these 
 
 **Still run** the rest of preflight — the plugin won't work without them:
 
-- `onchainos --version || install` — no-op on this system (already installed at onboarding).
+- `onchainos --version || install` — hosted images already include `onchainos`. Remote agents install it with `purr deps install`.
 - `launcher.sh` + `update-checker.py` download into `~/.plugin-store/` — shared infra every OKX plugin depends on.
 - Plugin binary download to `~/.local/bin/.<plugin>-core` + symlink `~/.local/bin/<plugin>` → `launcher.sh`.
 - `~/.plugin-store/managed/<plugin>` — the launcher reads this to find the installed version.
