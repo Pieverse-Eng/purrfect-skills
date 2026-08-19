@@ -1,0 +1,4 @@
+interface:
+  display_name: "HR Review"
+  short_description: "Run fair daily evidence capture and weekly agent reviews"
+  default_prompt: "Use $hr-review to collect auditable daily evidence and publish a fair weekly agent improvement report."
