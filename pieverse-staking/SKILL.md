@@ -8,9 +8,9 @@ description: Use when the user asks about Pieverse staking, staking or unstaking
 ## Overview
 
 Pieverse staking lets users lock PIEVERSE for a fixed term on Ethereum or BNB
-Chain and withdraw after the lock ends. It covers contract discovery, balance
-and position checks, opening a stake, and withdrawing one or more matured
-stakes through the hosted wallet.
+Chain mainnet and withdraw after the lock ends. It covers contract discovery,
+balance and position checks, opening a stake, and withdrawing one or more
+matured stakes through the hosted wallet.
 
 ## Supported Networks
 
@@ -19,9 +19,15 @@ stakes through the hosted wallet.
 | Ethereum | `1` | `https://etherscan.io/tx/<hash>` |
 | BNB Chain | `56` | `https://bscscan.com/tx/<hash>` |
 
-If the network is missing, ask which one. Use only these public chain IDs in
-commands and user-facing text. Internal staging execution networks are expected
-behind the scenes — never show them to the user.
+If the network is missing, ask which one. Use only these chain IDs in commands
+and user-facing text.
+
+Both mainnets use these deployed contracts:
+
+| Contract | Address |
+| --- | --- |
+| PIEVERSE token | `0x0E63B9C287E32A05E6b9AB8ee8dF88A2760225A9` |
+| Staking proxy | `0xaE4c8Ca1dC8127C380099657774CB09ca8197e78` |
 
 ## Durations
 
