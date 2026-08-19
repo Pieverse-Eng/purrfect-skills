@@ -30,8 +30,9 @@ creating or changing the state, capture receipt, or weekly report.
 - A message proves what its author said. Verify material technical claims from
   the exact PR head, code, hosted check, provider readback, direct reproducer,
   or another primary artifact when practical.
-- Record the access boundary. Never imply that visible channels and systems
-  represent all activity on every computer or private service.
+- Record the access boundary. The validator checks that this declaration is
+  present; it cannot prove the declaration is complete or privacy-safe. The
+  reviewer remains accountable for its truth.
 - Do not disclose a private channel's name, membership, or confidential
   content in a public report. Use public evidence or a non-sensitive
   abstraction unless disclosure is explicitly authorized in that private
@@ -45,13 +46,18 @@ creating or changing the state, capture receipt, or weekly report.
    start from memory or a date label.
 2. Freeze one canonical UTC `end_utc` before searching. Use the half-open
    interval `[start_utc, end_utc)`.
-3. Enumerate the selected message, task, PR, and operational surfaces. Search
-   each surface through pagination exhaustion. Record the query, scope,
-   result count, and whether access was exhausted or unavailable.
+3. Enumerate every `required_sources` entry from state plus any optional
+   message, task, PR, and operational surfaces. Search through pagination
+   exhaustion. Record the stable source ID, query, scope, result count, and
+   whether access was exhausted or unavailable. Set required sources before
+   the interval; never remove one merely to clear an outage. These records
+   are reviewer declarations: the validator enforces their coverage contract
+   but cannot independently prove query exhaustion or scope truth.
 4. Inventory distinct outcomes per roster member before selecting examples:
    delivery and follow-through, reasoning and correction, communication and
    collaboration, and safety and ownership.
-5. Store evidence privately with resolvable source references and confidence:
+5. Store nonempty evidence privately with resolvable source references and
+   record its SHA-256 in the receipt. Assign confidence:
    `high` for a primary artifact, `medium` for corroborated direct evidence,
    `low` for a partial or narrative-only surface, and `insufficient` when no
    fair assessment is possible.
@@ -67,8 +73,16 @@ creating or changing the state, capture receipt, or weekly report.
      --next-state review-state.next.json
    ```
 
-8. Replace the state only after validation succeeds and the evidence artifact
-   exists. A reminder firing is not completion evidence.
+   If a required source is unavailable, use `--allow-partial-coverage` only to
+   validate a diagnostic receipt. Every agent must then use `insufficient`
+   confidence; `weekly-final` and `--next-state` remain forbidden.
+
+8. Replace the state only after validation succeeds. The validator requires a
+   nonempty evidence artifact with the declared digest and, on the next run,
+   rechecks the prior receipt against the digest retained in state.
+   Continuity and receipt-integrity guarantees assume the state file itself is
+   faithfully carried forward; the state is not externally or
+   cryptographically anchored. A reminder firing is not completion evidence.
 
 ## Produce a weekly report
 
@@ -90,8 +104,9 @@ creating or changing the state, capture receipt, or weekly report.
    weakness for symmetry. Apply the same threshold to self-review.
 5. Draft from the weekly template. State the interval, visible-source
    boundary, per-agent confidence, and any insufficient sample.
-6. Preflight the exact configured publication target, roster, conditional
-   inclusion, privacy, source resolvability, and unsupported absolutes.
+6. Require every configured source to be exhausted, then preflight the exact
+   publication target, roster, conditional inclusion, privacy, source
+   resolvability, and unsupported absolutes.
 7. For a pre-publication continuity check, set the weekly receipt's
    `message_id` to `PENDING` and run:
 

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import copy
 import hashlib
 import importlib.util
 import json
@@ -24,6 +23,7 @@ def state() -> dict:
         "schema_version": 1,
         "roster": ["@Agent-A", "@Agent-B"],
         "conditional_agents": ["@Optional-Agent"],
+        "required_sources": ["raft"],
         "publication_target": "#all",
         "next_capture_start_utc": "2026-08-18T14:30:00Z",
         "next_weekly_start_utc": "2026-08-12T00:00:00Z",
@@ -39,8 +39,10 @@ def receipt() -> dict:
         "start_utc": "2026-08-18T14:30:00Z",
         "end_utc": "2026-08-19T14:30:00Z",
         "evidence_artifact": "notes/evidence.md",
+        "evidence_sha256": "0" * 64,
         "sources": [
             {
+                "source_id": "raft",
                 "surface": "raft",
                 "scope": "visible targets",
                 "query": "interval query",
@@ -62,16 +64,33 @@ def receipt() -> dict:
 
 
 class ReceiptValidationTest(unittest.TestCase):
-    def validate(self, candidate: dict, allow_pending: bool = False) -> dict:
-        validated_state = MODULE.validate_state(state())
-        return MODULE.validate_receipt(candidate, validated_state, allow_pending)
+    def validate(
+        self,
+        candidate: dict,
+        allow_pending: bool = False,
+        allow_partial_coverage: bool = False,
+        candidate_state: dict | None = None,
+    ) -> dict:
+        validated_state = MODULE.validate_state(candidate_state or state())
+        return MODULE.validate_receipt(
+            candidate,
+            validated_state,
+            allow_pending,
+            allow_partial_coverage,
+        )
 
     def test_valid_daily_receipt_advances_capture_only(self) -> None:
         candidate = receipt()
         validated_state = MODULE.validate_state(state())
         validated_receipt = MODULE.validate_receipt(candidate, validated_state, False)
         encoded = json.dumps(candidate).encode()
-        updated = MODULE.next_state(validated_state, validated_receipt, encoded)
+        updated = MODULE.next_state(
+            validated_state,
+            validated_receipt,
+            encoded,
+            Path("/review/receipt.json"),
+            Path("/review/state.json"),
+        )
 
         self.assertEqual(updated["next_capture_start_utc"], candidate["end_utc"])
         self.assertEqual(
@@ -80,6 +99,9 @@ class ReceiptValidationTest(unittest.TestCase):
         self.assertEqual(
             updated["last_completed_capture"]["receipt_sha256"],
             hashlib.sha256(encoded).hexdigest(),
+        )
+        self.assertEqual(
+            updated["last_completed_capture"]["receipt_path"], "receipt.json"
         )
 
     def test_gap_or_overlap_fails_closed(self) -> None:
@@ -99,6 +121,89 @@ class ReceiptValidationTest(unittest.TestCase):
         candidate["sources"][0].update(status="unavailable", result_count=0)
         with self.assertRaisesRegex(MODULE.ValidationError, "must be null"):
             self.validate(candidate)
+
+    def test_missing_required_source_fails_closed(self) -> None:
+        candidate_state = state()
+        candidate_state["required_sources"].append("github")
+        with self.assertRaisesRegex(MODULE.ValidationError, "omits required sources"):
+            self.validate(receipt(), candidate_state=candidate_state)
+
+    def test_required_source_outage_caps_confidence_and_blocks_state(self) -> None:
+        candidate_state = state()
+        candidate_state["required_sources"].append("github")
+        candidate = receipt()
+        candidate["sources"].append(
+            {
+                "source_id": "github",
+                "surface": "github",
+                "scope": "visible repositories",
+                "query": "interval query",
+                "status": "unavailable",
+                "result_count": None,
+                "note": "provider unavailable",
+            }
+        )
+
+        with self.assertRaisesRegex(
+            MODULE.ValidationError, "required sources unavailable"
+        ):
+            self.validate(candidate, candidate_state=candidate_state)
+        with self.assertRaisesRegex(MODULE.ValidationError, "must use insufficient"):
+            self.validate(
+                candidate,
+                allow_partial_coverage=True,
+                candidate_state=candidate_state,
+            )
+
+        for agent in candidate["agents"]:
+            agent["confidence"] = "insufficient"
+        validated_state = MODULE.validate_state(candidate_state)
+        validated_receipt = MODULE.validate_receipt(
+            candidate,
+            validated_state,
+            False,
+            True,
+        )
+        with self.assertRaisesRegex(MODULE.ValidationError, "partial source coverage"):
+            MODULE.next_state(
+                validated_state,
+                validated_receipt,
+                b"receipt",
+                Path("/review/receipt.json"),
+                Path("/review/state.json"),
+            )
+
+    def test_weekly_report_rejects_partial_coverage(self) -> None:
+        candidate_state = state()
+        candidate_state["required_sources"].append("github")
+        candidate = receipt()
+        candidate["sources"].append(
+            {
+                "source_id": "github",
+                "surface": "github",
+                "scope": "visible repositories",
+                "query": "interval query",
+                "status": "unavailable",
+                "result_count": None,
+                "note": "provider unavailable",
+            }
+        )
+        for agent in candidate["agents"]:
+            agent["confidence"] = "insufficient"
+        candidate["mode"] = "weekly-final"
+        candidate["weekly_report"] = {
+            "start_utc": candidate_state["next_weekly_start_utc"],
+            "end_utc": candidate["end_utc"],
+            "target": candidate_state["publication_target"],
+            "access_boundary": "Visible sources only.",
+            "message_id": "abc123",
+        }
+        with self.assertRaisesRegex(MODULE.ValidationError, "complete source coverage"):
+            self.validate(
+                candidate,
+                allow_partial_coverage=True,
+                candidate_state=candidate_state,
+            )
 
     def test_conditional_agent_requires_direct_activity(self) -> None:
         candidate = receipt()
@@ -137,13 +242,20 @@ class ReceiptValidationTest(unittest.TestCase):
         }
         validated = self.validate(candidate, allow_pending=True)
         with self.assertRaisesRegex(MODULE.ValidationError, "pending publication"):
-            MODULE.next_state(state(), validated, b"receipt")
+            MODULE.next_state(
+                state(),
+                validated,
+                b"receipt",
+                Path("/review/receipt.json"),
+                Path("/review/state.json"),
+            )
 
     def test_corrupt_saved_watermark_fails_closed(self) -> None:
         candidate = state()
         candidate["last_completed_capture"] = {
             "start_utc": "2026-08-17T14:30:00Z",
             "end_utc": "2026-08-18T14:29:59Z",
+            "receipt_path": "receipt.json",
             "receipt_sha256": "0" * 64,
         }
         with self.assertRaisesRegex(MODULE.ValidationError, "capture watermark"):
@@ -157,9 +269,12 @@ class ReceiptValidationTest(unittest.TestCase):
             next_path = root / "next.json"
             evidence_path = root / "notes" / "evidence.md"
             evidence_path.parent.mkdir()
-            evidence_path.write_text("evidence\n", encoding="utf-8")
+            evidence = b"evidence\n"
+            evidence_path.write_bytes(evidence)
+            candidate = receipt()
+            candidate["evidence_sha256"] = hashlib.sha256(evidence).hexdigest()
             state_path.write_text(json.dumps(state()), encoding="utf-8")
-            receipt_path.write_text(json.dumps(receipt()), encoding="utf-8")
+            receipt_path.write_text(json.dumps(candidate), encoding="utf-8")
 
             completed = subprocess.run(
                 [
@@ -180,7 +295,7 @@ class ReceiptValidationTest(unittest.TestCase):
             self.assertEqual(completed.returncode, 0, completed.stderr)
             self.assertEqual(
                 json.loads(next_path.read_text())["next_capture_start_utc"],
-                receipt()["end_utc"],
+                candidate["end_utc"],
             )
 
     def test_cli_rejects_missing_evidence_artifact(self) -> None:
@@ -206,7 +321,102 @@ class ReceiptValidationTest(unittest.TestCase):
             )
 
             self.assertEqual(completed.returncode, 1)
-            self.assertIn("evidence artifact does not exist", completed.stderr)
+            self.assertIn("cannot read evidence artifact", completed.stderr)
+
+    def test_cli_rejects_empty_evidence_artifact(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            state_path = root / "state.json"
+            receipt_path = root / "receipt.json"
+            evidence_path = root / "notes" / "evidence.md"
+            evidence_path.parent.mkdir()
+            evidence_path.write_bytes(b"")
+            state_path.write_text(json.dumps(state()), encoding="utf-8")
+            receipt_path.write_text(json.dumps(receipt()), encoding="utf-8")
+
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT),
+                    "--state",
+                    str(state_path),
+                    "--receipt",
+                    str(receipt_path),
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(completed.returncode, 1)
+            self.assertIn("evidence artifact is empty", completed.stderr)
+
+    def test_cli_rejects_evidence_digest_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            state_path = root / "state.json"
+            receipt_path = root / "receipt.json"
+            evidence_path = root / "notes" / "evidence.md"
+            evidence_path.parent.mkdir()
+            evidence_path.write_text("evidence\n", encoding="utf-8")
+            state_path.write_text(json.dumps(state()), encoding="utf-8")
+            receipt_path.write_text(json.dumps(receipt()), encoding="utf-8")
+
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT),
+                    "--state",
+                    str(state_path),
+                    "--receipt",
+                    str(receipt_path),
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(completed.returncode, 1)
+            self.assertIn("evidence artifact SHA-256", completed.stderr)
+
+    def test_previous_receipt_digest_is_rechecked(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            state_path = root / "state.json"
+            receipt_path = root / "receipt.json"
+            next_path = root / "next.json"
+            evidence_path = root / "notes" / "evidence.md"
+            evidence_path.parent.mkdir()
+            evidence = b"evidence\n"
+            evidence_path.write_bytes(evidence)
+            candidate = receipt()
+            candidate["evidence_sha256"] = hashlib.sha256(evidence).hexdigest()
+            state_path.write_text(json.dumps(state()), encoding="utf-8")
+            receipt_path.write_text(json.dumps(candidate), encoding="utf-8")
+
+            first = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT),
+                    "--state",
+                    str(state_path),
+                    "--receipt",
+                    str(receipt_path),
+                    "--next-state",
+                    str(next_path),
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(first.returncode, 0, first.stderr)
+
+            receipt_path.write_text(json.dumps({**candidate, "mode": "weekly-final"}))
+            updated = MODULE.validate_state(json.loads(next_path.read_text()))
+            with self.assertRaisesRegex(
+                MODULE.ValidationError, "previous receipt SHA-256"
+            ):
+                MODULE.validate_previous_receipt(updated, next_path)
 
 
 if __name__ == "__main__":

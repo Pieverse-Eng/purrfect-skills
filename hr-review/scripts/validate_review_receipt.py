@@ -19,6 +19,7 @@ STATE_KEYS = {
     "schema_version",
     "roster",
     "conditional_agents",
+    "required_sources",
     "publication_target",
     "next_capture_start_utc",
     "next_weekly_start_utc",
@@ -31,6 +32,7 @@ RECEIPT_KEYS = {
     "start_utc",
     "end_utc",
     "evidence_artifact",
+    "evidence_sha256",
     "sources",
     "agents",
     "weekly_report",
@@ -88,8 +90,11 @@ def validate_state(raw: Any) -> dict[str, Any]:
         raise ValidationError("state.schema_version must be 1")
     roster = unique_names(state["roster"], "state.roster")
     conditional = unique_names(state["conditional_agents"], "state.conditional_agents")
+    required_sources = unique_names(state["required_sources"], "state.required_sources")
     if not roster:
         raise ValidationError("state.roster must not be empty")
+    if not required_sources:
+        raise ValidationError("state.required_sources must not be empty")
     overlap = set(roster) & set(conditional)
     if overlap:
         raise ValidationError(f"fixed and conditional rosters overlap: {sorted(overlap)}")
@@ -108,7 +113,7 @@ def validate_state(raw: Any) -> dict[str, Any]:
         last_capture = object_at(last_capture, "state.last_completed_capture")
         exact_keys(
             last_capture,
-            {"start_utc", "end_utc", "receipt_sha256"},
+            {"start_utc", "end_utc", "receipt_path", "receipt_sha256"},
             "state.last_completed_capture",
         )
         start = timestamp(
@@ -121,6 +126,7 @@ def validate_state(raw: Any) -> dict[str, Any]:
             raise ValidationError("last_completed_capture interval is invalid")
         if last_capture["end_utc"] != state["next_capture_start_utc"]:
             raise ValidationError("last_completed_capture does not meet capture watermark")
+        text(last_capture["receipt_path"], "state.last_completed_capture.receipt_path")
         digest = text(
             last_capture["receipt_sha256"],
             "state.last_completed_capture.receipt_sha256",
@@ -151,26 +157,36 @@ def validate_state(raw: Any) -> dict[str, Any]:
     return state
 
 
-def validate_sources(raw: Any) -> None:
+def validate_sources(
+    raw: Any, state: dict[str, Any], allow_partial_coverage: bool
+) -> bool:
     if not isinstance(raw, list) or not raw:
         raise ValidationError("receipt.sources must be a non-empty array")
-    seen: set[tuple[str, str, str]] = set()
-    exhausted = 0
+    seen_ids: set[str] = set()
+    required_status: dict[str, str] = {}
     for index, item in enumerate(raw):
         source = object_at(item, f"receipt.sources[{index}]")
         exact_keys(
             source,
-            {"surface", "scope", "query", "status", "result_count", "note"},
+            {
+                "source_id",
+                "surface",
+                "scope",
+                "query",
+                "status",
+                "result_count",
+                "note",
+            },
             f"receipt.sources[{index}]",
         )
-        identity = (
-            text(source["surface"], f"receipt.sources[{index}].surface"),
-            text(source["scope"], f"receipt.sources[{index}].scope"),
-            text(source["query"], f"receipt.sources[{index}].query"),
-        )
-        if identity in seen:
-            raise ValidationError(f"duplicate source receipt at index {index}")
-        seen.add(identity)
+        source_id = text(source["source_id"], f"receipt.sources[{index}].source_id")
+        if source_id in seen_ids:
+            raise ValidationError(f"duplicate source_id: {source_id}")
+        seen_ids.add(source_id)
+        text(source["surface"], f"receipt.sources[{index}].surface")
+        text(source["scope"], f"receipt.sources[{index}].scope")
+        text(source["query"], f"receipt.sources[{index}].query")
+        text(source["note"], f"receipt.sources[{index}].note")
         status = source["status"]
         if status == "exhausted":
             count = source["result_count"]
@@ -178,22 +194,37 @@ def validate_sources(raw: Any) -> None:
                 raise ValidationError(
                     f"receipt.sources[{index}].result_count must be a non-negative integer"
                 )
-            exhausted += 1
         elif status == "unavailable":
             if source["result_count"] is not None:
                 raise ValidationError(
                     f"receipt.sources[{index}].result_count must be null when unavailable"
                 )
-            text(source["note"], f"receipt.sources[{index}].note")
         else:
             raise ValidationError(
                 f"receipt.sources[{index}].status must be exhausted or unavailable"
             )
-    if exhausted == 0:
-        raise ValidationError("at least one source must be exhausted")
+        if source_id in state["required_sources"]:
+            required_status[source_id] = status
+
+    missing = set(state["required_sources"]) - required_status.keys()
+    if missing:
+        raise ValidationError(f"receipt omits required sources: {sorted(missing)}")
+    unavailable = sorted(
+        source_id
+        for source_id, status in required_status.items()
+        if status == "unavailable"
+    )
+    if unavailable and not allow_partial_coverage:
+        raise ValidationError(
+            "required sources unavailable; retry or use --allow-partial-coverage "
+            f"without advancing state: {unavailable}"
+        )
+    return not unavailable
 
 
-def validate_agents(raw: Any, state: dict[str, Any]) -> None:
+def validate_agents(
+    raw: Any, state: dict[str, Any], coverage_complete: bool
+) -> None:
     if not isinstance(raw, list):
         raise ValidationError("receipt.agents must be an array")
     by_name: dict[str, dict[str, Any]] = {}
@@ -215,9 +246,15 @@ def validate_agents(raw: Any, state: dict[str, Any]) -> None:
         confidence = agent["confidence"]
         if confidence not in CONFIDENCE:
             raise ValidationError(f"{name}.confidence must be one of {sorted(CONFIDENCE)}")
-        if outcomes == 0 and confidence != "insufficient":
-            raise ValidationError(f"{name} with zero outcomes must use insufficient confidence")
-        if outcomes > 0 and confidence == "insufficient":
+        if not coverage_complete and confidence != "insufficient":
+            raise ValidationError(
+                f"{name} must use insufficient confidence while required coverage is partial"
+            )
+        if coverage_complete and outcomes == 0 and confidence != "insufficient":
+            raise ValidationError(
+                f"{name} with zero outcomes must use insufficient confidence"
+            )
+        if coverage_complete and outcomes > 0 and confidence == "insufficient":
             raise ValidationError(f"{name} with outcomes cannot use insufficient confidence")
         by_name[name] = agent
     missing = set(state["roster"]) - by_name.keys()
@@ -257,7 +294,10 @@ def validate_weekly_report(
 
 
 def validate_receipt(
-    raw: Any, state: dict[str, Any], allow_pending: bool
+    raw: Any,
+    state: dict[str, Any],
+    allow_pending: bool,
+    allow_partial_coverage: bool = False,
 ) -> dict[str, Any]:
     receipt = object_at(raw, "receipt")
     exact_keys(receipt, RECEIPT_KEYS, "receipt")
@@ -272,15 +312,38 @@ def validate_receipt(
     if receipt["start_utc"] != state["next_capture_start_utc"]:
         raise ValidationError("capture start does not match next_capture_start_utc")
     text(receipt["evidence_artifact"], "receipt.evidence_artifact")
-    validate_sources(receipt["sources"])
-    validate_agents(receipt["agents"], state)
+    evidence_digest = text(receipt["evidence_sha256"], "receipt.evidence_sha256")
+    if not re.fullmatch(r"[0-9a-f]{64}", evidence_digest):
+        raise ValidationError("receipt.evidence_sha256 must be lowercase SHA-256")
+    coverage_complete = validate_sources(
+        receipt["sources"], state, allow_partial_coverage
+    )
+    if receipt["mode"] == "weekly-final" and not coverage_complete:
+        raise ValidationError("weekly-final receipt requires complete source coverage")
+    validate_agents(receipt["agents"], state, coverage_complete)
     validate_weekly_report(receipt["weekly_report"], state, receipt, allow_pending)
     return receipt
 
 
+def has_complete_coverage(state: dict[str, Any], receipt: dict[str, Any]) -> bool:
+    statuses = {
+        source["source_id"]: source["status"] for source in receipt["sources"]
+    }
+    return all(
+        statuses.get(source_id) == "exhausted"
+        for source_id in state["required_sources"]
+    )
+
+
 def next_state(
-    state: dict[str, Any], receipt: dict[str, Any], receipt_bytes: bytes
+    state: dict[str, Any],
+    receipt: dict[str, Any],
+    receipt_bytes: bytes,
+    receipt_path: Path,
+    state_path: Path,
 ) -> dict[str, Any]:
+    if not has_complete_coverage(state, receipt):
+        raise ValidationError("cannot advance state with partial source coverage")
     if (
         receipt["mode"] == "weekly-final"
         and receipt["weekly_report"]["message_id"] == "PENDING"
@@ -291,6 +354,7 @@ def next_state(
     result["last_completed_capture"] = {
         "start_utc": receipt["start_utc"],
         "end_utc": receipt["end_utc"],
+        "receipt_path": path_for_state(receipt_path, state_path),
         "receipt_sha256": hashlib.sha256(receipt_bytes).hexdigest(),
     }
     if receipt["mode"] == "weekly-final":
@@ -307,12 +371,50 @@ def load_json(path: Path, label: str) -> tuple[Any, bytes]:
         raise ValidationError(f"cannot read {label} {path}: {error}") from error
 
 
+def path_for_state(path: Path, state_path: Path) -> str:
+    resolved = path.resolve()
+    try:
+        return str(resolved.relative_to(state_path.resolve().parent))
+    except ValueError:
+        return str(resolved)
+
+
+def path_from_state(value: str, state_path: Path) -> Path:
+    path = Path(value)
+    return path if path.is_absolute() else state_path.resolve().parent / path
+
+
+def validate_previous_receipt(state: dict[str, Any], state_path: Path) -> None:
+    previous = state["last_completed_capture"]
+    if previous is None:
+        return
+    path = path_from_state(previous["receipt_path"], state_path)
+    try:
+        raw = path.read_bytes()
+        parsed = object_at(json.loads(raw), "previous receipt")
+    except (OSError, json.JSONDecodeError) as error:
+        raise ValidationError(f"cannot read previous receipt {path}: {error}") from error
+    digest = hashlib.sha256(raw).hexdigest()
+    if digest != previous["receipt_sha256"]:
+        raise ValidationError("previous receipt SHA-256 does not match retained state")
+    if parsed.get("start_utc") != previous["start_utc"]:
+        raise ValidationError("previous receipt start does not match retained state")
+    if parsed.get("end_utc") != previous["end_utc"]:
+        raise ValidationError("previous receipt end does not match retained state")
+
+
 def validate_evidence_artifact(receipt: dict[str, Any], state_path: Path) -> None:
     artifact = Path(receipt["evidence_artifact"])
     if not artifact.is_absolute():
         artifact = state_path.resolve().parent / artifact
-    if not artifact.is_file():
-        raise ValidationError(f"evidence artifact does not exist: {artifact}")
+    try:
+        evidence = artifact.read_bytes()
+    except OSError as error:
+        raise ValidationError(f"cannot read evidence artifact {artifact}: {error}") from error
+    if not evidence:
+        raise ValidationError(f"evidence artifact is empty: {artifact}")
+    if hashlib.sha256(evidence).hexdigest() != receipt["evidence_sha256"]:
+        raise ValidationError("evidence artifact SHA-256 does not match receipt")
 
 
 def main() -> int:
@@ -321,18 +423,29 @@ def main() -> int:
     parser.add_argument("--receipt", type=Path, required=True)
     parser.add_argument("--next-state", type=Path)
     parser.add_argument("--allow-pending-publication", action="store_true")
+    parser.add_argument("--allow-partial-coverage", action="store_true")
     args = parser.parse_args()
 
     try:
         state_raw, _ = load_json(args.state, "state")
         receipt_raw, receipt_bytes = load_json(args.receipt, "receipt")
         state = validate_state(state_raw)
+        validate_previous_receipt(state, args.state)
         receipt = validate_receipt(
-            receipt_raw, state, args.allow_pending_publication
+            receipt_raw,
+            state,
+            args.allow_pending_publication,
+            args.allow_partial_coverage,
         )
         validate_evidence_artifact(receipt, args.state)
         if args.next_state:
-            updated = next_state(state, receipt, receipt_bytes)
+            updated = next_state(
+                state,
+                receipt,
+                receipt_bytes,
+                args.receipt,
+                args.state,
+            )
             args.next_state.write_text(
                 json.dumps(updated, indent=2, ensure_ascii=False) + "\n",
                 encoding="utf-8",
@@ -341,7 +454,13 @@ def main() -> int:
         print(f"review receipt invalid: {error}", file=sys.stderr)
         return 1
 
-    print("review receipt valid")
+    if has_complete_coverage(state, receipt):
+        print("review receipt valid")
+    else:
+        print(
+            "review receipt valid for diagnostics only; "
+            "state advancement and weekly publication remain blocked"
+        )
     return 0
 
 
