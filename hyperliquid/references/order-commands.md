@@ -26,6 +26,20 @@ A user request for a stop-loss or take-profit requires a trigger command. Do
 not translate it into `limit-order`. Use `limit-order --reduce-only true` only
 when the user actually wants an ordinary resting or market-style exit order.
 
+## Size Units
+
+Every typed order's `--size` is in asset units, not USD. Resolve `assetId` and
+`szDecimals` with `symbol`; do not infer either one.
+
+If the user specifies a USD notional, never copy that number into `--size`.
+Convert it to asset units as `USD notional / sizing price`, then round down to
+at most `szDecimals` decimal places. Use the user-confirmed price for a resting
+order. For `FrontendMarket`, use a fresh displayed executable quote and state
+that the final notional is approximate because the fill price can move; its
+worst-price boundary is a separate risk control. Confirm the USD notional,
+sizing price, and derived asset size. If no reliable sizing price exists or the
+rounded size is zero, ask the user for an asset size instead.
+
 ## Place Orders
 
 ### Ordinary limit order
@@ -40,9 +54,6 @@ purr hyperliquid limit-order \
   --reduce-only true|false \
   [--cloid <cloid>]
 ```
-
-`--size` is in asset units, not USD. Resolve `assetId` and `szDecimals` with
-`symbol`; do not infer either one.
 
 `FrontendMarket` is market-style execution with an explicit protection price,
 not an unbounded market order. Treat `--price` as the user-confirmed worst
@@ -119,6 +130,12 @@ Before using them, read `state --kind perp [--dex <dex>]` and verify the exact
 asset, position side, and absolute current position size. A position has no
 OID.
 
+Read the signed size from `assetPositions[].position.szi`: a value greater
+than zero is `--position-side long`, a value less than zero is
+`--position-side short`, and `--size` is the absolute value. A zero value is no
+open position. Never pass a negative `szi` as `--size` or infer side from the
+historical entry order.
+
 For full-position protection, pass the full current position size. For a
 proportional partial TP/SL, pass the user-confirmed portion of the current
 position and explain that its absolute size will scale with later position
@@ -147,6 +164,12 @@ The trigger and the executable order price are different:
 - Limit trigger execution requires `--limit-price`, or the paired
   `--take-profit-limit-price` and `--stop-loss-limit-price`. Do not also pass a
   worst-price option.
+
+A limit trigger only activates a limit order; a market gap can leave it
+unfilled or partially filled. State this risk when the user chooses limit
+execution, especially for a stop-loss. If exiting is more important than the
+limit price, offer market execution with an explicit worst-price boundary, but
+never switch modes without fresh confirmation.
 
 For an existing long, a normal TP is above the current market and a normal SL
 is below it. For an existing short, the reverse applies. If a requested trigger
@@ -197,15 +220,40 @@ Read the current order first and provide every required field. `--oid` selects
 the target and accepts a numeric OID or a cloid. Optional `--cloid` is the
 client ID on the replacement order, not the target selector.
 
+Map `orders --kind frontend` fields to a replacement as follows:
+
+| Frontend field | Replacement parameter |
+| --- | --- |
+| `oid` | `--oid`; use the exact open target |
+| `coin` | Resolve with `symbol`; use the returned `assetId` as `--asset` |
+| non-trigger `side` | `B` → `--side buy`; `A` → `--side sell` |
+| trigger `side` | `A` sells to close a long → `--position-side long`; `B` buys to close a short → `--position-side short` |
+| `orderType` | `Stop Market`/`Stop Limit` → `modify-stop-loss`; `Take Profit Market`/`Take Profit Limit` → `modify-take-profit`; a non-trigger `Limit`/`Market` → `modify-limit-order` |
+| trigger `orderType` suffix | `Market` → `--execution market`; `Limit` → `--execution limit` |
+| `triggerPx` | `--trigger-price` |
+| non-trigger `limitPx` | `--price` |
+| market-trigger `limitPx` | `--worst-price` |
+| limit-trigger `limitPx` | `--limit-price` |
+| `sz` | Current open size; use as `--size` subject to the sizing rule below |
+| `tif` | `--tif` for `modify-limit-order`; stop if it is null or an unsupported value such as `LiquidationMarket` |
+| `reduceOnly` | `--reduce-only` for `modify-limit-order` |
+
+Verify `isTrigger` and `reduceOnly` before selecting a trigger modify command.
+The typed trigger commands create reduce-only closing orders; they cannot
+preserve a non-reduce-only conditional opening order. Stop if the existing
+order has unsupported semantics rather than converting it silently.
+
+For an ordinary order or a fixed-size `normalTpsl` child, use current `sz`, not
+historical `origSz`, so a partially filled remainder is not enlarged. When
+`isPositionTpsl` is true, re-read live `szi`, verify the current frontend `sz`
+against `abs(szi)`, and preserve the user's current protected proportion unless
+they explicitly request a new one. Do not derive replacement size from
+`origSz`, or silently convert between fixed and proportional protection.
+
 Neither `bracket-order` nor `protect-position` can be modified as one group.
 For a bracket, modify its still-open entry with `modify-limit-order`. For both
 commands, modify each open TP/SL child with its matching modify command;
 `protect-position` has no entry order.
-
-Use the frontend order's `isPositionTpsl` field to preserve sizing semantics.
-For a position TP/SL, re-read live position state and preserve the user's
-protected proportion. For a normal bracket child, preserve its fixed child
-size. Never convert between fixed and proportional protection silently.
 
 Once an entry order is filled, it is historical and cannot be modified. Manage
 the resulting position by creating or modifying its open protection orders.

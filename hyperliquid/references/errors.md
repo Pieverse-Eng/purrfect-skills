@@ -20,7 +20,7 @@ fills, or balances when an action may have partially applied.
 | Code / condition | Meaning | Agent action |
 | --- | --- | --- |
 | `HYPERLIQUID_TRADING_DISABLED` | Trading integration is off; exchange routes are blocked | Explain; confirm `enable`; require fresh confirmation before retrying account-changing work |
-| `HYPERLIQUID_TRADING_DISABLE_BLOCKED` | Open positions or orders prevent disable | Present blockers; close/cancel exposure; re-confirm disable |
+| `HYPERLIQUID_TRADING_DISABLE_BLOCKED` | Positions, orders, default/builder funds, spot balances, or dust prevent disable | Present exact blockers; close/cancel exposure, consolidate and withdraw funds, then re-confirm disable |
 | `HYPERLIQUID_TRADING_DISABLE_CHECK_UNAVAILABLE` | Platform could not verify exposure | Stop; inspect `state` / `orders` / `snapshot`; do not force-disable |
 | `HYPERLIQUID_SYMBOL_AMBIGUOUS` | Multiple markets match | Present candidates and wait for selection |
 | `HYPERLIQUID_SYMBOL_NOT_FOUND` | No matching market | Try exact `dex:COIN`, `--dex default`, or `markets`; never invent an asset ID |

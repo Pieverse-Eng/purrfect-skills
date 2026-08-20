@@ -21,7 +21,7 @@ purr hyperliquid set-abstraction --mode disabled|unifiedAccount|portfolioMargin
 | `status` | Whether Hyperliquid Trading is enabled for this instance (integration gate) |
 | `snapshot` | Dashboard-style summary: account value, PnL, margin used, open positions, risk (requires trading enabled) |
 | `enable` | Turn on Hyperliquid Trading so exchange routes work; confirm first |
-| `disable` | Turn off Hyperliquid Trading; blocked while open positions or open orders exist |
+| `disable` | Turn off Hyperliquid Trading; blocked while positions, orders, or funds remain |
 | `account` | Hyperliquid account address, network, and wallet metadata |
 | `state` | Perp margin/positions and/or spot balances for that address |
 | `builder-fee-status` | Whether the fixed 0.05% transaction fee is authorized for orders |
@@ -55,9 +55,11 @@ purr hyperliquid disable
 - `enable` / `disable` require confirmation (see Confirmation Contract in
   `SKILL.md`).
 - `disable` fails with `HYPERLIQUID_TRADING_DISABLE_BLOCKED` when any default or
-  builder-dex account has open positions or open orders. Show the `blockers`
-  payload, close/cancel exposure first, then retry disable only after a new
-  confirmation.
+  builder-dex account has open positions, open orders, positive account value,
+  or withdrawable funds, or when any positive spot balance or dust remains.
+  Show the `blockers` payload, clear the reported exposure and funds, then
+  retry disable only after a new confirmation. Do not treat a rounded display
+  value of zero as proof that exact dust is absent.
 - Prefer `snapshot` for a quick portfolio overview once trading is enabled; use
   `state` for exact collateral and position details needed to trade.
 

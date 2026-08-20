@@ -176,7 +176,9 @@ purr hyperliquid prices [--dex <dex>]
 purr hyperliquid l2 --coin <canonical-coin>
 ```
 
-2. Verify the exact asset, non-zero position side, and absolute current size.
+2. Map `assetPositions[].position.szi` to side and size using
+[order-commands.md](order-commands.md). Verify the exact asset, non-zero
+position side, and absolute current size.
 Choose either full-position protection or a user-confirmed proportional
 portion. Position TP/SL size scales with later position changes; do not promise
 a fixed absolute partial-close size. For a long, TP normally belongs above
@@ -220,7 +222,10 @@ purr hyperliquid order-status --oid <oid-or-cloid>
 ```
 
 2. Reconstruct the complete replacement parameters from the current order plus
-the requested change. Confirm the target OID and all fields.
+the requested change using the frontend-field mapping in
+[order-commands.md](order-commands.md). Use current `sz`, not `origSz`, for an
+ordinary order or fixed-size child; re-read live position state for a
+position-sized TP/SL. Confirm the target OID and all fields.
 
 3. Use `modify-limit-order` for an open entry/ordinary limit,
 `modify-stop-loss` for an SL child, or `modify-take-profit` for a TP child.
@@ -325,6 +330,25 @@ purr hyperliquid state --kind both
 purr hyperliquid orders --kind frontend
 ```
 
-Close positions and cancel open orders with separate confirmations. Then
-confirm `disable`. On `HYPERLIQUID_TRADING_DISABLE_BLOCKED`, show the blockers
-and obtain a new confirmation only after exposure is clear.
+Also inspect every relevant builder dex with `state --kind both --dex <dex>`
+and `orders --kind frontend --dex <dex>`. Disable is blocked not only by
+positions and orders, but also by positive default/builder account value,
+withdrawable funds, and any positive spot balance or dust.
+
+Close positions and cancel open orders with separate confirmations. Clear any
+non-USDC spot holdings with separately confirmed spot orders, then move spot
+USDC to perp with `usd-class-transfer --to-perp true`. Move each builder-dex
+balance to default with:
+
+```bash
+purr hyperliquid send-asset \
+  --source-dex <builder-dex> \
+  --destination-dex= \
+  --amount <amount>
+```
+
+Withdraw the consolidated default balance, then re-read state and orders before
+confirming `disable`. On `HYPERLIQUID_TRADING_DISABLE_BLOCKED`, show the exact
+blockers; clear them and obtain a new confirmation before retrying. If positive
+dust cannot be transferred or withdrawn, report that disable remains blocked
+instead of retrying in a loop or claiming success.
