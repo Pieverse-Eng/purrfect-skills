@@ -53,6 +53,8 @@ The CLI rejects these before sending a platform request:
 | Missing market worst price | Ask for an explicit execution boundary |
 | Worst price on the wrong side of the trigger | Stop; do not reverse or alter it automatically |
 | TP/SL relationship invalid for the position side | Recheck long/short intent and trigger values |
+| Missing `--always-place true` for trigger, `Ioc`, `FrontendMarket`, or executable `Gtc` modification | Verify the exact open target and obtain confirmation of the always-place duplicate-order risk before retrying |
+| `--always-place false` | Remove it only for a safe `Alo` or non-executable `Gtc` replacement; otherwise stop |
 | Removed `order` or `modify` command | Select the matching typed command; never retry with a body |
 | `--body-json` / `--body-file` on cancel | Use `--asset` plus numeric `--oid`, or `cancel-by-cloid` |
 

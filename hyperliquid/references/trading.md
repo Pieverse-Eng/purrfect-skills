@@ -164,7 +164,9 @@ purr hyperliquid order-status --oid <oid-or-cloid>
    or sizing semantics from coin alone.
 3. Reconstruct the complete replacement order from the current order plus the
    requested change. Modify commands are not partial patches.
-4. Confirm the exact target OID and all replacement fields.
+4. Apply the `--always-place` rule in
+   [order-commands.md](order-commands.md), then confirm the exact target OID,
+   all replacement fields, and any always-place duplicate-order risk.
 5. Run the matching `modify-limit-order`, `modify-stop-loss`, or
    `modify-take-profit`.
 6. Re-read `frontend` orders or `order-status`.

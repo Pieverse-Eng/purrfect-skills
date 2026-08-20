@@ -85,6 +85,10 @@ using `normalTpsl`. Their size does not adjust with later position changes.
 `--cloid` applies to the entry. After submission, use
 `orders --kind frontend` to identify the entry and child OIDs.
 
+When `--entry-tif FrontendMarket`, `--entry-price` is the user-confirmed worst
+execution boundary: above the current executable price for a buy and below it
+for a sell. It is separate from the fresh quote used to calculate `--size`.
+
 For a long entry, confirm that TP is above the intended entry/current market
 and SL is below it. For a short entry, confirm the reverse. A merely valid
 `TP > SL` or `TP < SL` relationship is not enough if either trigger would fire
@@ -190,6 +194,7 @@ purr hyperliquid modify-limit-order \
   --price <price> \
   --tif Gtc|Ioc|Alo|FrontendMarket \
   --reduce-only true|false \
+  [--always-place true] \
   [--cloid <replacement-cloid>]
 
 purr hyperliquid modify-stop-loss \
@@ -199,6 +204,7 @@ purr hyperliquid modify-stop-loss \
   --size <asset-size> \
   --trigger-price <trigger> \
   --execution market|limit \
+  --always-place true \
   [--worst-price <price>] \
   [--limit-price <price>] \
   [--cloid <replacement-cloid>]
@@ -210,6 +216,7 @@ purr hyperliquid modify-take-profit \
   --size <asset-size> \
   --trigger-price <trigger> \
   --execution market|limit \
+  --always-place true \
   [--worst-price <price>] \
   [--limit-price <price>] \
   [--cloid <replacement-cloid>]
@@ -219,6 +226,17 @@ A modify command replaces the complete open order; it is not a partial patch.
 Read the current order first and provide every required field. `--oid` selects
 the target and accepts a numeric OID or a cloid. Optional `--cloid` is the
 client ID on the replacement order, not the target selector.
+
+Hyperliquid requires `--always-place true` when modifying a trigger order, and
+when `modify-limit-order` uses `Ioc`, `FrontendMarket`, or an executable `Gtc`.
+The CLI cannot determine locally whether a `Gtc` price crosses the book, so
+compare it with a fresh executable quote before submission. Always-place lets
+the replacement be placed even if the target cancellation fails; freshly
+verify the exact open target and include this duplicate-order risk in the
+confirmation. The CLI rejects `--always-place false`. For an `Alo` or a
+non-executable `Gtc` replacement, omit the option to retain safe replace
+semantics. If the user does not accept always-place behavior, stop; do not
+silently emulate modify with separate cancel and create commands.
 
 Map `orders --kind frontend` fields to a replacement as follows:
 
