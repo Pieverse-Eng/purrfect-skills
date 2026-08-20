@@ -51,33 +51,36 @@ Pick the matching command group below, then read that reference before acting.
    upcoming sequence with phrases such as “Let me…” or “What we need to do.”
    Speak when a user decision or confirmation is needed, when an action
    finishes, or when an error changes the workflow.
-7. For ordinary single order, modify, or cancel actions, build the complete
-   wire payload in memory and pass compact JSON with `--body-json`. Use
-   `--body-file` only for genuinely large batches and only at a known writable
-   workspace path. Do not use `/tmp` with file-writing tools.
-8. Deposits must be at least **5 USDC**. Platform rejects smaller amounts.
-9. Hyperliquid keeps **perp** and **spot** USDC separate. Deposits land on the
+7. Use only the parameterized order commands documented in
+   [order-commands.md](references/order-commands.md). Never call the removed
+   raw `order` or `modify` commands, pass raw bodies to cancel commands, or
+   fall back to direct gateway payloads. A stop-loss or take-profit must use a
+   trigger command; never substitute a plain `limit-order`.
+8. Before modifying or cancelling, identify the exact open order OID and
+   verify its status. Never infer a target from market or position alone. A
+   filled entry is historical and cannot be modified; manage its resulting
+   position or open protection orders instead.
+9. Deposits must be at least **5 USDC**. Platform rejects smaller amounts.
+10. Hyperliquid keeps **perp** and **spot** USDC separate. Deposits land on the
    **perp** side. Move collateral with `usd-class-transfer` or `send-asset`
    when the user needs spot or a builder dex.
-10. Do not retry account-changing actions after unknown broadcast, deferred
+11. Do not retry account-changing actions after unknown broadcast, deferred
     policy, or partial success. Reconcile by checking state, orders, or fills.
-11. Do not claim a fill from a submit response alone. Verify with
+12. Do not claim a fill from a submit response alone. Verify with
     `order-status`, `orders`, `fills`, or `state`. Do not claim a withdraw has
     arrived on Arbitrum from the withdraw submit alone — keep the returned
     `nonce` and verify with `withdraw-status` (or balances if nonce is missing).
-12. Never pass `--network`. The CLI and platform are mainnet-only.
-13. After resolving a market for an order (perp **or** spot), check the
+13. Never pass `--network`. The CLI and platform are mainnet-only.
+14. After resolving a market for an order (perp **or** spot), check the
     additional fee authorization with `purr hyperliquid builder-fee-status`
     before confirmation or any account-changing preparation for the order.
     Never use an order as the authorization check, and never authorize the fixed
     additional `0.05%` fee silently.
-14. For every non-default dex market, query that dex's state and treat only its
+15. For every non-default dex market, query that dex's state and treat only its
     available collateral as usable for the order. Default perp collateral does
     not fund a builder-dex order. If the target dex is short, confirm and run
     `send-asset`, then verify the destination balance before changing leverage
     or submitting the order. Never use a rejected order to discover this.
-15. Do not mix perpetual and spot legs in one order batch. Platform rejects
-    mixed batches.
 
 ## Command Groups
 
@@ -86,7 +89,7 @@ Pick the matching command group below, then read that reference before acting.
 | Integration | Enable/disable trading, status, dashboard snapshot | [preflight.md](references/preflight.md) |
 | Preflight / account | Wallet address, account state, positions, balances, fee authorization, abstraction mode | [preflight.md](references/preflight.md) |
 | Market data | Symbol resolve, markets, prices, L2 book, candles, funding | [market-data.md](references/market-data.md) |
-| Trading | Orders, fee authorization, modify, cancel, leverage, status, fills | [trading.md](references/trading.md), [order-wire-format.md](references/order-wire-format.md) |
+| Trading | Typed order creation, protection, modify, cancel, leverage, status, fills | [trading.md](references/trading.md), [order-commands.md](references/order-commands.md) |
 | Collateral | Perp↔spot USDC and default↔builder-dex USDC | [collateral.md](references/collateral.md) |
 | Deposit / withdraw | Arbitrum USDC bridge in; withdraw to Arbitrum; withdraw arrival status by nonce | [deposit-withdraw.md](references/deposit-withdraw.md) |
 | Full recipes | First fund, crypto perp, equity perp, spot, close, withdraw | [workflows.md](references/workflows.md) |
@@ -94,9 +97,10 @@ Pick the matching command group below, then read that reference before acting.
 
 ## Confirmation Contract
 
-Before any account-changing action (`enable`, `disable`, `order`, `modify`,
-`cancel`, `cancel-by-cloid`, `update-leverage`, `schedule-cancel`,
-`set-abstraction`, `usd-class-transfer`, `send-asset`, `deposit`, `withdraw`):
+Before any account-changing action (all order-placement commands, all
+`modify-*` commands, `cancel`, `cancel-by-cloid`, `enable`, `disable`,
+`update-leverage`, `schedule-cancel`, `set-abstraction`,
+`usd-class-transfer`, `send-asset`, `deposit`, or `withdraw`):
 
 1. Summarize the concrete parameters (market/`assetId`, side, size, price or
    amount, and any collateral impact). For enable/disable, state the integration
@@ -119,10 +123,11 @@ generic action prompt.
 
 ## Transaction Fee Authorization
 
-All Hyperliquid **orders** (perpetual and spot) carry a fixed additional
+Hyperliquid order-placement commands (`limit-order`, `bracket-order`,
+`stop-loss`, `take-profit`, and `protect-position`) carry a fixed additional
 `0.05%` transaction fee on executed notional. Non-order actions (cancel,
-leverage, transfer, deposit, withdraw, etc.) do not carry this fee.
-Before confirmation or any account-changing preparation for an order, follow
+leverage, transfer, deposit, withdraw, etc.) do not carry this fee. Before
+confirmation or any account-changing preparation for a new order, follow
 [preflight.md](references/preflight.md).
 
 When authorization is required, keep the user-facing message to these two

@@ -5,115 +5,121 @@ fills, or balances when an action may have partially applied.
 
 ## Global Rules
 
-1. **Do not retry account-changing actions** after unknown outcome, timeout
-   after broadcast, or deferred policy. Report uncertainty and inspect the
-   resulting state.
-2. **Do retry only** when the failure is clearly pre-broadcast validation (bad
-   args, ambiguous symbol, amount too small) **and** the user re-confirms a
-   corrected action.
-3. Surface the exact CLI/platform error message and code when present.
-4. Never double-`deposit` or double-`withdraw` to “fix” a hang.
+1. Do not retry account-changing actions after an unknown outcome, timeout
+   after broadcast, deferred policy, or partial success. Reconcile first.
+2. A CLI argument error occurs before a platform request. Correct it only from
+   known user intent; never guess a missing value, discard an option silently,
+   switch order type, or fall back to a raw payload.
+3. If corrected execution parameters differ from the confirmed action, present
+   the complete correction and obtain confirmation again.
+4. Surface the exact CLI/platform error and code when present.
+5. Never double-deposit or double-withdraw to fix a hang.
 
 ## Common Codes and Conditions
 
 | Code / condition | Meaning | Agent action |
 | --- | --- | --- |
-| `HYPERLIQUID_TRADING_DISABLED` | Hyperliquid Trading integration is off; exchange routes (including `snapshot`) are blocked | Explain; confirm → `enable`; then retry the original read/write after a fresh confirmation for account-changing work |
-| `HYPERLIQUID_TRADING_DISABLE_BLOCKED` | Cannot disable while open positions or open orders exist | Present `blockers` (per dex: positions, open order counts); close/cancel first; re-confirm disable only after exposure is clear |
-| `HYPERLIQUID_TRADING_DISABLE_CHECK_UNAVAILABLE` | Platform could not verify exposure before disable | Report and stop; do not force-disable; retry later or inspect with `state` / `orders` / `snapshot` |
-| `HYPERLIQUID_SYMBOL_AMBIGUOUS` | Multiple markets match the coin | Present `data.candidates`, ask the user to pick, then use the selected candidate directly without resolving again |
-| `HYPERLIQUID_SYMBOL_NOT_FOUND` | No market for coin/dex | Try full `dex:COIN`, `--dex default`, or `markets`; do not invent `assetId` |
-| `HYPERLIQUID_SYMBOL_DEX_MISMATCH` | Coin prefix conflicts with `--dex` | Align prefix and `--dex`, or use only one form |
-| `HYPERLIQUID_SYMBOL_INVALID` | Bad selector (e.g. coin `default:…`) | Use `--dex default` instead of embedding `default:` in coin |
-| `HYPERLIQUID_DEPOSIT_AMOUNT_TOO_SMALL` | Deposit under 5 USDC | Refuse; ask for at least 5 USDC |
-| `HYPERLIQUID_BUILDER_FEE_APPROVAL_REQUIRED` | An order needs authorization for the fixed additional `0.05%` transaction fee | The order was not submitted. Briefly request authorization using the exact user-facing prompt in `SKILL.md`, run `approve-builder-fee` after consent, then obtain fresh confirmation before retrying the order |
-| `HYPERLIQUID_MIXED_ORDER_ASSET_CLASSES_UNSUPPORTED` | Order batch mixes perpetual and spot assets | Split into separate orders; never mix asset classes in one batch |
-| Fee status check fails or returns an unknown value | Authorization cannot be established safely | Stop before order confirmation; report the status error and do not submit an order as a probe |
-| CLI: `--network is not supported` | Network override attempted | Remove `--network`; mainnet only |
-| `HYPERLIQUID_API_PARTIAL_SUCCESS` | Some batch legs succeeded | Report partial; reconcile with `orders` / `state` / `order-status`; do not resubmit whole batch blindly |
-| `HYPERLIQUID_API_ERROR` | Venue rejected the action | Report venue message; fix inputs with user; re-confirm if retrying |
-| `HYPERLIQUID_REQUEST_INVALID` | Payload failed validation (extra keys, bad types, size/price) | Fix body (wire format, types); re-confirm |
-| `HYPERLIQUID_TRANSPORT_ERROR` / timeouts | Network or gateway issue | If pre-broadcast likely: may retry after user confirm. If deposit/withdraw/order may have submitted: **do not** auto-retry; reconcile |
-| Policy deferred / manual approval | Wallet policy needs approval | Explain reason; wait for approval path; do not spam resubmit |
-| Insufficient margin / balance | Not enough HL collateral or Arbitrum USDC | Show `state` and/or Arbitrum USDC balance; propose fund or transfer steps |
-| Pass either `--body-json` or `--body-file` | Both body inputs set | Use exactly one |
-| Invalid boolean / integer flags | Bad CLI args | Correct flag values; re-run only after user intent still holds |
+| `HYPERLIQUID_TRADING_DISABLED` | Trading integration is off; exchange routes are blocked | Explain; confirm `enable`; require fresh confirmation before retrying account-changing work |
+| `HYPERLIQUID_TRADING_DISABLE_BLOCKED` | Open positions or orders prevent disable | Present blockers; close/cancel exposure; re-confirm disable |
+| `HYPERLIQUID_TRADING_DISABLE_CHECK_UNAVAILABLE` | Platform could not verify exposure | Stop; inspect `state` / `orders` / `snapshot`; do not force-disable |
+| `HYPERLIQUID_SYMBOL_AMBIGUOUS` | Multiple markets match | Present candidates and wait for selection |
+| `HYPERLIQUID_SYMBOL_NOT_FOUND` | No matching market | Try exact `dex:COIN`, `--dex default`, or `markets`; never invent an asset ID |
+| `HYPERLIQUID_SYMBOL_DEX_MISMATCH` | Coin prefix conflicts with `--dex` | Align them or use one selector |
+| `HYPERLIQUID_SYMBOL_INVALID` | Invalid selector | Correct the selector; do not guess a market |
+| `HYPERLIQUID_DEPOSIT_AMOUNT_TOO_SMALL` | Deposit is below 5 USDC | Request at least 5 USDC |
+| `HYPERLIQUID_BUILDER_FEE_APPROVAL_REQUIRED` | New order requires the fixed additional fee authorization | The order was not submitted; follow the consent fallback below |
+| `HYPERLIQUID_MIXED_ORDER_ASSET_CLASSES_UNSUPPORTED` | One request mixes perp and spot | Stop; typed commands do not expose a mixed batch |
+| Fee status fails or is unknown | Authorization cannot be established | Stop; do not use an order as a probe |
+| `HYPERLIQUID_API_PARTIAL_SUCCESS` | Some multi-leg orders succeeded | Report exact legs; reconcile frontend orders, state, and statuses; do not resubmit the whole action |
+| `HYPERLIQUID_API_ERROR` | Venue rejected the action | Report the venue message; fix only with user intent and re-confirm changed parameters |
+| `HYPERLIQUID_REQUEST_INVALID` | Platform rejected the CLI-built request | Report as an implementation/compatibility error; never bypass the CLI with raw JSON |
+| `HYPERLIQUID_TRANSPORT_ERROR` / timeout | Submission outcome may be unknown | Do not retry a possible write; reconcile first |
+| Policy deferred / manual approval | Wallet policy requires another approval path | Explain and wait; do not spam resubmit |
+| Insufficient margin / balance | Target account lacks collateral | Show state and offer smaller size, transfer, or deposit choices |
+| `--network is not supported` | Network override was attempted | Remove `--network`; mainnet only |
 
-## Integration Failures
+## Typed CLI Validation
 
-- **Disabled trading**: Only `status`, `enable`, and `disable` still work.
-  `snapshot` and all other Hyperliquid commands require enable first. Do not
-  loop on exchange commands while disabled.
-- **Disable blocked**: Use `blockers` to tell the user which dex still has
-  positions or open orders. Flat and cancel, then disable only with a new yes.
-- **Disable check unavailable**: Treat as soft failure; do not claim trading was
-  disabled.
+The CLI rejects these before sending a platform request:
 
-## Symbol Failures
+| Error | Response |
+| --- | --- |
+| Missing value or required argument | Obtain the actual value; do not substitute `true` or a default |
+| Duplicate option | Resolve which value the user intends |
+| Unknown option | Check [order-commands.md](order-commands.md); do not silently delete a meaningful parameter |
+| Unexpected positional argument | Rebuild using named options only |
+| Invalid side, TIF, execution, boolean, integer, decimal, OID, or cloid | Surface the exact invalid value and accepted form |
+| Both worst-price and limit-price forms | Preserve the requested execution mode and pass only its matching option |
+| Missing market worst price | Ask for an explicit execution boundary |
+| Worst price on the wrong side of the trigger | Stop; do not reverse or alter it automatically |
+| TP/SL relationship invalid for the position side | Recheck long/short intent and trigger values |
+| Removed `order` or `modify` command | Select the matching typed command; never retry with a body |
+| `--body-json` / `--body-file` on cancel | Use `--asset` plus numeric `--oid`, or `cancel-by-cloid` |
 
-- Ambiguous: present `data.candidates`; after the user picks, use its `coin`,
-  `dex`, `assetId`, and `szDecimals` directly. Do not resolve it again.
-- Not found: try full `dex:COIN`, `markets --dex`, or ask for the exact ticker.
-- Never invent an `assetId` when resolve fails.
+Syntax correction alone does not authorize a changed trade. If the effective
+order remains exactly what the user confirmed, correct only the syntax; if any
+field or execution behavior changes, confirm again.
+
+## Order Lifecycle Failures
+
+| Situation | Action |
+| --- | --- |
+| Wrong size precision | Re-read `szDecimals` from `symbol` |
+| Margin insufficient | Show target `state`; offer reduce size, transfer, or deposit |
+| Leverage change rejected | Stop; do not submit an order whose confirmation depended on that leverage |
+| Missing target OID | Refresh `orders --kind frontend`; do not infer one |
+| Order no longer open | Check `order-status`, `historical`, and `fills` |
+| Filled entry cannot be modified/cancelled | Manage its resulting position or open protection orders |
+| Partially filled entry | Modify/cancel only the open remainder; protect the filled position separately |
+| Wrong modify command for order type | Stop and choose the matching limit, SL, or TP modify command |
+| Bracket/protection group requested as one modify | Find child OIDs and modify each still-open leg separately |
+
+Modify commands replace a complete order. If current fields cannot be
+established from `orders --kind frontend` or `order-status`, do not guess them.
+
+## Transaction Fee Authorization Required
+
+The primary flow is `builder-fee-status` before every order-placement command.
+If placement still returns
+`HYPERLIQUID_BUILDER_FEE_APPROVAL_REQUIRED`:
+
+1. Stop. The rejected order was not submitted.
+2. Use the brief fee wording and exact consent prompt from `SKILL.md`.
+3. After explicit consent, run `purr hyperliquid approve-builder-fee`.
+4. Present the rejected order again and obtain fresh confirmation before
+   submitting it.
+
+Never expose internal builder details or request fee parameters. There is no
+CLI revoke command.
 
 ## Deposit / Withdraw Failures
 
 | Situation | Action |
 | --- | --- |
-| Amount under 5 USDC | Stop before or after platform reject; request valid amount |
-| Insufficient Arbitrum USDC or gas | Report shortage; do not attempt smaller blind retries without user intent |
-| Bridge / broadcast unknown | Report uncertainty; include any `txHash` / request id / `nonce`; **do not redeposit or re-withdraw** |
-| Withdraw submit succeeded, settlement unknown | Keep `nonce`; run `withdraw-status --nonce <nonce>` when user asks |
-| `withdraw-status` → `pending` | Report still settling; do **not** re-run withdraw; poll later only if asked |
-| `withdraw-status` → `arrived` | Report `amountUsdc`, `feeUsdc`, `txHash`; optional Arbitrum USDC balance check |
-| Withdraw with no captured `nonce` | Reconcile via `state` + Arbitrum USDC only; never invent a nonce or re-withdraw for a new handle |
-
-## Order Failures
-
-| Situation | Action |
-| --- | --- |
-| Bad wire fields | Fix using [order-wire-format.md](order-wire-format.md) |
-| Wrong size decimals | Re-read `szDecimals` from `symbol` |
-| Margin insufficient | Show `state`; suggest reduce size, transfer collateral, or deposit |
-| Leverage change rejected | Report; leave leverage as-is unless user chooses another path |
-| Cancel missing oid | Refresh `orders --kind open`; do not invent oids |
-| Mixed perp + spot batch | Split into two requests |
-
-### Transaction fee authorization required
-
-The primary flow is to run `builder-fee-status` before confirming any order
-(perp or spot) as described in [preflight.md](preflight.md). If an order still
-returns `HYPERLIQUID_BUILDER_FEE_APPROVAL_REQUIRED`:
-
-1. Stop. The rejected order was not submitted.
-2. Use only the brief transaction-fee wording and exact consent prompt from
-   `SKILL.md` unless the user asks for details.
-3. Use the exact fee consent prompt in `SKILL.md`.
-4. Only after an explicit yes, run `purr hyperliquid approve-builder-fee` and
-   report `approved` or `already_approved`.
-5. Re-present the rejected order parameters and obtain a fresh order
-   confirmation before submitting it again. Never auto-retry it.
-
-Never say “builder fee” to the user or request fee/builder parameters. There is
-no CLI revoke command.
+| Amount under 5 USDC | Request a valid amount |
+| Insufficient Arbitrum USDC or gas | Report the shortage; do not blind-retry a smaller amount |
+| Bridge or broadcast outcome unknown | Include any tx hash, request ID, or nonce; do not resubmit |
+| Withdraw status `pending` | Report settling; do not withdraw again |
+| Withdraw status `arrived` | Report amount, fee, and tx hash |
+| No captured withdraw nonce | Reconcile state and Arbitrum balance; never invent a nonce |
 
 ## Policy Failures
 
-- If wallet policy denies or defers: quote the reason; do not bypass.
-- If signing errors: report and stop; do not fall back to local keys.
+- If wallet policy denies or defers, report the reason and do not bypass it.
+- If signing fails, report and stop; do not fall back to local keys.
 
-## Reconciliation Cheatsheet
+## Reconciliation
 
 ```bash
 purr hyperliquid status
 purr hyperliquid snapshot
 purr hyperliquid state --kind both [--dex <dex>]
-purr hyperliquid orders --kind open [--dex <dex>]
+purr hyperliquid orders --kind frontend [--dex <dex>]
+purr hyperliquid orders --kind historical
+purr hyperliquid fills [--start-time <ms>]
 purr hyperliquid order-status --oid <oid-or-cloid>
 purr hyperliquid withdraw-status --nonce <nonce>
-purr hyperliquid fills --start-time <ms>
 purr wallet balance --chain-type ethereum --chain-id 42161 --token USDC
 ```
 
-Use these after any uncertain action before claiming success or opening a new
-risk-increasing order.
+Use these after uncertain actions before claiming success or opening new risk.

@@ -31,9 +31,9 @@ purr hyperliquid set-abstraction --mode disabled|unifiedAccount|portfolioMargin
 ## Trading Integration Gate
 
 All exchange routes under the Hyperliquid gateway (`account`, `state`,
-`markets`, `order`, `deposit`, `snapshot`, and the rest) require the trading
-integration to be **enabled**. Only `status`, `enable`, and `disable` remain
-available when trading is disabled.
+`markets`, typed order commands, `deposit`, `snapshot`, and the rest) require
+the trading integration to be **enabled**. Only `status`, `enable`, and
+`disable` remain available when trading is disabled.
 
 Run this check silently when starting any Hyperliquid workflow:
 
@@ -74,17 +74,18 @@ or balance inspection is starting, and do not narrate the remaining steps.
    Optionally use `snapshot` when the user wants a high-level summary.
 4. When the user targets a builder dex (for example equity perps on `xyz`),
    also run `state --kind both --dex xyz` (or the relevant dex name).
-5. Before confirming **any** order (perpetual or spot) or changing
-   leverage/collateral for it, run `builder-fee-status` and follow **Order Fee
-   Preflight** below.
+5. Before confirming any order-placement command (`limit-order`,
+   `bracket-order`, `stop-loss`, `take-profit`, or `protect-position`) or
+   changing leverage/collateral for it, run `builder-fee-status` and follow
+   **Order Fee Preflight** below.
 6. Check `abstraction` when the user asks about Standard / unified / portfolio
    margin mode. Only call `set-abstraction` after confirmation.
 
 ## Order Fee Preflight
 
-All orders (perp and spot) require the fixed additional `0.05%` transaction
-fee authorization when it is not already approved. Non-order actions skip this
-check.
+All order-placement commands (perp and spot) require the fixed additional
+`0.05%` transaction fee authorization when it is not already approved.
+Non-order actions skip this check.
 
 ```bash
 purr hyperliquid builder-fee-status
