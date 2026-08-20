@@ -228,15 +228,13 @@ the target and accepts a numeric OID or a cloid. Optional `--cloid` is the
 client ID on the replacement order, not the target selector.
 
 Hyperliquid requires `--always-place true` when modifying a trigger order, and
-when `modify-limit-order` uses `Ioc`, `FrontendMarket`, or an executable `Gtc`.
-The CLI cannot determine locally whether a `Gtc` price crosses the book, so
-compare it with a fresh executable quote before submission. Always-place lets
-the replacement be placed even if the target cancellation fails; freshly
-verify the exact open target and include this duplicate-order risk in the
-confirmation. The CLI rejects `--always-place false`. For an `Alo` or a
-non-executable `Gtc` replacement, omit the option to retain safe replace
-semantics. If the user does not accept always-place behavior, stop; do not
-silently emulate modify with separate cancel and create commands.
+when `modify-limit-order` uses `Ioc` or `FrontendMarket`. Always-place lets the
+replacement be placed even if the target cancellation fails; freshly verify
+the exact open target and include this duplicate-order risk in the
+confirmation. The CLI rejects `--always-place false`. For an `Alo` or `Gtc`
+replacement, omit the option. If the venue rejects a `Gtc` replacement, report
+the error and stop; do not automatically retry with always-place or separate
+cancel and create commands.
 
 Map `orders --kind frontend` fields to a replacement as follows:
 
