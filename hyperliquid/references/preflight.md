@@ -21,7 +21,7 @@ purr hyperliquid set-abstraction --mode disabled|unifiedAccount|portfolioMargin
 | `status` | Whether Hyperliquid Trading is enabled for this instance (integration gate) |
 | `snapshot` | Dashboard-style summary: account value, PnL, margin used, open positions, risk (requires trading enabled) |
 | `enable` | Turn on Hyperliquid Trading so exchange routes work; confirm first |
-| `disable` | Turn off Hyperliquid Trading; blocked while open positions or open orders exist |
+| `disable` | Turn off Hyperliquid Trading; blocked while positions, orders, or funds remain |
 | `account` | Hyperliquid account address, network, and wallet metadata |
 | `state` | Perp margin/positions and/or spot balances for that address |
 | `builder-fee-status` | Whether the fixed 0.05% transaction fee is authorized for orders |
@@ -31,9 +31,9 @@ purr hyperliquid set-abstraction --mode disabled|unifiedAccount|portfolioMargin
 ## Trading Integration Gate
 
 All exchange routes under the Hyperliquid gateway (`account`, `state`,
-`markets`, `order`, `deposit`, `snapshot`, and the rest) require the trading
-integration to be **enabled**. Only `status`, `enable`, and `disable` remain
-available when trading is disabled.
+`markets`, typed order commands, `deposit`, `snapshot`, and the rest) require
+the trading integration to be **enabled**. Only `status`, `enable`, and
+`disable` remain available when trading is disabled.
 
 Run this check silently when starting any Hyperliquid workflow:
 
@@ -55,9 +55,11 @@ purr hyperliquid disable
 - `enable` / `disable` require confirmation (see Confirmation Contract in
   `SKILL.md`).
 - `disable` fails with `HYPERLIQUID_TRADING_DISABLE_BLOCKED` when any default or
-  builder-dex account has open positions or open orders. Show the `blockers`
-  payload, close/cancel exposure first, then retry disable only after a new
-  confirmation.
+  builder-dex account has open positions, open orders, positive account value,
+  or withdrawable funds, or when any positive spot balance or dust remains.
+  Show the `blockers` payload, clear the reported exposure and funds, then
+  retry disable only after a new confirmation. Do not treat a rounded display
+  value of zero as proof that exact dust is absent.
 - Prefer `snapshot` for a quick portfolio overview once trading is enabled; use
   `state` for exact collateral and position details needed to trade.
 
@@ -74,17 +76,18 @@ or balance inspection is starting, and do not narrate the remaining steps.
    Optionally use `snapshot` when the user wants a high-level summary.
 4. When the user targets a builder dex (for example equity perps on `xyz`),
    also run `state --kind both --dex xyz` (or the relevant dex name).
-5. Before confirming **any** order (perpetual or spot) or changing
-   leverage/collateral for it, run `builder-fee-status` and follow **Order Fee
-   Preflight** below.
+5. Before confirming any order-placement command (`limit-order`,
+   `bracket-order`, `stop-loss`, `take-profit`, or `protect-position`) or
+   changing leverage/collateral for it, run `builder-fee-status` and follow
+   **Order Fee Preflight** below.
 6. Check `abstraction` when the user asks about Standard / unified / portfolio
    margin mode. Only call `set-abstraction` after confirmation.
 
 ## Order Fee Preflight
 
-All orders (perp and spot) require the fixed additional `0.05%` transaction
-fee authorization when it is not already approved. Non-order actions skip this
-check.
+All order-placement commands (perp and spot) require the fixed additional
+`0.05%` transaction fee authorization when it is not already approved.
+Non-order actions skip this check.
 
 ```bash
 purr hyperliquid builder-fee-status

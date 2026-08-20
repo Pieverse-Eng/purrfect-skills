@@ -59,6 +59,9 @@ purr hyperliquid send-asset --destination-dex xyz --amount 25
 
 # Explicit source and destination
 purr hyperliquid send-asset --source-dex abc --destination-dex xyz --amount 5
+
+# xyz builder dex → default vault (empty destination dex)
+purr hyperliquid send-asset --source-dex xyz --destination-dex= --amount 25
 ```
 
 | Flag | Meaning |
@@ -71,6 +74,10 @@ Notes:
 
 - CLI defaults `sourceDex` to `""` when `--source-dex` is omitted (platform
   default vault / empty dex name).
+- The default destination vault is also the empty dex name. Use the exact
+  `--destination-dex=` form when moving funds from a builder dex back to
+  default; do not pass the literal word `default` and do not omit the required
+  option.
 - Body sent is `{ sourceDex, destinationDex, amount }` only; destination wallet
   and USDC token are filled by the platform.
 - Dex names may be empty or match `[A-Za-z0-9_.:-]{0,64}`.
