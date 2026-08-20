@@ -158,7 +158,10 @@ purr hyperliquid order-status --oid <oid-or-cloid>
 ```
 
 2. Confirm that it is still open and identify whether it is an ordinary limit,
-   stop-loss, or take-profit. Do not infer the target from coin alone.
+   stop-loss, or take-profit. For a trigger order, inspect `isPositionTpsl`:
+   position TP/SL sizing is proportional and requires a fresh position-state
+   read, while a normal bracket child has fixed size. Do not infer the target
+   or sizing semantics from coin alone.
 3. Reconstruct the complete replacement order from the current order plus the
    requested change. Modify commands are not partial patches.
 4. Confirm the exact target OID and all replacement fields.

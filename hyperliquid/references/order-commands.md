@@ -62,12 +62,16 @@ purr hyperliquid bracket-order \
   --take-profit-price <trigger> \
   --stop-loss-price <trigger> \
   --execution market|limit \
-  <execution-price-options> \
+  [--take-profit-worst-price <price>] \
+  [--stop-loss-worst-price <price>] \
+  [--take-profit-limit-price <price>] \
+  [--stop-loss-limit-price <price>] \
   [--cloid <entry-cloid>]
 ```
 
-This submits an entry followed by reduce-only TP and SL children using
-`normalTpsl`. `--cloid` applies to the entry. After submission, use
+This submits an entry followed by fixed-size, reduce-only TP and SL children
+using `normalTpsl`. Their size does not adjust with later position changes.
+`--cloid` applies to the entry. After submission, use
 `orders --kind frontend` to identify the entry and child OIDs.
 
 For a long entry, confirm that TP is above the intended entry/current market
@@ -84,7 +88,8 @@ purr hyperliquid stop-loss \
   --size <current-position-size> \
   --trigger-price <trigger> \
   --execution market|limit \
-  <execution-price-option> \
+  [--worst-price <price>] \
+  [--limit-price <price>] \
   [--cloid <cloid>]
 
 purr hyperliquid take-profit \
@@ -93,7 +98,8 @@ purr hyperliquid take-profit \
   --size <current-position-size> \
   --trigger-price <trigger> \
   --execution market|limit \
-  <execution-price-option> \
+  [--worst-price <price>] \
+  [--limit-price <price>] \
   [--cloid <cloid>]
 
 purr hyperliquid protect-position \
@@ -107,11 +113,19 @@ purr hyperliquid protect-position \
   --stop-loss-worst-price <price>
 ```
 
-These commands create reduce-only `positionTpsl` orders. Before using them,
-read `state --kind perp [--dex <dex>]` and verify the exact asset, position
-side, and absolute current position size. A position has no OID. The supplied
-size is the position size being protected when the order is placed; do not
-copy it from an old entry order or assume the position is unchanged.
+These commands create reduce-only `positionTpsl` orders. Unlike
+`normalTpsl`, their size adjusts proportionally when the position size changes.
+Before using them, read `state --kind perp [--dex <dex>]` and verify the exact
+asset, position side, and absolute current position size. A position has no
+OID.
+
+For full-position protection, pass the full current position size. For a
+proportional partial TP/SL, pass the user-confirmed portion of the current
+position and explain that its absolute size will scale with later position
+changes. These commands cannot promise a fixed absolute partial-close size;
+if that is the user's requirement, report that the typed CLI does not expose
+that conditional-order behavior and do not fall back to a raw payload. Never
+copy size from an old entry order or assume the position is unchanged.
 
 `protect-position` currently supports market execution only. Use the
 individual trigger commands when limit execution is required.
@@ -162,7 +176,8 @@ purr hyperliquid modify-stop-loss \
   --size <asset-size> \
   --trigger-price <trigger> \
   --execution market|limit \
-  <execution-price-option> \
+  [--worst-price <price>] \
+  [--limit-price <price>] \
   [--cloid <replacement-cloid>]
 
 purr hyperliquid modify-take-profit \
@@ -172,7 +187,8 @@ purr hyperliquid modify-take-profit \
   --size <asset-size> \
   --trigger-price <trigger> \
   --execution market|limit \
-  <execution-price-option> \
+  [--worst-price <price>] \
+  [--limit-price <price>] \
   [--cloid <replacement-cloid>]
 ```
 
@@ -181,9 +197,15 @@ Read the current order first and provide every required field. `--oid` selects
 the target and accepts a numeric OID or a cloid. Optional `--cloid` is the
 client ID on the replacement order, not the target selector.
 
-A `bracket-order` or `protect-position` cannot be modified as one group.
-Modify its still-open entry with `modify-limit-order` and each open TP/SL child
-with its matching modify command.
+Neither `bracket-order` nor `protect-position` can be modified as one group.
+For a bracket, modify its still-open entry with `modify-limit-order`. For both
+commands, modify each open TP/SL child with its matching modify command;
+`protect-position` has no entry order.
+
+Use the frontend order's `isPositionTpsl` field to preserve sizing semantics.
+For a position TP/SL, re-read live position state and preserve the user's
+protected proportion. For a normal bracket child, preserve its fixed child
+size. Never convert between fixed and proportional protection silently.
 
 Once an entry order is filled, it is historical and cannot be modified. Manage
 the resulting position by creating or modifying its open protection orders.

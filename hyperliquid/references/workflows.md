@@ -177,8 +177,11 @@ purr hyperliquid l2 --coin <canonical-coin>
 ```
 
 2. Verify the exact asset, non-zero position side, and absolute current size.
-For a long, TP normally belongs above current price and SL below it. For a
-short, reverse this. Stop if a trigger is already crossed.
+Choose either full-position protection or a user-confirmed proportional
+portion. Position TP/SL size scales with later position changes; do not promise
+a fixed absolute partial-close size. For a long, TP normally belongs above
+current price and SL below it. For a short, reverse this. Stop if a trigger is
+already crossed.
 
 3. Run fee preflight. Confirm every trigger and execution boundary.
 
@@ -188,7 +191,7 @@ short, reverse this. Stop if a trigger is already crossed.
 purr hyperliquid protect-position \
   --asset <asset-id> \
   --position-side long|short \
-  --size <current-position-size> \
+  --size <protected-size-at-placement> \
   --take-profit-price <tp-trigger> \
   --stop-loss-price <sl-trigger> \
   --execution market \
