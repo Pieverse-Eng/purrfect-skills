@@ -66,8 +66,9 @@ Do not print wei next to the human amount in confirmations or summaries.
 | `matured` | Yes |
 
 Withdraw only `matured` stakes. Use stake IDs only from the latest positions
-result. Never invent IDs. If `paused` is true, stop and tell the user staking
-is paused — do not print `paused: false` when things are fine.
+result. Never invent IDs. If `paused` is true, do not create new stakes;
+position reads and matured withdrawals remain available. Do not print
+`paused: false` when things are fine.
 
 ## Confirmation Format
 
@@ -149,7 +150,8 @@ with only a bare hash. Then re-check positions.
 1. Resolve chain (both networks if needed).
 2. `purr pieverse staking positions --chain-id <chainId>`.
 3. List open stakes for the user (id, amount as PIEVERSE, status, unlock time).
-   Mark only `matured` as selectable. Stop if paused.
+   Mark only `matured` as selectable. A paused contract still permits matured
+   withdrawals.
 4. User chooses: one id, several ids, all matured, or cancel.
 5. Refuse `active` ids.
 6. Confirm with the withdraw table, then after Yes:
@@ -267,5 +269,5 @@ the user as code fences or tables in the confirmation message.
 | Low gas | Check native balance on that chain |
 | More than 2 amount decimal places | Ask for a new amount; do not round or execute |
 | Bad duration | Only `90d` / `180d` / `365d` |
-| Paused | Stop stake and withdraw |
+| Paused | Refuse new stakes; continue to permit matured withdrawals |
 | Duplicate batch ids | Fix list before execute |
