@@ -546,6 +546,357 @@
 					"targetPath": "surf/vendor/SKILL.md"
 				}
 			]
+		},
+		{
+			"id": "okx-cex",
+			"repo": "https://github.com/okx/agent-skills.git",
+			"commit": "b9a0f35e319243385c3660120ec889da31d409f3",
+			"notes": "Official OKX CEX skills (okx CLI). Imported under okx-cex/vendor. Distinct from okx/ OnchainOS.",
+			"skills": [
+				{
+					"name": "okx-cex-LICENSE",
+					"upstreamPath": "LICENSE",
+					"targetPath": "okx-cex/LICENSE.md"
+				},
+				{
+					"name": "okx-cex-vendor-_shared-preflight",
+					"upstreamPath": "skills/_shared/preflight.md",
+					"targetPath": "okx-cex/vendor/_shared/preflight.md"
+				},
+				{
+					"name": "okx-cex-vendor-earn-hunter-SKILL",
+					"upstreamPath": "skills/earn-hunter/SKILL.md",
+					"targetPath": "okx-cex/vendor/earn-hunter/SKILL.md"
+				},
+				{
+					"name": "okx-cex-vendor-earn-hunter-config-claude-code.default.json",
+					"upstreamPath": "skills/earn-hunter/config/claude-code.default.json",
+					"targetPath": "okx-cex/vendor/earn-hunter/config/claude-code.default.json"
+				},
+				{
+					"name": "okx-cex-vendor-earn-hunter-config-default.json",
+					"upstreamPath": "skills/earn-hunter/config/default.json",
+					"targetPath": "okx-cex/vendor/earn-hunter/config/default.json"
+				},
+				{
+					"name": "okx-cex-vendor-earn-hunter-config-openclaw.default.json",
+					"upstreamPath": "skills/earn-hunter/config/openclaw.default.json",
+					"targetPath": "okx-cex/vendor/earn-hunter/config/openclaw.default.json"
+				},
+				{
+					"name": "okx-cex-vendor-earn-hunter-references-config-reference",
+					"upstreamPath": "skills/earn-hunter/references/config-reference.md",
+					"targetPath": "okx-cex/vendor/earn-hunter/references/config-reference.md"
+				},
+				{
+					"name": "okx-cex-vendor-earn-hunter-references-notify-channels",
+					"upstreamPath": "skills/earn-hunter/references/notify-channels.md",
+					"targetPath": "okx-cex/vendor/earn-hunter/references/notify-channels.md"
+				},
+				{
+					"name": "okx-cex-vendor-earn-hunter-references-purchase-guide",
+					"upstreamPath": "skills/earn-hunter/references/purchase-guide.md",
+					"targetPath": "okx-cex/vendor/earn-hunter/references/purchase-guide.md"
+				},
+				{
+					"name": "okx-cex-vendor-earn-hunter-references-scan-logic",
+					"upstreamPath": "skills/earn-hunter/references/scan-logic.md",
+					"targetPath": "okx-cex/vendor/earn-hunter/references/scan-logic.md"
+				},
+				{
+					"name": "okx-cex-vendor-earn-hunter-references-scheduler-setup",
+					"upstreamPath": "skills/earn-hunter/references/scheduler-setup.md",
+					"targetPath": "okx-cex/vendor/earn-hunter/references/scheduler-setup.md"
+				},
+				{
+					"name": "okx-cex-vendor-earn-hunter-scripts-scan.sh",
+					"upstreamPath": "skills/earn-hunter/scripts/scan.sh",
+					"targetPath": "okx-cex/vendor/earn-hunter/scripts/scan.sh"
+				},
+				{
+					"name": "okx-cex-vendor-earn-hunter-templates-activation",
+					"upstreamPath": "skills/earn-hunter/templates/activation.md",
+					"targetPath": "okx-cex/vendor/earn-hunter/templates/activation.md"
+				},
+				{
+					"name": "okx-cex-vendor-earn-hunter-templates-error-alert",
+					"upstreamPath": "skills/earn-hunter/templates/error-alert.md",
+					"targetPath": "okx-cex/vendor/earn-hunter/templates/error-alert.md"
+				},
+				{
+					"name": "okx-cex-vendor-earn-hunter-templates-fixed-earn",
+					"upstreamPath": "skills/earn-hunter/templates/fixed-earn.md",
+					"targetPath": "okx-cex/vendor/earn-hunter/templates/fixed-earn.md"
+				},
+				{
+					"name": "okx-cex-vendor-earn-hunter-templates-flash-earn",
+					"upstreamPath": "skills/earn-hunter/templates/flash-earn.md",
+					"targetPath": "okx-cex/vendor/earn-hunter/templates/flash-earn.md"
+				},
+				{
+					"name": "okx-cex-vendor-earn-hunter-templates-flexible-earn",
+					"upstreamPath": "skills/earn-hunter/templates/flexible-earn.md",
+					"targetPath": "okx-cex/vendor/earn-hunter/templates/flexible-earn.md"
+				},
+				{
+					"name": "okx-cex-vendor-earn-hunter-templates-mixed-notify",
+					"upstreamPath": "skills/earn-hunter/templates/mixed-notify.md",
+					"targetPath": "okx-cex/vendor/earn-hunter/templates/mixed-notify.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-auth-SKILL",
+					"upstreamPath": "skills/okx-cex-auth/SKILL.md",
+					"targetPath": "okx-cex/vendor/okx-cex-auth/SKILL.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-bot-SKILL",
+					"upstreamPath": "skills/okx-cex-bot/SKILL.md",
+					"targetPath": "okx-cex/vendor/okx-cex-bot/SKILL.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-earn-SKILL",
+					"upstreamPath": "skills/okx-cex-earn/SKILL.md",
+					"targetPath": "okx-cex/vendor/okx-cex-earn/SKILL.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-earn-references-autoearn-commands",
+					"upstreamPath": "skills/okx-cex-earn/references/autoearn-commands.md",
+					"targetPath": "okx-cex/vendor/okx-cex-earn/references/autoearn-commands.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-earn-references-dcd-commands",
+					"upstreamPath": "skills/okx-cex-earn/references/dcd-commands.md",
+					"targetPath": "okx-cex/vendor/okx-cex-earn/references/dcd-commands.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-earn-references-flash-earn-commands",
+					"upstreamPath": "skills/okx-cex-earn/references/flash-earn-commands.md",
+					"targetPath": "okx-cex/vendor/okx-cex-earn/references/flash-earn-commands.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-earn-references-onchain-commands",
+					"upstreamPath": "skills/okx-cex-earn/references/onchain-commands.md",
+					"targetPath": "okx-cex/vendor/okx-cex-earn/references/onchain-commands.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-earn-references-savings-commands",
+					"upstreamPath": "skills/okx-cex-earn/references/savings-commands.md",
+					"targetPath": "okx-cex/vendor/okx-cex-earn/references/savings-commands.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-earn-references-templates",
+					"upstreamPath": "skills/okx-cex-earn/references/templates.md",
+					"targetPath": "okx-cex/vendor/okx-cex-earn/references/templates.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-earn-references-workflows",
+					"upstreamPath": "skills/okx-cex-earn/references/workflows.md",
+					"targetPath": "okx-cex/vendor/okx-cex-earn/references/workflows.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-market-SKILL",
+					"upstreamPath": "skills/okx-cex-market/SKILL.md",
+					"targetPath": "okx-cex/vendor/okx-cex-market/SKILL.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-market-references-derivatives-commands",
+					"upstreamPath": "skills/okx-cex-market/references/derivatives-commands.md",
+					"targetPath": "okx-cex/vendor/okx-cex-market/references/derivatives-commands.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-market-references-indicator-commands",
+					"upstreamPath": "skills/okx-cex-market/references/indicator-commands.md",
+					"targetPath": "okx-cex/vendor/okx-cex-market/references/indicator-commands.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-market-references-instrument-commands",
+					"upstreamPath": "skills/okx-cex-market/references/instrument-commands.md",
+					"targetPath": "okx-cex/vendor/okx-cex-market/references/instrument-commands.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-market-references-price-data-commands",
+					"upstreamPath": "skills/okx-cex-market/references/price-data-commands.md",
+					"targetPath": "okx-cex/vendor/okx-cex-market/references/price-data-commands.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-market-references-workflows",
+					"upstreamPath": "skills/okx-cex-market/references/workflows.md",
+					"targetPath": "okx-cex/vendor/okx-cex-market/references/workflows.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-portfolio-SKILL",
+					"upstreamPath": "skills/okx-cex-portfolio/SKILL.md",
+					"targetPath": "okx-cex/vendor/okx-cex-portfolio/SKILL.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-skill-mp-SKILL",
+					"upstreamPath": "skills/okx-cex-skill-mp/SKILL.md",
+					"targetPath": "okx-cex/vendor/okx-cex-skill-mp/SKILL.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-smartmoney-SKILL",
+					"upstreamPath": "skills/okx-cex-smartmoney/SKILL.md",
+					"targetPath": "okx-cex/vendor/okx-cex-smartmoney/SKILL.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-smartmoney-references-signal-commands",
+					"upstreamPath": "skills/okx-cex-smartmoney/references/signal-commands.md",
+					"targetPath": "okx-cex/vendor/okx-cex-smartmoney/references/signal-commands.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-smartmoney-references-templates",
+					"upstreamPath": "skills/okx-cex-smartmoney/references/templates.md",
+					"targetPath": "okx-cex/vendor/okx-cex-smartmoney/references/templates.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-smartmoney-references-trader-commands",
+					"upstreamPath": "skills/okx-cex-smartmoney/references/trader-commands.md",
+					"targetPath": "okx-cex/vendor/okx-cex-smartmoney/references/trader-commands.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-smartmoney-references-workflows",
+					"upstreamPath": "skills/okx-cex-smartmoney/references/workflows.md",
+					"targetPath": "okx-cex/vendor/okx-cex-smartmoney/references/workflows.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-trade-SKILL",
+					"upstreamPath": "skills/okx-cex-trade/SKILL.md",
+					"targetPath": "okx-cex/vendor/okx-cex-trade/SKILL.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-trade-references-event-commands",
+					"upstreamPath": "skills/okx-cex-trade/references/event-commands.md",
+					"targetPath": "okx-cex/vendor/okx-cex-trade/references/event-commands.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-trade-references-event-workflows",
+					"upstreamPath": "skills/okx-cex-trade/references/event-workflows.md",
+					"targetPath": "okx-cex/vendor/okx-cex-trade/references/event-workflows.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-trade-references-futures-commands",
+					"upstreamPath": "skills/okx-cex-trade/references/futures-commands.md",
+					"targetPath": "okx-cex/vendor/okx-cex-trade/references/futures-commands.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-trade-references-options-commands",
+					"upstreamPath": "skills/okx-cex-trade/references/options-commands.md",
+					"targetPath": "okx-cex/vendor/okx-cex-trade/references/options-commands.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-trade-references-spot-commands",
+					"upstreamPath": "skills/okx-cex-trade/references/spot-commands.md",
+					"targetPath": "okx-cex/vendor/okx-cex-trade/references/spot-commands.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-trade-references-swap-commands",
+					"upstreamPath": "skills/okx-cex-trade/references/swap-commands.md",
+					"targetPath": "okx-cex/vendor/okx-cex-trade/references/swap-commands.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-trade-references-templates",
+					"upstreamPath": "skills/okx-cex-trade/references/templates.md",
+					"targetPath": "okx-cex/vendor/okx-cex-trade/references/templates.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-cex-trade-references-workflows",
+					"upstreamPath": "skills/okx-cex-trade/references/workflows.md",
+					"targetPath": "okx-cex/vendor/okx-cex-trade/references/workflows.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-outcomes-SKILL",
+					"upstreamPath": "skills/okx-outcomes/SKILL.md",
+					"targetPath": "okx-cex/vendor/okx-outcomes/SKILL.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-outcomes-references-account-commands",
+					"upstreamPath": "skills/okx-outcomes/references/account-commands.md",
+					"targetPath": "okx-cex/vendor/okx-outcomes/references/account-commands.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-outcomes-references-clob-commands",
+					"upstreamPath": "skills/okx-outcomes/references/clob-commands.md",
+					"targetPath": "okx-cex/vendor/okx-outcomes/references/clob-commands.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-outcomes-references-ctf-commands",
+					"upstreamPath": "skills/okx-outcomes/references/ctf-commands.md",
+					"targetPath": "okx-cex/vendor/okx-outcomes/references/ctf-commands.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-outcomes-references-data-commands",
+					"upstreamPath": "skills/okx-outcomes/references/data-commands.md",
+					"targetPath": "okx-cex/vendor/okx-outcomes/references/data-commands.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-outcomes-references-setup-auth",
+					"upstreamPath": "skills/okx-outcomes/references/setup-auth.md",
+					"targetPath": "okx-cex/vendor/okx-outcomes/references/setup-auth.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-outcomes-references-workflows",
+					"upstreamPath": "skills/okx-outcomes/references/workflows.md",
+					"targetPath": "okx-cex/vendor/okx-outcomes/references/workflows.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-sentiment-tracker-SKILL",
+					"upstreamPath": "skills/okx-sentiment-tracker/SKILL.md",
+					"targetPath": "okx-cex/vendor/okx-sentiment-tracker/SKILL.md"
+				},
+				{
+					"name": "okx-cex-vendor-okx-sentiment-tracker-references-workflows",
+					"upstreamPath": "skills/okx-sentiment-tracker/references/workflows.md",
+					"targetPath": "okx-cex/vendor/okx-sentiment-tracker/references/workflows.md"
+				}
+			]
+		},
+		{
+			"id": "bitget-cex",
+			"repo": "https://github.com/Bitget-AI/agent-skill.git",
+			"commit": "55747b8a33236bbb4dcabffe22c42d302178268c",
+			"notes": "Official Bitget Exchange UTA v3 skill (bgc CLI). Distinct from bitget-wallet.",
+			"skills": [
+				{
+					"name": "bitget-LICENSE",
+					"upstreamPath": "LICENSE",
+					"targetPath": "bitget/LICENSE.md"
+				},
+				{
+					"name": "bitget-references-auth-setup",
+					"upstreamPath": "references/auth-setup.md",
+					"targetPath": "bitget/references/auth-setup.md"
+				},
+				{
+					"name": "bitget-references-commands",
+					"upstreamPath": "references/commands.md",
+					"targetPath": "bitget/references/commands.md"
+				},
+				{
+					"name": "bitget-references-demo-trading",
+					"upstreamPath": "references/demo-trading.md",
+					"targetPath": "bitget/references/demo-trading.md"
+				},
+				{
+					"name": "bitget-references-discover-guide",
+					"upstreamPath": "references/discover-guide.md",
+					"targetPath": "bitget/references/discover-guide.md"
+				},
+				{
+					"name": "bitget-references-error-codes",
+					"upstreamPath": "references/error-codes.md",
+					"targetPath": "bitget/references/error-codes.md"
+				},
+				{
+					"name": "bitget-references-trading-safety",
+					"upstreamPath": "references/trading-safety.md",
+					"targetPath": "bitget/references/trading-safety.md"
+				},
+				{
+					"name": "bitget-SKILL",
+					"upstreamPath": "skills/SKILL.md",
+					"targetPath": "bitget/SKILL.md"
+				}
+			]
 		}
 	]
 }
