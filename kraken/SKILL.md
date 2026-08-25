@@ -3,11 +3,9 @@ name: kraken
 description: Kraken,spot,futures,xStocks,forex,earn,paper,MCP
 metadata:
   openclaw:
-    primaryEnv: KRAKEN_API_KEY
-  requires:
-    env:
-      - KRAKEN_API_KEY
-      - KRAKEN_API_SECRET
+    requires:
+      bins:
+        - kraken
 ---
 
 # Kraken
