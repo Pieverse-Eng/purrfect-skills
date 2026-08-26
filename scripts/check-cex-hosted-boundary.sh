@@ -71,6 +71,27 @@ if [[ -f "$okx_router" ]]; then
 	if ! grep -Eiq 'reference-only|reference only|upstream reference' "$okx_router"; then
 		fail "$okx_router must mark marketplace/preflight as reference-only"
 	fi
+
+	auth="$(section "$okx_router" '## Hosted authentication (authoritative)')"
+	for env_var in OKX_API_KEY OKX_SECRET_KEY OKX_PASSPHRASE; do
+		if ! grep -Fq "$env_var" <<<"$auth"; then
+			fail "$okx_router hosted authentication is missing $env_var"
+		fi
+	done
+	if ! grep -Fq 'even when' <<<"$auth" || ! grep -Fq 'okx config show --json' <<<"$auth"; then
+		fail "$okx_router must make complete hosted credentials authoritative over empty CLI profiles"
+	fi
+	for forbidden in 'okx config init' 'okx auth status' 'okx auth login' '--profile'; do
+		if ! grep -Fq -- "$forbidden" <<<"$auth"; then
+			fail "$okx_router must define the hosted API-key boundary for $forbidden"
+		fi
+	done
+	if ! grep -Eiq 'printing|echoing|logging|exposing' <<<"$auth"; then
+		fail "$okx_router must forbid exposing hosted credential values"
+	fi
+	if ! grep -Eiq 'only some|partial' <<<"$auth" || ! grep -Fq 'Pieverse Agent page' <<<"$auth"; then
+		fail "$okx_router must stop on partial credentials and direct users to the Agent page"
+	fi
 fi
 
 # --- Bitget qualified triggers ----------------------------------------------
