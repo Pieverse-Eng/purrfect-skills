@@ -17,10 +17,6 @@ Account balance, positions, P&L, bills, fees, and fund transfers on OKX exchange
 
 ## Authentication and trading mode
 
-Before any authenticated command, follow the authentication selection in
-`../../SKILL.md`. It is authoritative; do not repeat credential or profile
-discovery from this reference.
-
 Confirm trading mode before continuing:
 
 **Resolution rules:**
@@ -31,11 +27,7 @@ Confirm trading mode before continuing:
 
 ### Handling Authentication Errors
 
-**Authentication error** (error contains "401", "Session expired", or "Run `okx auth login` first"):
-1. **Stop immediately** — do not retry the same command
-2. Inform the user: "Authentication failed. Your session may have expired."
-3. Load `okx-cex-auth` skill and follow the re-authentication steps
-4. After successful re-authentication, retry the original command
+For authentication errors, follow `../../SKILL.md`.
 
 ## Demo vs Live Mode
 
@@ -520,12 +512,11 @@ OKX splits assets across multiple sub-accounts. The `--valuation` breakdown maps
 - **set-position-mode**: cannot switch to `net` if you have both long and short positions on the same instrument
 - **transfer --from/--to codes**: `6`=funding account, `18`=trading account; other values exist for sub-account flows
 - **max-size vs max-avail-size**: `max-size` is the theoretical maximum; `max-avail-size` accounts for existing orders and reserved margin
-- **Demo mode**: follow the top-level authentication selection before querying simulated balances
+- **Demo mode**: add `--demo` only when the user explicitly requests simulated balances
 
 ## Global Notes
 
-- All write commands require valid credentials selected by the top-level skill
-- Auth method and trading mode are determined in "Authentication and trading mode"
+- Trading mode is determined in "Authentication and trading mode"
 - Every command result includes a `[mode: live]` or `[mode: demo]` tag for audit reference
 - `--json` returns the raw OKX API v5 response by default. Add `--env` to wrap the output as `{"env": "<live|demo>", "profile": "<name>", "data": <response>}`
 - Rate limit: 10 requests per 2 seconds for account endpoints

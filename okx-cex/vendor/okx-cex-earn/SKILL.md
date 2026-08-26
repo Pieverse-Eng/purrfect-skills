@@ -15,14 +15,9 @@ metadata:
 
 ## Authentication and trading mode
 
-Before any authenticated command, follow the authentication selection in
-`../../SKILL.md`. It is authoritative; do not repeat credential or profile
-discovery from this reference.
+OKX Earn does not support demo mode. Always use live mode silently.
 
-OKX Earn does not support demo mode. Always use live mode silently; when using a
-local API-key profile, select a live profile according to the top-level rules.
-
-**On authentication errors (401 / "Session expired" / "Run `okx auth login` first"):** stop immediately, load `okx-cex-auth` skill and follow re-authentication steps, then retry.
+For authentication errors, follow `../../SKILL.md`.
 
 ---
 

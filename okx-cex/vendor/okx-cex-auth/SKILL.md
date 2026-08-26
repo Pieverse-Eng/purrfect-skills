@@ -24,9 +24,7 @@ OAuth 2.0 device flow authentication for OKX CLI. Guides first-time setup, re-au
 | `us`     | US     | `app.okx.com` |
 | `tr`     | TR     | `tr.okx.com`  |
 
-This reference is used only after the authentication selection in `../../SKILL.md`
-chooses OAuth. That top-level selection is authoritative. Do not repeat API-key
-or profile discovery here.
+Use this reference when the user chooses OAuth.
 
 For OAuth, the site is saved inside the `okx-auth` binary state the first time
 `okx auth login --site <X>` succeeds and is returned by `okx auth status --json`.
@@ -90,8 +88,8 @@ Worked counter-example (anti-pattern):
 
 ## Login Flow
 
-> **Prerequisite:** The top-level skill selected OAuth, Step 0 completed, and the
-> Pre-login Gate above passes. You have a site the user just chose in chat.
+> **Prerequisite:** The user chose OAuth, Step 0 completed, and the Pre-login
+> Gate above passes. You have a site the user just chose in chat.
 
 `okx auth login` without `--manual` is a **blocking command** — it polls until the user authorizes in their browser.
 
@@ -101,7 +99,8 @@ Worked counter-example (anti-pattern):
 
 1. Run `okx auth login --manual --site <global|eea|us|tr>` with the site chosen in Step 0.1.
    - If the CLI returns `{"status":"skipped","reason":"api_key_configured",...}`,
-     stop and return to the top-level authentication selection. Do not retry.
+     an API key is already configured. Retry the original command once instead
+     of retrying OAuth login.
    - Otherwise the CLI prints a single line of JSON: `{"verificationUri":"...","userCode":"XXXX-XXXX","expiresIn":600}`.
 
 2. **Surface the verification URL and user code in your assistant reply — NOT only inside a tool-output block.**
@@ -175,7 +174,7 @@ Worked counter-example (anti-pattern):
 3. **Do NOT assume the command is stuck.** The polling phase produces no output — this is normal.
 4. **Check the result:**
    - `Logged in successfully!` — proceed with the user's original request.
-   - `API key already configured ...` — stop and return to the top-level authentication selection.
+   - `API key already configured ...` — retry the original command once instead of retrying OAuth login.
    - Login failed — show the error and ask if they want to retry.
 
 ## API-key setup
@@ -200,7 +199,7 @@ Wizard steps:
 2. **Demo / live**: whether this profile should target simulated trading.
 3. **AK / SK / Passphrase**: credentials created on the OKX web console.
 
-After API-key setup, return to the authentication selection in `../../SKILL.md`.
+After API-key setup, retry the original command.
 
 ## Login Status Check
 
@@ -244,7 +243,7 @@ DCR client registration is retained after logout. The next `okx auth login` will
 
 | Error message                                 | Cause                                  | Action                                           |
 | --------------------------------------------- | -------------------------------------- | ------------------------------------------------ |
-| `No config found. Run okx config init first.` | No local config | Return to the top-level API-key or OAuth flow |
+| `No config found. Run okx config init first.` | No local config | Offer Claw Dashboard credentials or OAuth |
 | `Session expired — run okx auth login again`  | Refresh token expired                  | Run `okx auth login --manual`                    |
 | `Authorization timed out`                     | User did not authorize in time         | Run `okx auth login --manual` again              |
 | `Access denied`                               | User rejected authorization in browser | Run `okx auth login --manual` and ask to approve |

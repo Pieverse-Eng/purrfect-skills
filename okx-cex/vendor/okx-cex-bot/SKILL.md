@@ -18,10 +18,6 @@ Grid and DCA (Spot & Contract Martingale) bot management on OKX. All bots are **
 
 ## Authentication and trading mode
 
-Before any authenticated command, follow the authentication selection in
-`../../SKILL.md`. It is authoritative; do not repeat credential or profile
-discovery from this reference.
-
 Confirm trading mode before continuing:
 
 Resolution:
@@ -33,10 +29,7 @@ Resolution:
 
 ### Handling 401 Errors
 
-**Authentication error** (error contains "401", "Session expired", or "Run `okx auth login` first"):
-1. Stop immediately
-2. Load `okx-cex-auth` skill and follow re-authentication steps
-3. Retry original command
+For authentication errors, follow `../../SKILL.md`.
 
 ## Skill Routing
 
@@ -481,7 +474,7 @@ okx bot dca orders --algoOrdType spot_dca
 - **Amend — spot grid topUpAmt**: not supported; omit `--topUpAmt` for spot grids
 - **Already stopped bot**: stop returns error — check `bot grid orders --history` first to confirm state
 - **Insufficient margin (51340)**: extract required minimum from error, check balance via `okx-cex-portfolio`, report shortfall to user — do NOT auto-transfer
-- **Demo mode**: follow the top-level authentication selection; simulated trading does not use real funds
+- **Demo mode**: add `--demo` only when the user explicitly requests simulated trading; simulated trading does not use real funds
 - **algoClOrdId duplicate**: if the same `algoClOrdId` already exists, the API returns error code `51065`
 
 ### DCA Bot
@@ -493,7 +486,7 @@ okx bot dca orders --algoOrdType spot_dca
 - **volMult**: `1.0` = equal sizes; `>1.0` = increase per safety order (Martingale scaling)
 - **triggerStrategy**: `instant` starts immediately; `price` waits for trigger price (contract_dca only); `rsi` waits for RSI condition (both spot_dca and contract_dca)
 - **Already stopped bot**: stop returns error — check `bot dca orders --history` first
-- **Demo mode**: follow the top-level authentication selection; simulated trading does not use real funds
+- **Demo mode**: add `--demo` only when the user explicitly requests simulated trading; simulated trading does not use real funds
 - **INVALID_PRICE_STEPS_MULTIPLIER error**: adjust `slPct`. Recalculate MPD = Σ(pxSteps × pxStepsMult^i) for i = 0..maxSafetyOrds−1, then set `slPct` > MPD
 - **algoClOrdId duplicate**: error code `51065`
 
