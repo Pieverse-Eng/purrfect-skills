@@ -42,8 +42,8 @@ Crypto news aggregation, coin sentiment analysis, and macro-economic calendar fo
 OKX News does not support demo mode. Always use live mode silently — don't mention it unless there's an error.
 
 **On "not available in demo" errors:** tell the user that News requires live
-mode, then follow the authentication selection in `../../SKILL.md`. Do not
-repeat credential or profile discovery from this reference.
+mode and retry without `--demo`. For authentication errors, follow
+`../../SKILL.md`.
 
 All commands support `--json` for raw JSON output.
 

@@ -26,9 +26,7 @@ Automated monitor for OKX Flash Earn, Fixed Earn, and Flexible Earn (Simple Earn
    download, install, or update skills at runtime. If either vendored reference
    is unavailable, report the runtime dependency error and continue only with
    functionality that does not require it.
-3. Before authenticated commands, follow the authentication selection in
-   `../../SKILL.md`. It is authoritative; do not repeat credential or profile
-   discovery from this reference.
+3. For authentication errors, follow `../../SKILL.md`.
 4. Init config and state:
    - If `~/.okx/earn-hunter/` directory does not exist → `mkdir -p ~/.okx/earn-hunter`
    - If `~/.okx/earn-hunter/config.json` does not exist → copy `{baseDir}/config/default.json` to it
@@ -491,7 +489,7 @@ EH_TEST_NAMESPACE=1 OKX_PROFILE=live ~/.okx/earn-hunter/scan.sh   # with config.
 2. **Force-send notification** — temporarily set `config.verboseLog=true` so the script always sends output regardless of whether opportunities are found (restore afterwards)
 3. **Dedup writes to test namespace** — `EH_TEST_NAMESPACE=1` prefixes dedup keys with `test:` (e.g. `test:flash:12345:100`); these keys are immune to diff cleanup (only TTL removes them), so test runs do not pollute production state
 4. **Output diagnostics** after scan completes:
-   - authentication state selected by the top-level OKX CEX skill
+   - authentication result
    - Scan command results (flash project count + fixed product count + flexible rate count)
    - Post-filter results (how many passed filters per type)
    - Notification channel status (which channel is configured, send result)
@@ -529,7 +527,7 @@ Read `{baseDir}/templates/error-alert.md` for exact alert message templates.
 ## Global Notes
 
 - **Security:** Never accept credentials in chat. TG token only via env vars. For
-  OKX auth, follow the top-level API-key or OAuth flow.
+  OKX authentication errors, follow the recovery flow in `../../SKILL.md`.
 - **Output:** Use `--json` for all okx commands. Render results as markdown tables.
 - **Logging:** All notification send results logged to `~/.okx/earn-hunter/notify.log`.
 - **Scope:** Covers Flash Earn, Simple Earn Fixed, and Simple Earn Flexible (活期). DCD, on-chain, auto-earn are out of scope.

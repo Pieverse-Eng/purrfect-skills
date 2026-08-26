@@ -19,10 +19,6 @@ Spot, perpetual swap, delivery futures, **options**, and **event contract** orde
 
 ## Authentication and trading mode
 
-Before any authenticated command, follow the authentication selection in
-`../../SKILL.md`. It is authoritative; do not repeat credential or profile
-discovery from this reference.
-
 Confirm trading mode before continuing:
 
 **Resolution rules:**
@@ -33,11 +29,7 @@ Confirm trading mode before continuing:
 
 ### Handling Authentication Errors
 
-**Authentication error** (error contains "401", "Session expired", or "Run `okx auth login` first"):
-1. **Stop immediately** — do not retry the same command
-2. Inform the user: "Authentication failed. Your session may have expired."
-3. Load `okx-cex-auth` skill and follow the re-authentication steps
-4. After successful re-authentication, retry the original command
+For authentication errors, follow `../../SKILL.md`.
 
 ## Demo vs Live Mode
 
@@ -391,8 +383,7 @@ This applies to all error codes whose messages suggest destructive actions, incl
 
 ## Global Notes
 
-- All write commands require valid credentials selected by the top-level skill
-- Auth method and trading mode are determined in "Authentication and trading mode"
+- Trading mode is determined in "Authentication and trading mode"
 - `--json` returns the raw OKX API v5 response by default. Add `--env` to wrap the output as `{"env": "<live|demo>", "profile": "<name>", "data": <response>}` — useful when you need to know the active environment and credential profile
 - Rate limit: 60 order operations per 2 seconds per UID
 - Batch operations (batch cancel, batch amend) are available via MCP tools directly if needed
