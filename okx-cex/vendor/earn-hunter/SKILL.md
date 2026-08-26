@@ -21,27 +21,15 @@ Automated monitor for OKX Flash Earn, Fixed Earn, and Flexible Earn (Simple Earn
 
 1. Verify `okx` CLI is available with `which okx`. If missing, report the runtime error and stop.
    On OpenClaw, also verify the in-session `cron` tool is available in the agent tool list (used for scheduling — not the `openclaw` CLI).
-2. Check optional dependent skills:
-   ```bash
-   okx skill list --json
-   ```
-   Optional skills (not required for scanning/notifications):
-   - `okx-cex-earn` — needed for purchase guide (subscription execution)
-   - `okx-cex-auth` — needed for authentication recovery
-
-   If either is missing, attempt to install but **do not block** if installation fails:
-   ```bash
-   okx skill add okx-cex-earn
-   okx skill add okx-cex-auth
-   ```
-   - Install succeeds → continue
-   - Install fails (network error, marketplace unavailable, etc.) → **warn and continue**:
-     "⚠ `{skill_name}` 安装失败，扫描和通知功能不受影响。申购引导和认证恢复需要该 skill，后续可手动安装。"
-   - Preflight continues regardless of skill installation result
-4. Before authenticated commands, follow the authentication selection in
+2. Use the vendored `okx-cex-earn` reference for subscription guidance and the
+   vendored `okx-cex-auth` reference for authentication recovery. Do not list,
+   download, install, or update skills at runtime. If either vendored reference
+   is unavailable, report the runtime dependency error and continue only with
+   functionality that does not require it.
+3. Before authenticated commands, follow the authentication selection in
    `../../SKILL.md`. It is authoritative; do not repeat credential or profile
    discovery from this reference.
-5. Init config and state:
+4. Init config and state:
    - If `~/.okx/earn-hunter/` directory does not exist → `mkdir -p ~/.okx/earn-hunter`
    - If `~/.okx/earn-hunter/config.json` does not exist → copy `{baseDir}/config/default.json` to it
    - If `~/.okx/earn-hunter/state.json` does not exist → write `{"flash":{},"fixed":{},"flexible":{},"consecutive_failures":0,"last_error":""}`
@@ -59,7 +47,7 @@ Automated monitor for OKX Flash Earn, Fixed Earn, and Flexible Earn (Simple Earn
      ```
      The scan script sources this file to resolve tool paths even under cron's minimal `PATH=/usr/bin:/bin`.
 
-   Config/state/platform JSON read-write done by the agent is only for activation/config management. The recurring **scan itself is performed entirely by `scripts/scan.sh`** (shell + jq) — `jq` is required for scanning. Verify with `which jq`; if missing, install (`brew install jq` / `apt-get install jq`).
+   Config/state/platform JSON read-write done by the agent is only for activation/config management. The recurring **scan itself is performed entirely by `scripts/scan.sh`** (shell + jq) — `jq` is required for scanning. Verify with `which jq`; if missing, report the runtime dependency error and stop. Do not install it at runtime.
 
 ## Platform & Channel Detection
 

@@ -61,8 +61,11 @@ To change frequency: `crontab -e` → modify the cron expression (e.g., `*/30 * 
 
 ### Prerequisites
 
-- `jq` must be installed (the script uses it for all JSON processing): `which jq` → if missing, `brew install jq` (macOS) or `apt-get install jq` (Linux).
-- `okx` CLI installed and authenticated (`~/.okx/config.toml`). The script never reads or prints credentials; auth is fully delegated to the CLI.
+- `jq` must be available (the script uses it for all JSON processing): verify
+  with `which jq`; if missing, report the runtime dependency error and stop.
+  Do not install it at runtime.
+- The runtime-provided `okx` CLI must be authenticated. The script never reads
+  or prints credentials; auth is fully delegated to the CLI.
 
 ## Verification
 
