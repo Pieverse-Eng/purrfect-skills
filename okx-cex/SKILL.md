@@ -82,6 +82,7 @@ running commands.
 | Official reference | Use |
 | --- | --- |
 | `vendor/okx-cex-auth/SKILL.md` | Login, API key, session expiry, and site selection |
+| `vendor/okx-cex-skill-mp/SKILL.md` | Search, browse, install, update, remove, and verify skills from the OKX Skills Marketplace |
 | `vendor/okx-cex-market/SKILL.md` | Prices, order books, candles, funding, open interest, and indicators |
 | `vendor/okx-cex-trade/SKILL.md` | Place, amend, and cancel spot, swap, futures, options, and event orders |
 | `vendor/okx-cex-portfolio/SKILL.md` | Balances, positions, PnL, fees, and transfers |
@@ -91,8 +92,7 @@ running commands.
 | `vendor/okx-sentiment-tracker/SKILL.md` | News and sentiment |
 | `vendor/okx-outcomes/SKILL.md` | Outcome and YES/NO event contracts |
 | `vendor/earn-hunter/SKILL.md` | Earn product scanning and notifications |
-| `vendor/_shared/preflight.md` | Reference only; do not run because it executes `okx upgrade` and unpins the runtime CLI |
-| `vendor/okx-cex-skill-mp/SKILL.md` | Reference only; do not use it to install third-party marketplace skills or bypass signatures with `--force` |
+| `vendor/_shared/preflight.md` | Shared CLI and authentication preflight referenced by official skills; the runtime wrapper overrides its upgrade and authentication-selection steps |
 
 If the request is about OKX Wallet, DEX swap, x402, or Agent identity, use the
 `okx` OnchainOS skill instead of this one.
