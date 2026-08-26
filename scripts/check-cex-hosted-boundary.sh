@@ -4,8 +4,8 @@
 # This would fail the 017cd481 layout:
 # - okx-cex/SKILL.md sent every command through vendor/_shared/preflight.md
 #   (which runs `okx upgrade`) and routed install intent to okx-cex-skill-mp
-# - bitget/SKILL.md was the official file and claimed provider-agnostic
-#   exchange intents
+# Bitget ships the official body directly with only a provider-qualified
+# frontmatter description; it must not claim unnamed exchange requests.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -17,10 +17,6 @@ errors=0
 fail() {
 	echo "ERROR: $*" >&2
 	errors=1
-}
-
-frontmatter() {
-	awk 'BEGIN { p = 0 } /^---[[:space:]]*$/ { p++; next } p == 1 { print } p >= 2 { exit }' "$1"
 }
 
 section() {
@@ -94,53 +90,25 @@ if [[ -f "$okx_router" ]]; then
 	fi
 fi
 
-# --- Bitget qualified triggers ----------------------------------------------
+# --- Bitget official direct package -----------------------------------------
 
-bitget_router="bitget/SKILL.md"
-bitget_official="bitget/vendor/bitget/SKILL.md"
-[[ -f "$bitget_router" ]] || fail "missing $bitget_router"
-[[ -f "$bitget_official" ]] || fail "missing official $bitget_official"
+bitget_skill="bitget/SKILL.md"
+[[ -f "$bitget_skill" ]] || fail "missing official $bitget_skill"
 
-if [[ -f "$bitget_router" && -f "$bitget_official" ]]; then
-	if cmp -s "$bitget_router" "$bitget_official"; then
-		fail "bitget/SKILL.md must be a platform router, not the official file"
-	fi
+if [[ -d "bitget/vendor" ]]; then
+	fail "Bitget official files must live directly under bitget/, not bitget/vendor/"
+fi
 
-	if ! grep -Fq 'Do not install packages at runtime' "$bitget_router"; then
-		fail "$bitget_router must forbid runtime package installs"
-	fi
-
-	fm="$(frontmatter "$bitget_router")"
-	if [[ -z "$fm" ]]; then
-		fail "$bitget_router is missing YAML frontmatter"
-	fi
-
-	# Provider-agnostic phrases from the official Bitget frontmatter.
-	while IFS= read -r phrase; do
-		[[ -n "$phrase" ]] || continue
-		if grep -Fqi -- "$phrase" <<<"$fm"; then
-			fail "$bitget_router frontmatter claims provider-agnostic intent: $phrase"
+if [[ -f "$bitget_skill" ]]; then
+	bitget_frontmatter="$(awk 'BEGIN { p = 0 } /^---[[:space:]]*$/ { p++; next } p == 1 { print } p >= 2 { exit }' "$bitget_skill")"
+	for phrase in "Use when the user asks" "Bitget Exchange" "bgc CLI"; do
+		if ! grep -Fqi -- "$phrase" <<<"$bitget_frontmatter"; then
+			fail "$bitget_skill frontmatter is missing provider-qualified trigger: $phrase"
 		fi
-	done <<'PHRASES'
-check my open orders
-place a market sell
-BTC现在多少钱
-even when the user doesn't say
-even without the exchange name
-Always invoke this skill before attempting any exchange
-these are Bitget operations even without the exchange name
-查看我的账户
-下一个限价单
-PHRASES
-
-	if ! grep -Eiq 'bitget' <<<"$fm"; then
-		fail "$bitget_router frontmatter must be Bitget-qualified"
-	fi
-
-	# Official file stays byte-for-byte, including the aggressive triggers.
-	for phrase in "check my open orders" "place a market sell" "BTC现在多少钱" "even when the user doesn't say"; do
-		if ! grep -Fqi -- "$phrase" "$bitget_official"; then
-			fail "$bitget_official no longer contains official trigger phrase: $phrase"
+	done
+	for phrase in "even when the user doesn't say" "even without the exchange name" "Always invoke this skill before attempting any exchange"; do
+		if grep -Fqi -- "$phrase" <<<"$bitget_frontmatter"; then
+			fail "$bitget_skill frontmatter claims unnamed exchange requests: $phrase"
 		fi
 	done
 fi

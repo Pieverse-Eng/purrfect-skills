@@ -854,47 +854,37 @@
 			"id": "bitget-cex",
 			"repo": "https://github.com/Bitget-AI/agent-skill.git",
 			"commit": "55747b8a33236bbb4dcabffe22c42d302178268c",
-			"notes": "Official Bitget Exchange UTA v3 skill (bgc CLI). Official files live under bitget/vendor/bitget/; top-level bitget/SKILL.md is a platform router. Distinct from bitget-wallet.",
+			"notes": "Official Bitget Exchange UTA v3 references copied unchanged into bitget/references/. bitget/SKILL.md keeps the official body with a platform-qualified description. Distinct from bitget-wallet.",
 			"skills": [
-				{
-					"name": "bitget-LICENSE",
-					"upstreamPath": "LICENSE",
-					"targetPath": "bitget/LICENSE.md"
-				},
 				{
 					"name": "bitget-references-auth-setup",
 					"upstreamPath": "references/auth-setup.md",
-					"targetPath": "bitget/vendor/bitget/references/auth-setup.md"
+					"targetPath": "bitget/references/auth-setup.md"
 				},
 				{
 					"name": "bitget-references-commands",
 					"upstreamPath": "references/commands.md",
-					"targetPath": "bitget/vendor/bitget/references/commands.md"
+					"targetPath": "bitget/references/commands.md"
 				},
 				{
 					"name": "bitget-references-demo-trading",
 					"upstreamPath": "references/demo-trading.md",
-					"targetPath": "bitget/vendor/bitget/references/demo-trading.md"
+					"targetPath": "bitget/references/demo-trading.md"
 				},
 				{
 					"name": "bitget-references-discover-guide",
 					"upstreamPath": "references/discover-guide.md",
-					"targetPath": "bitget/vendor/bitget/references/discover-guide.md"
+					"targetPath": "bitget/references/discover-guide.md"
 				},
 				{
 					"name": "bitget-references-error-codes",
 					"upstreamPath": "references/error-codes.md",
-					"targetPath": "bitget/vendor/bitget/references/error-codes.md"
+					"targetPath": "bitget/references/error-codes.md"
 				},
 				{
 					"name": "bitget-references-trading-safety",
 					"upstreamPath": "references/trading-safety.md",
-					"targetPath": "bitget/vendor/bitget/references/trading-safety.md"
-				},
-				{
-					"name": "bitget-SKILL",
-					"upstreamPath": "skills/SKILL.md",
-					"targetPath": "bitget/vendor/bitget/SKILL.md"
+					"targetPath": "bitget/references/trading-safety.md"
 				}
 			]
 		}
