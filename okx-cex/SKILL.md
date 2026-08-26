@@ -1,6 +1,6 @@
 ---
 name: okx-cex
-description: OKX CEX,spot,perp,futures,options,portfolio,bots,earn
+description: Use when the user asks about OKX centralized exchange (CEX) for spot, perpetuals, futures, options, portfolio, trading bots, or earn products.
 metadata:
   openclaw:
     primaryEnv: OKX_API_KEY
