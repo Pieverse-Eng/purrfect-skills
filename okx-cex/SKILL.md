@@ -74,33 +74,25 @@ vendored files.
   action and wait for explicit user confirmation.
 - Prefer `okx-cex-market` for prices. Do not place trades from market data alone.
 
-## Routing
+## References
 
-This top-level skill is a router. Read `vendor/<skill>/SKILL.md` before running
-commands. Do not use `vendor/_shared/preflight.md` as the command path.
+This top-level skill is a router. Read the matching official reference before
+running commands.
 
-| User intent | Read |
+| Official reference | Use |
 | --- | --- |
-| Login, API key, session expired, site selection | `vendor/okx-cex-auth/SKILL.md` |
-| Price, book, candles, funding, OI, indicators | `vendor/okx-cex-market/SKILL.md` |
-| Place, amend, cancel spot / swap / futures / options / event orders | `vendor/okx-cex-trade/SKILL.md` |
-| Balances, positions, PnL, fees, transfers | `vendor/okx-cex-portfolio/SKILL.md` |
-| Grid or DCA bots | `vendor/okx-cex-bot/SKILL.md` |
-| Simple Earn, Dual Investment, AutoEarn | `vendor/okx-cex-earn/SKILL.md` |
-| Smart-money leaderboard / consensus | `vendor/okx-cex-smartmoney/SKILL.md` |
-| News and sentiment | `vendor/okx-sentiment-tracker/SKILL.md` |
-| Outcomes / YES-NO event contracts | `vendor/okx-outcomes/SKILL.md` |
-| Earn product hunter / notify scanner | `vendor/earn-hunter/SKILL.md` |
+| `vendor/okx-cex-auth/SKILL.md` | Login, API key, session expiry, and site selection |
+| `vendor/okx-cex-market/SKILL.md` | Prices, order books, candles, funding, open interest, and indicators |
+| `vendor/okx-cex-trade/SKILL.md` | Place, amend, and cancel spot, swap, futures, options, and event orders |
+| `vendor/okx-cex-portfolio/SKILL.md` | Balances, positions, PnL, fees, and transfers |
+| `vendor/okx-cex-bot/SKILL.md` | Grid and DCA bots |
+| `vendor/okx-cex-earn/SKILL.md` | Simple Earn, Dual Investment, and AutoEarn |
+| `vendor/okx-cex-smartmoney/SKILL.md` | Smart-money leaderboards and consensus signals |
+| `vendor/okx-sentiment-tracker/SKILL.md` | News and sentiment |
+| `vendor/okx-outcomes/SKILL.md` | Outcome and YES/NO event contracts |
+| `vendor/earn-hunter/SKILL.md` | Earn product scanning and notifications |
+| `vendor/_shared/preflight.md` | Reference only; do not run because it executes `okx upgrade` and unpins the runtime CLI |
+| `vendor/okx-cex-skill-mp/SKILL.md` | Reference only; do not use it to install third-party marketplace skills or bypass signatures with `--force` |
 
 If the request is about OKX Wallet, DEX swap, x402, or Agent identity, use the
 `okx` OnchainOS skill instead of this one.
-
-## Reference only
-
-These vendored files are kept for official provenance. They are not runtime
-runbooks:
-
-| File | Why it is reference-only |
-| --- | --- |
-| `vendor/_shared/preflight.md` | Step 1 runs `okx upgrade` and unpins the runtime CLI |
-| `vendor/okx-cex-skill-mp/SKILL.md` | Installs third-party community skills and documents `--force` signature bypass |
