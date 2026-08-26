@@ -551,22 +551,12 @@
 			"id": "okx-cex",
 			"repo": "https://github.com/okx/agent-skills.git",
 			"commit": "b9a0f35e319243385c3660120ec889da31d409f3",
-			"notes": "Official OKX CEX skills (okx CLI). Imported under okx-cex/vendor. Distinct from okx/ OnchainOS.",
+			"notes": "OKX CEX runtime-adapted skills under okx-cex/vendor. Supporting references and assets remain pinned to the official source; SKILL.md files omit runtime install, upgrade, and shared-preflight instructions. Distinct from okx/ OnchainOS.",
 			"skills": [
 				{
 					"name": "okx-cex-LICENSE",
 					"upstreamPath": "LICENSE",
 					"targetPath": "okx-cex/LICENSE.md"
-				},
-				{
-					"name": "okx-cex-vendor-_shared-preflight",
-					"upstreamPath": "skills/_shared/preflight.md",
-					"targetPath": "okx-cex/vendor/_shared/preflight.md"
-				},
-				{
-					"name": "okx-cex-vendor-earn-hunter-SKILL",
-					"upstreamPath": "skills/earn-hunter/SKILL.md",
-					"targetPath": "okx-cex/vendor/earn-hunter/SKILL.md"
 				},
 				{
 					"name": "okx-cex-vendor-earn-hunter-config-claude-code.default.json",
@@ -644,21 +634,6 @@
 					"targetPath": "okx-cex/vendor/earn-hunter/templates/mixed-notify.md"
 				},
 				{
-					"name": "okx-cex-vendor-okx-cex-auth-SKILL",
-					"upstreamPath": "skills/okx-cex-auth/SKILL.md",
-					"targetPath": "okx-cex/vendor/okx-cex-auth/SKILL.md"
-				},
-				{
-					"name": "okx-cex-vendor-okx-cex-bot-SKILL",
-					"upstreamPath": "skills/okx-cex-bot/SKILL.md",
-					"targetPath": "okx-cex/vendor/okx-cex-bot/SKILL.md"
-				},
-				{
-					"name": "okx-cex-vendor-okx-cex-earn-SKILL",
-					"upstreamPath": "skills/okx-cex-earn/SKILL.md",
-					"targetPath": "okx-cex/vendor/okx-cex-earn/SKILL.md"
-				},
-				{
 					"name": "okx-cex-vendor-okx-cex-earn-references-autoearn-commands",
 					"upstreamPath": "skills/okx-cex-earn/references/autoearn-commands.md",
 					"targetPath": "okx-cex/vendor/okx-cex-earn/references/autoearn-commands.md"
@@ -694,11 +669,6 @@
 					"targetPath": "okx-cex/vendor/okx-cex-earn/references/workflows.md"
 				},
 				{
-					"name": "okx-cex-vendor-okx-cex-market-SKILL",
-					"upstreamPath": "skills/okx-cex-market/SKILL.md",
-					"targetPath": "okx-cex/vendor/okx-cex-market/SKILL.md"
-				},
-				{
 					"name": "okx-cex-vendor-okx-cex-market-references-derivatives-commands",
 					"upstreamPath": "skills/okx-cex-market/references/derivatives-commands.md",
 					"targetPath": "okx-cex/vendor/okx-cex-market/references/derivatives-commands.md"
@@ -724,21 +694,6 @@
 					"targetPath": "okx-cex/vendor/okx-cex-market/references/workflows.md"
 				},
 				{
-					"name": "okx-cex-vendor-okx-cex-portfolio-SKILL",
-					"upstreamPath": "skills/okx-cex-portfolio/SKILL.md",
-					"targetPath": "okx-cex/vendor/okx-cex-portfolio/SKILL.md"
-				},
-				{
-					"name": "okx-cex-vendor-okx-cex-skill-mp-SKILL",
-					"upstreamPath": "skills/okx-cex-skill-mp/SKILL.md",
-					"targetPath": "okx-cex/vendor/okx-cex-skill-mp/SKILL.md"
-				},
-				{
-					"name": "okx-cex-vendor-okx-cex-smartmoney-SKILL",
-					"upstreamPath": "skills/okx-cex-smartmoney/SKILL.md",
-					"targetPath": "okx-cex/vendor/okx-cex-smartmoney/SKILL.md"
-				},
-				{
 					"name": "okx-cex-vendor-okx-cex-smartmoney-references-signal-commands",
 					"upstreamPath": "skills/okx-cex-smartmoney/references/signal-commands.md",
 					"targetPath": "okx-cex/vendor/okx-cex-smartmoney/references/signal-commands.md"
@@ -757,11 +712,6 @@
 					"name": "okx-cex-vendor-okx-cex-smartmoney-references-workflows",
 					"upstreamPath": "skills/okx-cex-smartmoney/references/workflows.md",
 					"targetPath": "okx-cex/vendor/okx-cex-smartmoney/references/workflows.md"
-				},
-				{
-					"name": "okx-cex-vendor-okx-cex-trade-SKILL",
-					"upstreamPath": "skills/okx-cex-trade/SKILL.md",
-					"targetPath": "okx-cex/vendor/okx-cex-trade/SKILL.md"
 				},
 				{
 					"name": "okx-cex-vendor-okx-cex-trade-references-event-commands",
@@ -804,11 +754,6 @@
 					"targetPath": "okx-cex/vendor/okx-cex-trade/references/workflows.md"
 				},
 				{
-					"name": "okx-cex-vendor-okx-outcomes-SKILL",
-					"upstreamPath": "skills/okx-outcomes/SKILL.md",
-					"targetPath": "okx-cex/vendor/okx-outcomes/SKILL.md"
-				},
-				{
 					"name": "okx-cex-vendor-okx-outcomes-references-account-commands",
 					"upstreamPath": "skills/okx-outcomes/references/account-commands.md",
 					"targetPath": "okx-cex/vendor/okx-outcomes/references/account-commands.md"
@@ -837,11 +782,6 @@
 					"name": "okx-cex-vendor-okx-outcomes-references-workflows",
 					"upstreamPath": "skills/okx-outcomes/references/workflows.md",
 					"targetPath": "okx-cex/vendor/okx-outcomes/references/workflows.md"
-				},
-				{
-					"name": "okx-cex-vendor-okx-sentiment-tracker-SKILL",
-					"upstreamPath": "skills/okx-sentiment-tracker/SKILL.md",
-					"targetPath": "okx-cex/vendor/okx-sentiment-tracker/SKILL.md"
 				},
 				{
 					"name": "okx-cex-vendor-okx-sentiment-tracker-references-workflows",

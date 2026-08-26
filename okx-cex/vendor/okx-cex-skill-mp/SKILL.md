@@ -9,12 +9,6 @@ metadata:
   agent:
     requires:
       bins: ["okx"]
-    install:
-      - id: npm
-        kind: node
-        package: "@okx_ai/okx-trade-cli@1.4.4"
-        bins: ["okx"]
-        label: "Install okx CLI (npm)"
 ---
 
 # OKX Skills Marketplace
@@ -34,11 +28,7 @@ Browse, search, install, and manage AI trading skills from the OKX Skills Market
 
 ## Prerequisites
 
-1. Install `okx` CLI:
-   ```bash
-   npm install -g @okx_ai/okx-trade-cli
-   ```
-2. Configure API credentials (required for marketplace access):
+1. Configure API credentials (required for marketplace access):
    ```bash
    okx config init
    ```

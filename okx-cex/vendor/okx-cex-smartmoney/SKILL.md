@@ -9,34 +9,19 @@ metadata:
   agent:
     requires:
       bins: ["okx"]
-    install:
-      - id: npm
-        kind: node
-        package: "@okx_ai/okx-trade-cli@1.4.4"
-        bins: ["okx"]
-        label: "Install okx CLI (npm)"
 ---
 
 # OKX CEX Smart Money CLI
 
 Smart Money leaderboard, trader analytics, position tracking, and aggregated consensus signals.
 
-## Preflight
-
-Before running any command, follow [`../_shared/preflight.md`](../_shared/preflight.md).
-Use `metadata.version` from this file's frontmatter as the reference for Step 2.
-
 ## Prerequisites
 
-1. Install `okx` CLI:
-   ```bash
-   npm install -g @okx_ai/okx-trade-cli
-   ```
-2. Configure credentials:
+1. Configure credentials:
    ```bash
    okx config init   # select site -> follow browser OAuth flow
    ```
-3. Verify: `okx smartmoney traders-by-filter --limit 5`
+2. Verify: `okx smartmoney traders-by-filter --limit 5`
 
 > **Security**: NEVER accept credentials in chat. Guide users to `okx config init` for setup.
 
@@ -44,7 +29,7 @@ Use `metadata.version` from this file's frontmatter as the reference for Step 2.
 
 ## Credential & Profile Check
 
-Run **both** commands before any authenticated command — the `apiKey` field from `okx auth status --json` is the auth-binary's internal state and is always `false` regardless of whether `~/.okx/config.toml` has an API-key profile. `okx config show --json` is the only authoritative source for API-key presence. The auth method is detected during [preflight](../_shared/preflight.md) Step 2 and remembered for the session.
+Run **both** commands before any authenticated command — the `apiKey` field from `okx auth status --json` is the auth-binary's internal state and is always `false` regardless of whether `~/.okx/config.toml` has an API-key profile. `okx config show --json` is the only authoritative source for API-key presence. Remember the selected auth method for the session.
 
 ```bash
 okx config show --json      # reveals API-key profiles (TOML config)

@@ -9,12 +9,6 @@ metadata:
   agent:
     requires:
       bins: ["okx"]
-    install:
-      - id: npm
-        kind: node
-        package: "@okx_ai/okx-trade-cli@1.4.4"
-        bins: ["okx"]
-        label: "Install okx CLI (npm)"
 ---
 
 # OKX News & Sentiment
@@ -39,12 +33,8 @@ Crypto news aggregation, coin sentiment analysis, and macro-economic calendar fo
 
 ## Prerequisites
 
-1. Install `okx` CLI:
-   ```bash
-   npm install -g @okx_ai/okx-trade-cli
-   ```
-2. Configure credentials in `~/.okx/config.toml`
-3. Verify setup:
+1. Configure credentials in `~/.okx/config.toml`
+2. Verify setup:
    ```bash
    okx news latest --limit 3
    ```

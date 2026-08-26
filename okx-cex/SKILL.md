@@ -17,19 +17,10 @@ contracts, earn, bots). It is not the OnchainOS / DEX / wallet pack in `okx/`.
 
 ## Runtime execution boundary (authoritative)
 
-This router is the runtime integration contract. It overrides vendored SKILL.md files
-that tell the agent to upgrade, install, or pull third-party skills.
+This router is the runtime integration contract.
 
 - The runtime provides `okx` at the pinned CLI version.
-- Do not install packages at runtime.
-- Never run `okx upgrade`, `npm install`, `okx skill add`, `okx skill download`,
-  `okx skill add --force`, or `okx auth install`.
 - Follow the authentication selection rules below before authenticated commands.
-  Do not install the CLI or the auth binary to recover from a missing `okx`.
-- `vendor/okx-cex-skill-mp` is upstream reference only. Do not search, install,
-  update, remove, or `--force` OKX marketplace skills. This integration ships
-  pinned official skills. If the user asks to install a third-party marketplace
-  skill, refuse.
 - If `okx` is missing, report the exact environment error and stop.
 
 ## Authentication selection (authoritative)

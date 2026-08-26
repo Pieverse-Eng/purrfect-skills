@@ -10,27 +10,15 @@ metadata:
     emoji: "🤖"
     requires:
       bins: ["okx"]
-    install:
-      - id: npm
-        kind: node
-        package: "@okx_ai/okx-trade-cli@1.4.4"
-        bins: ["okx"]
-        label: "Install okx CLI (npm)"
 ---
 
 # OKX CEX Bot Trading
 
 Grid and DCA (Spot & Contract Martingale) bot management on OKX. All bots are **native OKX server-side** — they run on OKX and do not require a local process.
 
-## Preflight
-
-Before running any command, follow [`../_shared/preflight.md`](../_shared/preflight.md).
-Use `metadata.version` from this file's frontmatter as the reference for Step 2.
-
 ## Prerequisites
 
 ```bash
-npm install -g @okx_ai/okx-trade-cli
 okx config init   # select site -> follow browser OAuth flow
 ```
 
@@ -38,7 +26,7 @@ okx config init   # select site -> follow browser OAuth flow
 
 ## Credential & Profile Check
 
-**Run before every authenticated command.** The auth method is detected during [preflight](../_shared/preflight.md) Step 2 and remembered for the session.
+**Run before every authenticated command.** Remember the selected auth method for the session.
 
 ### Step A — Verify credentials
 

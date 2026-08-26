@@ -9,12 +9,6 @@ metadata:
   agent:
     requires:
       bins: ["okx"]
-    install:
-      - id: okx-cli
-        kind: node
-        package: "@okx_ai/okx-trade-cli@1.4.4"
-        bins: ["okx"]
-        label: "Install okx CLI (npm)"
 ---
 
 # Earn Hunter
@@ -25,7 +19,7 @@ Automated monitor for OKX Flash Earn, Fixed Earn, and Flexible Earn (Simple Earn
 
 ## Preflight
 
-1. Verify `okx` CLI installed: `which okx`. If missing, install via `npm install -g @okx_ai/okx-trade-cli`.
+1. Verify `okx` CLI is available with `which okx`. If missing, report the runtime error and stop.
    On OpenClaw, also verify the in-session `cron` tool is available in the agent tool list (used for scheduling — not the `openclaw` CLI).
 2. Check optional dependent skills:
    ```bash

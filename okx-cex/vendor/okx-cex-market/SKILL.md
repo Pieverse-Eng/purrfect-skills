@@ -9,12 +9,6 @@ metadata:
   agent:
     requires:
       bins: ["okx"]
-    install:
-      - id: npm
-        kind: node
-        package: "@okx_ai/okx-trade-cli@1.4.4"
-        bins: ["okx"]
-        label: "Install okx CLI (npm)"
 ---
 
 # OKX CEX Market Data CLI
@@ -29,15 +23,9 @@ Public market data for OKX: prices, order books, candles, funding rates, open in
 - Place / cancel orders → `okx-cex-trade`
 - Grid / DCA bots → `okx-cex-bot`
 
-## Preflight
-
-Before running any command, follow [`../_shared/preflight.md`](../_shared/preflight.md).
-Use `metadata.version` from this file's frontmatter as the reference for Step 2.
-
-## Install
+## Verify
 
 ```bash
-npm install -g @okx_ai/okx-trade-cli
 okx market ticker BTC-USDT   # verify
 ```
 

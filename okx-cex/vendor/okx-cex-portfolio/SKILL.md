@@ -9,34 +9,19 @@ metadata:
   agent:
     requires:
       bins: ["okx"]
-    install:
-      - id: npm
-        kind: node
-        package: "@okx_ai/okx-trade-cli@1.4.4"
-        bins: ["okx"]
-        label: "Install okx CLI (npm)"
 ---
 
 # OKX CEX Portfolio & Account CLI
 
 Account balance, positions, P&L, bills, fees, and fund transfers on OKX exchange. **Requires API credentials.**
 
-## Preflight
-
-Before running any command, follow [`../_shared/preflight.md`](../_shared/preflight.md).
-Use `metadata.version` from this file's frontmatter as the reference for Step 2.
-
 ## Prerequisites
 
-1. Install `okx` CLI:
-   ```bash
-   npm install -g @okx_ai/okx-trade-cli
-   ```
-2. Configure credentials:
+1. Configure credentials:
    ```bash
    okx config init   # select site -> follow browser OAuth flow
    ```
-3. Test with demo mode (simulated trading, no real funds):
+2. Test with demo mode (simulated trading, no real funds):
    ```bash
    okx --demo account balance
    ```
@@ -45,11 +30,11 @@ Use `metadata.version` from this file's frontmatter as the reference for Step 2.
 
 ## Credential & Profile Check
 
-**Run this check before any authenticated command.** The auth method is detected during [preflight](../_shared/preflight.md) Step 2 and remembered for the session.
+**Run this check before any authenticated command.** Remember the selected auth method for the session.
 
 ### Step A — Verify credentials
 
-Check **both** sources (see [preflight Step 2](../_shared/preflight.md#step-2--detect-auth-method-once-per-session) for the decision table). `okx auth status --json` alone is insufficient — its `apiKey` field is always `false` and does NOT reflect the TOML config.
+Check **both** sources. `okx auth status --json` alone is insufficient — its `apiKey` field is always `false` and does NOT reflect the TOML config.
 
 ```bash
 okx config show --json      # authoritative for API-key presence

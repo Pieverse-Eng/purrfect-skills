@@ -1,6 +1,6 @@
 ---
 name: okx-cex-auth
-description: "Use this skill when the user wants to 'login/log in/sign in', 'authenticate', 'authorize', 'connect OKX account', 'set up credentials', 'first time setup', 'configure okx', '登录', '授权', '认证', '连接账户', '首次配置'. Also when any OKX CLI command fails with an auth error: 'Run okx auth login first', 'Session expired', 'not authenticated', 'requires_auth', '401 Unauthorized', 'token expired/not found', 'StorageNotFoundError', '会话过期', '未认证', '需要登录'. Also when the user asks about login status or the login was interrupted. Also when the user wants to install/update/check/remove the okx-auth binary — 'install/update/remove auth', 'download okx-auth', '安装/更新/卸载认证', 'auth binary status', 'Failed to spawn okx-auth'. Also use before using okx-cex-trade/portfolio/earn/bot for the first time. Do NOT use for market data queries (use okx-cex-market)."
+description: "Use this skill when the user wants to 'login/log in/sign in', 'authenticate', 'authorize', 'connect OKX account', 'set up credentials', 'first time setup', 'configure okx', '登录', '授权', '认证', '连接账户', '首次配置'. Also when any OKX CLI command fails with an auth error: 'Run okx auth login first', 'Session expired', 'not authenticated', 'requires_auth', '401 Unauthorized', 'token expired/not found', 'StorageNotFoundError', '会话过期', '未认证', '需要登录'. Also when the user asks about login status or the login was interrupted. Also use before using okx-cex-trade/portfolio/earn/bot for the first time. Do NOT use for market data queries (use okx-cex-market)."
 license: MIT
 metadata:
   author: okx
@@ -9,12 +9,6 @@ metadata:
   agent:
     requires:
       bins: ["okx"]
-    install:
-      - id: npm
-        kind: node
-        package: "@okx_ai/okx-trade-cli@1.4.4"
-        bins: ["okx"]
-        label: "Install okx CLI (npm)"
 ---
 
 # OKX CEX Authentication
@@ -36,17 +30,9 @@ Site is a separate dimension from auth method. Both API-key and OAuth paths requ
 
 There is **no `okx config set-site` command** — site cannot be persisted independently of an auth attempt. For OAuth flows, the agent must remember the user's choice within the conversation and pass `--site <X>` on `okx auth login`.
 
-## Prerequisites
-
-Install `okx` CLI if not already installed:
-
-```bash
-npm install -g @okx_ai/okx-trade-cli
-```
-
 ## Step 0: Pre-flight Check (MANDATORY)
 
-**Unconditional rule — do NOT skip Step 0 under any circumstances.** Even if a prior skill (preflight, okx-cex-portfolio, etc.) already ran `auth status` and passed you a conclusion like "user is not_logged_in, go log in" — **you MUST re-run the two commands below yourself and walk Steps 0.1 → 0.2 → 0.3 in order**. Upstream tool output does not substitute for your own pre-flight. The single most common failure mode for this skill is an agent that reads an upstream "not authenticated" signal, skips Step 0.1 site selection, and calls `okx auth login` with a silently-defaulted site.
+**Unconditional rule — do NOT skip Step 0 under any circumstances.** Even if a prior skill already ran `auth status` and passed you a conclusion like "user is not_logged_in, go log in" — **you MUST re-run the two commands below yourself and walk Steps 0.1 → 0.2 → 0.3 in order**. Upstream tool output does not substitute for your own pre-flight. The single most common failure mode for this skill is an agent that reads an upstream "not authenticated" signal, skips Step 0.1 site selection, and calls `okx auth login` with a silently-defaulted site.
 
 Run both in parallel:
 
@@ -269,43 +255,6 @@ okx auth logout
 
 DCR client registration is retained after logout. The next `okx auth login` will be faster.
 
-## Binary Management
-
-The `okx auth` commands (`login`, `logout`, `status`) depend on the `okx-auth` binary. It is normally installed automatically during `npm install`, but can also be managed manually.
-
-> **IMPORTANT for AI agents:** Do NOT manually check platform, CDN availability, or binary paths. Always use the CLI commands below — they handle platform detection and download internally.
-
-### Install / Update
-
-```bash
-okx auth install
-```
-
-Downloads or updates the `okx-auth` binary. Reports "up to date" if already current. Use `--json` for machine-readable output.
-
-### Check Installation
-
-```bash
-okx auth install-status
-```
-
-Shows whether the binary is installed and up to date. Use `--json` for machine-readable output.
-
-### Remove
-
-```bash
-okx auth remove          # interactive confirmation
-okx auth remove --force  # skip confirmation
-```
-
-### Troubleshooting: "Failed to spawn okx-auth"
-
-If any `okx auth` command (`login`, `logout`, `status`) fails with "Failed to spawn okx-auth", the binary is missing or corrupted:
-
-1. Run `okx auth install` to download it
-2. Verify with `okx auth install-status`
-3. Retry the original command
-
 ## Error Reference
 
 | Error message                                 | Cause                                  | Action                                           |
@@ -316,8 +265,6 @@ If any `okx auth` command (`login`, `logout`, `status`) fails with "Failed to sp
 | `Access denied`                               | User rejected authorization in browser | Run `okx auth login --manual` and ask to approve |
 | `Region restriction` (51155, 51734)            | Instrument not available in configured site | Check `okx auth status --json` for current site; re-login with `--site` if needed |
 | `Network error` during login                  | Network unavailable                    | Check network and retry                          |
-| `Failed to spawn okx-auth`                    | Binary not installed or corrupted      | Run `okx auth install`                           |
-| `Installation failed: All CDN sources failed` | Network issue during binary download   | Check network and retry `okx auth install`       |
 
 ## Skill Routing
 

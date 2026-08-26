@@ -9,12 +9,6 @@ metadata:
   agent:
     requires:
       bins: ["okx"]
-    install:
-      - id: npm
-        kind: node
-        package: "@okx_ai/okx-trade-cli@1.4.4"
-        bins: ["okx"]
-        label: "Install okx CLI (npm)"
 ---
 
 # OKX CEX Trading CLI
@@ -23,22 +17,13 @@ Spot, perpetual swap, delivery futures, **options**, and **event contract** orde
 
 > **CLI vs MCP tool names** — Subcommands use spaces (`okx swap algo place`, `okx bot grid create`), not hyphens. Do NOT convert an MCP tool identifier (`swap_place_algo_order`) into a hyphen-joined CLI command (`okx swap place-algo`) — that will be rejected with "Unknown command". Per-module mapping tables live in `references/<module>-commands.md`.
 
-## Preflight
-
-Before running any command, follow [`../_shared/preflight.md`](../_shared/preflight.md).
-Use `metadata.version` from this file's frontmatter as the reference for Step 2.
-
 ## Prerequisites
 
-1. Install `okx` CLI:
-   ```bash
-   npm install -g @okx_ai/okx-trade-cli
-   ```
-2. Configure credentials:
+1. Configure credentials:
    ```bash
    okx config init   # select site -> follow browser OAuth flow
    ```
-3. Test with demo mode (simulated trading, no real funds):
+2. Test with demo mode (simulated trading, no real funds):
    ```bash
    okx --demo spot orders
    ```
@@ -47,7 +32,7 @@ Use `metadata.version` from this file's frontmatter as the reference for Step 2.
 
 ## Credential & Profile Check
 
-**Run this check before any authenticated command.** The auth method is detected during [preflight](../_shared/preflight.md) Step 2 and remembered for the session.
+**Run this check before any authenticated command.** Remember the selected auth method for the session.
 
 ### Step A — Verify credentials
 

@@ -9,12 +9,6 @@ metadata:
   agent:
     requires:
       bins: ["okx", "okx-outcomes"]
-    install:
-      - id: npm-cli
-        kind: node
-        package: "@okx_ai/okx-trade-cli@1.4.4"
-        bins: ["okx"]
-        label: "Install okx CLI (npm)"
 ---
 
 # OKX Outcomes CLI
@@ -23,8 +17,7 @@ Binary-outcome (YES / NO) event-contract trading via the external `okx-outcomes`
 
 ## Preflight
 
-1. Run [`../_shared/preflight.md`](../_shared/preflight.md) **Step 1 only** (main CLI auto-upgrade). Steps 2 and 3 (OAuth/API-key detection, version drift) do **not** apply — Outcomes markets use an independent credential set.
-2. Confirm `okx-outcomes` binary is reachable:
+Confirm `okx-outcomes` binary is reachable:
    ```bash
    okx outcomes status
    ```
@@ -33,23 +26,20 @@ Binary-outcome (YES / NO) event-contract trading via the external `okx-outcomes`
 ## Prerequisites
 
 ```bash
-# 1. Main OKX CLI (provides the `okx outcomes` wrapper command)
-npm install -g @okx_ai/okx-trade-cli
-
-# 2. Outcomes binary
+# 1. Outcomes binary
 #    macOS / Linux:
 curl -fsSL https://raw.githubusercontent.com/okx/outcomes-cli/main/install.sh | sh
 #    Windows: download okx-outcomes.exe from https://github.com/okx/outcomes-cli/releases
 #             and place it on your PATH.
 
-# 3. First-time setup — sign in + bind wallet.
+# 2. First-time setup — sign in + bind wallet.
 #    In a real terminal you can run the full interactive wizard:
 okx outcomes setup
 #    In an agent / chat context, drive it step-by-step instead — see
 #    "Setup & Onboarding" below (the full wizard needs a TTY and cannot be
 #    spawned from an agent).
 
-# 4. Verify
+# 3. Verify
 okx outcomes status
 ```
 
