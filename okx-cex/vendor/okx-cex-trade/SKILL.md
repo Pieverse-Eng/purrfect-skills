@@ -17,56 +17,19 @@ Spot, perpetual swap, delivery futures, **options**, and **event contract** orde
 
 > **CLI vs MCP tool names** — Subcommands use spaces (`okx swap algo place`, `okx bot grid create`), not hyphens. Do NOT convert an MCP tool identifier (`swap_place_algo_order`) into a hyphen-joined CLI command (`okx swap place-algo`) — that will be rejected with "Unknown command". Per-module mapping tables live in `references/<module>-commands.md`.
 
-## Prerequisites
+## Authentication and trading mode
 
-1. Configure credentials:
-   ```bash
-   okx config init   # select site -> follow browser OAuth flow
-   ```
-2. Test with demo mode (simulated trading, no real funds):
-   ```bash
-   okx --demo spot orders
-   ```
+Before any authenticated command, follow the authentication selection in
+`../../SKILL.md`. It is authoritative; do not repeat credential or profile
+discovery from this reference.
 
-> **Security**: NEVER accept credentials in chat. Guide users to `okx config init` for setup.
-
-## Credential & Profile Check
-
-**Run this check before any authenticated command.** Remember the selected auth method for the session.
-
-### Step A — Verify credentials
-
-Run **both** commands — the `apiKey` field from `okx auth status --json` is the auth-binary's internal state and is always `false` regardless of whether `~/.okx/config.toml` has an API-key profile. `okx config show --json` is the only authoritative source for API-key presence.
-
-```bash
-okx config show --json      # reveals API-key profiles (TOML config)
-okx auth status --json      # reveals OAuth session state (auth-binary state)
-```
-
-Apply **in this order** — first match wins:
-
-- `config show --json` has any profile with a non-empty `api_key` field → **API Key mode**. Proceed to Step B.
-- No API-key profile **AND** `auth status --json` returns `"status":"logged_in"` → **OAuth mode**. Proceed to Step B.
-- No API-key profile **AND** `"status":"pending"` — login is in progress, wait for it to complete.
-- No API-key profile **AND** `"status":"not_logged_in"` — **stop all operations**, load `okx-cex-auth` skill and follow login steps, wait for completion.
-
-### Step B — Confirm trading mode
+Confirm trading mode before continuing:
 
 **Resolution rules:**
 1. Current message intent is clear (e.g. "real" / "实盘" / "live" → live; "test" / "模拟" / "demo" → demo) → use it and inform the user
 2. Current message has no explicit declaration → check conversation context for a previous choice:
    - Found → reuse it, inform user
    - Not found → ask: `"Live (实盘) or Demo (模拟盘)?"` — wait for answer before proceeding
-
-**How to apply the mode depends on auth method (detected in Step A):**
-
-| Auth method | Live (实盘) | Demo (模拟盘) |
-|---|---|---|
-| **API Key** | `--profile <live-profile>` | `--profile <demo-profile>` |
-| **OAuth** | *(no flag needed, live is default)* | `--demo` |
-
-- **API Key users**: run `okx config show --json` to discover available profile names and their `demo` settings. Use `--profile <name>` to select the correct one.
-- **OAuth users**: omit flags for live trading; add `--demo` for simulated trading. Do **not** use `--profile` to switch modes.
 
 ### Handling Authentication Errors
 
@@ -78,13 +41,13 @@ Apply **in this order** — first match wins:
 
 ## Demo vs Live Mode
 
-| Mode | Funds | API Key param | OAuth param |
-|---|---|---|---|
-| 实盘 (live) | Real money — irreversible | `--profile <live-profile>` | *(default, no flag)* |
-| 模拟盘 (demo) | Simulated — no real funds | `--profile <demo-profile>` | `--demo` |
+| Mode | Funds |
+|---|---|
+| 实盘 (live) | Real money — irreversible |
+| 模拟盘 (demo) | Simulated — no real funds |
 
 **Rules:**
-1. Trading mode is **required** on every authenticated command — determined in "Credential & Profile Check" Step B
+1. Trading mode is **required** on every authenticated command — determined in "Authentication and trading mode"
 2. Every response after a command must append: `[mode: live]` or `[mode: demo]`
 
 ## Skill Routing
@@ -308,9 +271,9 @@ For full command syntax, parameter tables, and edge cases, read `{baseDir}/refer
 
 ## Operation Flow
 
-### Step 0 — Credential & Profile Check
+### Step 0 — Authentication and trading mode
 
-Before any authenticated command: see [Credential & Profile Check](#credential--profile-check). Determine auth method and trading mode before executing.
+Before any authenticated command: see [Authentication and trading mode](#authentication-and-trading-mode). Determine auth method and trading mode before executing.
 
 After every command result: append `[mode: live]` or `[mode: demo]`.
 
@@ -428,8 +391,8 @@ This applies to all error codes whose messages suggest destructive actions, incl
 
 ## Global Notes
 
-- All write commands require valid credentials (OAuth session or API key in `~/.okx/config.toml`)
-- Auth method and trading mode are determined in "Credential & Profile Check"; see that section for parameter rules
+- All write commands require valid credentials selected by the top-level skill
+- Auth method and trading mode are determined in "Authentication and trading mode"
 - `--json` returns the raw OKX API v5 response by default. Add `--env` to wrap the output as `{"env": "<live|demo>", "profile": "<name>", "data": <response>}` — useful when you need to know the active environment and credential profile
 - Rate limit: 60 order operations per 2 seconds per UID
 - Batch operations (batch cancel, batch amend) are available via MCP tools directly if needed

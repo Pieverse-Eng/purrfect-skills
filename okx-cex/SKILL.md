@@ -25,31 +25,45 @@ This router is the runtime integration contract.
 
 ## Authentication selection (authoritative)
 
-Both API-key and OAuth authentication are supported. Before an authenticated
-command, use this Bash check to select the mode without printing, echoing,
-logging, or otherwise exposing credential values:
+API-key authentication (hosted environment variables or a local CLI profile)
+and OAuth are supported. Before an authenticated command, first use this Bash
+check without printing, echoing, logging, or otherwise exposing credential
+values:
 
 ```bash
 if [[ -n "${OKX_API_KEY:-}" && -n "${OKX_SECRET_KEY:-}" && -n "${OKX_PASSPHRASE:-}" ]]; then
-  printf '%s\n' api-key
+  printf '%s\n' env-api-key
+elif [[ -n "${OKX_API_KEY:-}" || -n "${OKX_SECRET_KEY:-}" || -n "${OKX_PASSPHRASE:-}" ]]; then
+  printf '%s\n' partial-api-key
 else
-  printf '%s\n' oauth
+  printf '%s\n' no-env-api-key
 fi
 ```
 
-- `api-key`: treat the environment as authenticated and use the credentials
+- `env-api-key`: treat the environment as authenticated and use the credentials
   directly, even if `okx config show --json` would report no profiles. Do not
   run `okx config show`, `okx config init`, `okx auth status`, or
   `okx auth login`, and do not pass `--profile`. Use `OKX_SITE` when provided.
-- `oauth`: incomplete or absent API-key variables do not constitute an error.
-  Run `okx config show --json`, then `okx auth status --json`, and follow the
-  OAuth flow in `vendor/okx-cex-auth/SKILL.md` if login is needed.
-- If neither mode is authenticated, tell the user they can either complete all
-  three OKX API credentials in the Claw Dashboard or authenticate with OAuth.
-  Never ask the user to paste credentials into chat.
-- Add `--demo` only when the user explicitly requests demo trading.
+- `partial-api-key`: stop before running any `okx` command. Tell the user to
+  either complete all three OKX credentials in the Claw Dashboard or clear the
+  partial API-key configuration to use a local profile or OAuth. Never print or
+  identify which credential values are present.
+- `no-env-api-key`: run `okx config show --json` without exposing its output. If
+  it contains a profile with complete API credentials, use that local API-key
+  profile and pass its name with `--profile`. If the selected local profile has
+  only some API credential fields, stop and tell the user to complete or remove
+  that profile. If no local API credentials exist, run `okx auth status --json`
+  and follow the OAuth flow in `vendor/okx-cex-auth/SKILL.md` if login is needed.
+- If no local profile exists and OAuth is not authenticated, tell the user they
+  can either complete all three OKX API credentials in the Claw Dashboard or
+  authenticate with OAuth. Never ask the user to paste credentials into chat.
+- For environment API keys and OAuth, add `--demo` only when the user explicitly
+  requests demo trading. For a local API-key profile, select a demo profile only
+  when the user explicitly requests demo trading.
 
 These rules override conflicting authentication instructions in vendored files.
+Any `--profile` shown in a vendored command example applies only when the
+top-level selection chose a local API-key profile; otherwise omit it.
 
 ## Safety
 

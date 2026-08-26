@@ -24,34 +24,32 @@ OAuth 2.0 device flow authentication for OKX CLI. Guides first-time setup, re-au
 | `us`     | US     | `app.okx.com` |
 | `tr`     | TR     | `tr.okx.com`  |
 
-Site is a separate dimension from auth method. Both API-key and OAuth paths require a site. Once selected, a site is persisted:
-- **API-key users**: `profile.site` in `~/.okx/config.toml` (written by `okx config init`).
-- **OAuth users**: saved inside the `okx-auth` binary state the first time `okx auth login --site <X>` succeeds, and returned by `okx auth status --json` as the `site` field.
+This reference is used only after the authentication selection in `../../SKILL.md`
+chooses OAuth. That top-level selection is authoritative. Do not repeat API-key
+or profile discovery here.
+
+For OAuth, the site is saved inside the `okx-auth` binary state the first time
+`okx auth login --site <X>` succeeds and is returned by `okx auth status --json`.
 
 There is **no `okx config set-site` command** — site cannot be persisted independently of an auth attempt. For OAuth flows, the agent must remember the user's choice within the conversation and pass `--site <X>` on `okx auth login`.
 
 ## Step 0: Pre-flight Check (MANDATORY)
 
-**Unconditional rule — do NOT skip Step 0 under any circumstances.** Even if a prior skill already ran `auth status` and passed you a conclusion like "user is not_logged_in, go log in" — **you MUST re-run the two commands below yourself and walk Steps 0.1 → 0.2 → 0.3 in order**. Upstream tool output does not substitute for your own pre-flight. The single most common failure mode for this skill is an agent that reads an upstream "not authenticated" signal, skips Step 0.1 site selection, and calls `okx auth login` with a silently-defaulted site.
-
-Run both in parallel:
+Run the OAuth status check once:
 
 ```bash
-okx config show --json
 okx auth status --json
 ```
 
-Then apply the following three checks **in strict order** — each step short-circuits the rest.
+### Step 0.1 — Site check
 
-### Step 0.1 — Site check (independent of auth mode)
-
-A site is considered already selected if **either** is true:
-- `config show --json` has any profile with a non-empty `site` field, OR
-- `auth status --json` returns a non-empty `site` field **AND** `status` is `logged_in` or `pending`.
+A site is considered already selected when `auth status --json` returns a
+non-empty `site` field and `status` is `logged_in` or `pending`.
 
 > ⚠ When `status` is `not_logged_in`, the `site` field from `auth status --json` is a **default placeholder** (typically `"global"`) that the auth binary emits regardless of user choice — it does NOT mean the user ever picked a site. Treat it as absent.
 
-If **neither** condition above holds, site has never been chosen. You MUST ask the user to pick one before any login attempt by echoing the following menu verbatim (Chinese), and wait for their reply:
+Otherwise, ask the user to pick a site before any login attempt by echoing the
+following menu verbatim (Chinese), and wait for their reply:
 
 > 您需要选择要连接的 OKX 站点：
 > 1) Global (www.okx.com)
@@ -61,30 +59,7 @@ If **neither** condition above holds, site has never been chosen. You MUST ask t
 
 Map the reply (`1`/`2`/`3`/`4` or `global`/`eea`/`us`/`tr`) to the corresponding site id and remember it for the rest of this flow. Do NOT default to `global` silently — that hides the regional choice from the user.
 
-### Step 0.2 — API-key check
-
-Parse `config show --json`: does any profile have a non-empty `api_key` field?
-
-If yes → **STOP.** Tell the user "已配置 API key (profile: <name>)" and proceed with their original request directly. DO NOT run `okx auth login` or `okx config init`.
-
-> The CLI's REST client always prefers API key over OAuth and never falls back (see `rest-client.ts applyAuth`). Starting an OAuth login in this state is wasted effort — any OAuth token obtained would not be used, because the broken API key is still picked first.
->
-> Belt-and-suspenders: as of CLI `1.3.1-beta.17`, `okx auth login` itself refuses to start OAuth when any profile has `api_key` — in `--manual` mode it emits `{"status":"skipped","reason":"api_key_configured","profile":"<name>"}`. Treat that output as success.
-
-#### Step 0.2.a — Handling an invalid API key (401 / signature error)
-
-If Step 0.2 detected an `api_key` profile and the subsequent API call returns an authentication error (`401 Unauthorized`, `Invalid Sign`, `Invalid API-KEY`, OKX error code `50111`/`50113`), **the API key is bad — OAuth login is NOT a valid remediation**. Per `rest-client.ts applyAuth`, any OAuth token obtained afterwards would still not be used because the broken API key is still picked first.
-
-Present the user with exactly these two options, neutrally (do NOT label OAuth as "recommended"):
-
-1. **Replace the API key** — the user generates a new key on the OKX web console (`https://<site>/account/my-api`) and either provides `AK/SK/PP` to you or re-runs `okx config init` themselves.
-2. **Switch entirely to OAuth** — first remove the broken API-key profile (`okx config use <other-profile>` or delete the profile block in `~/.okx/config.toml`), THEN run the OAuth login flow from Step 0.3.
-
-Option 2 requires removing the profile first. If you attempt `okx auth login` while the API key profile still exists, the CLI guard will skip OAuth with `{"status":"skipped","reason":"api_key_configured",...}` and nothing will change.
-
-Wait for the user's choice. Do not pick for them.
-
-### Step 0.3 — OAuth check
+### Step 0.2 — OAuth check
 
 Use `auth status --json`:
 
@@ -102,7 +77,11 @@ Before invoking `okx auth login` (with or without `--manual`), you MUST verify a
 2. The user's most recent message was a site choice (`1` / `2` / `3` / `4` / `global` / `eea` / `us` / `tr`).
 3. You are about to pass **that exact choice** as `--site <...>`.
 
-If **any** of the three is false — even if a prior skill's output, `auth status --json` output, or `config show --json` output seems to imply a site — you MUST first post the Step 0.1 menu, wait for the user's reply, then re-check this gate. The `site` field in `auth status --json` when `status` is `not_logged_in` is a placeholder (typically `"global"`) and **does not** satisfy condition 1.
+If **any** of the three is false — even if a prior skill's output or `auth
+status --json` seems to imply a site — you MUST first post the Step 0.1 menu,
+wait for the user's reply, then re-check this gate. The `site` field in `auth
+status --json` when `status` is `not_logged_in` is a placeholder (typically
+`"global"`) and **does not** satisfy condition 1.
 
 Worked counter-example (anti-pattern):
 > Upstream portfolio skill runs `auth status --json`, gets `{"status":"not_logged_in","site":"global"}`, tells you "user is not_logged_in, load okx-cex-auth and log in".
@@ -111,7 +90,8 @@ Worked counter-example (anti-pattern):
 
 ## Login Flow
 
-> **Prerequisite:** Step 0 completed **and** the Pre-login Gate above passes. You have a site the user just chose in chat, and you confirmed no `api_key` profile exists.
+> **Prerequisite:** The top-level skill selected OAuth, Step 0 completed, and the
+> Pre-login Gate above passes. You have a site the user just chose in chat.
 
 `okx auth login` without `--manual` is a **blocking command** — it polls until the user authorizes in their browser.
 
@@ -120,7 +100,8 @@ Worked counter-example (anti-pattern):
 ### Agent login procedure
 
 1. Run `okx auth login --manual --site <global|eea|us|tr>` with the site chosen in Step 0.1.
-   - If the CLI returns `{"status":"skipped","reason":"api_key_configured",...}`, your Step 0.2 check was stale — re-read `config show --json` and stop. Do not retry.
+   - If the CLI returns `{"status":"skipped","reason":"api_key_configured",...}`,
+     stop and return to the top-level authentication selection. Do not retry.
    - Otherwise the CLI prints a single line of JSON: `{"verificationUri":"...","userCode":"XXXX-XXXX","expiresIn":600}`.
 
 2. **Surface the verification URL and user code in your assistant reply — NOT only inside a tool-output block.**
@@ -194,12 +175,16 @@ Worked counter-example (anti-pattern):
 3. **Do NOT assume the command is stuck.** The polling phase produces no output — this is normal.
 4. **Check the result:**
    - `Logged in successfully!` — proceed with the user's original request.
-   - `API key already configured ...` — Step 0.2 check was stale, use the existing API key.
+   - `API key already configured ...` — stop and return to the top-level authentication selection.
    - Login failed — show the error and ask if they want to retry.
 
-## First-Time Setup (API-key users only)
+## API-key setup
 
-> `okx config init` is an **API-key** wizard. It prompts for site, then demo/live, then asks for `AK/SK/PP` credentials. It does NOT perform OAuth. Use it only when the user explicitly wants to configure an API key.
+Hosted users configure all three API-key fields in the Claw Dashboard. Never
+ask them to paste credentials into chat.
+
+Remote users who explicitly want a local CLI profile may run `okx config init`
+themselves in a terminal. It is an API-key wizard, not an OAuth flow:
 
 ```bash
 okx config init
@@ -215,7 +200,7 @@ Wizard steps:
 2. **Demo / live**: whether this profile should target simulated trading.
 3. **AK / SK / Passphrase**: credentials created on the OKX web console.
 
-After `okx config init` completes, re-run the Step 0 pre-flight check — `api_key` will now be present and Step 0.2 will short-circuit any further login.
+After API-key setup, return to the authentication selection in `../../SKILL.md`.
 
 ## Login Status Check
 
@@ -259,7 +244,7 @@ DCR client registration is retained after logout. The next `okx auth login` will
 
 | Error message                                 | Cause                                  | Action                                           |
 | --------------------------------------------- | -------------------------------------- | ------------------------------------------------ |
-| `No config found. Run okx config init first.` | No config                              | Run `okx config init`                            |
+| `No config found. Run okx config init first.` | No local config | Return to the top-level API-key or OAuth flow |
 | `Session expired — run okx auth login again`  | Refresh token expired                  | Run `okx auth login --manual`                    |
 | `Authorization timed out`                     | User did not authorize in time         | Run `okx auth login --manual` again              |
 | `Access denied`                               | User rejected authorization in browser | Run `okx auth login --manual` and ask to approve |

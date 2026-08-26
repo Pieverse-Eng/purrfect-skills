@@ -39,11 +39,11 @@ Crypto news aggregation, coin sentiment analysis, and macro-economic calendar fo
    okx news latest --limit 3
    ```
 
-OKX News does not support demo mode. Always use `--profile live` silently — don't mention it unless there's an error.
+OKX News does not support demo mode. Always use live mode silently — don't mention it unless there's an error.
 
-**On "not available in demo" errors:** the user's current profile is configured with demo/simulated credentials. Tell the user: "News module does not support demo mode. Please switch to a live profile." Guide them to either:
-- Use `--profile live` if a live profile exists: `okx --profile live news latest`
-- Or create one: `okx config add-profile AK=<key> SK=<secret> PP=<passphrase> name=live`
+**On "not available in demo" errors:** tell the user that News requires live
+mode, then follow the authentication selection in `../../SKILL.md`. Do not
+repeat credential or profile discovery from this reference.
 
 All commands support `--json` for raw JSON output.
 
@@ -138,7 +138,7 @@ Notes:
 - When searching for a specific event (NFP, CPI, ECB decision), always add `--importance 3` to reduce noise — these are all high-importance events. Use `--limit 100` and a wide window to ensure the target event is captured.
 - `actual=""` = not yet released; non-empty = released.
 - Historical data >3 months requires VIP1+.
-- Demo mode not supported — use `--profile live` silently.
+- Demo mode not supported — use live mode silently.
 - `--region` values are snake_case (e.g. `united_states`, `euro_area`). **Invalid values silently return empty results** (no error). If you get empty results and suspect a region typo, run `okx news list-regions` to get the full list of 210 valid values, then fuzzy-match the user's input and retry. If unsure of the exact value, **omit `--region`** and filter results client-side by the `region` field in the response.
 
 ### BTC Macro Impact (cross-skill)

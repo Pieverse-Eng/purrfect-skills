@@ -38,10 +38,9 @@ Automated monitor for OKX Flash Earn, Fixed Earn, and Flexible Earn (Simple Earn
    - Install fails (network error, marketplace unavailable, etc.) → **warn and continue**:
      "⚠ `{skill_name}` 安装失败，扫描和通知功能不受影响。申购引导和认证恢复需要该 skill，后续可手动安装。"
    - Preflight continues regardless of skill installation result
-4. Auth mode detection — run **both**, first match wins:
-   - `okx config show --json` → has non-empty `api_key` field → **API Key mode**. Add `--profile live` to all commands.
-   - No API key + `okx auth status --json` → `"status":"logged_in"` → **OAuth mode**. No `--profile` flag needed.
-   - Neither → **stop**. Load `okx-cex-auth` skill and follow login steps.
+4. Before authenticated commands, follow the authentication selection in
+   `../../SKILL.md`. It is authoritative; do not repeat credential or profile
+   discovery from this reference.
 5. Init config and state:
    - If `~/.okx/earn-hunter/` directory does not exist → `mkdir -p ~/.okx/earn-hunter`
    - If `~/.okx/earn-hunter/config.json` does not exist → copy `{baseDir}/config/default.json` to it
@@ -402,9 +401,9 @@ Then **relay the script's stdout verbatim** to the user:
 
 1. Reads `~/.okx/earn-hunter/config.json`
 2. Runs scan commands (based on `flash.enabled` / `fixed.enabled` / `flexible.enabled`):
-   - Flash: `okx [--profile live] earn flash-earn projects --status 0,100 --json`
-   - Fixed: `okx [--profile live] earn savings fixed-products --json` (auto-fallback to `rate-history` + `fixedOffers` on CLI <1.3.3)
-   - Flexible: for each currency in `flexible.currencies`, `okx [--profile live] earn savings rate-history --ccy <ccy> --limit 1 --json`
+   - Flash: `okx earn flash-earn projects --status 0,100 --json`
+   - Fixed: `okx earn savings fixed-products --json` (auto-fallback to `rate-history` + `fixedOffers` on CLI <1.3.3)
+   - Flexible: for each currency in `flexible.currencies`, `okx earn savings rate-history --ccy <ccy> --limit 1 --json`
 3. Filters (two-layer APY threshold, terms filter, currency filter; flexible uses threshold-crossing model)
 4. Dedups against `~/.okx/earn-hunter/state.json` (`state.flash["<id>:<status>"]`, `state.fixed["<ccy>:<term>:<rate>"]`, `state.flexible["<ccy>"]`)
 5. If new opportunities → renders the matching template (flash / fixed / flexible / mixed) and sends via the detected channel (TG → Lark → session), logging to `notify.log`
@@ -504,7 +503,7 @@ EH_TEST_NAMESPACE=1 OKX_PROFILE=live ~/.okx/earn-hunter/scan.sh   # with config.
 2. **Force-send notification** — temporarily set `config.verboseLog=true` so the script always sends output regardless of whether opportunities are found (restore afterwards)
 3. **Dedup writes to test namespace** — `EH_TEST_NAMESPACE=1` prefixes dedup keys with `test:` (e.g. `test:flash:12345:100`); these keys are immune to diff cleanup (only TTL removes them), so test runs do not pollute production state
 4. **Output diagnostics** after scan completes:
-   - okx auth status (logged in / expired / not configured)
+   - authentication state selected by the top-level OKX CEX skill
    - Scan command results (flash project count + fixed product count + flexible rate count)
    - Post-filter results (how many passed filters per type)
    - Notification channel status (which channel is configured, send result)
@@ -541,7 +540,8 @@ Read `{baseDir}/templates/error-alert.md` for exact alert message templates.
 
 ## Global Notes
 
-- **Security:** Never accept credentials in chat. TG token only via env vars. Guide users to `okx config init` for OKX auth.
+- **Security:** Never accept credentials in chat. TG token only via env vars. For
+  OKX auth, follow the top-level API-key or OAuth flow.
 - **Output:** Use `--json` for all okx commands. Render results as markdown tables.
 - **Logging:** All notification send results logged to `~/.okx/earn-hunter/notify.log`.
 - **Scope:** Covers Flash Earn, Simple Earn Fixed, and Simple Earn Flexible (活期). DCD, on-chain, auto-earn are out of scope.

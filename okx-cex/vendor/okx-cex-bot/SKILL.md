@@ -16,50 +16,18 @@ metadata:
 
 Grid and DCA (Spot & Contract Martingale) bot management on OKX. All bots are **native OKX server-side** — they run on OKX and do not require a local process.
 
-## Prerequisites
+## Authentication and trading mode
 
-```bash
-okx config init   # select site -> follow browser OAuth flow
-```
+Before any authenticated command, follow the authentication selection in
+`../../SKILL.md`. It is authoritative; do not repeat credential or profile
+discovery from this reference.
 
-> **Security**: NEVER accept credentials in chat. Guide users to `okx config init` for setup.
-
-## Credential & Profile Check
-
-**Run before every authenticated command.** Remember the selected auth method for the session.
-
-### Step A — Verify credentials
-
-Run **both** commands — the `apiKey` field from `okx auth status --json` is the auth-binary's internal state and is always `false` regardless of whether `~/.okx/config.toml` has an API-key profile. `okx config show --json` is the only authoritative source for API-key presence.
-
-```bash
-okx config show --json      # reveals API-key profiles (TOML config)
-okx auth status --json      # reveals OAuth session state (auth-binary state)
-```
-
-Apply **in this order** — first match wins:
-
-- `config show --json` has any profile with a non-empty `api_key` field → **API Key mode**. Proceed to Step B.
-- No API-key profile **AND** `auth status --json` returns `"status":"logged_in"` → **OAuth mode**. Proceed to Step B.
-- No API-key profile **AND** `"status":"pending"` — login is in progress, wait for it to complete.
-- No API-key profile **AND** `"status":"not_logged_in"` — stop, load `okx-cex-auth` skill and follow login steps, wait for completion.
-
-### Step B — Confirm trading mode
+Confirm trading mode before continuing:
 
 Resolution:
 1. User intent is clear ("real"/"实盘"/"live" → live; "test"/"模拟"/"demo" → demo) → use it, inform user
 2. No explicit declaration → check conversation context for previous choice → reuse if found
 3. Nothing found → ask: "Live (实盘) or Demo (模拟盘)?" — wait before proceeding
-
-**How to apply the mode depends on auth method (detected in Step A):**
-
-| Auth method | Live (实盘) | Demo (模拟盘) |
-|---|---|---|
-| **API Key** | `--profile <live-profile>` | `--profile <demo-profile>` |
-| **OAuth** | *(no flag needed, live is default)* | `--demo` |
-
-- **API Key users**: run `okx config show --json` to discover available profile names and their `demo` settings.
-- **OAuth users**: omit flags for live; add `--demo` for simulated trading.
 
 **After every command**: append `[mode: live]` or `[mode: demo]`
 
@@ -513,7 +481,7 @@ okx bot dca orders --algoOrdType spot_dca
 - **Amend — spot grid topUpAmt**: not supported; omit `--topUpAmt` for spot grids
 - **Already stopped bot**: stop returns error — check `bot grid orders --history` first to confirm state
 - **Insufficient margin (51340)**: extract required minimum from error, check balance via `okx-cex-portfolio`, report shortfall to user — do NOT auto-transfer
-- **Demo mode**: `okx --demo bot grid create ...` (OAuth) or `okx --profile <demo-profile> bot grid create ...` (API Key) — safe for testing, no real funds
+- **Demo mode**: follow the top-level authentication selection; simulated trading does not use real funds
 - **algoClOrdId duplicate**: if the same `algoClOrdId` already exists, the API returns error code `51065`
 
 ### DCA Bot
@@ -525,7 +493,7 @@ okx bot dca orders --algoOrdType spot_dca
 - **volMult**: `1.0` = equal sizes; `>1.0` = increase per safety order (Martingale scaling)
 - **triggerStrategy**: `instant` starts immediately; `price` waits for trigger price (contract_dca only); `rsi` waits for RSI condition (both spot_dca and contract_dca)
 - **Already stopped bot**: stop returns error — check `bot dca orders --history` first
-- **Demo mode**: `okx --demo bot dca create ...` (OAuth) or `okx --profile <demo-profile> bot dca create ...` (API Key) — safe testing, no real funds
+- **Demo mode**: follow the top-level authentication selection; simulated trading does not use real funds
 - **INVALID_PRICE_STEPS_MULTIPLIER error**: adjust `slPct`. Recalculate MPD = Σ(pxSteps × pxStepsMult^i) for i = 0..maxSafetyOrds−1, then set `slPct` > MPD
 - **algoClOrdId duplicate**: error code `51065`
 
@@ -601,7 +569,7 @@ okx bot dca orders --algoOrdType spot_dca
 ## Global Notes
 
 - All bots run on OKX servers — stopping the CLI does not affect them
-- Auth method and trading mode are determined in "Credential & Profile Check"; see that section for parameter rules
+- Auth method and trading mode are determined in "Authentication and trading mode"
 - `--json` returns the raw OKX API v5 response by default. Add `--env` to wrap the output as `{"env": "<live|demo>", "profile": "<name>", "data": <response>}`
 - Rate limit: 20 requests per 2 seconds per UID
 - Grid `--gridNum` range: 2–100

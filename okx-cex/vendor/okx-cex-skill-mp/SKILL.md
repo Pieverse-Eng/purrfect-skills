@@ -28,10 +28,8 @@ Browse, search, install, and manage AI trading skills from the OKX Skills Market
 
 ## Prerequisites
 
-1. Configure API credentials (required for marketplace access):
-   ```bash
-   okx config init
-   ```
+1. Marketplace access is authenticated. Follow the authentication selection in
+   `../../SKILL.md`; do not repeat credential or profile discovery here.
 
 ---
 
@@ -247,5 +245,5 @@ Note: MCP tools only support search and download. The full install flow (`add`) 
 | `70002 SKILL_DELETED` | Skill has been removed from marketplace | Choose a different skill |
 | `70003 NO_APPROVED_VERSION` | No approved version available | Skill is pending review, try later |
 | `70030 VERSION_NOT_APPROVED` | Version not yet approved for download | Wait for review or use an older version |
-| `50111/50112/50113` | Authentication error | Run `okx config init` to set up credentials |
+| `50111/50112/50113` | Authentication error | Follow the top-level API-key or OAuth recovery flow |
 | `npx skills add` fails | npx not available or network issue | Use `okx skill download` instead, then manually install |

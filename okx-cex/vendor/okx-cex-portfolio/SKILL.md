@@ -15,56 +15,19 @@ metadata:
 
 Account balance, positions, P&L, bills, fees, and fund transfers on OKX exchange. **Requires API credentials.**
 
-## Prerequisites
+## Authentication and trading mode
 
-1. Configure credentials:
-   ```bash
-   okx config init   # select site -> follow browser OAuth flow
-   ```
-2. Test with demo mode (simulated trading, no real funds):
-   ```bash
-   okx --demo account balance
-   ```
+Before any authenticated command, follow the authentication selection in
+`../../SKILL.md`. It is authoritative; do not repeat credential or profile
+discovery from this reference.
 
-> **Security**: NEVER accept credentials in chat. Guide users to `okx config init` for setup.
-
-## Credential & Profile Check
-
-**Run this check before any authenticated command.** Remember the selected auth method for the session.
-
-### Step A — Verify credentials
-
-Check **both** sources. `okx auth status --json` alone is insufficient — its `apiKey` field is always `false` and does NOT reflect the TOML config.
-
-```bash
-okx config show --json      # authoritative for API-key presence
-okx auth status --json      # authoritative for OAuth session state
-```
-
-Branch in this order — first match wins:
-
-- `config show` has any profile with a non-empty `api_key` — **API Key mode**. Proceed to Step B.
-- No API-key profile **AND** `auth status` returns `"status": "logged_in"` — **OAuth mode**. Proceed to Step B.
-- No API-key profile **AND** `auth status` returns `"status": "pending"` — login in progress, wait.
-- No API-key profile **AND** `auth status` returns `"status": "not_logged_in"` — **stop all operations**, load `okx-cex-auth` skill and follow login steps, wait for completion.
-
-### Step B — Confirm trading mode
+Confirm trading mode before continuing:
 
 **Resolution rules:**
 1. Current message intent is clear (e.g. "real" / "实盘" / "live" → live; "test" / "模拟" / "demo" → demo) → use it and inform the user
 2. Current message has no explicit declaration → check conversation context for a previous choice:
    - Found → reuse it, inform user
    - Not found → ask: `"Live (实盘) or Demo (模拟盘)?"` — wait for answer before proceeding
-
-**How to apply the mode depends on auth method (detected in Step A):**
-
-| Auth method | Live (实盘) | Demo (模拟盘) |
-|---|---|---|
-| **API Key** | `--profile <live-profile>` | `--profile <demo-profile>` |
-| **OAuth** | *(no flag needed, live is default)* | `--demo` |
-
-- **API Key users**: run `okx config show --json` to discover available profile names and their `demo` settings. Use `--profile <name>` to select the correct one.
-- **OAuth users**: omit flags for live trading; add `--demo` for simulated trading. Do **not** use `--profile` to switch modes.
 
 ### Handling Authentication Errors
 
@@ -76,24 +39,14 @@ Branch in this order — first match wins:
 
 ## Demo vs Live Mode
 
-| Mode | Funds | API Key param | OAuth param |
-|---|---|---|---|
-| 实盘 (live) | Real funds | `--profile <live-profile>` | *(default, no flag)* |
-| 模拟盘 (demo) | Simulated funds | `--profile <demo-profile>` | `--demo` |
-
-```bash
-# API Key user
-okx --profile okx-prod  account balance     # 实盘
-okx --profile okx-demo  account balance     # 模拟盘
-
-# OAuth user
-okx account balance                          # 实盘 (default)
-okx --demo account balance                   # 模拟盘
-```
+| Mode | Funds |
+|---|---|
+| 实盘 (live) | Real funds |
+| 模拟盘 (demo) | Simulated funds |
 
 **Rules:**
 - **Read commands** (balance, positions, bills, etc.): always state which mode was used
-- **Write commands** (`transfer`, `set-position-mode`): **mode must be confirmed before execution** (see "Credential & Profile Check" Step B); transfer especially — wrong mode means wrong account
+- **Write commands** (`transfer`, `set-position-mode`): **mode must be confirmed before execution** (see "Authentication and trading mode"); transfer especially — wrong mode means wrong account
 - Every response after a command must append: `[mode: live]` or `[mode: demo]`
 
 ## Skill Routing
@@ -232,9 +185,9 @@ okx account transfer --ccy USDT --amt 100 --from 6 --to 18
 
 ## Operation Flow
 
-### Step 0 — Credential & Profile Check
+### Step 0 — Authentication and trading mode
 
-Before any authenticated command: see [Credential & Profile Check](#credential--profile-check). Determine auth method and trading mode before executing.
+Before any authenticated command: see [Authentication and trading mode](#authentication-and-trading-mode). Determine auth method and trading mode before executing.
 
 **After every command result:** append `[mode: live]` or `[mode: demo]` to the response
 
@@ -567,12 +520,12 @@ OKX splits assets across multiple sub-accounts. The `--valuation` breakdown maps
 - **set-position-mode**: cannot switch to `net` if you have both long and short positions on the same instrument
 - **transfer --from/--to codes**: `6`=funding account, `18`=trading account; other values exist for sub-account flows
 - **max-size vs max-avail-size**: `max-size` is the theoretical maximum; `max-avail-size` accounts for existing orders and reserved margin
-- **Demo mode**: `okx --demo account balance` (OAuth) or `okx --profile <demo-profile> account balance` (API Key) shows simulated balances, not real funds
+- **Demo mode**: follow the top-level authentication selection before querying simulated balances
 
 ## Global Notes
 
-- All write commands require valid credentials (OAuth session or API key in `~/.okx/config.toml`)
-- Auth method and trading mode are determined in "Credential & Profile Check"; see that section for parameter rules
+- All write commands require valid credentials selected by the top-level skill
+- Auth method and trading mode are determined in "Authentication and trading mode"
 - Every command result includes a `[mode: live]` or `[mode: demo]` tag for audit reference
 - `--json` returns the raw OKX API v5 response by default. Add `--env` to wrap the output as `{"env": "<live|demo>", "profile": "<name>", "data": <response>}`
 - Rate limit: 10 requests per 2 seconds for account endpoints

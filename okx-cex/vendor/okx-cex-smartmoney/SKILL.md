@@ -15,37 +15,15 @@ metadata:
 
 Smart Money leaderboard, trader analytics, position tracking, and aggregated consensus signals.
 
-## Prerequisites
+## Authentication and trading mode
 
-1. Configure credentials:
-   ```bash
-   okx config init   # select site -> follow browser OAuth flow
-   ```
-2. Verify: `okx smartmoney traders-by-filter --limit 5`
+Before any authenticated command, follow the authentication selection in
+`../../SKILL.md`. It is authoritative; do not repeat credential or profile
+discovery from this reference.
 
-> **Security**: NEVER accept credentials in chat. Guide users to `okx config init` for setup.
-
----
-
-## Credential & Profile Check
-
-Run **both** commands before any authenticated command — the `apiKey` field from `okx auth status --json` is the auth-binary's internal state and is always `false` regardless of whether `~/.okx/config.toml` has an API-key profile. `okx config show --json` is the only authoritative source for API-key presence. Remember the selected auth method for the session.
-
-```bash
-okx config show --json      # reveals API-key profiles (TOML config)
-okx auth status --json      # reveals OAuth session state (auth-binary state)
-```
-
-Apply **in this order** — first match wins:
-
-- `config show --json` has any profile with a non-empty `api_key` field → **API Key mode**. Proceed.
-- No API-key profile **AND** `auth status --json` returns `"status":"logged_in"` → **OAuth mode**. Proceed.
-- No API-key profile **AND** `"status":"pending"` — login is in progress, wait for it to complete.
-- No API-key profile **AND** `"status":"not_logged_in"` — **stop**, load `okx-cex-auth` skill and follow login steps, wait for completion.
-
-Smart Money does not support demo mode (leaderboard data is live-only). Always use live mode silently — don't mention it unless there's an error.
-- **API Key users**: use `--profile <live-profile>` (the profile without `demo=true`).
-- **OAuth users**: no flag needed (live is the default).
+Smart Money does not support demo mode (leaderboard data is live-only). Always
+use live mode silently; when using a local API-key profile, select a live profile
+according to the top-level rules.
 
 **On authentication errors (401 / "Session expired" / "Run `okx auth login` first"):** stop immediately, load `okx-cex-auth` skill and follow re-authentication steps, then retry.
 
@@ -100,9 +78,9 @@ For full command syntax and parameters, read `{baseDir}/references/trader-comman
 
 ## Operation Flow
 
-### Step 0 — Credential & Profile Check
+### Step 0 — Authentication and trading mode
 
-Before any authenticated command: see [Credential & Profile Check](#credential--profile-check). Always use live mode silently.
+Before any authenticated command: see [Authentication and trading mode](#authentication-and-trading-mode). Always use live mode silently.
 
 ### Step 1 — Identify intent
 
