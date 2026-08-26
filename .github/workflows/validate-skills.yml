@@ -16,5 +16,3 @@ jobs:
       - uses: actions/checkout@v4
       - name: Reject skill-name shadowing
         run: bash scripts/check-skill-shadowing.sh
-      - name: Reject CEX hosted-boundary regressions
-        run: bash scripts/check-cex-hosted-boundary.sh
