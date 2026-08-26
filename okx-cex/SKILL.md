@@ -20,7 +20,8 @@ contracts, earn, bots). It is not the OnchainOS / DEX / wallet pack in `okx/`.
 This router is the runtime integration contract.
 
 - The runtime provides `okx` at the pinned CLI version.
-- Follow the authentication selection rules below before authenticated commands.
+- Follow the authentication selection rules below before authenticated commands,
+  except for OKX Outcomes, which has an independent authentication flow.
 - If `okx` is missing, report the exact environment error and stop.
 
 ## Authentication selection (authoritative)
@@ -29,6 +30,9 @@ API-key authentication (hosted environment variables or a local CLI profile)
 and OAuth are supported. Before an authenticated command, first use this Bash
 check without printing, echoing, logging, or otherwise exposing credential
 values:
+
+This selection does not apply to `vendor/okx-outcomes/SKILL.md`. Outcomes uses
+its own OAuth session and signing-key setup; follow that reference directly.
 
 ```bash
 if [[ -n "${OKX_API_KEY:-}" && -n "${OKX_SECRET_KEY:-}" && -n "${OKX_PASSPHRASE:-}" ]]; then
@@ -61,7 +65,8 @@ fi
   requests demo trading. For a local API-key profile, select a demo profile only
   when the user explicitly requests demo trading.
 
-These rules override conflicting authentication instructions in vendored files.
+Except for `okx-outcomes`, these rules override conflicting authentication
+instructions in vendored files.
 Any `--profile` shown in a vendored command example applies only when the
 top-level selection chose a local API-key profile; otherwise omit it.
 
@@ -69,7 +74,9 @@ top-level selection chose a local API-key profile; otherwise omit it.
 
 - Public market data does not need credentials.
 - Authenticated reads and every write need either the complete API-key
-  environment above or an OAuth session via `vendor/okx-cex-auth`.
+  environment above or an OAuth session via `vendor/okx-cex-auth`. Outcomes is
+  the exception and uses the independent credentials described in
+  `vendor/okx-outcomes/SKILL.md`.
 - Before any live order, transfer, bot change, or earn allocation, preview the
   action and wait for explicit user confirmation.
 - Prefer `okx-cex-market` for prices. Do not place trades from market data alone.
@@ -90,7 +97,7 @@ running commands.
 | `vendor/okx-cex-earn/SKILL.md` | Simple Earn, Dual Investment, and AutoEarn |
 | `vendor/okx-cex-smartmoney/SKILL.md` | Smart-money leaderboards and consensus signals |
 | `vendor/okx-sentiment-tracker/SKILL.md` | News and sentiment |
-| `vendor/okx-outcomes/SKILL.md` | Outcome and YES/NO event contracts |
+| `vendor/okx-outcomes/SKILL.md` | Outcome and YES/NO event contracts with independent OAuth and signing-key setup |
 | `vendor/earn-hunter/SKILL.md` | Earn product scanning and notifications |
 
 If the request is about OKX Wallet, DEX swap, x402, or Agent identity, use the

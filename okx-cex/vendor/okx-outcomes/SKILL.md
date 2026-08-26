@@ -21,25 +21,19 @@ Confirm `okx-outcomes` binary is reachable:
    ```bash
    okx outcomes status
    ```
-   If you see `Error: okx-outcomes binary not found in PATH`, install it first (see Prerequisites).
+   If you see `Error: okx-outcomes binary not found in PATH`, report the exact
+   runtime dependency error and stop. Do not install or upgrade binaries.
 
-## Prerequisites
+## First-time setup
 
 ```bash
-# 1. Outcomes binary
-#    macOS / Linux:
-curl -fsSL https://raw.githubusercontent.com/okx/outcomes-cli/main/install.sh | sh
-#    Windows: download okx-outcomes.exe from https://github.com/okx/outcomes-cli/releases
-#             and place it on your PATH.
-
-# 2. First-time setup — sign in + bind wallet.
-#    In a real terminal you can run the full interactive wizard:
+# In a real terminal you can run the full interactive wizard:
 okx outcomes setup
-#    In an agent / chat context, drive it step-by-step instead — see
-#    "Setup & Onboarding" below (the full wizard needs a TTY and cannot be
-#    spawned from an agent).
+# In an agent / chat context, drive it step-by-step instead — see
+# "Setup & Onboarding" below (the full wizard needs a TTY and cannot be
+# spawned from an agent).
 
-# 3. Verify
+# Verify
 okx outcomes status
 ```
 
@@ -258,7 +252,8 @@ okx outcomes clob create-order --asset <assetId> --side buy --price 0.55 --size 
 okx outcomes status --json
 ```
 
-- If the wrapper prints "okx-outcomes binary not found", **stop** and tell the user to install via `curl -fsSL https://raw.githubusercontent.com/okx/outcomes-cli/main/install.sh | sh`.
+- If the wrapper prints "okx-outcomes binary not found", report the exact
+  runtime dependency error and stop. Do not install or upgrade binaries.
 - If `status` returns auth errors, the user isn't signed in — check `okx outcomes auth status --json` and guide them through "Setup & Onboarding" (`auth login`).
 
 ### Step 1 — Decide what's being asked
@@ -324,7 +319,8 @@ This module **does not expose any MCP tools** in the current release. Agents inv
 
 ## Edge Cases
 
-- **`okx-outcomes` not in PATH**: wrapper prints install hint and exits 127. Tell the user to run `curl -fsSL https://raw.githubusercontent.com/okx/outcomes-cli/main/install.sh | sh`.
+- **`okx-outcomes` not in PATH**: the wrapper exits 127. Report the exact
+  runtime dependency error and stop; do not install or upgrade binaries.
 - **Signing wallet missing**: any `clob create-order` / `market-order` / `ctf *` will fail. Run `okx outcomes setup bind --json` (agent-runnable), relay the **short link** (`deeplink` field, `https://okx.com/ul/3OauBX?eoa=…&uid=…`), and have the user open it (tap on phone → OKX app, or copy into a browser); if the link won't open, have them copy the wallet address and bind it manually in the OKX app (**Outcomes → Profile → Settings → API Bind Wallet**) — never ask for the key in chat.
 - **Asset id vs market id mix-up**: the most common error class. `clob price/book/create-order/market-order` need `assetId`; `ctf *` and `account trades --market` need `marketId`. When unsure, run `event-markets <eventId>` first — its output lists both.
 - **`--tif gtd` without `--expiry`**: rejected client-side. Pair them or default to `gtc`.
