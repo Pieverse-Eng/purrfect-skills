@@ -20,6 +20,7 @@ This directory contains the Pieverse built-in skills. Each folder is a skill uni
 | `binance` | Binance CEX via `binance-cli` — Spot, USD-S Futures, and Convert trading + market data (incl. bStocks spot pairs). Requires Binance API keys (auth). |
 | `binance-agentic-wallet` | Binance Web3 Agentic Wallet via `baw` CLI — sign-in, balances, transfers, DEX swaps, limit orders, prediction markets, and x402 payments. |
 | `binance-onchain-pay` | Binance Onchain Pay on-ramp via `purr` — payment methods, quotes, hosted checkout, order status, and reference docs. |
+| `bitget` | Bitget Exchange UTA v3 via `bgc` — spot, margin, futures, account, transfers. Requires Bitget API keys for private ops. |
 | `bitget-wallet` | Bitget Wallet integration for multi-chain swaps, RWA stock trading, and market data. |
 | `dflow` | DFlow Agent CLI — Solana spot swaps, prediction markets, transfers, funding, guardrails, and local vault management. |
 | `fourmeme` | four.meme on BSC — token buy, sell, and creation. |
@@ -30,6 +31,7 @@ This directory contains the Pieverse built-in skills. Each folder is a skill uni
 | `lista-vaults` | Lista DAO lending vaults on BSC — deposit, redeem, and withdraw from ERC-4626 yield vaults. |
 | `morph` | Morph L2 domain router — wallet, explorer, DEX swap, cross-chain bridge, EIP-7702 delegation, EIP-8004 agent identity & reputation, and x402 USDC payments. |
 | `okx` | OKX domain router — token research, market data, WebSocket streams, portfolio analysis, smart-money signals, meme scanning, security checks, DEX swaps, cross-chain bridging, DeFi invest (APY/TVL discovery + deposit/redeem/stake/lend), DeFi portfolio view, wallet ops, and x402 payments. |
+| `okx-cex` | Official OKX CEX via `okx` CLI — spot, perpetuals, dated futures, options, event contracts, portfolio, earn, and bots. Distinct from OnchainOS `okx/`. |
 | `opensea` | OpenSea entry point — execute NFT buy/sell via `purr opensea`, and route read operations to `opensea-vendor`. |
 | `pancake` | PancakeSwap planning and BSC execution — swaps, liquidity, farms, LP fees, rewards, and PCS Hub handoffs. |
 | `predict-fun` | Predict.fun YES/NO markets on BNB Chain — discovery, quotes, orders, approvals, position actions, and streaming through `purr predict-fun`. |
