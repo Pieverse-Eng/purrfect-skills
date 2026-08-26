@@ -3,7 +3,7 @@ name: okx-cex
 description: Use when the user asks about OKX centralized exchange (CEX) for spot, perpetuals, futures, options, portfolio, trading bots, or earn products.
 metadata:
   openclaw:
-    primaryEnv: OKX_API_KEY
+    primaryEnv: OKX_CEX_API_KEY
     requires:
       bins:
         - okx
@@ -42,9 +42,9 @@ This selection does not apply to `vendor/okx-outcomes/SKILL.md`. Outcomes uses
 its own OAuth session and signing-key setup; follow that reference directly.
 
 ```bash
-if [[ -n "${OKX_API_KEY:-}" && -n "${OKX_SECRET_KEY:-}" && -n "${OKX_PASSPHRASE:-}" ]]; then
+if [[ -n "${OKX_CEX_API_KEY:-}" && -n "${OKX_CEX_SECRET_KEY:-}" && -n "${OKX_CEX_PASSPHRASE:-}" ]]; then
   printf '%s\n' env-api-key
-elif [[ -n "${OKX_API_KEY:-}" || -n "${OKX_SECRET_KEY:-}" || -n "${OKX_PASSPHRASE:-}" ]]; then
+elif [[ -n "${OKX_CEX_API_KEY:-}" || -n "${OKX_CEX_SECRET_KEY:-}" || -n "${OKX_CEX_PASSPHRASE:-}" ]]; then
   printf '%s\n' partial-api-key
 else
   printf '%s\n' no-env-api-key
