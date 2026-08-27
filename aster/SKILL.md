@@ -6,6 +6,9 @@ metadata:
     primaryEnv: ASTER_USER_WALLET
   pieverse:
     marketSearch: true
+    tradeReady:
+      env:
+        - [ASTER_USER_WALLET]
 ---
 
 # Aster DEX (Perpetual Futures)

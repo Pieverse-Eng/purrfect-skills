@@ -4,6 +4,8 @@ description: Use when the user asks to trade or manage Hyperliquid — e.g. chec
 metadata:
   pieverse:
     marketSearch: true
+    tradeReady:
+      integration: hyperliquidTrading
 ---
 
 # Hyperliquid

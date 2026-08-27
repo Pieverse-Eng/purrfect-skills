@@ -9,6 +9,9 @@ metadata:
         - okx
   pieverse:
     marketSearch: true
+    tradeReady:
+      env:
+        - [OKX_CEX_API_KEY, OKX_CEX_SECRET_KEY, OKX_CEX_PASSPHRASE]
 ---
 
 # OKX Exchange

@@ -4,6 +4,8 @@ description: Use when the user asks to trade or manage Lighter (lighter.xyz) —
 metadata:
   pieverse:
     marketSearch: true
+    tradeReady:
+      integration: lighterTrading
 ---
 
 # Lighter

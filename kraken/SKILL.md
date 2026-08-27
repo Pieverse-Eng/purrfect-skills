@@ -8,6 +8,10 @@ metadata:
         - kraken
   pieverse:
     marketSearch: true
+    tradeReady:
+      env:
+        - [KRAKEN_API_KEY, KRAKEN_API_SECRET]
+        - [KRAKEN_FUTURES_API_KEY, KRAKEN_FUTURES_API_SECRET]
 ---
 
 # Kraken

@@ -4,6 +4,9 @@ description: Use when the user asks about Bitget Exchange for market data, accou
 metadata:
   pieverse:
     marketSearch: true
+    tradeReady:
+      env:
+        - [BITGET_API_KEY, BITGET_SECRET_KEY, BITGET_PASSPHRASE]
 ---
 
 # Bitget Skill (Unified Trading Account / v3)
