@@ -5,7 +5,10 @@ metadata:
   pieverse:
     marketSearch: true
     tradeReady:
-      integration: hyperliquidTrading
+      probe:
+        argv: [purr, hyperliquid, status]
+        jsonEquals:
+          enabled: true
 ---
 
 # Hyperliquid

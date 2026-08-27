@@ -5,7 +5,10 @@ metadata:
   pieverse:
     marketSearch: true
     tradeReady:
-      integration: lighterTrading
+      probe:
+        argv: [purr, lighter, status]
+        jsonEquals:
+          enabled: true
 ---
 
 # Lighter
