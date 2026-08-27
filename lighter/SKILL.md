@@ -1,6 +1,9 @@
 ---
 name: lighter
 description: Use when the user asks to trade or manage Lighter (lighter.xyz) — e.g. check my Lighter balance, open a long on SOL perp, buy LIT spot, set leverage to 5x, cancel my Lighter orders, open a Lighter account, deposit USDC to Lighter, withdraw from Lighter, fast withdraw, update margin, what is funding on BTC, enable Lighter trading, approve the Lighter transaction fee, or other Lighter account, market-data, order, margin, or deposit/withdraw requests.
+metadata:
+  pieverse:
+    marketSearch: true
 ---
 
 # Lighter

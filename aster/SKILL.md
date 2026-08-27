@@ -4,6 +4,8 @@ description: Aster DEX,futures market,trade,account,transfer,deposit
 metadata:
   openclaw:
     primaryEnv: ASTER_USER_WALLET
+  pieverse:
+    marketSearch: true
 ---
 
 # Aster DEX (Perpetual Futures)

@@ -7,6 +7,8 @@ metadata:
     requires:
       bins:
         - okx
+  pieverse:
+    marketSearch: true
 ---
 
 # OKX Exchange

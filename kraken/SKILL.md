@@ -6,6 +6,8 @@ metadata:
     requires:
       bins:
         - kraken
+  pieverse:
+    marketSearch: true
 ---
 
 # Kraken
