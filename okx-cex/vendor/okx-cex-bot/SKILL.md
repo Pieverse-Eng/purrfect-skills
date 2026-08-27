@@ -1,6 +1,8 @@
 ---
 name: okx-cex-bot
 description: Manage Grid bots (spot/contract/coin-margined) and DCA Martingale bots (Spot DCA 现货马丁 / Contract DCA 合约马丁) on OKX. Covers create, stop, amend, monitor P&L, TP/SL, margin/investment adjustment, and AI-recommended parameters. Requires API credentials. Not for regular orders (okx-cex-trade), market data (okx-cex-market), or account info (okx-cex-portfolio).
+disable-model-invocation: true
+user-invocable: false
 license: MIT
 metadata:
   author: okx

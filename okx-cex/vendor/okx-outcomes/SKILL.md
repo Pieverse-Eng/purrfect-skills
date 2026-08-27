@@ -1,6 +1,8 @@
 ---
 name: okx-outcomes
 description: "Use this skill for OKX Outcomes markets (YES/NO event contracts, formerly OKX Predictions) via the okx-outcomes binary. Triggers: 'list prediction events', '预测市场', 'event detail', 'place prediction order', '预测下单', 'buy YES', 'buy NO', '撤单 预测', 'split xp', '拆分 xp', 'merge YES NO', '赎回 预测', 'prediction positions', '预测持仓', 'live prediction price', '预测行情', 'OHLCV candles', 'K线', 'CTF', 'polymarket'. Auth: OAuth sign-in via 'okx outcomes auth login'; writes need a signing key configured by 'okx outcomes setup'. Do NOT use for OKX CEX event contracts (use okx-cex-trade event), spot/swap/futures (okx-cex-trade), crypto market data (okx-cex-market), or CEX portfolio (okx-cex-portfolio). Namespace required: account: balance/positions/order/orders/trades; clob: price/prices/midpoint/midpoints/spread/spreads/book/books; data: events/event/event-markets/market/trending/ticker/candles; ctf: split/merge/redeem; wallet: show; auth: login/refresh/status; setup: status/region/bind."
+disable-model-invocation: true
+user-invocable: false
 license: MIT
 metadata:
   author: okx

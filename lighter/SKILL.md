@@ -4,6 +4,12 @@ description: Use when the user asks to trade or manage Lighter (lighter.xyz) —
 metadata:
   pieverse:
     marketSearch: true
+    tradeReady:
+      probe:
+        argv: [purr, lighter, status]
+        jsonEquals:
+          enabled: true
+          accountReady: true
 ---
 
 # Lighter

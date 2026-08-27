@@ -4,6 +4,9 @@ description: Gate CEX/DEX,spot/futures,earn,Web3 Pay,x402,news
 metadata:
   pieverse:
     marketSearch: true
+    tradeReady:
+      env:
+        - [GATE_API_KEY, GATE_API_SECRET]
 ---
 
 # Gate

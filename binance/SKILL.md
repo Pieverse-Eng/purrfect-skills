@@ -6,6 +6,9 @@ metadata:
   author: Binance
   pieverse:
     marketSearch: true
+    tradeReady:
+      env:
+        - [BINANCE_API_KEY, BINANCE_SECRET_KEY]
   openclaw:
     requires:
       bins:

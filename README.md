@@ -2,6 +2,32 @@
 
 This directory contains the Pieverse built-in skills. Each folder is a skill unit organized by domain or protocol.
 
+## Market-search metadata
+
+Venue skills exposed to the Pod-local Market Search Agent declare
+`metadata.pieverse.marketSearch: true`. Their `tradeReady` metadata describes
+how the runtime can determine locally whether the tenant configured trading:
+
+```yaml
+metadata:
+  pieverse:
+    marketSearch: true
+    tradeReady:
+      env:
+        - [EXCHANGE_API_KEY, EXCHANGE_API_SECRET]
+      probe:
+        argv: [exchange, auth, status, --json]
+        jsonEquals:
+          status: logged_in
+```
+
+Each `env` item is one complete credential set; satisfying any item satisfies
+the env condition. A `probe` is an alternative local authentication condition:
+the runtime executes its fixed argument vector without a shell and requires the
+JSON result to contain every `jsonEquals` field. Probes must be read-only,
+bounded, and fail closed. This metadata declares detection rules only and must
+never contain credentials or tenant state.
+
 # Current Layout
 
 ### Routers & Runtime
