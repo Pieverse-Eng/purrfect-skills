@@ -24,13 +24,44 @@ def frontmatter(path: Path) -> list[str]:
     return lines[1:end]
 
 
+def pieverse_metadata(lines: list[str]) -> list[str]:
+    try:
+        metadata_start = lines.index("metadata:") + 1
+    except ValueError:
+        return []
+
+    metadata_end = len(lines)
+    for index in range(metadata_start, len(lines)):
+        line = lines[index]
+        if line and not line.startswith("  "):
+            metadata_end = index
+            break
+
+    try:
+        pieverse_start = lines.index("  pieverse:", metadata_start, metadata_end) + 1
+    except ValueError:
+        return []
+
+    pieverse_end = metadata_end
+    for index in range(pieverse_start, metadata_end):
+        line = lines[index]
+        if line.startswith("  ") and not line.startswith("    "):
+            pieverse_end = index
+            break
+    return lines[pieverse_start:pieverse_end]
+
+
 def validate(path: Path, lines: list[str]) -> list[str]:
     if "    marketSearch: true" not in lines:
         return []
 
+    pieverse = pieverse_metadata(lines)
+    if "    marketSearch: true" not in pieverse:
+        return [f"{path}: marketSearch must be nested under metadata.pieverse"]
+
     errors: list[str] = []
     try:
-        start = lines.index("    tradeReady:") + 1
+        start = pieverse.index("    tradeReady:") + 1
     except ValueError:
         return [f"{path}: marketSearch venue is missing metadata.pieverse.tradeReady"]
 
@@ -41,7 +72,7 @@ def validate(path: Path, lines: list[str]) -> list[str]:
     in_json_equals = False
     probe_argv = False
     probe_json_conditions = 0
-    for line in lines[start:]:
+    for line in pieverse[start:]:
         if line and not line.startswith("      "):
             break
         if line == "      env:":

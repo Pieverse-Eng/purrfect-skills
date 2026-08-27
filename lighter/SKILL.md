@@ -9,6 +9,7 @@ metadata:
         argv: [purr, lighter, status]
         jsonEquals:
           enabled: true
+          accountReady: true
 ---
 
 # Lighter

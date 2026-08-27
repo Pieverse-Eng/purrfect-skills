@@ -17,4 +17,6 @@ jobs:
       - name: Reject skill-name shadowing
         run: bash scripts/check-skill-shadowing.sh
       - name: Validate market-search metadata
-        run: python3 scripts/check-market-search-metadata.py
+        run: |
+          python3 scripts/check-market-search-metadata.py
+          python3 -m unittest discover -s scripts -p 'test_check_market_search_metadata.py'
