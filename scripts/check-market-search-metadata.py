@@ -9,7 +9,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 ENV_KEY = re.compile(r"^[A-Z_][A-Z0-9_]*$")
-INTEGRATION_KEY = re.compile(r"^[a-z][A-Za-z0-9]*$")
 ARGV_TOKEN = re.compile(r"^[A-Za-z0-9_./:-]+$")
 JSON_KEY = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
@@ -36,7 +35,6 @@ def validate(path: Path, lines: list[str]) -> list[str]:
         return [f"{path}: marketSearch venue is missing metadata.pieverse.tradeReady"]
 
     env_groups = 0
-    integration = False
     probe = False
     in_env = False
     in_probe = False
@@ -52,14 +50,9 @@ def validate(path: Path, lines: list[str]) -> list[str]:
             in_json_equals = False
             continue
         if line.startswith("      integration:"):
-            in_env = False
-            in_probe = False
-            in_json_equals = False
-            value = line.split(":", 1)[1].strip()
-            if not INTEGRATION_KEY.fullmatch(value):
-                errors.append(f"{path}: invalid tradeReady.integration {value!r}")
-            else:
-                integration = True
+            errors.append(
+                f"{path}: tradeReady.integration is unsupported; declare a local probe"
+            )
             continue
         if in_env and line.startswith("        - [") and line.endswith("]"):
             keys = [key.strip() for key in line[11:-1].split(",")]
@@ -93,8 +86,8 @@ def validate(path: Path, lines: list[str]) -> list[str]:
 
     if probe and (not probe_argv or probe_json_conditions == 0):
         errors.append(f"{path}: tradeReady.probe requires argv and jsonEquals")
-    if env_groups == 0 and not integration and not probe:
-        errors.append(f"{path}: tradeReady must declare env, probe, or integration")
+    if env_groups == 0 and not probe:
+        errors.append(f"{path}: tradeReady must declare env or probe")
     return errors
 
 
