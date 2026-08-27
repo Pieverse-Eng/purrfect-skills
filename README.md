@@ -15,14 +15,20 @@ metadata:
     tradeReady:
       env:
         - [EXCHANGE_API_KEY, EXCHANGE_API_SECRET]
+      probe:
+        argv: [exchange, auth, status, --json]
+        jsonEquals:
+          status: logged_in
       integration: exchangeTrading
 ```
 
 Each `env` item is one complete credential set; satisfying any item satisfies
-the env condition. `integration`, when present, names the required
-`platformIntegrations` entry. When both sources are present, both conditions
-must pass. This metadata declares detection rules only and must never contain
-credentials or tenant state.
+the env condition. A `probe` is an alternative local authentication condition:
+the runtime executes its fixed argument vector without a shell and requires the
+JSON result to contain every `jsonEquals` field. Probes must be read-only,
+bounded, and fail closed. `integration`, when present, names an additional
+required `platformIntegrations` entry. This metadata declares detection rules
+only and must never contain credentials or tenant state.
 
 # Current Layout
 

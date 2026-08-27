@@ -10,6 +10,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 ENV_KEY = re.compile(r"^[A-Z_][A-Z0-9_]*$")
 INTEGRATION_KEY = re.compile(r"^[a-z][A-Za-z0-9]*$")
+ARGV_TOKEN = re.compile(r"^[A-Za-z0-9_./:-]+$")
+JSON_KEY = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
 def frontmatter(path: Path) -> list[str]:
@@ -35,15 +37,24 @@ def validate(path: Path, lines: list[str]) -> list[str]:
 
     env_groups = 0
     integration = False
+    probe = False
     in_env = False
+    in_probe = False
+    in_json_equals = False
+    probe_argv = False
+    probe_json_conditions = 0
     for line in lines[start:]:
         if line and not line.startswith("      "):
             break
         if line == "      env:":
             in_env = True
+            in_probe = False
+            in_json_equals = False
             continue
         if line.startswith("      integration:"):
             in_env = False
+            in_probe = False
+            in_json_equals = False
             value = line.split(":", 1)[1].strip()
             if not INTEGRATION_KEY.fullmatch(value):
                 errors.append(f"{path}: invalid tradeReady.integration {value!r}")
@@ -56,9 +67,34 @@ def validate(path: Path, lines: list[str]) -> list[str]:
                 errors.append(f"{path}: invalid tradeReady.env credential set {line.strip()!r}")
             else:
                 env_groups += 1
+            continue
+        if line == "      probe:":
+            in_env = False
+            in_probe = True
+            in_json_equals = False
+            probe = True
+            continue
+        if in_probe and line.startswith("        argv: [") and line.endswith("]"):
+            argv = [token.strip() for token in line[15:-1].split(",")]
+            if not argv or any(not ARGV_TOKEN.fullmatch(token) for token in argv):
+                errors.append(f"{path}: invalid tradeReady.probe argv {line.strip()!r}")
+            else:
+                probe_argv = True
+            continue
+        if in_probe and line == "        jsonEquals:":
+            in_json_equals = True
+            continue
+        if in_probe and in_json_equals and line.startswith("          "):
+            key, separator, value = line.strip().partition(":")
+            if not separator or not JSON_KEY.fullmatch(key) or not value.strip():
+                errors.append(f"{path}: invalid tradeReady.probe jsonEquals condition")
+            else:
+                probe_json_conditions += 1
 
-    if env_groups == 0 and not integration:
-        errors.append(f"{path}: tradeReady must declare env or integration")
+    if probe and (not probe_argv or probe_json_conditions == 0):
+        errors.append(f"{path}: tradeReady.probe requires argv and jsonEquals")
+    if env_groups == 0 and not integration and not probe:
+        errors.append(f"{path}: tradeReady must declare env, probe, or integration")
     return errors
 
 

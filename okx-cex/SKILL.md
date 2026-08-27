@@ -12,6 +12,10 @@ metadata:
     tradeReady:
       env:
         - [OKX_CEX_API_KEY, OKX_CEX_SECRET_KEY, OKX_CEX_PASSPHRASE]
+      probe:
+        argv: [okx, auth, status, --json]
+        jsonEquals:
+          status: logged_in
 ---
 
 # OKX Exchange
