@@ -1,6 +1,9 @@
 ---
 name: bitget
 description: Use when the user asks about Bitget Exchange for market data, account balances, spot, margin, futures, orders, positions, transfers, deposits, withdrawals, funding rates, demo trading, loans, sub-accounts, or broker operations.
+metadata:
+  pieverse:
+    marketSearch: true
 ---
 
 # Bitget Skill (Unified Trading Account / v3)

@@ -1,6 +1,9 @@
 ---
 name: hyperliquid
 description: Use when the user asks to trade or manage Hyperliquid — e.g. check my HL balance, open a long on ETH, set leverage to 5x, cancel my open orders, deposit USDC to Hyperliquid, withdraw from HL, buy TSLA perp on xyz, move USDC to spot, what is funding on BTC, enable Hyperliquid trading, or other Hyperliquid account, market-data, order, collateral, or deposit/withdraw requests.
+metadata:
+  pieverse:
+    marketSearch: true
 ---
 
 # Hyperliquid

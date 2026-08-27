@@ -4,6 +4,8 @@ description: Use binance-cli for Binance Spot, Futures (USD-S), and Convert. Req
 metadata:
   version: 1.2.0
   author: Binance
+  pieverse:
+    marketSearch: true
   openclaw:
     requires:
       bins:
