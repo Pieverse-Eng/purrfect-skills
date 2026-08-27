@@ -1,6 +1,8 @@
 ---
 name: okx-cex-portfolio
 description: "This skill should be used when the user asks about 'account balance', 'how much USDT do I have', 'my funding account', 'show my positions', 'open positions', 'position P&L', 'unrealized PnL', 'closed positions', 'position history', 'realized PnL', 'account bills', 'transaction history', 'trading fees', 'fee tier', 'account config', 'max order size', 'how much can I buy', 'withdrawable amount', 'transfer funds', 'move USDT to trading account', or 'switch position mode'. Also use for '总资产', 'full balance', 'all assets', 'total holdings', 'net worth', 'how much do I have in total', 'show all my balances', 'all account balances', 'asset overview', 'aggregated balance', 'asset snapshot', '资产快照'. Requires API credentials. Do NOT use for market prices (use okx-cex-market), placing/cancelling orders (use okx-cex-trade), or grid/DCA bots (use okx-cex-bot)."
+disable-model-invocation: true
+user-invocable: false
 license: MIT
 metadata:
   author: okx

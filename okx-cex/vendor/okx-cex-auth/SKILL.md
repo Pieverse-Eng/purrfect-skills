@@ -1,6 +1,8 @@
 ---
 name: okx-cex-auth
 description: "Use this skill when the user wants to 'login/log in/sign in', 'authenticate', 'authorize', 'connect OKX account', 'set up credentials', 'first time setup', 'configure okx', '登录', '授权', '认证', '连接账户', '首次配置'. Also when any OKX CLI command fails with an auth error: 'Run okx auth login first', 'Session expired', 'not authenticated', 'requires_auth', '401 Unauthorized', 'token expired/not found', 'StorageNotFoundError', '会话过期', '未认证', '需要登录'. Also when the user asks about login status or the login was interrupted. Also use before using okx-cex-trade/portfolio/earn/bot for the first time. Do NOT use for market data queries (use okx-cex-market)."
+disable-model-invocation: true
+user-invocable: false
 license: MIT
 metadata:
   author: okx

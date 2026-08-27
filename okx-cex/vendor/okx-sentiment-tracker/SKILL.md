@@ -1,6 +1,8 @@
 ---
 name: okx-sentiment-tracker
 description: "Use this skill when the user asks about: 'any crypto news', 'latest news', 'market update', 'daily briefing', 'BTC news', 'ETH news', 'news on SOL', 'search SEC ETF', 'regulation news', 'Bitcoin halving', 'is BTC bullish or bearish', 'coin sentiment', 'sentiment trend', 'trending coins', 'top bullish coins', 'bearish sentiment', 'social buzz', 'market mood', 'fear and greed', 'full article', 'read more', 'economic calendar', '经济日历', 'macro data', '宏观数据', 'NFP', 'nonfarm', '非农', 'CPI', 'GDP', 'FOMC', '利率决议', 'interest rate decision', 'PMI', 'unemployment rate', '失业率', 'economic events', '经济事件', or any request for crypto news, market intelligence, sentiment analysis, social trend data, or macro-economic calendar. Requires API credentials. Do NOT use for market prices/candles (okx-cex-market), placing orders (okx-cex-trade), or account info (okx-cex-portfolio)."
+disable-model-invocation: true
+user-invocable: false
 license: MIT
 metadata:
   author: okx

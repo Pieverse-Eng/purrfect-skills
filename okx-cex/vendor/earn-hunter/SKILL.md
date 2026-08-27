@@ -1,6 +1,8 @@
 ---
 name: earn-hunter
 description: "Automatically monitors OKX Flash Earn, Fixed Earn and Flexible Earn opportunities, sends push notifications, and guides subscription. 自动监控 OKX 闪赚、定期和活期赚币机会，推送通知并引导申购。Use when user says: 有闪赚通知我, 监控赚币, monitor earn, notify me about earn, 定时检查理财, 执行 earn-hunter 扫描, earn-hunter scan, 活期年化高了通知我, 监控活期."
+disable-model-invocation: true
+user-invocable: false
 license: MIT
 metadata:
   author: okx
