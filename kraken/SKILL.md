@@ -28,25 +28,35 @@ trading, funding, earn, futures, or portfolio workflows.
 ## Market Search
 
 For a host-provided read-only market-search request, use this section directly;
-do not load a vendor skill. Market Search supports Kraken Spot only. Do not
-substitute Spot candles for a futures or perpetual request; return no Kraken
-venue when the requested product requires Kraken Futures candles.
+do not load a vendor skill. Kraken Spot and Futures market data are public and
+do not require credentials.
 
-- Kraken Spot market data is public and does not require credentials. Run each
-  command directly, without pipes, redirects, variables, command substitution,
-  or command chaining.
-- Verify an exact pair with
+- Run each command directly, without pipes, redirects, variables, command
+  substitution, or command chaining.
+- For Spot, verify an exact pair with
   `kraken pairs --pair <BASE><QUOTE> -o json`. Accept it only when exactly one
   pair is returned with `status` equal to `online`. Use the returned `altname`
   as the exact symbol and `wsname` to verify the base and quote. Kraken may map
   BTC input to its XBT listing, such as `XBTUSD` and `XBT/USD`.
-- Use `kraken ticker <PAIR> -o json` when a current public price is needed.
-- Run `date -u +%s` once and calculate literal `--since` epoch seconds from
+- Use `kraken ticker <PAIR> -o json` for a current Spot price. Run
+  `date -u +%s` once and calculate literal `--since` epoch seconds from
   that value: subtract 19,800 seconds for 15m, 79,200 seconds for 1h, and
-  316,800 seconds for 4h. Then run:
+  316,800 seconds for 4h. Fetch Spot candles with:
   - `kraken ohlc <PAIR> --interval 15 --since <EPOCH> -o json`
   - `kraken ohlc <PAIR> --interval 60 --since <EPOCH> -o json`
   - `kraken ohlc <PAIR> --interval 240 --since <EPOCH> -o json`
+- For Futures, fetch `https://futures.kraken.com/api/charts/v1/trade`
+  directly with the URL-fetch tool to discover symbols that have trade
+  candles. Do not use `curl` or another terminal command for Charts API URLs.
+  Verify the selected symbol with `kraken futures ticker <SYMBOL> -o json`.
+  Accept only an unsuspended ticker whose returned symbol, pair, and product
+  tag match the requested asset and product. Use the returned symbol exactly
+  and require it to contain only uppercase ASCII letters, digits, and
+  underscores before placing it in a URL.
+- Fetch Futures trade candles directly with the URL-fetch tool from:
+  - `https://futures.kraken.com/api/charts/v1/trade/<SYMBOL>/15m?count=21`
+  - `https://futures.kraken.com/api/charts/v1/trade/<SYMBOL>/1h?count=21`
+  - `https://futures.kraken.com/api/charts/v1/trade/<SYMBOL>/4h?count=21`
 - Exclude the newest candle when its interval has not closed, and return at
   most the latest 20 closed candles per timeframe.
 
