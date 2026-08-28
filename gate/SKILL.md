@@ -15,6 +15,28 @@ This is the top-level Gate router. Classify the user's intent, choose the
 matching vendor skill under `vendor/`, then read that vendor `SKILL.md` before
 running commands or explaining a workflow.
 
+## Market Search
+
+For a host-provided read-only market-search request, use this section directly;
+do not load a vendor skill. Gate market endpoints are public and do not require
+`GATE_API_KEY` or `GATE_API_SECRET`.
+
+- Run each command as one direct `gate-cli` invocation. Do not wrap it in
+  `if`, `command -v`, variables, pipes, redirects, or command chains.
+- For a USDT perpetual, verify an exact contract with
+  `gate-cli cex futures market contract --contract <BASE>_USDT --settle usdt --format json`.
+  Use `gate-cli cex futures market contracts --settle usdt --format json` only
+  when the exact contract cannot be derived safely.
+- Fetch perpetual candles with
+  `gate-cli cex futures market candlesticks --contract <CONTRACT> --settle usdt --interval <15m|1h|4h> --limit 21 --format json`.
+- For spot, verify an exact pair with
+  `gate-cli cex spot market pair --pair <BASE>_<QUOTE> --format json`, and fetch
+  candles with
+  `gate-cli cex spot market candlesticks --pair <PAIR> --interval <15m|1h|4h> --limit 21 --format json`.
+- Accept a listing only when the exact contract or pair is returned as active.
+  Exclude the newest candle when its interval has not closed, and return at
+  most the latest 20 closed candles per timeframe.
+
 ## Execution Boundary
 
 - Prefer CLI vendor skills whenever CLI and MCP both cover the same capability.
