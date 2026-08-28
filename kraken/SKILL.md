@@ -25,6 +25,31 @@ Use this skill when the user wants to inspect Kraken markets, test strategies
 with paper trading, manage Kraken account state, or prepare/execute Kraken
 trading, funding, earn, futures, or portfolio workflows.
 
+## Market Search
+
+For a host-provided read-only market-search request, use this section directly;
+do not load a vendor skill. Market Search supports Kraken Spot only. Do not
+substitute Spot candles for a futures or perpetual request; return no Kraken
+venue when the requested product requires Kraken Futures candles.
+
+- Kraken Spot market data is public and does not require credentials. Run each
+  command directly, without pipes, redirects, variables, command substitution,
+  or command chaining.
+- Verify an exact pair with
+  `kraken pairs --pair <BASE><QUOTE> -o json`. Accept it only when exactly one
+  pair is returned with `status` equal to `online`. Use the returned `altname`
+  as the exact symbol and `wsname` to verify the base and quote. Kraken may map
+  BTC input to its XBT listing, such as `XBTUSD` and `XBT/USD`.
+- Use `kraken ticker <PAIR> -o json` when a current public price is needed.
+- Run `date -u +%s` once and calculate literal `--since` epoch seconds from
+  that value: subtract 19,800 seconds for 15m, 79,200 seconds for 1h, and
+  316,800 seconds for 4h. Then run:
+  - `kraken ohlc <PAIR> --interval 15 --since <EPOCH> -o json`
+  - `kraken ohlc <PAIR> --interval 60 --since <EPOCH> -o json`
+  - `kraken ohlc <PAIR> --interval 240 --since <EPOCH> -o json`
+- Exclude the newest candle when its interval has not closed, and return at
+  most the latest 20 closed candles per timeframe.
+
 ## Scope
 
 - Public market data: assets, pairs, tickers, OHLC, order books, trades,
