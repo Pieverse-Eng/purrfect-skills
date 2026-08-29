@@ -1,6 +1,6 @@
 ---
 name: purrfect-news
-description: Handle a platform-started News Ingress background batch by securely pulling news cards, reading selected article content, and acknowledging durable Thinking handoff.
+description: Handle platform-started News Ingress delivery batches.
 ---
 
 # Purrfect News Ingress
