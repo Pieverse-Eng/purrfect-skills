@@ -25,6 +25,31 @@ integration (`status` / `enable` / `disable`).
 
 Pick the matching command group below, then read that reference before acting.
 
+## Market Search
+
+For a host-provided read-only market-search request, use this section directly.
+Hyperliquid market search and candles use the public mainnet Info API and do
+not require the trading integration or wallet credentials.
+
+- First derive one or more plausible canonical tickers from the requested
+  company, asset, or exposure. `purr hyperliquid search` performs
+  case-insensitive substring filtering over Hyperliquid's raw market and token
+  names; it does not translate natural-language names into tickers.
+- Run `purr hyperliquid search --query <TICKER>` as one direct command. Do not
+  use pipes, redirects, variables, command substitution, command chains, or a
+  complete `markets` catalog for targeted discovery.
+- A substring match alone is not verification. Accept only an `active: true`
+  result whose exact symbol, base token, `baseFullName`, or returned annotation
+  identifies the intended underlying and product. Discard unrelated prefix or
+  substring matches.
+- For candles, pass a perp result's exact `symbol` as `--coin`; for a spot
+  result, pass its exact `pairId` (for example `@706`) instead of the display
+  symbol. Fetch 15m, 1h, and 4h with literal Unix-millisecond `--start-time`
+  values and return at most the latest 20 candles per timeframe.
+- If no result verifies the intended underlying, report no Hyperliquid listing.
+  A failed natural-language-name query is not evidence that the ticker is
+  absent; derive the canonical ticker before concluding that no listing exists.
+
 ## Scope
 
 | In scope | Out of scope |
@@ -39,12 +64,12 @@ Pick the matching command group below, then read that reference before acting.
 
 1. Use `purr hyperliquid <command>` for every Hyperliquid action. Do not call
    Hyperliquid APIs or construct exchange signatures yourself.
-2. Before any exchange read or write under the Hyperliquid gateway (account,
-   markets, state, orders, deposit, snapshot, etc.), ensure the trading
-   integration is enabled. Run `purr hyperliquid status` first when unsure. If
-   disabled, explain and obtain confirmation, then run `enable` — never enable
-   silently. Only `status`, `enable`, and `disable` work when trading is off;
-   `snapshot` and all other Hyperliquid commands require trading enabled.
+2. Before any account read or write under the Hyperliquid gateway (account,
+   state, orders, deposit, snapshot, etc.), ensure the trading integration is
+   enabled. Run `purr hyperliquid status` first when unsure. If disabled,
+   explain and obtain confirmation, then run `enable` — never enable silently.
+   Public `search`, `symbol`, `markets`, and `candles` commands remain available
+   while trading is off and do not require wallet credentials.
 3. Resolve markets with `purr hyperliquid symbol` and use the returned
    `assetId`, full `coin`, and `szDecimals` before placing or modifying orders.
    Never guess asset indices.

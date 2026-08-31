@@ -1,11 +1,14 @@
 # Market Data
 
-Public Hyperliquid market data through the platform gateway. These commands
-only inspect data and do not require confirmation.
+Hyperliquid market data commands only inspect data and do not require
+confirmation. `search`, `symbol`, `markets`, and `candles` use Hyperliquid's
+public mainnet Info API without wallet credentials; the other commands use the
+platform gateway and require the trading integration.
 
 ## Commands
 
 ```bash
+purr hyperliquid search --query <ticker>
 purr hyperliquid symbol --coin <coin> [--dex <dex|default>]
 purr hyperliquid markets [--kind perp|spot|both] [--dex <dex>]
 purr hyperliquid prices [--dex <dex>]
@@ -16,6 +19,7 @@ purr hyperliquid funding --coin <coin> --start-time <ms> [--end-time <ms>]
 
 | Command | Purpose |
 | --- | --- |
+| `search` | Filter the complete public perp and spot directory by raw ticker or symbol and return candidate listings |
 | `symbol` | Resolve bare or full coin names to `coin`, `assetId`, `szDecimals`, optional `dex` |
 | `markets` | List markets; `--kind` defaults to both; `--dex` filters perp meta only |
 | `prices` | Mid prices (`allMids`); omit `--dex` for default book, or pass a builder dex |
@@ -24,6 +28,11 @@ purr hyperliquid funding --coin <coin> --start-time <ms> [--end-time <ms>]
 | `funding` | Historical funding for a perp coin; times are Unix ms; `--start-time` required |
 
 ## Symbol Resolution (Required Before Orders)
+
+Use `search` for targeted ticker discovery. It filters raw catalog fields and
+does not translate company or asset names into tickers. Verify the intended
+underlying and product from active results, then use `symbol` for the final
+pre-order resolution.
 
 Always resolve before placing or modifying an order:
 
@@ -77,8 +86,9 @@ purr hyperliquid prices
 purr hyperliquid prices --dex xyz
 ```
 
-Use markets for discovery; use prices for a quick mark/mid context before
-building a limit or IOC order.
+Use `search` for targeted ticker discovery. Use `markets` only when the complete
+catalog is explicitly needed, and use prices for a quick mark/mid context
+before building a limit or IOC order.
 
 ## L2 Book
 
@@ -102,6 +112,9 @@ purr hyperliquid funding --coin ETH --start-time 1710000000000
 - `interval` examples: `1m`, `5m`, `15m`, `1h`, `4h`, `1d` (use what the venue
   accepts; pass through as the user requested when valid).
 - `start-time` / `end-time` are Unix milliseconds.
+- For a perp search result, pass its exact `symbol` as `--coin`. For a spot
+  search result, pass its exact `pairId` (such as `@706`), not its display
+  `symbol`.
 - Funding is for perps; do not invent funding for pure spot pairs.
 
 ## Research vs Trading
