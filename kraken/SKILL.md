@@ -57,8 +57,7 @@ do not require credentials.
   - `https://futures.kraken.com/api/charts/v1/trade/<SYMBOL>/15m?count=21`
   - `https://futures.kraken.com/api/charts/v1/trade/<SYMBOL>/1h?count=21`
   - `https://futures.kraken.com/api/charts/v1/trade/<SYMBOL>/4h?count=21`
-- Exclude the newest candle when its interval has not closed, and return at
-  most the latest 20 closed candles per timeframe.
+- Return at most the latest 20 candles per timeframe.
 
 ## Scope
 

@@ -45,8 +45,7 @@ not require the trading integration or wallet credentials.
 - For candles, pass a perp result's exact `symbol` as `--coin`; for a spot
   result, pass its exact `pairId` (for example `@706`) instead of the display
   symbol. Fetch 15m, 1h, and 4h with literal Unix-millisecond `--start-time`
-  values, exclude a still-open newest candle, and return at most the latest 20
-  closed candles per timeframe.
+  values and return at most the latest 20 candles per timeframe.
 - If no result verifies the intended underlying, report no Hyperliquid listing.
   A failed natural-language-name query is not evidence that the ticker is
   absent; derive the canonical ticker before concluding that no listing exists.

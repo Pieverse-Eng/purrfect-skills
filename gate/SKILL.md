@@ -34,8 +34,7 @@ do not load a vendor skill. Gate market endpoints are public and do not require
   candles with
   `gate-cli cex spot market candlesticks --pair <PAIR> --interval <15m|1h|4h> --limit 21 --format json`.
 - Accept a listing only when the exact contract or pair is returned as active.
-  Exclude the newest candle when its interval has not closed, and return at
-  most the latest 20 closed candles per timeframe.
+  Return at most the latest 20 candles per timeframe.
 
 ## Execution Boundary
 
