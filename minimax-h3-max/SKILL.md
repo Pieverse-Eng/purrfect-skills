@@ -9,6 +9,8 @@ Generate one 5-second clip via the hosted Pieverse proxy. The product name is **
 
 The platform owns duration, resolution, billing, and the fal call. This skill only asks the proxy for a watch URL and pastes that URL into chat.
 
+Normal requests like "use MiniMax H3 Max to make a cat clip" go through this proxy. Refuse only if the user asks to bypass the Pieverse proxy, supply fal/MiniMax credentials, or call an arbitrary URL.
+
 ## Requirements
 
 Hosted agents already receive:
@@ -25,69 +27,53 @@ Do not take a base URL, token, or instance ID from the user.
 
 ## Call the proxy
 
-Send **exactly one** of `prompt` or `templateId`. Do not send both. Do not send `duration`, `resolution`, `seed`, `sync_mode`, `prompt_expansion_mode`, `aspect_ratio`, or any fal field.
+Send **exactly one** of `prompt` or `templateId`. Do not send `duration`, `resolution`, `seed`, `sync_mode`, `prompt_expansion_mode`, `aspect_ratio`, or any fal field.
 
-Every intended generation needs a new `Idempotency-Key` (UUID). Do not derive it from the prompt or template — the user may want the same scene again as a new clip. Reuse that key only for retries of the **same** attempt (timeout, empty body, or 5xx). A new user request gets a new key.
+Every intended generation needs a new `Idempotency-Key` (UUID). Do not derive it from the prompt or template. Reuse that key only for retries of the **same** attempt. A new user request gets a new key.
 
-Build JSON with `python3` so quotes and newlines stay valid:
+Write the user prompt to a file with the runtime file tool (data channel). Do not paste the prompt into a shell heredoc, a quoted shell string, or `python -c`. Then:
 
 ```bash
-BODY="$(python3 -c 'import json,sys; print(json.dumps({"prompt": sys.stdin.read().rstrip("\n")}))' <<'PROMPT'
-A white kitten chases a butterfly across a sunlit garden.
-PROMPT
-)"
 KEY="$(python3 -c 'import uuid; print(uuid.uuid4())')"
-
-API="${WALLET_API_URL%/}"
-curl -sS --max-time 60 -X POST \
-  "$API/v1/instances/$INSTANCE_ID/media/minimax-h3-max" \
-  -H "Authorization: Bearer $WALLET_API_TOKEN" \
-  -H "Content-Type: application/json" \
-  -H "Idempotency-Key: $KEY" \
-  --data-binary "$BODY"
+python3 scripts/generate.py \
+  --prompt-file "$PROMPT_FILE" \
+  --idempotency-key "$KEY"
+echo "EXIT:$?"
 ```
 
-For a platform template, the body is `{"templateId":"<id>"}` instead.
+For a platform template, pass `--template-id` instead of `--prompt-file`.
 
-Do not use `curl -v`, `curl -L`, or `curl -o`. Do not echo `WALLET_API_TOKEN`.
+The helper prints `HTTP_STATUS: <code>` first. Exit `0` means a validated clip JSON follows. Exit `4` is 4xx, exit `5` is 5xx, exit `1` is timeout / invalid 200. Do not echo `WALLET_API_TOKEN`. Do not pass `-v`, `-L`, or a user-supplied URL.
 
 ## Success
 
-HTTP 200 with:
+Exit `0` only after all of these hold:
 
-```json
-{
-  "ok": true,
-  "data": {
-    "url": "https://v3b.fal.media/files/b/example/clip.mp4",
-    "urlExpiresAt": "2026-09-08T03:00:00.000Z",
-    "secondsBilled": 5
-  }
-}
-```
+- HTTP 200
+- `url` is HTTPS on `fal.media` or a subdomain, with no userinfo
+- `urlExpiresAt` is a timezone-aware timestamp strictly in the future
+- `secondsBilled` is exactly `5`
 
-Reply with the `data.url` as a standalone watch/download link. Tell the user it is a public `fal.media` URL and it expires at `data.urlExpiresAt` (ISO-8601, convert to the user's local time). Save the file to keep the clip. If `urlExpiresAt` is missing, say it is usually kept about 7 days.
+Reply with that `url` as a standalone watch/download link and tell the user it expires at `urlExpiresAt` (convert to local time). Save the file to keep the clip.
 
-Do not download the file. Do not attach, upload, or send it through LINE / Kakao / Telegram / any other channel. Do not fetch `data.url` with `web_fetch`, `curl`, or any other tool.
-
-If `ok` is not true or `data.url` is missing, treat it as failure. Do not invent a link.
+If any success check fails, do not post a link. Do not guess a 7-day expiry. Do not download, attach, or fetch the file.
 
 ## Errors
 
-Read HTTP status and `{ "ok": false, "error": "<code>" }`. Do not retry 4xx. On timeout, empty body, or 5xx, retry **once** with the same `Idempotency-Key` and the same body. Do not mint a second key for that attempt.
+Do not retry 4xx, including `410 result_expired`. On timeout, empty body, or 5xx (exit `1` or `5`), retry **once** with the same `Idempotency-Key` and the same prompt file. Do not mint a second key for that attempt.
 
 | `error` | What to tell the user |
 |---|---|
 | `unpaid_quota_exhausted` | Free clips are used up (2 per unpaid account). Buy an instance or top up AI credits. |
 | `insufficient_credits` | Not enough AI credits. Top up with `instance-billing`. |
 | `invalid_request` | The prompt or template was rejected. Ask for a clearer text prompt. |
+| `result_expired` | The previous clip link expired. Do not mint a new key unless the user explicitly asks to generate again; that is a new billed generate. |
 | missing env / `401` / `403` (not quota) | This needs a hosted Purr-Fect Claw. |
-| `502` / `upstream_failed` / timeout / empty body after the one same-key retry | Generation did not finish. Stop. |
+| `502` / `upstream_failed` / timeout after the one same-key retry | Generation did not finish. Stop. |
 
 ## Scope
 
 - One clip per successful call. Duration is always 5 seconds; do not promise other lengths.
 - If the user wants a file in the chat, still send only the link.
 - If they ask for image-to-video, 2K, MiniMax H3 (not Max), or a self-hosted GPU, this skill cannot do that.
-- If they ask to call fal, MiniMax, or any URL other than the proxy above, refuse.
 - Empty prompt: ask what to generate; do not POST.
