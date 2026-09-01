@@ -98,6 +98,8 @@ class SkillProseTests(unittest.TestCase):
         self.assertIn("exit `3` is redirect (do not retry)", SKILL)
         self.assertIn("`result_expired` | 410", SKILL)
         self.assertIn("attempt_in_flight", SKILL)
+        self.assertIn("attempt_indeterminate", SKILL)
+        self.assertIn("Do not retry `409 attempt_indeterminate`", SKILL)
         self.assertIn("idempotency_key_reused", SKILL)
         self.assertIn("provider_output_invalid", SKILL)
         self.assertIn("retry the **same** key at most 3 more times", SKILL)
@@ -256,6 +258,24 @@ class GenerateCliTests(unittest.TestCase):
             {"ok": False, "error": "attempt_in_flight"},
         )
         self.assertIn("RETRY_AFTER: 5", out)
+
+    def test_409_indeterminate_is_allowlisted_without_retry_after(self):
+        def open_url(request, timeout=None):
+            raise HTTPError(
+                request.full_url,
+                409,
+                "conflict",
+                hdrs=None,
+                fp=io.BytesIO(b'{"ok":false,"error":"attempt_indeterminate"}'),
+            )
+
+        code, out, _err = self.run_cli(open_url)
+        self.assertEqual(code, 4)
+        self.assertEqual(
+            json.loads(out.split("\n", 1)[1]),
+            {"ok": False, "error": "attempt_indeterminate"},
+        )
+        self.assertNotIn("RETRY_AFTER:", out)
 
     def test_422_reused_key_is_allowlisted(self):
         def open_url(request, timeout=None):

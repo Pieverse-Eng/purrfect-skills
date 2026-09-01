@@ -69,13 +69,14 @@ If any success check fails, do not post a link. Do not guess a 7-day expiry. Do 
 
 ## Errors
 
-Do not retry 4xx except `409 attempt_in_flight`. Do not retry exit `3` (redirect). On timeout, empty body, or 5xx (exit `1` or `5`), retry **once** with the same `Idempotency-Key` and a new prompt file in the temp root that contains the same text. Do not mint a second key for that attempt.
+Do not retry 4xx except `409 attempt_in_flight`. Do not retry `409 attempt_indeterminate`. Do not retry exit `3` (redirect). On timeout, empty body, or 5xx (exit `1` or `5`), retry **once** with the same `Idempotency-Key` and a new prompt file in the temp root that contains the same text. Do not mint a second key for that attempt.
 
 `409 attempt_in_flight` is bounded: wait `RETRY_AFTER` seconds if the helper printed it (already capped at 30), otherwise wait 2 seconds; retry the **same** key at most 3 more times; then stop. Do not tight-loop. After those retries, report outcome **unknown**. Do not mint a new key for this intended generation, and do not tell the user to generate again — that would start a second billable request while the original claim may still complete. There is no durable receipt to resume the old key later.
 
 | `error` | HTTP | What to do |
 |---|---|---|
 | `attempt_in_flight` | 409 | Same key is still running. Retry the **same** key. Do not mint a new one. |
+| `attempt_indeterminate` | 409 | Outcome unknown; nothing is running. Do not retry and do not mint a new key for this generation. |
 | `idempotency_key_reused` | 422 | Same key with a different prompt. Stop. New content needs a new key. |
 | `unpaid_quota_exhausted` | 403 | Free clips are used up (2 per unpaid account). Buy an instance or top up AI credits. |
 | `insufficient_credits` | 402 | Not enough AI credits. Top up with `instance-billing`. |

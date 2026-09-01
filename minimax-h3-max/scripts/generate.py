@@ -40,6 +40,7 @@ ALLOWED_ERRORS = frozenset(
         "upstream_failed",
         "redirect_not_allowed",
         "attempt_in_flight",
+        "attempt_indeterminate",
         "idempotency_key_reused",
         "provider_output_invalid",
     }
