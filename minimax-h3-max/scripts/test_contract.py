@@ -80,6 +80,8 @@ class SkillProseTests(unittest.TestCase):
 
     def test_success_validation_is_strict(self):
         self.assertIn("secondsBilled` is exactly `5`", SKILL)
+        self.assertIn("480p", SKILL)
+        self.assertEqual(SKILL.count("768p"), 2)
         self.assertIn("fal.media", SKILL)
         self.assertIn("timezone-aware timestamp strictly in the future", SKILL)
         self.assertIn("Do not guess a 7-day expiry", SKILL)

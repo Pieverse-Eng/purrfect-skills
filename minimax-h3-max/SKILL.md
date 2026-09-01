@@ -7,7 +7,7 @@ description: Use when the user wants a short MiniMax H3 Max video clip in messen
 
 Generate one 5-second clip via the hosted Pieverse proxy. The product name is **H3 Max**, not M3. This skill is text-to-video only.
 
-The platform owns duration, resolution, billing, and the fal call. This skill only asks the proxy for a watch URL and pastes that URL into chat.
+The platform owns duration, resolution, billing, and the fal call. Duration is 5 seconds and resolution is **480p**; do not send those fields and do not promise 768p. This skill only asks the proxy for a watch URL and pastes that URL into chat.
 
 Normal requests like "use MiniMax H3 Max to make a cat clip" go through this proxy. Refuse only if the user asks to bypass the Pieverse proxy, supply fal/MiniMax credentials, or call an arbitrary URL.
 
@@ -71,7 +71,7 @@ If any success check fails, do not post a link. Do not guess a 7-day expiry. Do 
 
 Do not retry 4xx except `409 attempt_in_flight`. Do not retry exit `3` (redirect). On timeout, empty body, or 5xx (exit `1` or `5`), retry **once** with the same `Idempotency-Key` and a new prompt file in the temp root that contains the same text. Do not mint a second key for that attempt.
 
-`409 attempt_in_flight` is bounded: wait `RETRY_AFTER` seconds if the helper printed it (already capped at 30), otherwise wait 2 seconds; retry the **same** key at most 3 more times; then stop. Do not tight-loop.
+`409 attempt_in_flight` is bounded: wait `RETRY_AFTER` seconds if the helper printed it (already capped at 30), otherwise wait 2 seconds; retry the **same** key at most 3 more times; then stop. Do not tight-loop. The proxy claim lease is about 60 seconds — after three retries, stop and tell the user to try again shortly; do not keep polling a stuck key.
 
 | `error` | HTTP | What to do |
 |---|---|---|
@@ -87,7 +87,7 @@ Do not retry 4xx except `409 attempt_in_flight`. Do not retry exit `3` (redirect
 
 ## Scope
 
-- One clip per successful call. Duration is always 5 seconds; do not promise other lengths.
+- One clip per successful call. Duration is always 5 seconds; resolution is 480p. Do not promise other lengths or 768p.
 - If the user wants a file in the chat, still send only the link.
 - If they ask for image-to-video, 2K, MiniMax H3 (not Max), or a self-hosted GPU, this skill cannot do that.
 - Empty prompt: ask what to generate; do not POST.
