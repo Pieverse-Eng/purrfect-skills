@@ -44,13 +44,7 @@ ALLOWED_ERRORS = frozenset(
 TIMEOUT_SECONDS = 60
 MAX_PROMPT_BYTES = 8192
 MAX_RESPONSE_BYTES = 4096
-READ_FAILURES = (
-    TimeoutError,
-    ConnectionResetError,
-    ConnectionError,
-    BrokenPipeError,
-    IncompleteRead,
-)
+READ_FAILURES = (OSError, IncompleteRead)
 
 
 class FailClosedRedirects(HTTPRedirectHandler):
@@ -74,13 +68,22 @@ def die(message: str, code: int = 2) -> None:
 
 def prompt_root() -> Path:
     here = Path(__file__).resolve().parent
-    root = (here / "prompt-root").resolve()
-    if root.parent != here:
+    root = here / "prompt-root"
+    if root.is_symlink():
         die("prompt root escaped")
     root.mkdir(mode=0o700, exist_ok=True)
-    if root.is_symlink() or not root.is_dir():
+    os.chmod(root, 0o700)
+    info = os.lstat(root)
+    if stat.S_ISLNK(info.st_mode) or not stat.S_ISDIR(info.st_mode):
         die("prompt root must be a directory")
-    return root
+    if info.st_uid != os.geteuid():
+        die("prompt root owner")
+    if info.st_mode & 0o077:
+        die("prompt root mode")
+    resolved = root.resolve()
+    if resolved.parent != here:
+        die("prompt root escaped")
+    return resolved
 
 
 def read_bounded(fp, limit: int = MAX_RESPONSE_BYTES) -> bytes:
@@ -182,6 +185,12 @@ def read_prompt_file(path_str: str) -> str:
         info = os.fstat(fd)
         if not stat.S_ISREG(info.st_mode):
             die("prompt file must be a regular file")
+        if info.st_nlink != 1:
+            die("prompt file must not be linked")
+        if info.st_uid != os.geteuid():
+            die("prompt file owner")
+        if info.st_mode & 0o077:
+            die("prompt file mode")
         if info.st_size > MAX_PROMPT_BYTES:
             die("prompt file too large")
         data = os.read(fd, info.st_size)
@@ -238,7 +247,7 @@ def post(url: str, token: str, idempotency_key: str, body: dict[str, str]) -> tu
         except ValueError:
             return int(error.code), b""
         return int(error.code), raw
-    except (URLError, TimeoutError, ConnectionError):
+    except (URLError, OSError, IncompleteRead):
         return 0, b""
 
 

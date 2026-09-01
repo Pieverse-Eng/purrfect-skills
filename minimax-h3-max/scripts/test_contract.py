@@ -146,6 +146,7 @@ class GenerateCliTests(unittest.TestCase):
         self.root = generate.prompt_root()
         self.prompt = self.root / "prompt.txt"
         self.prompt.write_text("PROMPT\nprintf injected\n: <<'PROMPT'\nA cat.\n", encoding="utf-8")
+        os.chmod(self.prompt, 0o600)
         self.env = {
             "WALLET_API_URL": "https://api.example",
             "WALLET_API_TOKEN": "pcp_secret",
@@ -253,6 +254,51 @@ class GenerateCliTests(unittest.TestCase):
         self.assertNotIn("Traceback", err)
         self.assertNotIn("Traceback", out)
 
+    def test_generic_oserror_read_is_exit_1(self):
+        def open_url(request, timeout=None):
+            return FakeResponse(200, b"x", read_error=OSError("read failed"))
+
+        code, out, err = self.run_cli(open_url)
+        self.assertEqual(code, 1)
+        self.assertIn("HTTP_STATUS: 0", out)
+        self.assertNotIn("Traceback", err)
+
+    def test_rejects_hardlink_prompt(self):
+        source = tempfile.NamedTemporaryFile("w", delete=False, encoding="utf-8")
+        source.write("PRIVATE_TENANT_STATE")
+        source.close()
+        os.chmod(source.name, 0o600)
+        link = self.root / "hardlink.txt"
+        os.link(source.name, link)
+        opened = {"called": False}
+
+        def open_url(request, timeout=None):
+            opened["called"] = True
+            opened["body"] = json.loads(request.data.decode("utf-8"))
+            return FakeResponse(200, json.dumps(ok_payload()).encode())
+
+        argv = ["--prompt-file", str(link), "--idempotency-key", "key-1"]
+        try:
+            with patch.dict(os.environ, self.env, clear=False), patch.object(
+                generate, "open_url", open_url
+            ), self.assertRaises(SystemExit) as raised:
+                generate.main(argv)
+            self.assertEqual(raised.exception.code, 2)
+            self.assertFalse(opened["called"])
+            self.assertEqual(Path(source.name).read_text(encoding="utf-8"), "PRIVATE_TENANT_STATE")
+        finally:
+            if link.exists():
+                link.unlink()
+            os.unlink(source.name)
+
+    def test_prompt_root_is_private(self):
+        root = generate.prompt_root()
+        os.chmod(root, 0o755)
+        root = generate.prompt_root()
+        info = os.lstat(root)
+        self.assertEqual(info.st_uid, os.geteuid())
+        self.assertEqual(info.st_mode & 0o777, 0o700)
+
     def test_connection_reset_is_exit_1(self):
         def open_url(request, timeout=None):
             return FakeResponse(200, b"x", read_error=ConnectionResetError("reset"))
@@ -330,8 +376,12 @@ class GenerateCliTests(unittest.TestCase):
 
     def test_rejects_symlink_prompt(self):
         secret = self.root / "secret"
-        secret.write_text("tenant-credential\n", encoding="utf-8")
         link = self.root / "link.txt"
+        if secret.exists() or secret.is_symlink():
+            secret.unlink()
+        if link.exists() or link.is_symlink():
+            link.unlink()
+        secret.write_text("tenant-credential\n", encoding="utf-8")
         link.symlink_to(secret)
         opened = {"called": False}
 
@@ -340,13 +390,19 @@ class GenerateCliTests(unittest.TestCase):
             return FakeResponse(200, json.dumps(ok_payload()).encode())
 
         argv = ["--prompt-file", str(link), "--idempotency-key", "key-1"]
-        with patch.dict(os.environ, self.env, clear=False), patch.object(
-            generate, "open_url", open_url
-        ), self.assertRaises(SystemExit) as raised:
-            generate.main(argv)
-        self.assertEqual(raised.exception.code, 2)
-        self.assertFalse(opened["called"])
-        self.assertTrue(secret.exists())
+        try:
+            with patch.dict(os.environ, self.env, clear=False), patch.object(
+                generate, "open_url", open_url
+            ), self.assertRaises(SystemExit) as raised:
+                generate.main(argv)
+            self.assertEqual(raised.exception.code, 2)
+            self.assertFalse(opened["called"])
+            self.assertTrue(secret.exists())
+        finally:
+            if link.exists() or link.is_symlink():
+                link.unlink()
+            if secret.exists():
+                secret.unlink()
 
     def test_rejects_prompt_outside_root(self):
         outside = tempfile.NamedTemporaryFile("w", delete=False, encoding="utf-8")
@@ -381,6 +437,7 @@ class RedirectIsolationTests(unittest.TestCase):
         self.root = generate.prompt_root()
         self.prompt = self.root / "prompt-redirect.txt"
         self.prompt.write_text("a cat\n", encoding="utf-8")
+        os.chmod(self.prompt, 0o600)
         self.capture_hits: list[dict[str, str | None]] = []
 
         class Capture(BaseHTTPRequestHandler):
