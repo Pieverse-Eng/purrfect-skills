@@ -31,7 +31,15 @@ Send **exactly one** of `prompt` or `templateId`. Do not send `duration`, `resol
 
 Every intended generation needs a new `Idempotency-Key` (UUID). Do not derive it from the prompt or template. Reuse that key only for retries of the **same** attempt. A new user request gets a new key.
 
-Write the user prompt to a file with the runtime file tool (data channel). Do not paste the prompt into a shell heredoc, a quoted shell string, or `python -c`. Then:
+Write the user prompt only under the skill temp root as a regular file (no symlink). Do not paste the prompt into a shell heredoc, a quoted shell string, or `python -c`.
+
+```bash
+ROOT="${MINIMAX_H3_MAX_PROMPT_ROOT:-${TMPDIR:-/tmp}/minimax-h3-max}"
+mkdir -p "$ROOT"
+PROMPT_FILE="$(mktemp "$ROOT/prompt.XXXXXX")"
+```
+
+Write the prompt bytes into `$PROMPT_FILE` with the runtime file tool, max 8192 bytes. Then:
 
 ```bash
 KEY="$(python3 -c 'import uuid; print(uuid.uuid4())')"
@@ -41,9 +49,11 @@ python3 scripts/generate.py \
 echo "EXIT:$?"
 ```
 
+The helper reads that file, deletes it, and POSTs. On same-key retry, write the same prompt to a new `mktemp` file in `$ROOT`; keep `$KEY`.
+
 For a platform template, pass `--template-id` instead of `--prompt-file`.
 
-The helper prints `HTTP_STATUS: <code>` first. Exit `0` means a validated clip JSON follows. Exit `4` is 4xx, exit `5` is 5xx, exit `1` is timeout / invalid 200. Do not echo `WALLET_API_TOKEN`. Do not pass `-v`, `-L`, or a user-supplied URL.
+The helper prints `HTTP_STATUS: <code>` first. Exit `0` means a validated clip JSON follows. Exit `4` is 4xx, exit `5` is 5xx, exit `3` is redirect (do not retry), exit `1` is timeout / invalid 200. Non-200 stdout is only `{"ok":false,"error":"<code>"}` from the allowlist. Do not echo `WALLET_API_TOKEN`. Do not pass `-v`, `-L`, or a user-supplied URL.
 
 ## Success
 
@@ -60,7 +70,7 @@ If any success check fails, do not post a link. Do not guess a 7-day expiry. Do 
 
 ## Errors
 
-Do not retry 4xx, including `410 result_expired`. On timeout, empty body, or 5xx (exit `1` or `5`), retry **once** with the same `Idempotency-Key` and the same prompt file. Do not mint a second key for that attempt.
+Do not retry 4xx, including `410 result_expired`, and do not retry exit `3` (redirect). On timeout, empty body, or 5xx (exit `1` or `5`), retry **once** with the same `Idempotency-Key` and a new prompt file in the temp root that contains the same text. Do not mint a second key for that attempt.
 
 | `error` | What to tell the user |
 |---|---|

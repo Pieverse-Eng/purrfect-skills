@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """POST one MiniMax H3 Max generate to the Pieverse platform proxy.
 
-Prompt arrives through --prompt-file (data channel), never through shell
-syntax. Duration, resolution, and other fal fields are not sent.
+Prompt arrives through a regular file under the skill temp root, never
+through shell syntax. Duration, resolution, and other fal fields are not
+sent. Redirects are rejected so bearer tokens never leave the platform
+origin.
 """
 
 from __future__ import annotations
@@ -10,13 +12,15 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import stat
 import sys
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 ENDPOINT_SUFFIX = "/media/minimax-h3-max"
 FORBIDDEN_BODY_KEYS = (
@@ -27,12 +31,46 @@ FORBIDDEN_BODY_KEYS = (
     "prompt_expansion_mode",
     "aspect_ratio",
 )
+ALLOWED_ERRORS = frozenset(
+    {
+        "unpaid_quota_exhausted",
+        "insufficient_credits",
+        "invalid_request",
+        "result_expired",
+        "upstream_failed",
+        "redirect_not_allowed",
+    }
+)
 TIMEOUT_SECONDS = 60
+MAX_PROMPT_BYTES = 8192
+MAX_ERROR_BYTES = 4096
+PROMPT_ROOT_ENV = "MINIMAX_H3_MAX_PROMPT_ROOT"
+
+
+class FailClosedRedirects(HTTPRedirectHandler):
+    def http_error_302(self, req, fp, code, msg, headers):
+        raise HTTPError(req.full_url, code, "redirect_not_allowed", headers, fp)
+
+    http_error_301 = http_error_303 = http_error_307 = http_error_308 = http_error_300 = http_error_302
+
+
+_OPENER = build_opener(FailClosedRedirects)
+
+
+def open_url(request: Request, timeout: float):
+    return _OPENER.open(request, timeout=timeout)
 
 
 def die(message: str, code: int = 2) -> None:
     print(message, file=sys.stderr)
     raise SystemExit(code)
+
+
+def prompt_root() -> Path:
+    raw = os.environ.get(PROMPT_ROOT_ENV)
+    if raw:
+        return Path(raw)
+    return Path(tempfile.gettempdir()) / "minimax-h3-max"
 
 
 def parse_iso8601(value: str) -> datetime:
@@ -86,16 +124,65 @@ def validate_success(payload: Any, *, now: datetime | None = None) -> dict[str, 
     }
 
 
+def public_error(status: int, raw: bytes) -> dict[str, Any]:
+    if 300 <= status < 400:
+        return {"ok": False, "error": "redirect_not_allowed"}
+    if len(raw) > MAX_ERROR_BYTES:
+        return {"ok": False, "error": "unknown"}
+    try:
+        payload = json.loads(raw.decode("utf-8"))
+    except (ValueError, UnicodeDecodeError):
+        return {"ok": False, "error": "unknown"}
+    if not isinstance(payload, dict):
+        return {"ok": False, "error": "unknown"}
+    code = payload.get("error")
+    if code not in ALLOWED_ERRORS:
+        return {"ok": False, "error": "unknown"}
+    return {"ok": False, "error": code}
+
+
+def read_prompt_file(path_str: str) -> str:
+    root = prompt_root().resolve()
+    if not root.is_dir():
+        die("prompt temp root missing")
+    given = Path(path_str)
+    if given.is_symlink():
+        die("prompt file must be a regular file")
+    resolved = given.resolve(strict=True)
+    try:
+        resolved.relative_to(root)
+    except ValueError:
+        die("prompt file outside temp root")
+    flags = os.O_RDONLY
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    fd = os.open(resolved, flags)
+    try:
+        info = os.fstat(fd)
+        if not stat.S_ISREG(info.st_mode):
+            die("prompt file must be a regular file")
+        if info.st_size > MAX_PROMPT_BYTES:
+            die("prompt file too large")
+        data = os.read(fd, info.st_size)
+    finally:
+        os.close(fd)
+    try:
+        os.unlink(resolved)
+    except OSError:
+        die("could not remove prompt file")
+    text = data.decode("utf-8").rstrip("\n")
+    if not text.strip():
+        die("empty prompt")
+    return text
+
+
 def request_body(prompt_file: str | None, template_id: str | None) -> dict[str, str]:
     if bool(prompt_file) == bool(template_id):
         die("exactly one of --prompt-file or --template-id")
     if template_id:
         body: dict[str, str] = {"templateId": template_id}
     else:
-        text = Path(prompt_file).read_text(encoding="utf-8").rstrip("\n")
-        if not text.strip():
-            die("empty prompt")
-        body = {"prompt": text}
+        body = {"prompt": read_prompt_file(prompt_file)}
     leaked = [key for key in FORBIDDEN_BODY_KEYS if key in body]
     if leaked:
         die(f"forbidden field: {leaked[0]}")
@@ -114,11 +201,19 @@ def post(url: str, token: str, idempotency_key: str, body: dict[str, str]) -> tu
         },
     )
     try:
-        with urlopen(request, timeout=TIMEOUT_SECONDS) as response:
-            return int(response.status), response.read()
+        with open_url(request, timeout=TIMEOUT_SECONDS) as response:
+            try:
+                raw = response.read()
+            except TimeoutError:
+                return 0, b""
+            return int(response.status), raw
     except HTTPError as error:
-        return int(error.code), error.read()
-    except URLError:
+        try:
+            raw = error.read() or b""
+        except TimeoutError:
+            raw = b""
+        return int(error.code), raw
+    except (URLError, TimeoutError):
         return 0, b""
 
 
@@ -142,9 +237,9 @@ def main(argv: list[str] | None = None) -> int:
     if status == 0:
         return 1
     if status != 200:
-        sys.stdout.write(raw.decode("utf-8", errors="replace"))
-        if raw and not raw.endswith(b"\n"):
-            sys.stdout.write("\n")
+        print(json.dumps(public_error(status, raw), ensure_ascii=False))
+        if 300 <= status < 400:
+            return 3
         if status >= 500:
             return 5
         if status >= 400:
@@ -153,7 +248,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         payload = json.loads(raw.decode("utf-8"))
         clip = validate_success(payload)
-    except (ValueError, json.JSONDecodeError) as error:
+    except (ValueError, json.JSONDecodeError, TimeoutError) as error:
         print(f"INVALID_SUCCESS: {error}", file=sys.stderr)
         return 1
     print(json.dumps(clip, ensure_ascii=False))
