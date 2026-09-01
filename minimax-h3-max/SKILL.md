@@ -77,7 +77,7 @@ Do not retry 4xx except `409 attempt_in_flight`. Do not retry exit `3` (redirect
 |---|---|---|
 | `attempt_in_flight` | 409 | Same key is still running. Retry the **same** key. Do not mint a new one. |
 | `idempotency_key_reused` | 422 | Same key with a different prompt. Stop. New content needs a new key. |
-| `unpaid_quota_exhausted` | 402 | Free clips are used up (2 per unpaid account). Buy an instance or top up AI credits. |
+| `unpaid_quota_exhausted` | 403 | Free clips are used up (2 per unpaid account). Buy an instance or top up AI credits. |
 | `insufficient_credits` | 402 | Not enough AI credits. Top up with `instance-billing`. |
 | `invalid_request` | 400 | The prompt or template was rejected. Ask for a clearer text prompt. |
 | `result_expired` | 410 | The previous clip link expired. Do not mint a new key unless the user explicitly asks to generate again; that is a new billed generate. |
