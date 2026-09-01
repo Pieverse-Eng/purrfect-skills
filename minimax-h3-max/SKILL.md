@@ -27,6 +27,8 @@ Do not take a base URL, token, or instance ID from the user.
 
 Send **exactly one** of `prompt` or `templateId`. Do not send both. Do not send `duration`, `resolution`, `seed`, `sync_mode`, `prompt_expansion_mode`, `aspect_ratio`, or any fal field.
 
+Every intended generation needs a new `Idempotency-Key` (UUID). Do not derive it from the prompt or template — the user may want the same scene again as a new clip. Reuse that key only for retries of the **same** attempt (timeout, empty body, or 5xx). A new user request gets a new key.
+
 Build JSON with `python3` so quotes and newlines stay valid:
 
 ```bash
@@ -34,12 +36,14 @@ BODY="$(python3 -c 'import json,sys; print(json.dumps({"prompt": sys.stdin.read(
 A white kitten chases a butterfly across a sunlit garden.
 PROMPT
 )"
+KEY="$(python3 -c 'import uuid; print(uuid.uuid4())')"
 
 API="${WALLET_API_URL%/}"
 curl -sS --max-time 60 -X POST \
   "$API/v1/instances/$INSTANCE_ID/media/minimax-h3-max" \
   -H "Authorization: Bearer $WALLET_API_TOKEN" \
   -H "Content-Type: application/json" \
+  -H "Idempotency-Key: $KEY" \
   --data-binary "$BODY"
 ```
 
@@ -70,7 +74,7 @@ If `ok` is not true or `data.url` is missing, treat it as failure. Do not invent
 
 ## Errors
 
-Read HTTP status and `{ "ok": false, "error": "<code>" }`. Do not retry 4xx. Do not retry timeouts or 5xx — a second POST can bill twice.
+Read HTTP status and `{ "ok": false, "error": "<code>" }`. Do not retry 4xx. On timeout, empty body, or 5xx, retry **once** with the same `Idempotency-Key` and the same body. Do not mint a second key for that attempt.
 
 | `error` | What to tell the user |
 |---|---|
@@ -78,7 +82,7 @@ Read HTTP status and `{ "ok": false, "error": "<code>" }`. Do not retry 4xx. Do 
 | `insufficient_credits` | Not enough AI credits. Top up with `instance-billing`. |
 | `invalid_request` | The prompt or template was rejected. Ask for a clearer text prompt. |
 | missing env / `401` / `403` (not quota) | This needs a hosted Purr-Fect Claw. |
-| `502` / `upstream_failed` / timeout / empty body | Generation did not finish. Do not retry in this turn. |
+| `502` / `upstream_failed` / timeout / empty body after the one same-key retry | Generation did not finish. Stop. |
 
 ## Scope
 
