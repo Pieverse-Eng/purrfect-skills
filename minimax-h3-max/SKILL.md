@@ -71,7 +71,7 @@ If any success check fails, do not post a link. Do not guess a 7-day expiry. Do 
 
 Do not retry 4xx except `409 attempt_in_flight`. Do not retry exit `3` (redirect). On timeout, empty body, or 5xx (exit `1` or `5`), retry **once** with the same `Idempotency-Key` and a new prompt file in the temp root that contains the same text. Do not mint a second key for that attempt.
 
-`409 attempt_in_flight` is bounded: wait `RETRY_AFTER` seconds if the helper printed it (already capped at 30), otherwise wait 2 seconds; retry the **same** key at most 3 more times; then stop. Do not tight-loop. The proxy claim lease is about 60 seconds — after three retries, stop and tell the user to try again shortly; do not keep polling a stuck key.
+`409 attempt_in_flight` is bounded: wait `RETRY_AFTER` seconds if the helper printed it (already capped at 30), otherwise wait 2 seconds; retry the **same** key at most 3 more times; then stop. Do not tight-loop. After those retries, report outcome **unknown**. Do not mint a new key for this intended generation, and do not tell the user to generate again — that would start a second billable request while the original claim may still complete. There is no durable receipt to resume the old key later.
 
 | `error` | HTTP | What to do |
 |---|---|---|

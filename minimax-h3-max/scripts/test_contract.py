@@ -101,6 +101,9 @@ class SkillProseTests(unittest.TestCase):
         self.assertIn("idempotency_key_reused", SKILL)
         self.assertIn("provider_output_invalid", SKILL)
         self.assertIn("retry the **same** key at most 3 more times", SKILL)
+        self.assertIn("report outcome **unknown**", SKILL)
+        self.assertIn("Do not mint a new key for this intended generation", SKILL)
+        self.assertNotIn("try again shortly", SKILL)
         self.assertIn("unless the user explicitly asks to generate again", SKILL)
         self.assertIn('{"ok":false,"error":"<code>"}', SKILL)
 
