@@ -14,8 +14,8 @@ import json
 import os
 import stat
 import sys
-import tempfile
 from datetime import datetime, timezone
+from http.client import IncompleteRead
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
@@ -43,8 +43,14 @@ ALLOWED_ERRORS = frozenset(
 )
 TIMEOUT_SECONDS = 60
 MAX_PROMPT_BYTES = 8192
-MAX_ERROR_BYTES = 4096
-PROMPT_ROOT_ENV = "MINIMAX_H3_MAX_PROMPT_ROOT"
+MAX_RESPONSE_BYTES = 4096
+READ_FAILURES = (
+    TimeoutError,
+    ConnectionResetError,
+    ConnectionError,
+    BrokenPipeError,
+    IncompleteRead,
+)
 
 
 class FailClosedRedirects(HTTPRedirectHandler):
@@ -67,10 +73,25 @@ def die(message: str, code: int = 2) -> None:
 
 
 def prompt_root() -> Path:
-    raw = os.environ.get(PROMPT_ROOT_ENV)
-    if raw:
-        return Path(raw)
-    return Path(tempfile.gettempdir()) / "minimax-h3-max"
+    here = Path(__file__).resolve().parent
+    root = (here / "prompt-root").resolve()
+    if root.parent != here:
+        die("prompt root escaped")
+    root.mkdir(mode=0o700, exist_ok=True)
+    if root.is_symlink() or not root.is_dir():
+        die("prompt root must be a directory")
+    return root
+
+
+def read_bounded(fp, limit: int = MAX_RESPONSE_BYTES) -> bytes:
+    chunk = fp.read(limit + 1)
+    if not chunk:
+        return b""
+    if isinstance(chunk, str):
+        chunk = chunk.encode("utf-8")
+    if len(chunk) > limit:
+        raise ValueError("response too large")
+    return chunk
 
 
 def parse_iso8601(value: str) -> datetime:
@@ -127,7 +148,7 @@ def validate_success(payload: Any, *, now: datetime | None = None) -> dict[str, 
 def public_error(status: int, raw: bytes) -> dict[str, Any]:
     if 300 <= status < 400:
         return {"ok": False, "error": "redirect_not_allowed"}
-    if len(raw) > MAX_ERROR_BYTES:
+    if len(raw) > MAX_RESPONSE_BYTES:
         return {"ok": False, "error": "unknown"}
     try:
         payload = json.loads(raw.decode("utf-8"))
@@ -203,17 +224,21 @@ def post(url: str, token: str, idempotency_key: str, body: dict[str, str]) -> tu
     try:
         with open_url(request, timeout=TIMEOUT_SECONDS) as response:
             try:
-                raw = response.read()
-            except TimeoutError:
+                raw = read_bounded(response)
+            except READ_FAILURES:
                 return 0, b""
+            except ValueError:
+                return int(getattr(response, "status", 0) or 0), b""
             return int(response.status), raw
     except HTTPError as error:
         try:
-            raw = error.read() or b""
-        except TimeoutError:
-            raw = b""
+            raw = read_bounded(error)
+        except READ_FAILURES:
+            return int(error.code), b""
+        except ValueError:
+            return int(error.code), b""
         return int(error.code), raw
-    except (URLError, TimeoutError):
+    except (URLError, TimeoutError, ConnectionError):
         return 0, b""
 
 
@@ -221,8 +246,15 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--prompt-file")
     parser.add_argument("--template-id")
-    parser.add_argument("--idempotency-key", required=True)
+    parser.add_argument("--idempotency-key")
+    parser.add_argument("--print-prompt-root", action="store_true")
     args = parser.parse_args(argv)
+
+    if args.print_prompt_root:
+        print(prompt_root())
+        return 0
+    if not args.idempotency_key:
+        die("missing --idempotency-key")
 
     base = os.environ.get("WALLET_API_URL")
     token = os.environ.get("WALLET_API_TOKEN")

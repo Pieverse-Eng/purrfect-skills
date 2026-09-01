@@ -31,11 +31,10 @@ Send **exactly one** of `prompt` or `templateId`. Do not send `duration`, `resol
 
 Every intended generation needs a new `Idempotency-Key` (UUID). Do not derive it from the prompt or template. Reuse that key only for retries of the **same** attempt. A new user request gets a new key.
 
-Write the user prompt only under the skill temp root as a regular file (no symlink). Do not paste the prompt into a shell heredoc, a quoted shell string, or `python -c`.
+Write the user prompt only under the helper's private root as a regular file (no symlink). Do not paste the prompt into a shell heredoc, a quoted shell string, or `python -c`. Ignore `TMPDIR` and any `MINIMAX_H3_MAX_PROMPT_ROOT` override — the helper will reject files outside its own `scripts/prompt-root`.
 
 ```bash
-ROOT="${MINIMAX_H3_MAX_PROMPT_ROOT:-${TMPDIR:-/tmp}/minimax-h3-max}"
-mkdir -p "$ROOT"
+ROOT="$(python3 scripts/generate.py --print-prompt-root)"
 PROMPT_FILE="$(mktemp "$ROOT/prompt.XXXXXX")"
 ```
 
