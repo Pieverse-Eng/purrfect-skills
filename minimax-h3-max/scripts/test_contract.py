@@ -104,6 +104,9 @@ class SkillProseTests(unittest.TestCase):
         self.assertIn("report outcome **unknown**", SKILL)
         self.assertIn("Do not mint a new key for this intended generation", SKILL)
         self.assertNotIn("try again shortly", SKILL)
+        self.assertIn("`unpaid_quota_exhausted` | 403", SKILL)
+        self.assertNotIn("`unpaid_quota_exhausted` | 402", SKILL)
+        self.assertIn("`insufficient_credits` | 402", SKILL)
         self.assertIn("unless the user explicitly asks to generate again", SKILL)
         self.assertIn('{"ok":false,"error":"<code>"}', SKILL)
 
