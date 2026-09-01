@@ -92,3 +92,9 @@ never contain credentials or tenant state.
 | `pieverse-a2a` | Pieverse HTTP 402 A2A payment flow — probe, confirm, authorize through the hosted wallet, and retry with `X-Pieverse-Payment`. |
 | `pieverse-staking` | Pieverse PIEVERSE staking — list positions, stake, withdraw one matured stake, or batch withdraw on Ethereum / BNB Chain. |
 | `red-packet` | P2P XLayer USDT0 redpackets through `purr redpacket` — send to `.pie`/EVM address, inspect pending, claim, and view sent history. |
+
+### Media
+
+| Skill | Description |
+|-------|-------------|
+| `minimax-h3-max` | MiniMax H3 Max 5-second text-to-video through the Pieverse platform proxy. Returns a `fal.media` watch link; never calls fal or attaches a file. |

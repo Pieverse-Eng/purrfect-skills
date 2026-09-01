@@ -20,3 +20,5 @@ jobs:
         run: |
           python3 scripts/check-market-search-metadata.py
           python3 -m unittest discover -s scripts -p 'test_check_market_search_metadata.py'
+      - name: MiniMax H3 Max contract regression
+        run: python3 -m unittest discover -s minimax-h3-max/scripts -p 'test_*.py'
