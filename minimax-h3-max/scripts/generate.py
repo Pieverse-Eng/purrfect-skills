@@ -39,6 +39,9 @@ ALLOWED_ERRORS = frozenset(
         "result_expired",
         "upstream_failed",
         "redirect_not_allowed",
+        "attempt_in_flight",
+        "idempotency_key_reused",
+        "provider_output_invalid",
     }
 )
 TIMEOUT_SECONDS = 60
@@ -219,7 +222,22 @@ def request_body(prompt_file: str | None, template_id: str | None) -> dict[str, 
     return body
 
 
-def post(url: str, token: str, idempotency_key: str, body: dict[str, str]) -> tuple[int, bytes]:
+def retry_after_seconds(headers) -> int | None:
+    if headers is None:
+        return None
+    raw = headers.get("Retry-After")
+    if raw is None:
+        return None
+    try:
+        seconds = int(str(raw).strip())
+    except ValueError:
+        return None
+    if seconds < 1:
+        return None
+    return min(seconds, 30)
+
+
+def post(url: str, token: str, idempotency_key: str, body: dict[str, str]) -> tuple[int, bytes, int | None]:
     request = Request(
         url,
         data=json.dumps(body).encode("utf-8"),
@@ -235,20 +253,21 @@ def post(url: str, token: str, idempotency_key: str, body: dict[str, str]) -> tu
             try:
                 raw = read_bounded(response)
             except READ_FAILURES:
-                return 0, b""
+                return 0, b"", None
             except ValueError:
-                return int(getattr(response, "status", 0) or 0), b""
-            return int(response.status), raw
+                return int(getattr(response, "status", 0) or 0), b"", None
+            return int(response.status), raw, retry_after_seconds(getattr(response, "headers", None))
     except HTTPError as error:
+        wait = retry_after_seconds(error.headers)
         try:
             raw = read_bounded(error)
         except READ_FAILURES:
-            return int(error.code), b""
+            return int(error.code), b"", wait
         except ValueError:
-            return int(error.code), b""
-        return int(error.code), raw
+            return int(error.code), b"", wait
+        return int(error.code), raw, wait
     except (URLError, OSError, IncompleteRead):
-        return 0, b""
+        return 0, b"", None
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -273,12 +292,14 @@ def main(argv: list[str] | None = None) -> int:
 
     body = request_body(args.prompt_file, args.template_id)
     url = f"{base.rstrip('/')}/v1/instances/{instance_id}{ENDPOINT_SUFFIX}"
-    status, raw = post(url, token, args.idempotency_key, body)
+    status, raw, wait = post(url, token, args.idempotency_key, body)
     print(f"HTTP_STATUS: {status}")
     if status == 0:
         return 1
     if status != 200:
         print(json.dumps(public_error(status, raw), ensure_ascii=False))
+        if status == 409 and wait is not None:
+            print(f"RETRY_AFTER: {wait}")
         if 300 <= status < 400:
             return 3
         if status >= 500:

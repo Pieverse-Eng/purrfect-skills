@@ -8,6 +8,7 @@ import tempfile
 import threading
 import unittest
 from datetime import datetime, timezone
+from email.message import Message
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from unittest.mock import patch
@@ -93,7 +94,11 @@ class SkillProseTests(unittest.TestCase):
         self.assertIn("HTTP_STATUS:", SKILL)
         self.assertIn("Exit `4` is 4xx, exit `5` is 5xx", SKILL)
         self.assertIn("exit `3` is redirect (do not retry)", SKILL)
-        self.assertIn("410 result_expired", SKILL)
+        self.assertIn("`result_expired` | 410", SKILL)
+        self.assertIn("attempt_in_flight", SKILL)
+        self.assertIn("idempotency_key_reused", SKILL)
+        self.assertIn("provider_output_invalid", SKILL)
+        self.assertIn("retry the **same** key at most 3 more times", SKILL)
         self.assertIn("unless the user explicitly asks to generate again", SKILL)
         self.assertIn('{"ok":false,"error":"<code>"}', SKILL)
 
@@ -220,6 +225,62 @@ class GenerateCliTests(unittest.TestCase):
         self.assertEqual(
             json.loads(out.split("\n", 1)[1]),
             {"ok": False, "error": "unpaid_quota_exhausted"},
+        )
+
+    def test_409_in_flight_prints_retry_after(self):
+        hdrs = Message()
+        hdrs["Retry-After"] = "5"
+
+        def open_url(request, timeout=None):
+            raise HTTPError(
+                request.full_url,
+                409,
+                "conflict",
+                hdrs=hdrs,
+                fp=io.BytesIO(b'{"ok":false,"error":"attempt_in_flight"}'),
+            )
+
+        code, out, _err = self.run_cli(open_url)
+        self.assertEqual(code, 4)
+        self.assertIn("HTTP_STATUS: 409", out)
+        self.assertEqual(
+            json.loads(out.splitlines()[1]),
+            {"ok": False, "error": "attempt_in_flight"},
+        )
+        self.assertIn("RETRY_AFTER: 5", out)
+
+    def test_422_reused_key_is_allowlisted(self):
+        def open_url(request, timeout=None):
+            raise HTTPError(
+                request.full_url,
+                422,
+                "unprocessable",
+                hdrs=None,
+                fp=io.BytesIO(b'{"ok":false,"error":"idempotency_key_reused"}'),
+            )
+
+        code, out, _err = self.run_cli(open_url)
+        self.assertEqual(code, 4)
+        self.assertEqual(
+            json.loads(out.split("\n", 1)[1]),
+            {"ok": False, "error": "idempotency_key_reused"},
+        )
+
+    def test_502_invalid_output_is_allowlisted(self):
+        def open_url(request, timeout=None):
+            raise HTTPError(
+                request.full_url,
+                502,
+                "bad gateway",
+                hdrs=None,
+                fp=io.BytesIO(b'{"ok":false,"error":"provider_output_invalid"}'),
+            )
+
+        code, out, _err = self.run_cli(open_url)
+        self.assertEqual(code, 5)
+        self.assertEqual(
+            json.loads(out.split("\n", 1)[1]),
+            {"ok": False, "error": "provider_output_invalid"},
         )
 
     def test_http_502_is_exit_5(self):

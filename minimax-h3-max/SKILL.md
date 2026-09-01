@@ -69,16 +69,21 @@ If any success check fails, do not post a link. Do not guess a 7-day expiry. Do 
 
 ## Errors
 
-Do not retry 4xx, including `410 result_expired`, and do not retry exit `3` (redirect). On timeout, empty body, or 5xx (exit `1` or `5`), retry **once** with the same `Idempotency-Key` and a new prompt file in the temp root that contains the same text. Do not mint a second key for that attempt.
+Do not retry 4xx except `409 attempt_in_flight`. Do not retry exit `3` (redirect). On timeout, empty body, or 5xx (exit `1` or `5`), retry **once** with the same `Idempotency-Key` and a new prompt file in the temp root that contains the same text. Do not mint a second key for that attempt.
 
-| `error` | What to tell the user |
-|---|---|
-| `unpaid_quota_exhausted` | Free clips are used up (2 per unpaid account). Buy an instance or top up AI credits. |
-| `insufficient_credits` | Not enough AI credits. Top up with `instance-billing`. |
-| `invalid_request` | The prompt or template was rejected. Ask for a clearer text prompt. |
-| `result_expired` | The previous clip link expired. Do not mint a new key unless the user explicitly asks to generate again; that is a new billed generate. |
-| missing env / `401` / `403` (not quota) | This needs a hosted Purr-Fect Claw. |
-| `502` / `upstream_failed` / timeout after the one same-key retry | Generation did not finish. Stop. |
+`409 attempt_in_flight` is bounded: wait `RETRY_AFTER` seconds if the helper printed it (already capped at 30), otherwise wait 2 seconds; retry the **same** key at most 3 more times; then stop. Do not tight-loop.
+
+| `error` | HTTP | What to do |
+|---|---|---|
+| `attempt_in_flight` | 409 | Same key is still running. Retry the **same** key. Do not mint a new one. |
+| `idempotency_key_reused` | 422 | Same key with a different prompt. Stop. New content needs a new key. |
+| `unpaid_quota_exhausted` | 402 | Free clips are used up (2 per unpaid account). Buy an instance or top up AI credits. |
+| `insufficient_credits` | 402 | Not enough AI credits. Top up with `instance-billing`. |
+| `invalid_request` | 400 | The prompt or template was rejected. Ask for a clearer text prompt. |
+| `result_expired` | 410 | The previous clip link expired. Do not mint a new key unless the user explicitly asks to generate again; that is a new billed generate. |
+| `provider_output_invalid` | 502 | Upstream clip was not a usable `fal.media` URL. Do not post a link. |
+| missing env / `401` / `403` (not quota) | | This needs a hosted Purr-Fect Claw. |
+| `upstream_failed` / timeout after the one same-key retry | 502 | Generation did not finish. Stop. |
 
 ## Scope
 
