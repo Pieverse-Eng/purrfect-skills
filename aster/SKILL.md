@@ -20,6 +20,29 @@ Interact with Aster DEX for perpetual futures trading. Authenticated API calls a
 - In scope: Futures market data, trading, account management, futures↔spot transfers, on-chain Aster deposits via `purr aster deposit`
 - Out of scope: On-chain withdrawals, spot trading execution, account creation (user must already have an Aster futures account)
 
+## Market Search
+
+For a host-provided read-only market-search request, use this section directly.
+Do not load a vendor skill. Aster Market Search covers USDT perpetual futures.
+
+- Public market data does not require credentials. Run `aster_api.py` from
+  `{baseDir}/vendor`, with one command per tool call and no shell composition.
+- Derive a short canonical base ticker, then verify the exact candidate with
+  `python3 aster_api.py ticker --symbol <BASE>USDT`.
+- Accept a candidate only when the command returns a JSON object whose `symbol`
+  exactly equals the requested symbol and whose `price` is numeric. An empty
+  object, an error object, or an invalid-symbol response is not a listing, even
+  when the process exits successfully.
+- Never run `python3 aster_api.py exchange-info` for market search. Do not fetch
+  or filter the complete Aster catalog.
+- After verification, retrieve exactly the bounded candle windows needed by the
+  host:
+  - `python3 aster_api.py klines --symbol <SYMBOL> --interval 15m --limit 20`
+  - `python3 aster_api.py klines --symbol <SYMBOL> --interval 1h --limit 20`
+  - `python3 aster_api.py klines --symbol <SYMBOL> --interval 4h --limit 20`
+- Return the venue-provided latest candle as the final element. Do not infer
+  candles or listing identity from a different symbol.
+
 ## Credentials
 
 The user must provide the main Aster login wallet address. Ask the user directly if you don't have it:
