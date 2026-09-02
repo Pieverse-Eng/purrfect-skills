@@ -25,6 +25,32 @@ license: MIT
 
 Use `binance-cli` for Binance Spot, Futures (USD-S), and Convert. Requires auth.
 
+## Market Search
+
+For a host-provided read-only market-search request, use this section directly.
+Do not load a reference skill. Binance Market Search covers USDⓈ-M USDT
+perpetual futures.
+
+- Public futures market data does not require credentials. Run one
+  `binance-cli` command per tool call, without pipes, redirects, variables,
+  command substitution, or command chaining.
+- Derive a short canonical base ticker, then verify the exact candidate with
+  `binance-cli futures-usds symbol-price-ticker --symbol <BASE>USDT`.
+- Accept a candidate only when the command returns a JSON object whose `symbol`
+  exactly equals the requested symbol and whose `price` is numeric. Plain-text
+  `Invalid symbol.`, an error response, or a different symbol is not a listing,
+  regardless of the process exit code.
+- Never run `binance-cli futures-usds exchange-information` or
+  `binance-cli futures-usds futures-tradfi-perps-contract` for market search.
+  Do not fetch or filter the complete Binance catalog.
+- After verification, retrieve exactly the bounded candle windows needed by the
+  host:
+  - `binance-cli futures-usds kline-candlestick-data --symbol <SYMBOL> --interval 15m --limit 20`
+  - `binance-cli futures-usds kline-candlestick-data --symbol <SYMBOL> --interval 1h --limit 20`
+  - `binance-cli futures-usds kline-candlestick-data --symbol <SYMBOL> --interval 4h --limit 20`
+- Return the venue-provided latest candle as the final element. Do not infer
+  candles or listing identity from a different symbol.
+
 > **PREREQUISITE:** Read [`auth.md`](./references/auth.md) for auth, global flags, and security rules.
 
 ## Helper Commands
