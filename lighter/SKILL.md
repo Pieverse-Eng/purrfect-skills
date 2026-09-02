@@ -4,6 +4,15 @@ description: Use when the user asks to trade or manage Lighter (lighter.xyz) —
 metadata:
   pieverse:
     marketSearch: true
+    marketCost:
+      perpetual:
+        publicTakerFeeBps: 0
+        sourceUrl: https://docs.lighter.xyz/trading/trading-fees
+        asOf: 2026-09-03
+      spot:
+        publicTakerFeeBps: 0
+        sourceUrl: https://docs.lighter.xyz/trading/trading-fees
+        asOf: 2026-09-03
     tradeReady:
       probe:
         argv: [purr, lighter, status]

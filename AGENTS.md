@@ -38,6 +38,35 @@ metadata:
 - The skill must document how to query public instruments and verify an exact
   ticker without requiring trading credentials.
 
+## Market-cost metadata
+
+Every top-level skill with `metadata.pieverse.marketSearch: true` must declare
+the public base taker fee for each product it exposes to Market Search:
+
+```yaml
+metadata:
+  pieverse:
+    marketSearch: true
+    marketCost:
+      perpetual:
+        publicTakerFeeBps: 5
+        sourceUrl: https://exchange.example/official-fees
+        asOf: 2026-09-03
+```
+
+- Product keys use lowercase kebab-case and must match the product identity
+  returned by Market Search.
+- `publicTakerFeeBps` is the current public base/default taker rate in basis
+  points. Do not include VIP tiers, referral rebates, token-payment discounts,
+  or temporary promotions.
+- `sourceUrl` must be an HTTPS page owned by the venue and must directly support
+  the declared product fee.
+- `asOf` records the UTC date on which the official source was verified.
+- Declare separate entries when spot, perpetual, stock perpetual, or another
+  product uses a different public fee schedule.
+- Metadata must describe the venue fee only. Do not include tenant-specific
+  account state, credentials, or optional third-party integrator fees.
+
 ## Wrapper and vendor skills
 
 When a venue skill is a wrapper/router around vendored skills:

@@ -6,6 +6,11 @@ metadata:
   author: Binance
   pieverse:
     marketSearch: true
+    marketCost:
+      perpetual:
+        publicTakerFeeBps: 5
+        sourceUrl: https://www.binance.com/en/fee/futureFee
+        asOf: 2026-09-03
     tradeReady:
       env:
         - [BINANCE_API_KEY, BINANCE_SECRET_KEY]

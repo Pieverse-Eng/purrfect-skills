@@ -4,6 +4,15 @@ description: Gate CEX/DEX,spot/futures,earn,Web3 Pay,x402,news
 metadata:
   pieverse:
     marketSearch: true
+    marketCost:
+      perpetual:
+        publicTakerFeeBps: 5
+        sourceUrl: https://www.gate.com/zh/announcements/article/101365
+        asOf: 2026-09-03
+      spot:
+        publicTakerFeeBps: 10
+        sourceUrl: https://www.gate.com/zh/fee
+        asOf: 2026-09-03
     tradeReady:
       env:
         - [GATE_API_KEY, GATE_API_SECRET]

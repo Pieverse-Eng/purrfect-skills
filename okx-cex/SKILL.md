@@ -9,6 +9,19 @@ metadata:
         - okx
   pieverse:
     marketSearch: true
+    marketCost:
+      perpetual:
+        publicTakerFeeBps: 5
+        sourceUrl: https://www.okx.com/en-gb/help/trading-fee-rules-faq
+        asOf: 2026-09-03
+      spot:
+        publicTakerFeeBps: 10
+        sourceUrl: https://www.okx.com/en-gb/help/trading-fee-rules-faq
+        asOf: 2026-09-03
+      stock-perpetual:
+        publicTakerFeeBps: 5
+        sourceUrl: https://www.okx.com/en-gb/help/stock-perpetuals-faq
+        asOf: 2026-09-03
     tradeReady:
       env:
         - [OKX_CEX_API_KEY, OKX_CEX_SECRET_KEY, OKX_CEX_PASSPHRASE]

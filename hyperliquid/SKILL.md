@@ -4,6 +4,15 @@ description: Use when the user asks to trade or manage Hyperliquid — e.g. chec
 metadata:
   pieverse:
     marketSearch: true
+    marketCost:
+      perpetual:
+        publicTakerFeeBps: 4.5
+        sourceUrl: https://hyperliquid.gitbook.io/hyperliquid-docs/trading/fees
+        asOf: 2026-09-03
+      spot:
+        publicTakerFeeBps: 7
+        sourceUrl: https://hyperliquid.gitbook.io/hyperliquid-docs/trading/fees
+        asOf: 2026-09-03
     tradeReady:
       probe:
         argv: [purr, hyperliquid, status]

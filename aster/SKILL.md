@@ -6,6 +6,15 @@ metadata:
     primaryEnv: ASTER_USER_WALLET
   pieverse:
     marketSearch: true
+    marketCost:
+      perpetual:
+        publicTakerFeeBps: 4
+        sourceUrl: https://docs.asterdex.com/product/aster-perpetual-pro/fees-and-specs/fees
+        asOf: 2026-09-03
+      stock-perpetual:
+        publicTakerFeeBps: 20
+        sourceUrl: https://docs.asterdex.com/product/asterex-pro/stock-perps-contracts
+        asOf: 2026-09-03
     tradeReady:
       env:
         - [ASTER_USER_WALLET]

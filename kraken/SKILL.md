@@ -8,6 +8,19 @@ metadata:
         - kraken
   pieverse:
     marketSearch: true
+    marketCost:
+      perpetual:
+        publicTakerFeeBps: 5
+        sourceUrl: https://www.kraken.com/features/fee-schedule
+        asOf: 2026-09-03
+      spot:
+        publicTakerFeeBps: 40
+        sourceUrl: https://www.kraken.com/features/fee-schedule
+        asOf: 2026-09-03
+      xstocks:
+        publicTakerFeeBps: 10
+        sourceUrl: https://www.kraken.com/features/fee-schedule
+        asOf: 2026-09-03
     tradeReady:
       env:
         - [KRAKEN_API_KEY, KRAKEN_API_SECRET]

@@ -4,13 +4,17 @@ from __future__ import annotations
 
 import re
 import sys
+from datetime import date
+from math import isfinite
 from pathlib import Path
+from urllib.parse import urlparse
 
 
 ROOT = Path(__file__).resolve().parent.parent
 ENV_KEY = re.compile(r"^[A-Z_][A-Z0-9_]*$")
 ARGV_TOKEN = re.compile(r"^[A-Za-z0-9_./:-]+$")
 JSON_KEY = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+PRODUCT_KEY = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 
 def frontmatter(path: Path) -> list[str]:
@@ -59,7 +63,7 @@ def validate(path: Path, lines: list[str]) -> list[str]:
     if "    marketSearch: true" not in pieverse:
         return [f"{path}: marketSearch must be nested under metadata.pieverse"]
 
-    errors: list[str] = []
+    errors = validate_market_cost(path, pieverse)
     try:
         start = pieverse.index("    tradeReady:") + 1
     except ValueError:
@@ -119,6 +123,75 @@ def validate(path: Path, lines: list[str]) -> list[str]:
         errors.append(f"{path}: tradeReady.probe requires argv and jsonEquals")
     if env_groups == 0 and not probe:
         errors.append(f"{path}: tradeReady must declare env or probe")
+    return errors
+
+
+def validate_market_cost(path: Path, pieverse: list[str]) -> list[str]:
+    try:
+        start = pieverse.index("    marketCost:") + 1
+    except ValueError:
+        return [f"{path}: marketSearch venue is missing metadata.pieverse.marketCost"]
+
+    block: list[str] = []
+    for line in pieverse[start:]:
+        if line and not line.startswith("      "):
+            break
+        block.append(line)
+
+    errors: list[str] = []
+    products = 0
+    index = 0
+    while index < len(block):
+        line = block[index]
+        if not line.strip():
+            index += 1
+            continue
+        match = re.fullmatch(r"      ([^:]+):", line)
+        if not match:
+            errors.append(f"{path}: marketCost entries must be product mappings")
+            index += 1
+            continue
+        product = match.group(1)
+        products += 1
+        if not PRODUCT_KEY.fullmatch(product):
+            errors.append(f"{path}: invalid marketCost product {product!r}")
+
+        fields: dict[str, str] = {}
+        index += 1
+        while index < len(block) and block[index].startswith("        "):
+            key, separator, value = block[index].strip().partition(":")
+            if not separator or not value.strip() or key in fields:
+                errors.append(f"{path}: invalid marketCost.{product} field")
+            else:
+                fields[key] = value.strip()
+            index += 1
+
+        expected = {"publicTakerFeeBps", "sourceUrl", "asOf"}
+        if set(fields) != expected:
+            errors.append(
+                f"{path}: marketCost.{product} must declare exactly "
+                "publicTakerFeeBps, sourceUrl, and asOf"
+            )
+            continue
+
+        try:
+            fee = float(fields["publicTakerFeeBps"])
+        except ValueError:
+            fee = float("nan")
+        if not isfinite(fee) or fee < 0 or fee > 10_000:
+            errors.append(f"{path}: marketCost.{product}.publicTakerFeeBps is invalid")
+
+        source = urlparse(fields["sourceUrl"])
+        if source.scheme != "https" or not source.hostname:
+            errors.append(f"{path}: marketCost.{product}.sourceUrl must be an HTTPS URL")
+
+        try:
+            date.fromisoformat(fields["asOf"])
+        except ValueError:
+            errors.append(f"{path}: marketCost.{product}.asOf must use YYYY-MM-DD")
+
+    if products == 0:
+        errors.append(f"{path}: metadata.pieverse.marketCost must declare a product")
     return errors
 
 

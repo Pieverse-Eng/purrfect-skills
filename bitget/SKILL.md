@@ -4,6 +4,11 @@ description: Use when the user asks about Bitget Exchange for market data, accou
 metadata:
   pieverse:
     marketSearch: true
+    marketCost:
+      perpetual:
+        publicTakerFeeBps: 6
+        sourceUrl: https://www.bitget.com/support/articles/12560603892734
+        asOf: 2026-09-03
     tradeReady:
       env:
         - [BITGET_API_KEY, BITGET_SECRET_KEY, BITGET_PASSPHRASE]
