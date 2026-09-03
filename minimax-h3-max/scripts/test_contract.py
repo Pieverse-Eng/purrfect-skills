@@ -24,6 +24,13 @@ NOW = datetime(2026, 9, 1, 4, 0, tzinfo=timezone.utc)
 FUTURE = "2026-09-08T04:00:00.000Z"
 PAST = "2026-08-01T04:00:00.000Z"
 CLIP_URL = "https://v3b.fal.media/files/b/example/clip.mp4"
+ORIGINAL_GENERIC_PROMPT = (
+    "Generate a photorealistic video of a Japanese man buying lamb skewers "
+    "from an Arab shop merchant in Ginza at night. Be creative, high-definition, "
+    "but it should have a story arc that is fun and interesting to watch."
+)
+EXPLICIT_COMFY_PROMPT = "Use ComfyUI to generate a video of a cat"
+IMAGE_TO_VIDEO_PROMPT = "Turn this image into a video"
 
 
 def ok_payload(**overrides):
@@ -92,16 +99,45 @@ class SkillProseTests(unittest.TestCase):
         self.assertIn("bypass the Pieverse proxy", SKILL)
         self.assertNotIn("ask to call fal, MiniMax, or any URL", SKILL)
 
-    def test_description_matches_generic_video_requests(self):
+    def _description(self) -> str:
+        return SKILL.split("---", 2)[1]
+
+    def test_description_matches_original_generic_text_to_video_prompt(self):
         # OpenClaw only injects YAML description into <available_skills>.
-        desc = SKILL.split("---", 2)[1]
+        desc = self._description()
+        self.assertNotIn("minimax", ORIGINAL_GENERIC_PROMPT.lower())
+        self.assertIn("hosted Purr-Fect Claw", desc)
+        self.assertIn("text prompt", desc)
         self.assertIn("generate a video", desc)
-        self.assertIn("text-to-video", desc)
-        self.assertIn("video_generate", desc)
-        self.assertIn("ComfyUI", desc)
+        self.assertIn("photorealistic video", desc)
+        self.assertIn("5-second", desc)
         self.assertNotIn("in messenger", desc)
-        self.assertIn("generate a video", SKILL)
-        self.assertIn("`video_generate` tool", SKILL)
+        self.assertIn(
+            "Generate a photorealistic video of a Japanese man buying lamb skewers",
+            SKILL,
+        )
+
+    def test_description_does_not_claim_explicit_comfy_or_image_to_video(self):
+        desc = self._description()
+        self.assertIn("ComfyUI", EXPLICIT_COMFY_PROMPT)
+        self.assertIn("image", IMAGE_TO_VIDEO_PROMPT.lower())
+        self.assertIn("ComfyUI", desc)
+        self.assertIn("image-to-video", desc)
+        self.assertIn("video editing", desc)
+        self.assertIn("non-5-second clip", desc)
+        self.assertIn("non-hosted runtime", desc)
+        self.assertIn("did not explicitly request", desc)
+        self.assertNotIn(
+            "Do not use video_generate or ComfyUI for ordinary video requests",
+            desc,
+        )
+        self.assertNotIn(
+            "Do not use the OpenClaw `video_generate` tool, ComfyUI, Comfy Cloud, or a local GPU for those requests",
+            SKILL,
+        )
+        self.assertIn("Leave those requests to `video_generate`", SKILL)
+        self.assertNotIn(EXPLICIT_COMFY_PROMPT, SKILL)
+        self.assertNotIn(IMAGE_TO_VIDEO_PROMPT, SKILL)
 
     def test_http_status_drives_retry(self):
         self.assertIn("HTTP_STATUS:", SKILL)
