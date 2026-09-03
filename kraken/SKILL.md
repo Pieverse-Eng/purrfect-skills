@@ -38,17 +38,23 @@ do not require credentials.
   pair is returned with `status` equal to `online`. Use the returned `altname`
   as the exact symbol and `wsname` to verify the base and quote. Kraken may map
   BTC input to its XBT listing, such as `XBTUSD` and `XBT/USD`.
-- For a stock or tokenized-equity Spot request, do not conclude that Kraken has
-  no listing from a failed lookup of `<TICKER><QUOTE>`. Run `kraken pairs -o json`
-  once to read the live API-tradable Spot catalog. The result can be retained
-  or truncated; search its exact result handle with `read_tool_result` using
-  the canonical ticker and issuer name. Inspect matching pair key, `altname`,
-  `wsname`, base, quote, and `status`, and accept only an `online` exact identity
-  match. Kraken xStock asset codes may add a venue-specific trailing `x`; treat
-  that only as a candidate hint. Do not shell-filter or rerun the catalog.
-- A Kraken web or Convert product that is absent from the public Spot pair
-  catalog is not an API-comparable Spot market. Do not substitute it for a
-  public order-book candidate.
+- For a stock or tokenized-equity Spot request, use Kraken's xStocks asset
+  class rather than the default crypto Spot catalog. Run
+  `kraken assets --asset-class tokenized_asset -o json` once to read the live
+  xStocks asset catalog. The result can be retained or truncated; search its
+  exact result handle with `read_tool_result` using the canonical ticker and
+  issuer name. Accept an asset only when its `aclass` is `tokenized_asset`, its
+  `status` is `enabled`, and its `altname` verifies the requested underlying.
+  Kraken xStock symbols conventionally append a lowercase `x` to the canonical
+  equity ticker, such as `CRCLx`; use this only as a candidate-generation rule,
+  not as proof of a listing.
+- Verify the corresponding live xStock pair with
+  `kraken pairs --pair <TICKER>x/USD --asset-class tokenized_asset -o json`.
+  Accept it only when exactly one pair is returned with `aclass_base` equal to
+  `tokenized_asset`, `status` equal to `online`, and matching `base`, `altname`,
+  and `wsname` identity fields. Preserve the returned `wsname` as the exact pair.
+  A failed default-crypto lookup without `--asset-class tokenized_asset` is not
+  evidence that Kraken lacks the xStock.
 - Use `kraken ticker <PAIR> -o json` for a current Spot price. Run
   `date -u +%s` once and calculate literal `--since` epoch seconds from
   that value: subtract 19,800 seconds for 15m, 79,200 seconds for 1h, and
@@ -56,6 +62,8 @@ do not require credentials.
   - `kraken ohlc <PAIR> --interval 15 --since <EPOCH> -o json`
   - `kraken ohlc <PAIR> --interval 60 --since <EPOCH> -o json`
   - `kraken ohlc <PAIR> --interval 240 --since <EPOCH> -o json`
+- For an xStock pair, add `--asset-class tokenized_asset` to every ticker and
+  OHLC command above.
 - For Futures, fetch `https://futures.kraken.com/api/charts/v1/trade`
   directly with the URL-fetch tool to discover symbols that have trade
   candles. Do not use `curl` or another terminal command for Charts API URLs.
@@ -80,6 +88,9 @@ do not require credentials.
   `kraken orderbook <PAIR> --count 100 -o json`. Use the exact pair response's
   first taker tier from `fees`; the tier entry is `[minimumVolume, percent]`, so
   multiply the percentage by `100` for `takerFeeBps`. Do not use `fees_maker`.
+  For an xStock pair, add `--asset-class tokenized_asset` to the order-book
+  command and read `fees` from the pair response fetched with that same asset
+  class.
 - For Futures, verify the exact contract with
   `kraken futures ticker <SYMBOL> -o json`. Run
   `kraken futures instruments -o json` once to obtain its `contractSize`,
@@ -152,6 +163,11 @@ credentials. For authenticated reads or live actions, if the selected vendor
 skill requires missing credentials, ask the user to configure or provide them
 through the host environment or platform credential flow, then rely on those
 environment variables.
+
+For every xStocks operation, including market data, order validation, and a
+later user-confirmed live order routed through a vendor skill, preserve the
+verified xStock pair and pass `--asset-class tokenized_asset`. Never silently
+fall back to the default crypto asset class.
 
 ## Skill Reference
 
