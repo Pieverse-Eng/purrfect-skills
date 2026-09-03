@@ -76,13 +76,17 @@ do not require credentials.
   catalog and may be retained or truncated; use `read_tool_result` with the
   exact symbol to read the matching instrument, and never rerun or
   shell-filter the catalog.
-- Treat the ticker as one current book level: `bid` with `bidSize` and `ask`
-  with `askSize`. Pass the verified instrument `contractSize` as
-  `baseSizePerUnit`. The one level is sufficient when
-  `price * size * contractSize * quoteToReferenceRate` covers the caller's
-  exact reference notional on the requested side. Include it in that case;
-  exclude it when the level cannot fill the order rather than treating its
-  size as unlimited. The official regular Futures taker fee is `0.05%`
+- For Futures cost depth, run
+  `kraken futures orderbook <SYMBOL> -o json`. Do not treat the ticker's
+  `bidSize` or `askSize` as the complete book. The response contains
+  `orderBook.bids` and `orderBook.asks` as `[price, size]` rows; normalize bids
+  to descending price and asks to ascending price before cost calculation,
+  and retain only enough current levels to cover the caller's exact reference
+  notional. If the result is retained or truncated, use `read_tool_result`
+  with bounded byte ranges instead of rerunning or shell-filtering it. Pass the
+  verified instrument `contractSize` as `baseSizePerUnit`, and exclude Kraken
+  for insufficient depth only when the retrieved order book cannot fill the
+  requested side. The official regular Futures taker fee is `0.05%`
   (`takerFeeBps: "5"`).
 - Fee source: `https://www.kraken.com/features/fee-schedule`. Use only the
   default/lowest-volume tier, exclude account-volume discounts, and pass
