@@ -57,10 +57,11 @@ Do not load a vendor skill. Aster Market Search covers USDT perpetual futures.
   and `https://docs.asterdex.com/product/asterex-pro/stock-perps-contracts`.
   Pass `additionalFeeBps: "0"` because this skill documents no additional
   Pieverse execution fee for Aster.
-- Order-book sizes are base-asset quantities only when the verified contract
-  metadata says one contract represents one base unit. Otherwise use the
-  official contract multiplier, or exclude the candidate when its unit cannot
-  be verified.
+- Aster defines the base asset as the quantity of a symbol, and its depth
+  response reports that absolute quantity at each price level. For an exact
+  verified USDT perpetual, pass `baseSizePerUnit: "1"`; do not fetch the full
+  `exchange-info` catalog merely to establish the size unit. Source:
+  `https://docs.asterdex.com/product/asterex-pro/api/api-documentation`.
 
 ## Credentials
 

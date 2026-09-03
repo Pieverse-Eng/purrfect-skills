@@ -65,18 +65,27 @@ do not require credentials.
   `kraken orderbook <PAIR> --count 100 -o json`. Use the exact pair response's
   first taker tier from `fees`; the tier entry is `[minimumVolume, percent]`, so
   multiply the percentage by `100` for `takerFeeBps`. Do not use `fees_maker`.
-- For Futures, `kraken futures ticker <SYMBOL> -o json` is only sufficient when
-  it returns both sides and enough size to fill the requested notional. If it
-  does not provide verifiable fillable depth, exclude that Futures candidate
-  from cost comparison rather than treating top-of-book as unlimited depth.
-  The official regular Futures taker fee is `0.05%`
+- For Futures, verify the exact contract with
+  `kraken futures ticker <SYMBOL> -o json`. Run
+  `kraken futures instruments -o json` once to obtain its `contractSize`,
+  `base`, `quote`, and `tradeable` fields. This command returns a complete
+  catalog and may be retained or truncated; use `read_tool_result` with the
+  exact symbol to read the matching instrument, and never rerun or
+  shell-filter the catalog.
+- Treat the ticker as one current book level: `bid` with `bidSize` and `ask`
+  with `askSize`. Pass the verified instrument `contractSize` as
+  `baseSizePerUnit`. The one level is sufficient when
+  `price * size * contractSize * quoteToReferenceRate` covers the caller's
+  exact reference notional on the requested side. Include it in that case;
+  exclude it when the level cannot fill the order rather than treating its
+  size as unlimited. The official regular Futures taker fee is `0.05%`
   (`takerFeeBps: "5"`).
 - Fee source: `https://www.kraken.com/features/fee-schedule`. Use only the
   default/lowest-volume tier, exclude account-volume discounts, and pass
   `additionalFeeBps: "0"`.
 - Spot order-book sizes are base-asset quantities (`baseSizePerUnit: "1"`).
-  For Futures, use the official contract multiplier only when its unit is the
-  base asset; otherwise exclude it.
+  Kraken's Futures instrument response defines `contractSize`; use it only
+  after the exact instrument also identifies the expected base and quote.
 
 ## Scope
 
