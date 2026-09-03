@@ -58,6 +58,24 @@ the command reports an authentication error.
   action and wait for explicit user confirmation.
 - Prefer `okx-cex-market` for prices. Do not place trades from market data alone.
 
+## Market Cost
+
+- For an exact verified Spot or linear USDT perpetual (`SWAP`), retrieve
+  bounded public depth with `okx market orderbook <INST_ID> --sz 100 --json` and
+  instrument metadata with
+  `okx market instruments --instType <SPOT|SWAP> --instId <INST_ID> --json`.
+- OKX's official regular/default taker fee is `0.1%` for standard Spot
+  (`takerFeeBps: "10"`) and `0.05%` for perpetual/futures
+  (`takerFeeBps: "5"`). These defaults apply only when the exact instrument is
+  in the standard fee group; exclude instruments whose special fee group cannot
+  be verified.
+- Fee source: `https://www.okx.com/en-gb/help/trading-fee-rules-faq`. Do not
+  call the authenticated `okx account fees` during public venue discovery, and
+  exclude VIP or account-specific rates. Pass `additionalFeeBps: "0"`.
+- Spot depth sizes are base-asset quantities. For a linear swap, use `ctVal` as
+  `baseSizePerUnit` only when `ctValCcy` confirms the base asset; otherwise
+  exclude the candidate.
+
 ## References
 
 This top-level skill is a router. Read the matching official reference before

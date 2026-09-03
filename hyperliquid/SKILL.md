@@ -50,6 +50,23 @@ not require the trading integration or wallet credentials.
   A failed natural-language-name query is not evidence that the ticker is
   absent; derive the canonical ticker before concluding that no listing exists.
 
+### Market Cost
+
+- Retrieve bounded depth for the exact verified market with
+  `purr hyperliquid l2 --coin <COIN>`. Use the complete returned book, whose
+  sizes are denominated in the base asset (`baseSizePerUnit: "1"`).
+- Hyperliquid's official default-tier taker fee is `0.045%` for validator-run
+  perpetuals (`takerFeeBps: "4.5"`) and `0.070%` for Spot
+  (`takerFeeBps: "7"`). Do not apply volume, staking, referral, aligned-quote,
+  stable-pair, or growth-mode discounts.
+- HIP-3 fees can differ from validator-run perpetuals. Use an HIP-3 candidate
+  only when its current fee scale and growth-mode state are available from
+  official market data and can be applied to the default perp rate. Otherwise
+  exclude it from cost comparison rather than assuming `4.5` bps.
+- Fee source: `https://hyperliquid.gitbook.io/hyperliquid-docs/trading/fees`.
+  The Pieverse execution path adds the separately documented `0.05%`
+  transaction fee, so pass `additionalFeeBps: "5"`.
+
 ## Scope
 
 | In scope | Out of scope |

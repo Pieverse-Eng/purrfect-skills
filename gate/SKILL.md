@@ -36,6 +36,26 @@ do not load a vendor skill. Gate market endpoints are public and do not require
 - Accept a listing only when the exact contract or pair is returned as active.
   Return at most the latest 20 candles per timeframe.
 
+### Market Cost
+
+- Retrieve Spot depth with
+  `gate-cli cex spot market orderbook --pair <PAIR> --depth 100 --format json`,
+  or USDT-perpetual depth with
+  `gate-cli cex futures market orderbook --contract <CONTRACT> --settle usdt --depth 100 --format json`.
+- For a perpetual, use `taker_fee_rate` from the exact public contract response
+  and multiply the decimal rate by `10000` for `takerFeeBps`. Use its
+  `quanto_multiplier` as `baseSizePerUnit` only when it represents units of the
+  underlying asset.
+- For Spot, use the exact pair response's public `fee` only when present. Gate
+  reports this value as a percentage, so multiply it by `100` for
+  `takerFeeBps` (`"0.2"` means `20` bps). The field is deprecated; if it is
+  absent, exclude the Spot candidate rather than using an authenticated,
+  account-specific fee or guessing.
+- Fee semantics are documented at
+  `https://www.gate.com/docs/developers/apiv4/en/spot/` and
+  `https://www.gate.com/docs/developers/apiv4/en/futures/`. Exclude GT/VIP
+  discounts and pass `additionalFeeBps: "0"`.
+
 ## Execution Boundary
 
 - Prefer CLI vendor skills whenever CLI and MCP both cover the same capability.

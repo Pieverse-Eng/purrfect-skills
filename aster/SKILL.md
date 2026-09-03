@@ -43,6 +43,25 @@ Do not load a vendor skill. Aster Market Search covers USDT perpetual futures.
 - Return the venue-provided latest candle as the final element. Do not infer
   candles or listing identity from a different symbol.
 
+### Market Cost
+
+- For a verified USDT perpetual, retrieve bounded depth with
+  `python3 aster_api.py depth --symbol <SYMBOL> --limit 100`.
+- For ordinary crypto USDT perpetuals, the official regular/default taker fee
+  is `0.04%`, so pass `takerFeeBps: "4"`. Do not apply the optional ASTER
+  payment discount.
+- Aster stock perpetuals use a different published schedule: the regular taker
+  fee is `0.2%`, so pass `takerFeeBps: "20"` only when the verified listing is
+  a stock perpetual. Do not infer product class from ticker spelling alone.
+- Fee sources: `https://docs.asterdex.com/trading/perpetuals/fees-and-specs/fees`
+  and `https://docs.asterdex.com/product/asterex-pro/stock-perps-contracts`.
+  Pass `additionalFeeBps: "0"` because this skill documents no additional
+  Pieverse execution fee for Aster.
+- Order-book sizes are base-asset quantities only when the verified contract
+  metadata says one contract represents one base unit. Otherwise use the
+  official contract multiplier, or exclude the candidate when its unit cannot
+  be verified.
+
 ## Credentials
 
 The user must provide the main Aster login wallet address. Ask the user directly if you don't have it:
