@@ -29,6 +29,22 @@ Access has two independent gates:
 
 Pick the matching command group below, then read that reference before acting.
 
+## Market Search
+
+For a host-provided read-only market-search request, use this section directly.
+Public Lighter market data does not require an account.
+
+- For a stock or tokenized-equity Spot request, run
+  `purr lighter markets --market-type spot` once to read the live Spot catalog.
+  The result can be retained or truncated; search its exact result handle with
+  `read_tool_result` using the canonical ticker and issuer name.
+- Inspect matching symbol, display name, base, quote, market type, market id,
+  and active status fields. Resolve a candidate with
+  `purr lighter market --market <SYMBOL> --market-type spot` before accepting
+  it. Do not infer stock identity from a ticker substring alone.
+- A failed direct lookup of a guessed symbol is not evidence that Lighter has
+  no stock Spot listing. Do not shell-filter or rerun the complete catalog.
+
 ## Scope
 
 | In scope | Out of scope |

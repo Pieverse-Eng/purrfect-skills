@@ -31,6 +31,25 @@ Public market data needs no credentials. Everything else (account, trading,
 transfers, withdrawals) needs API credentials as environment variables. See
 `references/auth-setup.md`.
 
+## Market Search
+
+For a host-provided read-only market-search request, use this section directly.
+Public Bitget market data does not require credentials.
+
+- For ordinary known symbols, use the exact public instrument lookup described
+  below.
+- For a stock or tokenized-equity Spot request, run
+  `bgc market --action instruments --category SPOT` once to read the live Spot
+  catalog. The result can be retained or truncated; search its exact result
+  handle with `read_tool_result` using the canonical ticker and issuer name.
+- Inspect matching symbol, base coin, quote coin, instrument name, product
+  category, and online status fields before accepting a listing. Bitget
+  tokenized equities may use a venue-specific base prefix such as `r`; treat
+  that only as a candidate hint and verify the underlying from Bitget-provided
+  metadata.
+- A failed lookup of `<TICKER>USDT` is not evidence that Bitget has no stock
+  Spot listing. Do not shell-filter or rerun the complete catalog.
+
 ## Market Cost
 
 - For a verified Spot, USDT Futures, or USDC Futures symbol, retrieve bounded

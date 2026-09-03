@@ -38,15 +38,25 @@ USDT perpetual futures.
   with `binance-cli spot ticker-price --symbol <BASE><QUOTE>`. For a USDT
   perpetual, use
   `binance-cli futures-usds symbol-price-ticker --symbol <BASE>USDT`.
+- For a stock or tokenized-equity Spot request, do not conclude that Binance
+  has no listing from a failed lookup of `<TICKER><QUOTE>`. Run
+  `binance-cli spot exchange-info --symbol-status TRADING` once to read the
+  live Spot catalog. The result can be retained or truncated; search its exact
+  result handle with `read_tool_result` using the canonical ticker and issuer
+  name. Inspect matching `symbol`, `baseAsset`, `quoteAsset`, `status`, and
+  Spot trading permission fields. Binance stock-token base assets may add a
+  venue-specific marker such as a trailing `B`; treat that only as a candidate
+  hint and verify the underlying from Binance-provided metadata.
 - Accept a candidate only when the command returns a JSON object whose `symbol`
   exactly equals the requested symbol and whose `price` is numeric. Plain-text
   `Invalid symbol.`, an error response, or a different symbol is not a listing,
   regardless of the process exit code.
-- Never run an unfiltered Spot or Futures catalog. In particular, do not run
-  `binance-cli spot exchange-info`,
-  `binance-cli futures-usds exchange-information`, or
+- Do not run an unfiltered catalog except for the stock Spot discovery case
+  above. In particular, do not run
+  `binance-cli futures-usds exchange-information` or
   `binance-cli futures-usds futures-tradfi-perps-contract` for market search.
-  Do not fetch or filter the complete Binance catalog.
+  Never shell-filter a complete Binance catalog or rerun it after receiving a
+  retained result handle.
 - After verifying a Spot pair, retrieve exactly the bounded candle windows
   needed by the host:
   - `binance-cli spot klines --symbol <SYMBOL> --interval 15m --limit 20`
