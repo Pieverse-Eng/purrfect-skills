@@ -41,7 +41,7 @@ do not load a vendor skill. Gate market endpoints are public and do not require
   Inspect matching pair id, base, quote, trade status, and currency identity
   fields, using `gate-cli cex spot market currency --currency <BASE> --format json`
   when the pair alone does not establish the underlying. Gate tokenized-equity
-  base assets may add a venue-specific suffix such as `X`; treat that only as a
+  base assets may add a venue-specific suffix; treat any such affix only as a
   candidate hint and verify it from Gate-provided metadata. Do not shell-filter
   or rerun the complete catalog.
 - Accept a listing only when the exact contract or pair is returned as active.
