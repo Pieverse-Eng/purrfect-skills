@@ -48,6 +48,10 @@ do not require credentials.
 - For Futures, fetch `https://futures.kraken.com/api/charts/v1/trade`
   directly with the URL-fetch tool to discover symbols that have trade
   candles. Do not use `curl` or another terminal command for Charts API URLs.
+  When both linear (`PF_`) and inverse (`PI_`) perpetuals match the same
+  underlying, prefer the linear contract for a reference-notional cost
+  comparison. Do not stop after finding an inverse contract or exclude Kraken
+  before checking for the matching linear contract.
   Verify the selected symbol with `kraken futures ticker <SYMBOL> -o json`.
   Accept only an unsuspended ticker whose returned symbol, pair, and product
   tag match the requested asset and product. Use the returned symbol exactly
