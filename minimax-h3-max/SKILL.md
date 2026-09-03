@@ -1,13 +1,13 @@
 ---
 name: minimax-h3-max
-description: Use on hosted Purr-Fect Claw for an ordinary short video from a text prompt — including generic asks like "generate a video" or "photorealistic video" that do not name MiniMax. Prefer this Pieverse 5-second 480p proxy only when the user did not explicitly request ComfyUI, a local GPU, image-to-video, video editing, or a non-5-second clip. Do not use this skill on a non-hosted runtime.
+description: Use on hosted Purr-Fect Claw for an ordinary short video from a text prompt, including requests that do not name MiniMax. Prefer this Pieverse 5-second 480p proxy only when the user did not explicitly request ComfyUI, a local GPU, image-to-video, video editing, or a non-5-second clip. Do not use this skill on a non-hosted runtime.
 ---
 
 # MiniMax H3 Max
 
 Generate one 5-second clip via the hosted Pieverse proxy. The product name is **H3 Max**, not M3. This skill is text-to-video only.
 
-On hosted Purr-Fect Claw, use this skill for an ordinary short video from a text prompt. That includes generic asks like "generate a video", "Generate a photorealistic video of a Japanese man buying lamb skewers from an Arab shop merchant in Ginza at night", or "use MiniMax H3 Max to make a cat clip". Prefer the Pieverse proxy only when the user did not explicitly request another backend or capability.
+On hosted Purr-Fect Claw, use this skill for an ordinary short video from a text prompt, including requests that do not name MiniMax. Named asks like "use MiniMax H3 Max to make a cat clip" also go through this proxy. Prefer the Pieverse proxy only when the user did not explicitly request another backend or capability.
 
 If they explicitly ask for ComfyUI, Comfy Cloud, a local GPU, image-to-video, video editing, or a clip that is not 5 seconds, do not use this skill. Leave those requests to `video_generate` or the matching tool. If the hosted env vars below are missing, stop; this skill does not run on a non-hosted runtime.
 

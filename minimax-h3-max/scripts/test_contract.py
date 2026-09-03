@@ -106,16 +106,14 @@ class SkillProseTests(unittest.TestCase):
         # OpenClaw only injects YAML description into <available_skills>.
         desc = self._description()
         self.assertNotIn("minimax", ORIGINAL_GENERIC_PROMPT.lower())
+        self.assertIn("video", ORIGINAL_GENERIC_PROMPT.lower())
         self.assertIn("hosted Purr-Fect Claw", desc)
-        self.assertIn("text prompt", desc)
-        self.assertIn("generate a video", desc)
-        self.assertIn("photorealistic video", desc)
+        self.assertIn("ordinary short video from a text prompt", desc)
+        self.assertIn("do not name MiniMax", desc)
         self.assertIn("5-second", desc)
         self.assertNotIn("in messenger", desc)
-        self.assertIn(
-            "Generate a photorealistic video of a Japanese man buying lamb skewers",
-            SKILL,
-        )
+        self.assertNotIn("photorealistic video", desc)
+        self.assertNotIn("generate a video", desc)
 
     def test_description_does_not_claim_explicit_comfy_or_image_to_video(self):
         desc = self._description()
