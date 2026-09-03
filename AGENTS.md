@@ -37,6 +37,14 @@ metadata:
 - Metadata must never contain credentials, authentication state, or tenant data.
 - The skill must document how to query public instruments and verify an exact
   ticker without requiring trading credentials.
+- If the venue can list tokenized equities or other stock-like Spot products,
+  the skill must document its live complete Spot-catalog command and the
+  venue-provided identity and status fields used to verify a listing. A failed
+  lookup of a guessed symbol is not evidence that no listing exists. When the
+  catalog result is retained or truncated, instruct the agent to search that
+  result with `read_tool_result` using the canonical ticker and issuer name.
+  Venue naming conventions may be documented as candidate-generation hints,
+  but do not maintain a fixed ticker alias table.
 - If the venue participates in market-order cost comparison, the skill must
   also document how to retrieve bounded public order-book depth and a current
   official public base/default taker fee for every supported product. Prefer a

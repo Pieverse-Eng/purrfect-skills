@@ -33,6 +33,17 @@ do not load a vendor skill. Gate market endpoints are public and do not require
   `gate-cli cex spot market pair --pair <BASE>_<QUOTE> --format json`, and fetch
   candles with
   `gate-cli cex spot market candlesticks --pair <PAIR> --interval <15m|1h|4h> --limit 21 --format json`.
+- For a stock or tokenized-equity Spot request, do not conclude that Gate has no
+  listing from a failed lookup of `<TICKER>_<QUOTE>`. Run
+  `gate-cli cex spot market pairs --format json` once to read the live Spot
+  catalog. The result can be retained or truncated; search its exact result
+  handle with `read_tool_result` using the canonical ticker and issuer name.
+  Inspect matching pair id, base, quote, trade status, and currency identity
+  fields, using `gate-cli cex spot market currency --currency <BASE> --format json`
+  when the pair alone does not establish the underlying. Gate tokenized-equity
+  base assets may add a venue-specific suffix such as `X`; treat that only as a
+  candidate hint and verify it from Gate-provided metadata. Do not shell-filter
+  or rerun the complete catalog.
 - Accept a listing only when the exact contract or pair is returned as active.
   Return at most the latest 20 candles per timeframe.
 

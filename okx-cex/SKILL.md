@@ -58,6 +58,23 @@ the command reports an authentication error.
   action and wait for explicit user confirmation.
 - Prefer `okx-cex-market` for prices. Do not place trades from market data alone.
 
+## Market Search
+
+For a host-provided read-only market-search request, use this section directly;
+do not load a vendor skill.
+
+- For a stock or tokenized-equity Spot request, run
+  `okx market instruments --instType SPOT --json` once to read the live Spot
+  catalog. The result can be retained or truncated; search its exact result
+  handle with `read_tool_result` using the canonical ticker and issuer name.
+- Inspect matching `instId`, `baseCcy`, `quoteCcy`, instrument identity, and
+  `state`. Accept only an exact identity match whose state is `live`. OKX
+  stock-token base currencies may add a venue-specific prefix such as `X`;
+  treat that only as a candidate hint and verify it from OKX-provided metadata.
+- A failed lookup of `<TICKER>-USDT` is not evidence that OKX has no stock Spot
+  listing. Do not confuse Spot stock tokens with `instCategory=3` stock-token
+  perpetuals, and do not shell-filter or rerun the complete catalog.
+
 ## Market Cost
 
 - For an exact verified Spot or linear USDT perpetual (`SWAP`), retrieve

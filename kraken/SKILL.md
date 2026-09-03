@@ -38,6 +38,17 @@ do not require credentials.
   pair is returned with `status` equal to `online`. Use the returned `altname`
   as the exact symbol and `wsname` to verify the base and quote. Kraken may map
   BTC input to its XBT listing, such as `XBTUSD` and `XBT/USD`.
+- For a stock or tokenized-equity Spot request, do not conclude that Kraken has
+  no listing from a failed lookup of `<TICKER><QUOTE>`. Run `kraken pairs -o json`
+  once to read the live API-tradable Spot catalog. The result can be retained
+  or truncated; search its exact result handle with `read_tool_result` using
+  the canonical ticker and issuer name. Inspect matching pair key, `altname`,
+  `wsname`, base, quote, and `status`, and accept only an `online` exact identity
+  match. Kraken xStock asset codes may add a venue-specific trailing `x`; treat
+  that only as a candidate hint. Do not shell-filter or rerun the catalog.
+- A Kraken web or Convert product that is absent from the public Spot pair
+  catalog is not an API-comparable Spot market. Do not substitute it for a
+  public order-book candidate.
 - Use `kraken ticker <PAIR> -o json` for a current Spot price. Run
   `date -u +%s` once and calculate literal `--since` epoch seconds from
   that value: subtract 19,800 seconds for 15m, 79,200 seconds for 1h, and
