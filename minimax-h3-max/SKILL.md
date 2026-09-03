@@ -1,15 +1,17 @@
 ---
 name: minimax-h3-max
-description: Use when the user wants a short MiniMax H3 Max video clip in messenger. Text-to-video through the Pieverse platform proxy; 5-second watch link only.
+description: Use when the user wants to generate a video, clip, text-to-video, or MiniMax H3 Max. Hosted Purr-Fect Claw default: 5-second 480p watch link via the Pieverse proxy. Do not use video_generate or ComfyUI for ordinary video requests.
 ---
 
 # MiniMax H3 Max
 
 Generate one 5-second clip via the hosted Pieverse proxy. The product name is **H3 Max**, not M3. This skill is text-to-video only.
 
+On hosted Purr-Fect Claw this is the default video path. Ordinary requests like "generate a video", "make a clip", or "use MiniMax H3 Max to make a cat clip" go through this proxy. Do not use the OpenClaw `video_generate` tool, ComfyUI, Comfy Cloud, or a local GPU for those requests.
+
 The platform owns duration, resolution, billing, and the fal call. Duration is 5 seconds and resolution is **480p**; do not send those fields and do not promise 768p. This skill only asks the proxy for a watch URL and pastes that URL into chat.
 
-Normal requests like "use MiniMax H3 Max to make a cat clip" go through this proxy. Refuse only if the user asks to bypass the Pieverse proxy, supply fal/MiniMax credentials, or call an arbitrary URL.
+Refuse only if the user asks to bypass the Pieverse proxy, supply fal/MiniMax credentials, or call an arbitrary URL.
 
 ## Requirements
 

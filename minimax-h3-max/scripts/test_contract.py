@@ -92,6 +92,17 @@ class SkillProseTests(unittest.TestCase):
         self.assertIn("bypass the Pieverse proxy", SKILL)
         self.assertNotIn("ask to call fal, MiniMax, or any URL", SKILL)
 
+    def test_description_matches_generic_video_requests(self):
+        # OpenClaw only injects YAML description into <available_skills>.
+        desc = SKILL.split("---", 2)[1]
+        self.assertIn("generate a video", desc)
+        self.assertIn("text-to-video", desc)
+        self.assertIn("video_generate", desc)
+        self.assertIn("ComfyUI", desc)
+        self.assertNotIn("in messenger", desc)
+        self.assertIn("generate a video", SKILL)
+        self.assertIn("`video_generate` tool", SKILL)
+
     def test_http_status_drives_retry(self):
         self.assertIn("HTTP_STATUS:", SKILL)
         self.assertIn("Exit `4` is 4xx, exit `5` is 5xx", SKILL)
