@@ -1,15 +1,19 @@
 ---
 name: minimax-h3-max
-description: Use when the user wants a short MiniMax H3 Max video clip in messenger. Text-to-video through the Pieverse platform proxy; 5-second watch link only.
+description: Use on hosted Purr-Fect Claw for an ordinary short video from a text prompt, including requests that do not name MiniMax. Prefer this Pieverse 5-second 480p proxy only when the user did not explicitly request ComfyUI, a local GPU, image-to-video, video editing, or a non-5-second clip. Do not use this skill on a non-hosted runtime.
 ---
 
 # MiniMax H3 Max
 
 Generate one 5-second clip via the hosted Pieverse proxy. The product name is **H3 Max**, not M3. This skill is text-to-video only.
 
+On hosted Purr-Fect Claw, use this skill for an ordinary short video from a text prompt, including requests that do not name MiniMax. Named asks like "use MiniMax H3 Max to make a cat clip" also go through this proxy. Prefer the Pieverse proxy only when the user did not explicitly request another backend or capability.
+
+If they explicitly ask for ComfyUI, Comfy Cloud, a local GPU, image-to-video, video editing, or a clip that is not 5 seconds, do not use this skill. Leave those requests to `video_generate` or the matching tool. If the hosted env vars below are missing, stop; this skill does not run on a non-hosted runtime.
+
 The platform owns duration, resolution, billing, and the fal call. Duration is 5 seconds and resolution is **480p**; do not send those fields and do not promise 768p. This skill only asks the proxy for a watch URL and pastes that URL into chat.
 
-Normal requests like "use MiniMax H3 Max to make a cat clip" go through this proxy. Refuse only if the user asks to bypass the Pieverse proxy, supply fal/MiniMax credentials, or call an arbitrary URL.
+Refuse a MiniMax / ordinary short text-to-video request only if the user asks to bypass the Pieverse proxy, supply fal/MiniMax credentials, or call an arbitrary URL.
 
 ## Requirements
 
@@ -90,5 +94,5 @@ Do not retry 4xx except `409 attempt_in_flight`. Do not retry `409 attempt_indet
 
 - One clip per successful call. Duration is always 5 seconds; resolution is 480p. Do not promise other lengths or 768p.
 - If the user wants a file in the chat, still send only the link.
-- If they ask for image-to-video, 2K, MiniMax H3 (not Max), or a self-hosted GPU, this skill cannot do that.
+- If they ask for image-to-video, video editing, 2K, MiniMax H3 (not Max), a self-hosted GPU, ComfyUI, or a length other than 5 seconds, this skill cannot do that. Leave those to the matching tool.
 - Empty prompt: ask what to generate; do not POST.
