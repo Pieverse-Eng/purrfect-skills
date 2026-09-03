@@ -31,6 +31,27 @@ Public market data needs no credentials. Everything else (account, trading,
 transfers, withdrawals) needs API credentials as environment variables. See
 `references/auth-setup.md`.
 
+## Market Cost
+
+- For a verified Spot, USDT Futures, or USDC Futures symbol, retrieve bounded
+  public depth with
+  `bgc market --action orderbook --category <CATEGORY> --symbol <SYMBOL> --limit 100`.
+- Retrieve the exact instrument with
+  `bgc market --action instruments --category <CATEGORY> --symbol <SYMBOL>`.
+  When that public response includes `takerFeeRate`, use it and convert the
+  decimal rate to basis points by multiplying by `10000`.
+- If Spot instrument metadata omits a fee, Bitget's official regular/default
+  Spot taker fee is `0.1%`; pass `takerFeeBps: "10"`. If Futures metadata omits
+  a fee, the official regular/default Futures taker fee is `0.06%`; pass
+  `takerFeeBps: "6"`.
+- Fee source:
+  `https://www.bitget.com/support/articles/12560603892734`. Exclude BGB-payment
+  discounts, VIP rates, referral rebates, promotions, and user-specific fees.
+  Pass `additionalFeeBps: "0"`.
+- Use `baseSizePerUnit: "1"` only when the instrument metadata confirms raw
+  book sizes are base-asset quantities. Otherwise use its official contract
+  multiplier, or exclude the candidate if the size unit is ambiguous.
+
 ## Step 2: The grammar (this replaced the old v2 grammar)
 
 ```

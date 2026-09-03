@@ -28,6 +28,13 @@ JSON result to contain every `jsonEquals` field. Probes must be read-only,
 bounded, and fail closed. This metadata declares detection rules only and must
 never contain credentials or tenant state.
 
+Market-search venue skills also carry their own market-cost runbook. It tells
+the Market Search Agent how to retrieve bounded public order-book depth and a
+current official regular/default taker fee for each supported product. The
+Agent supplies those verified numbers to fx's deterministic cost calculator;
+the calculator and Platform do not contain per-exchange fee tables or CLI
+adapters.
+
 # Current Layout
 
 ### Routers & Runtime

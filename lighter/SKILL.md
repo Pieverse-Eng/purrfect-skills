@@ -40,6 +40,21 @@ Pick the matching command group below, then read that reference before acting.
 | Fixed 0.05% transaction fee status / approval | Pasting or configuring Lighter API private keys |
 | Enable/disable Lighter Trading | Cross-venue arb execution |
 
+## Market Cost
+
+- For an exact verified Spot or perpetual market, retrieve bounded depth with
+  `purr lighter order-book-depth --market <SYMBOL> --market-type <spot|perp> --limit 100`.
+- Read `taker_fee` from
+  `purr lighter market --market <SYMBOL> --market-type <spot|perp>` and multiply
+  that decimal rate by `10000` for `takerFeeBps`. The current official Standard
+  Account fee is zero for both Spot and perpetual executions; use the live
+  market value when it is present and do not substitute Premium Account tiers.
+- Fee source: `https://docs.lighter.xyz/trading/trading-fees`. The Pieverse
+  execution path adds the separately documented `0.05%` transaction fee, so
+  pass `additionalFeeBps: "5"`.
+- Use `baseSizePerUnit: "1"` only when the exact market response confirms the
+  depth sizes are base-asset amounts; otherwise exclude the candidate.
+
 ## Core Rules
 
 1. Use `purr lighter <command>` for every Lighter action. Do not call Lighter

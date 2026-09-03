@@ -48,6 +48,10 @@ do not require credentials.
 - For Futures, fetch `https://futures.kraken.com/api/charts/v1/trade`
   directly with the URL-fetch tool to discover symbols that have trade
   candles. Do not use `curl` or another terminal command for Charts API URLs.
+  When both linear (`PF_`) and inverse (`PI_`) perpetuals match the same
+  underlying, prefer the linear contract for a reference-notional cost
+  comparison. Do not stop after finding an inverse contract or exclude Kraken
+  before checking for the matching linear contract.
   Verify the selected symbol with `kraken futures ticker <SYMBOL> -o json`.
   Accept only an unsuspended ticker whose returned symbol, pair, and product
   tag match the requested asset and product. Use the returned symbol exactly
@@ -58,6 +62,38 @@ do not require credentials.
   - `https://futures.kraken.com/api/charts/v1/trade/<SYMBOL>/1h?count=21`
   - `https://futures.kraken.com/api/charts/v1/trade/<SYMBOL>/4h?count=21`
 - Return at most the latest 20 candles per timeframe.
+
+### Market Cost
+
+- For Spot, retrieve bounded depth with
+  `kraken orderbook <PAIR> --count 100 -o json`. Use the exact pair response's
+  first taker tier from `fees`; the tier entry is `[minimumVolume, percent]`, so
+  multiply the percentage by `100` for `takerFeeBps`. Do not use `fees_maker`.
+- For Futures, verify the exact contract with
+  `kraken futures ticker <SYMBOL> -o json`. Run
+  `kraken futures instruments -o json` once to obtain its `contractSize`,
+  `base`, `quote`, and `tradeable` fields. This command returns a complete
+  catalog and may be retained or truncated; use `read_tool_result` with the
+  exact symbol to read the matching instrument, and never rerun or
+  shell-filter the catalog.
+- For Futures cost depth, run
+  `kraken futures orderbook <SYMBOL> -o json`. Do not treat the ticker's
+  `bidSize` or `askSize` as the complete book. The response contains
+  `orderBook.bids` and `orderBook.asks` as `[price, size]` rows; normalize bids
+  to descending price and asks to ascending price before cost calculation,
+  and retain only enough current levels to cover the caller's exact reference
+  notional. If the result is retained or truncated, use `read_tool_result`
+  with bounded byte ranges instead of rerunning or shell-filtering it. Pass the
+  verified instrument `contractSize` as `baseSizePerUnit`, and exclude Kraken
+  for insufficient depth only when the retrieved order book cannot fill the
+  requested side. The official regular Futures taker fee is `0.05%`
+  (`takerFeeBps: "5"`).
+- Fee source: `https://www.kraken.com/features/fee-schedule`. Use only the
+  default/lowest-volume tier, exclude account-volume discounts, and pass
+  `additionalFeeBps: "0"`.
+- Spot order-book sizes are base-asset quantities (`baseSizePerUnit: "1"`).
+  Kraken's Futures instrument response defines `contractSize`; use it only
+  after the exact instrument also identifies the expected base and quote.
 
 ## Scope
 
