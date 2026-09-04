@@ -58,6 +58,41 @@ the command reports an authentication error.
   action and wait for explicit user confirmation.
 - Prefer `okx-cex-market` for prices. Do not place trades from market data alone.
 
+## Market Search
+
+For a host-provided read-only market-search request, use this section directly;
+do not load a vendor skill.
+
+- For a stock or tokenized-equity Spot request, run
+  `okx market instruments --instType SPOT --json` once to read the live Spot
+  catalog. The result can be retained or truncated; search its exact result
+  handle with `read_tool_result` using the canonical ticker and issuer name.
+- Inspect matching `instId`, `baseCcy`, `quoteCcy`, instrument identity, and
+  `state`. Accept only an exact identity match whose state is `live`. OKX
+  stock-token base currencies may add a venue-specific prefix such as `X`;
+  treat that only as a candidate hint and verify it from OKX-provided metadata.
+- A failed lookup of `<TICKER>-USDT` is not evidence that OKX has no stock Spot
+  listing. Do not confuse Spot stock tokens with `instCategory=3` stock-token
+  perpetuals, and do not shell-filter or rerun the complete catalog.
+
+## Market Cost
+
+- For an exact verified Spot or linear USDT perpetual (`SWAP`), retrieve
+  bounded public depth with `okx market orderbook <INST_ID> --sz 100 --json` and
+  instrument metadata with
+  `okx market instruments --instType <SPOT|SWAP> --instId <INST_ID> --json`.
+- OKX's official regular/default taker fee is `0.1%` for standard Spot
+  (`takerFeeBps: "10"`) and `0.05%` for perpetual/futures
+  (`takerFeeBps: "5"`). These defaults apply only when the exact instrument is
+  in the standard fee group; exclude instruments whose special fee group cannot
+  be verified.
+- Fee source: `https://www.okx.com/en-gb/help/trading-fee-rules-faq`. Do not
+  call the authenticated `okx account fees` during public venue discovery, and
+  exclude VIP or account-specific rates. Pass `additionalFeeBps: "0"`.
+- Spot depth sizes are base-asset quantities. For a linear swap, use `ctVal` as
+  `baseSizePerUnit` only when `ctValCcy` confirms the base asset; otherwise
+  exclude the candidate.
+
 ## References
 
 This top-level skill is a router. Read the matching official reference before

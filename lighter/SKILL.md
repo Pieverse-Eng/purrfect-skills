@@ -29,6 +29,22 @@ Access has two independent gates:
 
 Pick the matching command group below, then read that reference before acting.
 
+## Market Search
+
+For a host-provided read-only market-search request, use this section directly.
+Public Lighter market data does not require an account.
+
+- For a stock or tokenized-equity Spot request, run
+  `purr lighter markets --market-type spot` once to read the live Spot catalog.
+  The result can be retained or truncated; search its exact result handle with
+  `read_tool_result` using the canonical ticker and issuer name.
+- Inspect matching symbol, display name, base, quote, market type, market id,
+  and active status fields. Resolve a candidate with
+  `purr lighter market --market <SYMBOL> --market-type spot` before accepting
+  it. Do not infer stock identity from a ticker substring alone.
+- A failed direct lookup of a guessed symbol is not evidence that Lighter has
+  no stock Spot listing. Do not shell-filter or rerun the complete catalog.
+
 ## Scope
 
 | In scope | Out of scope |
@@ -39,6 +55,21 @@ Pick the matching command group below, then read that reference before acting.
 | Secure withdraw (Ethereum) and fast withdraw (Arbitrum) | Account-to-account transfers (CLI does not support them) |
 | Fixed 0.05% transaction fee status / approval | Pasting or configuring Lighter API private keys |
 | Enable/disable Lighter Trading | Cross-venue arb execution |
+
+## Market Cost
+
+- For an exact verified Spot or perpetual market, retrieve bounded depth with
+  `purr lighter order-book-depth --market <SYMBOL> --market-type <spot|perp> --limit 100`.
+- Read `taker_fee` from
+  `purr lighter market --market <SYMBOL> --market-type <spot|perp>` and multiply
+  that decimal rate by `10000` for `takerFeeBps`. The current official Standard
+  Account fee is zero for both Spot and perpetual executions; use the live
+  market value when it is present and do not substitute Premium Account tiers.
+- Fee source: `https://docs.lighter.xyz/trading/trading-fees`. The Pieverse
+  execution path adds the separately documented `0.05%` transaction fee, so
+  pass `additionalFeeBps: "5"`.
+- Use `baseSizePerUnit: "1"` only when the exact market response confirms the
+  depth sizes are base-asset amounts; otherwise exclude the candidate.
 
 ## Core Rules
 

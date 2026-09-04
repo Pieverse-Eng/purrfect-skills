@@ -37,6 +37,27 @@ metadata:
 - Metadata must never contain credentials, authentication state, or tenant data.
 - The skill must document how to query public instruments and verify an exact
   ticker without requiring trading credentials.
+- If the venue can list tokenized equities or other stock-like Spot products,
+  the skill must document its live complete Spot-catalog command and the
+  venue-provided identity and status fields used to verify a listing. A failed
+  lookup of a guessed symbol is not evidence that no listing exists. When the
+  catalog result is retained or truncated, instruct the agent to search that
+  result with `read_tool_result` using the canonical ticker and issuer name.
+  Venue naming conventions may be documented as candidate-generation hints,
+  but do not maintain a fixed ticker alias table.
+- If the venue participates in market-order cost comparison, the skill must
+  also document how to retrieve bounded public order-book depth and a current
+  official public base/default taker fee for every supported product. Prefer a
+  fee returned by the exact public instrument response. Otherwise cite the
+  venue's official fee schedule and record its regular/default tier rate in the
+  prose runbook.
+- Fee instructions must state the source unit and its conversion to basis
+  points. They must exclude VIP tiers, rebates, referral or token-payment
+  discounts, and temporary account-specific rates. Missing or inapplicable fee
+  evidence must exclude that candidate from cost comparison; it must never be
+  treated as zero.
+- Keep venue-specific commands and response semantics in the venue skill. Do
+  not add fee tables, command templates, or venue adapters to Platform or fx.
 
 ## Wrapper and vendor skills
 
