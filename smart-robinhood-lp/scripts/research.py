@@ -294,10 +294,40 @@ def validate_token_control_evidence(value: Any) -> None:
                 or BYTES32_RE.fullmatch(evidence["runtimeCodeHash"]) is None
             )
         )
-        or evidence.get("transferTaxAssessment") not in {"KNOWN_PRESENT", "NOT_KNOWN"}
+        or evidence.get("transferTaxAssessment")
+        not in {"KNOWN_PRESENT", "MEASURED_ABSENT", "UNMEASURED"}
         or not _reasons(evidence.get("reasonCodes"))
     ):
         raise ValueError("token control evidence invalid")
+
+    tax_evidence = _object(
+        evidence.get("transferTaxEvidence"), "transfer tax evidence invalid"
+    )
+    method = tax_evidence.get("method")
+    measured_at_block = tax_evidence.get("measuredAtBlock")
+    max_tax_bps = tax_evidence.get("maxObservedTaxBps")
+    directions = _list(
+        tax_evidence.get("observedDirections"), "transfer tax directions invalid"
+    )
+    if (
+        method not in {None, "NATIVE_ASSET", "V3_EXECUTED_SWAP_TRANSFERS"}
+        or (
+            measured_at_block is not None
+            and (
+                not isinstance(measured_at_block, str)
+                or not measured_at_block.isdigit()
+            )
+        )
+        or not _nonnegative_int(tax_evidence.get("observedTransactions"))
+        or any(direction not in {"POOL_IN", "POOL_OUT"} for direction in directions)
+        or len(set(directions)) != len(directions)
+        or (max_tax_bps is not None and not _decimal(max_tax_bps))
+    ):
+        raise ValueError("transfer tax evidence invalid")
+    if evidence["transferTaxAssessment"] != "UNMEASURED" and (
+        method is None or measured_at_block is None
+    ):
+        raise ValueError("measured transfer tax evidence missing")
     if evidence.get("proxyEvidence") is not None:
         validate_proxy_slots(evidence["proxyEvidence"])
     selectors = _list(
@@ -346,6 +376,11 @@ def validate_candidate(value: Any) -> None:
         validate_token_control_evidence(evidence)
         if evidence.get("tokenAddress", "").lower() != tokens[index].get("address", "").lower():
             raise ValueError("candidate token control evidence address mismatch")
+    if candidate.get("status") == "CANDIDATE" and any(
+        evidence.get("transferTaxAssessment") != "MEASURED_ABSENT"
+        for evidence in token_controls
+    ):
+        raise ValueError("candidate transfer tax gate invalid")
     risk_flags = _list(candidate.get("riskFlags"), "candidate risk flags invalid")
     for raw_flag in risk_flags:
         flag = _object(raw_flag, "candidate risk flag invalid")

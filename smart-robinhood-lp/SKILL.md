@@ -94,11 +94,14 @@ When answering:
    incomplete volatility history. The
    reviewed v4 deployment is “v4-architecture,” not claimed official Uniswap.
 
-Token control evidence is a bounded static bytecode and EIP-1967 slot scan. A
-`NOT_KNOWN` transfer-tax result means only that the platform has no reviewed
-positive evidence; it does not prove that arbitrary or reconfigurable token tax
-and admin behavior is absent. Preserve `TOKEN_STATIC_SCAN_LIMITED` in the user
-explanation and never turn this evidence into a token-safety guarantee.
+Token control evidence contains two independent checks. The bytecode/EIP-1967
+scan is bounded static evidence and cannot prove transfer-tax absence. Transfer
+tax must come from executed-transfer measurement: only `MEASURED_ABSENT` clears
+that gate, while `KNOWN_PRESENT` and `UNMEASURED` stay `WAIT`. Preserve the
+measurement method, block, directions, transaction count, and reason codes in
+the explanation. Never describe one-direction, ambiguous, failed, or currently
+unsupported V4 evidence as tax-free, and never turn either check into a general
+token-safety guarantee.
 
 If the document is stale, former candidates must already be downgraded to
 `WAIT/DOCUMENT_STALE`. Do not override that downgrade with fresher facts from

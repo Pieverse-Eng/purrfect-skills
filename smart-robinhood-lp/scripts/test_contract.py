@@ -115,8 +115,15 @@ def valid_candidate(status="WAIT"):
                     "eip1967Beacon": ZERO_HASH,
                 },
                 "observedControlSelectors": [],
-                "transferTaxAssessment": "NOT_KNOWN",
-                "reasonCodes": ["TOKEN_STATIC_SCAN_LIMITED"],
+                "transferTaxAssessment": "UNMEASURED",
+                "transferTaxEvidence": {
+                    "method": None,
+                    "measuredAtBlock": None,
+                    "observedTransactions": 0,
+                    "observedDirections": [],
+                    "maxObservedTaxBps": None,
+                },
+                "reasonCodes": ["TOKEN_STATIC_SCAN_LIMITED", "TRANSFER_TAX_UNMEASURED"],
             },
             {
                 "tokenAddress": TOKEN,
@@ -127,8 +134,19 @@ def valid_candidate(status="WAIT"):
                     "eip1967Beacon": ZERO_HASH,
                 },
                 "observedControlSelectors": ["OWNER", "MINT"],
-                "transferTaxAssessment": "NOT_KNOWN",
-                "reasonCodes": ["TOKEN_CONTROL_SELECTOR_OBSERVED", "TOKEN_STATIC_SCAN_LIMITED"],
+                "transferTaxAssessment": "UNMEASURED",
+                "transferTaxEvidence": {
+                    "method": None,
+                    "measuredAtBlock": None,
+                    "observedTransactions": 0,
+                    "observedDirections": [],
+                    "maxObservedTaxBps": None,
+                },
+                "reasonCodes": [
+                    "TOKEN_CONTROL_SELECTOR_OBSERVED",
+                    "TOKEN_STATIC_SCAN_LIMITED",
+                    "TRANSFER_TAX_UNMEASURED",
+                ],
             },
         ],
         "riskFlags": [],
@@ -273,9 +291,25 @@ class ContractTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "address mismatch"):
             research.validate_document(payload)
 
+    def test_rejects_candidate_without_measured_absent_transfer_tax(self):
+        payload = valid_payload()
+        payload["data"]["candidates"][0]["status"] = "CANDIDATE"
+        payload["data"]["candidates"][0]["reasonCodes"] = ["ALL_CURRENT_GATES_PASS"]
+        with self.assertRaisesRegex(ValueError, "transfer tax gate"):
+            research.validate_document(payload)
+
     def test_rejects_candidate_inside_stale_document(self):
         payload = valid_payload(stale=True)
         payload["data"]["candidates"][0]["status"] = "CANDIDATE"
+        for evidence in payload["data"]["candidates"][0]["tokenControlEvidence"]:
+            evidence["transferTaxAssessment"] = "MEASURED_ABSENT"
+            evidence["transferTaxEvidence"] = {
+                "method": "V3_EXECUTED_SWAP_TRANSFERS",
+                "measuredAtBlock": "100",
+                "observedTransactions": 2,
+                "observedDirections": ["POOL_IN", "POOL_OUT"],
+                "maxObservedTaxBps": "0",
+            }
         with self.assertRaisesRegex(ValueError, "stale document"):
             research.validate_document(payload)
 
