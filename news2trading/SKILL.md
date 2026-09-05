@@ -135,13 +135,24 @@ When the platform activates the Agent with a Purr-Fect News batch, read
 that decision contract. A Profile match establishes topical interest only; it
 is not evidence of market impact or direction.
 
-Keep routine analysis in the isolated run. Return `NO_REPLY` when no item merits
-further market research. Otherwise hand one bounded, sourced candidate to the
-existing trading-suggestion workflow. That workflow remains responsible for
-validating the instrument and live market context and for producing any Trade
-Setup shown to the user.
+Keep analysis in the isolated run. This is research-only, not a user request to
+prepare an order: call `research_market` without `order`, and do not apply
+default amount, product, leverage, account preflight, or funding prompts.
+Return `NO_REPLY` or one concise sourced Trading Idea under the reference below.
+An Idea is not a Confirm Trade card. If the user later asks to prepare a trade,
+follow the existing trading workflow and its confirmation rules.
+
+OpenClaw delivers a substantive result and records it in the destination
+conversation (the PawPilot News Topic on Telegram); `NO_REPLY` stays silent. Do not create topics, send
+messages through tools, or copy the hidden analysis into another session.
+Hermes currently supports isolated analysis only; its result is inspected
+separately and must not be described as delivered to the user.
 
 ## Errors
+
+For a background batch, keep diagnostic failures in the isolated run; return
+`NO_REPLY` if they leave no supported idea. The user-facing error responses
+below apply to the user's explicit Profile or news-reading requests.
 
 - `400 invalid_news_profile`: correct the reported field; do not weaken the
   server constraint.
