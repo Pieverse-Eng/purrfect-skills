@@ -154,12 +154,19 @@ def valid_candidate(status="WAIT"):
     }
 
 
-def valid_payload(*, stale=False):
+def valid_payload(*, stale=False, funnel_policy_version="rh-lp-funnel.v1"):
+    funnel_policy = research.FUNNEL_POLICIES[funnel_policy_version]
+    deep_verification_limit = funnel_policy["deepVerificationLimit"]
+    selection_buckets = (
+        {"liquidityVolume": 10, "new": 5, "heat": 5, "rotation": 5}
+        if funnel_policy_version == "rh-lp-funnel.v1"
+        else {"liquidityVolume": 1, "new": 1, "heat": 1, "rotation": 1}
+    )
     return {
         "success": True,
         "data": {
             "schemaVersion": "rh-lp.v2",
-            "funnelPolicyVersion": "rh-lp-funnel.v1",
+            "funnelPolicyVersion": funnel_policy_version,
             "scorePolicyVersion": "rh-lp-score.v2",
             "venueRegistryVersion": "rh-lp-venues.v1",
             "chainId": 4663,
@@ -181,20 +188,15 @@ def valid_payload(*, stale=False):
                     "heat": 40,
                     "rotation": 0,
                 },
-                "deepVerificationLimit": 25,
-                "deepVerificationPlanned": 25,
+                "deepVerificationLimit": deep_verification_limit,
+                "deepVerificationPlanned": deep_verification_limit,
                 "deepVerificationCompleted": 1,
-                "deepVerificationPending": 24,
+                "deepVerificationPending": deep_verification_limit - 1,
                 "economicsBacklog": {"market": 24, "direct": 0},
                 "verified24h": 1,
                 "frontierSelectionRule": "80 liquidity_volume + 40 new + 40 heat + 40 source_diversity_rotation",
-                "selectionBuckets": {
-                    "liquidityVolume": 10,
-                    "new": 5,
-                    "heat": 5,
-                    "rotation": 5,
-                },
-                "selectionRule": "10 liquidity_volume + 5 new + 5 heat + 5 rotation",
+                "selectionBuckets": selection_buckets,
+                "selectionRule": funnel_policy["selectionRule"],
             },
             "sourceReceipts": [
                 {
@@ -251,11 +253,66 @@ class ContractTest(unittest.TestCase):
         self.assertEqual(document["coverage"]["frontierLimit"], 200)
         self.assertEqual(document["candidates"][0]["status"], "WAIT")
 
+    def test_validates_funnel_v2_document(self):
+        document = research.validate_document(
+            valid_payload(funnel_policy_version="rh-lp-funnel.v2")
+        )
+        self.assertEqual(document["coverage"]["deepVerificationLimit"], 4)
+        self.assertEqual(
+            document["coverage"]["selectionRule"],
+            "1 liquidity_volume + 1 new + 1 heat + 1 rotation",
+        )
+
     def test_rejects_old_or_changed_policy_versions(self):
         payload = valid_payload()
         payload["data"]["schemaVersion"] = "rh-lp.v1"
         with self.assertRaisesRegex(ValueError, "schemaVersion"):
             research.validate_document(payload)
+
+    def test_rejects_unknown_funnel_policy_version(self):
+        payload = valid_payload()
+        payload["data"]["funnelPolicyVersion"] = "rh-lp-funnel.v3"
+        with self.assertRaisesRegex(ValueError, "funnelPolicyVersion"):
+            research.validate_document(payload)
+
+    def test_rejects_cross_version_funnel_contract_mix(self):
+        mutations = {
+            "limit": ("deepVerificationLimit", 25),
+            "selection": (
+                "selectionRule",
+                "10 liquidity_volume + 5 new + 5 heat + 5 rotation",
+            ),
+        }
+        for name, (field, value) in mutations.items():
+            with self.subTest(name=name):
+                payload = valid_payload(funnel_policy_version="rh-lp-funnel.v2")
+                payload["data"]["coverage"][field] = value
+                with self.assertRaisesRegex(ValueError, "funnel policy"):
+                    research.validate_document(payload)
+
+    def test_rejects_bucket_counts_that_contradict_the_selection_rule(self):
+        payload = valid_payload(funnel_policy_version="rh-lp-funnel.v2")
+        payload["data"]["coverage"]["selectionBuckets"] = {
+            "liquidityVolume": 4,
+            "new": 0,
+            "heat": 0,
+            "rotation": 0,
+        }
+        with self.assertRaisesRegex(ValueError, "selectionBuckets"):
+            research.validate_document(payload)
+
+    def test_accepts_deterministic_partial_selection_prefix(self):
+        payload = valid_payload(funnel_policy_version="rh-lp-funnel.v2")
+        payload["data"]["coverage"]["deepVerificationPlanned"] = 2
+        payload["data"]["coverage"]["deepVerificationCompleted"] = 1
+        payload["data"]["coverage"]["deepVerificationPending"] = 1
+        payload["data"]["coverage"]["selectionBuckets"] = {
+            "liquidityVolume": 1,
+            "new": 1,
+            "heat": 0,
+            "rotation": 0,
+        }
+        research.validate_document(payload)
 
     def test_rejects_floating_point_economics(self):
         payload = valid_payload()

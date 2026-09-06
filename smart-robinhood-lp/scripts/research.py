@@ -28,6 +28,29 @@ DECIMAL_RE = re.compile(r"^-?\d+(?:\.\d+)?$")
 REASON_RE = re.compile(r"^[A-Z][A-Z0-9_]*$")
 JOB_ID_RE = re.compile(r"^[a-f0-9]{64}$")
 
+FUNNEL_POLICIES = {
+    "rh-lp-funnel.v1": {
+        "deepVerificationLimit": 25,
+        "selectionRule": "10 liquidity_volume + 5 new + 5 heat + 5 rotation",
+        "selectionBucketQuotas": {
+            "liquidityVolume": 10,
+            "new": 5,
+            "heat": 5,
+            "rotation": 5,
+        },
+    },
+    "rh-lp-funnel.v2": {
+        "deepVerificationLimit": 4,
+        "selectionRule": "1 liquidity_volume + 1 new + 1 heat + 1 rotation",
+        "selectionBucketQuotas": {
+            "liquidityVolume": 1,
+            "new": 1,
+            "heat": 1,
+            "rotation": 1,
+        },
+    },
+}
+
 
 class FailClosedRedirects(HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
@@ -435,13 +458,15 @@ def validate_document(payload: Any) -> dict[str, Any]:
     document = _object(envelope.get("data"), "response document missing")
     expected_versions = {
         "schemaVersion": "rh-lp.v2",
-        "funnelPolicyVersion": "rh-lp-funnel.v1",
         "scorePolicyVersion": "rh-lp-score.v2",
         "venueRegistryVersion": "rh-lp-venues.v1",
     }
     for field, expected in expected_versions.items():
         if document.get(field) != expected:
             raise ValueError(f"unsupported {field}")
+    funnel_policy = FUNNEL_POLICIES.get(document.get("funnelPolicyVersion"))
+    if funnel_policy is None:
+        raise ValueError("unsupported funnelPolicyVersion")
     if (
         document.get("chainId") != 4663
         or not isinstance(document.get("epoch"), str)
@@ -455,21 +480,24 @@ def validate_document(payload: Any) -> dict[str, Any]:
     ):
         raise ValueError("document contract invalid")
     coverage = _object(document.get("coverage"), "funnel coverage missing")
+    deep_verification_limit = funnel_policy["deepVerificationLimit"]
     if (
         coverage.get("frontierLimit") != 200
-        or coverage.get("deepVerificationLimit") != 25
+        or coverage.get("deepVerificationLimit") != deep_verification_limit
         or not _nonnegative_int(coverage.get("mergedCandidateCount"))
         or not _nonnegative_int(coverage.get("frontierCandidateCount"))
         or coverage["frontierCandidateCount"] > 200
         or not _nonnegative_int(coverage.get("deepVerificationPlanned"))
-        or coverage["deepVerificationPlanned"] > 25
+        or coverage["deepVerificationPlanned"] > deep_verification_limit
         or not _nonnegative_int(coverage.get("deepVerificationCompleted"))
         or coverage["deepVerificationCompleted"] > coverage["deepVerificationPlanned"]
         or not _nonnegative_int(coverage.get("deepVerificationPending"))
+        or coverage["deepVerificationCompleted"] + coverage["deepVerificationPending"]
+        != coverage["deepVerificationPlanned"]
         or not _nonnegative_int(coverage.get("verified24h"))
         or coverage.get("frontierSelectionRule")
         != "80 liquidity_volume + 40 new + 40 heat + 40 source_diversity_rotation"
-        or coverage.get("selectionRule") != "10 liquidity_volume + 5 new + 5 heat + 5 rotation"
+        or coverage.get("selectionRule") != funnel_policy["selectionRule"]
     ):
         raise ValueError("funnel policy invalid")
     source_rows = _object(coverage.get("sourceFetchedRows"), "source row coverage missing")
@@ -481,6 +509,14 @@ def validate_document(payload: Any) -> dict[str, Any]:
             not _nonnegative_int(count) for count in buckets.values()
         ):
             raise ValueError(f"{field} invalid")
+        if field == "selectionBuckets":
+            remaining = coverage["deepVerificationPlanned"]
+            expected_buckets = {}
+            for bucket, quota in funnel_policy["selectionBucketQuotas"].items():
+                expected_buckets[bucket] = min(quota, remaining)
+                remaining -= expected_buckets[bucket]
+            if buckets != expected_buckets:
+                raise ValueError("selectionBuckets invalid")
     backlog = _object(coverage.get("economicsBacklog"), "economics backlog missing")
     if any(
         not isinstance(backlog.get(lane), int) or backlog[lane] < 0

@@ -22,3 +22,5 @@ jobs:
           python3 -m unittest discover -s scripts -p 'test_check_market_search_metadata.py'
       - name: MiniMax H3 Max contract regression
         run: python3 -m unittest discover -s minimax-h3-max/scripts -p 'test_*.py'
+      - name: Smart Robinhood LP contract regression
+        run: python3 -m unittest discover -s smart-robinhood-lp/scripts -p 'test_*.py'
