@@ -20,15 +20,19 @@ The helper reads `PIEVERSE_APP_API_URL`, then
 the user and do not call GeckoTerminal, DexPaprika, DexScreener, vfat, a chain
 RPC, factory, PoolManager, or Quoter directly from the skill.
 
-Validation requires `rh-lp.v2`, `rh-lp-funnel.v1`, `rh-lp-score.v2`,
-`rh-lp-venues.v1`, and `chainId=4663`. Stop on a malformed or different-version
-response. Never improvise missing evidence.
+Validation requires `rh-lp.v2`, `rh-lp-score.v2`, `rh-lp-venues.v1`, and
+`chainId=4663`. During the bounded funnel migration it accepts exactly two
+version-bound contracts: `rh-lp-funnel.v1` with a 25-pool limit and
+`10 + 5 + 5 + 5` selection, or `rh-lp-funnel.v2` with a 4-pool limit and
+`1 + 1 + 1 + 1` selection. It rejects unknown versions and cross-version field
+mixes. Stop on a malformed or unsupported response. Never improvise missing
+evidence.
 
 The feed is bounded to the current epoch's discovered scope. Say exactly that.
 Do not call it the whole Robinhood Chain market or an exhaustive Top list. Use
 the supplied source receipts and per-page/batch scope receipts to disclose
 fetched and accepted rows, merged candidates, the 200-pool frontier, and the
-25-pool deep-analysis progress.
+versioned deep-analysis limit and progress reported by the validated contract.
 
 ## Analyze an exact user-supplied identifier
 
