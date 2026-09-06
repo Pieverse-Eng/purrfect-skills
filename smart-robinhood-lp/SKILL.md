@@ -67,6 +67,16 @@ respect `Retry-After` and do not create parallel retries.
 
 ## Interpret outcomes
 
+- Treat each candidate's server-emitted `status` as its authoritative
+  classification. Copy that enum verbatim before interpreting identity,
+  economics, risk flags, or `reasonCodes`; never infer, promote, demote, or
+  relabel a candidate from those supporting fields.
+- In particular, a candidate whose source `status` is `DISCOVERY_ONLY` remains
+  `DISCOVERY_ONLY` even when its identity is `VERIFIED`, its economics are
+  `INCOMPLETE`, or it looks worth monitoring after missing evidence arrives.
+  The ordinary verb “wait” may describe a future next step, but the uppercase
+  status `WAIT` is reserved exclusively for candidates whose source
+  `status == "WAIT"`.
 - `CANDIDATE`: every current identity, 24-hour coverage, liquidity, activity,
   trusted pool-age, economics, independent 50 bps measurement-buffer, and
   volatility/impermanent-loss stress gate passes. Say “worth further research,”
@@ -78,22 +88,27 @@ respect `Retry-After` and do not create parallel retries.
 
 When answering:
 
-1. State `generatedAt`, `isStale`, `documentStatus`, source receipts, and the
+1. First build an `id -> status` map directly from the validated candidate
+   objects. Count all three source statuses and, immediately before sending,
+   verify every discussed pool is under its mapped source status. If any prose
+   label or summary count disagrees, correct the prose; do not reinterpret the
+   source enum.
+2. State `generatedAt`, `isStale`, `documentStatus`, source receipts, and the
    discovery/deep-analysis coverage relevant to the claim.
-2. Put `CANDIDATE` first, then `WAIT`, then `DISCOVERY_ONLY`, preserving server
+3. Put `CANDIDATE` first, then `WAIT`, then `DISCOVERY_ONLY`, preserving server
    rank within each group.
-3. For each discussed pool, show exact pool address or pool ID, token symbols,
+4. For each discussed pool, show exact pool address or pool ID, token symbols,
    protocol label, selection bucket, identity status/venue, and all relevant
    `reasonCodes`.
-4. For completed economics, report the exact decimal strings for the `$1,000`
+5. For completed economics, report the exact decimal strings for the `$1,000`
    reference position, 24-hour volume and fees, entry/exit cost, impermanent
    loss, net benefit, margin basis points, 50 bps measurement buffer,
    volatility, and stress result. Never recalculate base units with floating
    point.
-5. Explain that source headline APR is discovery evidence only. Platform
+6. Explain that source headline APR is discovery evidence only. Platform
    economics come from a finalized 24-hour chain window and executable quotes;
    they are not APY or promised yield.
-6. Explain unknown hooks, unsupported semantic identity, transfer-tax tokens,
+7. Explain unknown hooks, unsupported semantic identity, transfer-tax tokens,
    token upgrade/admin-control evidence, missing coverage, young pools, and
    incomplete volatility history. The
    reviewed v4 deployment is “v4-architecture,” not claimed official Uniswap.
