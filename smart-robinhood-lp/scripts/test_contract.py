@@ -10,6 +10,7 @@ from unittest.mock import patch
 from urllib.error import URLError
 
 MODULE_PATH = Path(__file__).with_name("research.py")
+SKILL_PATH = Path(__file__).parents[1] / "SKILL.md"
 SPEC = importlib.util.spec_from_file_location("smart_robinhood_lp_research", MODULE_PATH)
 assert SPEC and SPEC.loader
 research = importlib.util.module_from_spec(SPEC)
@@ -248,10 +249,33 @@ def valid_job(state="QUEUED_ECONOMICS"):
 
 
 class ContractTest(unittest.TestCase):
+    def test_skill_treats_server_status_as_authoritative(self):
+        skill = SKILL_PATH.read_text(encoding="utf-8")
+        self.assertIn("server-emitted `status` as its authoritative", skill)
+        self.assertIn("never infer, promote, demote, or\n  relabel", skill)
+        self.assertIn("reserved exclusively for candidates whose source", skill)
+        self.assertIn('`status == "WAIT"`', skill)
+        self.assertIn("build an `id -> status` map", skill)
+        self.assertIn(
+            "verify every discussed pool is under its mapped source status", skill
+        )
+
     def test_validates_v2_document(self):
         document = research.validate_document(valid_payload())
         self.assertEqual(document["coverage"]["frontierLimit"], 200)
         self.assertEqual(document["candidates"][0]["status"], "WAIT")
+
+    def test_preserves_discovery_only_status_when_economics_are_incomplete(self):
+        payload = valid_payload()
+        candidate = payload["data"]["candidates"][0]
+        candidate["status"] = "DISCOVERY_ONLY"
+        candidate["reasonCodes"] = ["RPC_READ_FAILED"]
+        candidate["economics"]["status"] = "INCOMPLETE"
+        candidate["economics"]["reasonCodes"] = ["WINDOW_INCOMPLETE"]
+
+        document = research.validate_document(payload)
+
+        self.assertEqual(document["candidates"][0]["status"], "DISCOVERY_ONLY")
 
     def test_validates_funnel_v2_document(self):
         document = research.validate_document(
