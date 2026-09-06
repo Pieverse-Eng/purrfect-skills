@@ -68,6 +68,7 @@ adapters.
 | `opensea` | OpenSea entry point — execute NFT buy/sell via `purr opensea`, and route read operations to `opensea-vendor`. |
 | `pancake` | PancakeSwap planning and BSC execution — swaps, liquidity, farms, LP fees, rewards, and PCS Hub handoffs. |
 | `predict-fun` | Predict.fun YES/NO markets on BNB Chain — discovery, quotes, orders, approvals, position actions, and streaming through `purr predict-fun`. |
+| `smart-robinhood-lp` | Read-only Robinhood Chain LP discovery and exact token/pool analysis from the dynamic `rh-lp.v2` evidence API; never signs or moves funds. |
 
 ### Data & Intelligence
 
