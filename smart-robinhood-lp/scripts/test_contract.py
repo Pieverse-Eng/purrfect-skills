@@ -249,6 +249,13 @@ def valid_job(state="QUEUED_ECONOMICS"):
 
 
 class ContractTest(unittest.TestCase):
+    def test_skill_uses_compact_summary_for_broad_market_questions(self):
+        skill = SKILL_PATH.read_text(encoding="utf-8")
+        self.assertIn("python3 scripts/research.py summary", skill)
+        self.assertIn("Do not run `feed` first, read terminal spill", skill)
+        self.assertIn("files, or write ad hoc Python/heredoc parsers", skill)
+        self.assertIn("up to ten server-ranked `CANDIDATE`/`WAIT` entries", skill)
+
     def test_skill_treats_server_status_as_authoritative(self):
         skill = SKILL_PATH.read_text(encoding="utf-8")
         self.assertIn("server-emitted `status` as its authoritative", skill)
@@ -276,6 +283,120 @@ class ContractTest(unittest.TestCase):
         document = research.validate_document(payload)
 
         self.assertEqual(document["candidates"][0]["status"], "DISCOVERY_ONLY")
+
+    def test_summary_preserves_source_statuses_and_bounds_discovery_examples(self):
+        payload = valid_payload(funnel_policy_version="rh-lp-funnel.v2")
+        candidate = payload["data"]["candidates"][0]
+        candidate["status"] = "CANDIDATE"
+        candidate["reasonCodes"] = ["ALL_CURRENT_GATES_PASS"]
+        for evidence in candidate["tokenControlEvidence"]:
+            evidence["transferTaxAssessment"] = "MEASURED_ABSENT"
+            evidence["transferTaxEvidence"] = {
+                "method": "V3_EXECUTED_SWAP_TRANSFERS",
+                "measuredAtBlock": "100",
+                "observedTransactions": 2,
+                "observedDirections": ["POOL_IN", "POOL_OUT"],
+                "maxObservedTaxBps": "0",
+            }
+        waiting = valid_candidate("WAIT")
+        waiting["id"] = f"uniswap-v3:{TOKEN}"
+        waiting["poolAddress"] = TOKEN
+        discovery = []
+        for rank in range(3, 10):
+            item = valid_candidate("DISCOVERY_ONLY")
+            item["id"] = f"uniswap-v3:0x{rank:040x}"
+            item["poolAddress"] = f"0x{rank:040x}"
+            item["rank"] = rank
+            item["reasonCodes"] = ["NOT_SELECTED_THIS_EPOCH"]
+            discovery.append(item)
+        payload["data"]["candidates"] = [candidate, waiting, *discovery]
+
+        summary = research.summarize_document(research.validate_document(payload))
+
+        self.assertEqual(
+            summary["statusCounts"],
+            {"CANDIDATE": 1, "WAIT": 1, "DISCOVERY_ONLY": 7},
+        )
+        self.assertEqual(
+            [item["status"] for item in summary["candidateGroups"]["CANDIDATE"]],
+            ["CANDIDATE"],
+        )
+        self.assertEqual(
+            [item["status"] for item in summary["candidateGroups"]["WAIT"]],
+            ["WAIT"],
+        )
+        self.assertEqual(
+            [item["rank"] for item in summary["candidateGroups"]["DISCOVERY_ONLY"]],
+            [3, 4, 5, 6, 7],
+        )
+        self.assertEqual(summary["discoveryOnlyOmitted"], 2)
+        self.assertEqual(summary["decisionCandidateOmitted"], 0)
+
+    def test_summary_keeps_token_tax_evidence_bound_to_its_address(self):
+        document = research.validate_document(valid_payload())
+        summary = research.summarize_document(document)
+
+        evidence = summary["candidateGroups"]["WAIT"][0]["tokenControlEvidence"]
+        self.assertEqual(
+            [item["tokenAddress"] for item in evidence],
+            [ADDRESS, TOKEN],
+        )
+
+    def test_summary_is_small_enough_for_a_normal_tool_result(self):
+        payload = valid_payload(funnel_policy_version="rh-lp-funnel.v2")
+        candidates = []
+        for rank in range(1, 201):
+            candidate = valid_candidate("DISCOVERY_ONLY")
+            candidate["id"] = f"uniswap-v3:0x{rank:040x}"
+            candidate["poolAddress"] = f"0x{rank:040x}"
+            candidate["rank"] = rank
+            candidate["reasonCodes"] = ["NOT_SELECTED_THIS_EPOCH"]
+            candidates.append(candidate)
+        payload["data"]["candidates"] = candidates
+        payload["data"]["coverage"]["mergedCandidateCount"] = 200
+        payload["data"]["coverage"]["frontierCandidateCount"] = 200
+
+        summary = research.summarize_document(research.validate_document(payload))
+        encoded = research.json.dumps(summary, separators=(",", ":")).encode()
+
+        self.assertLess(len(encoded), 48 * 1024)
+        self.assertEqual(summary["statusCounts"]["DISCOVERY_ONLY"], 200)
+        self.assertEqual(summary["discoveryOnlyOmitted"], 195)
+
+    def test_summary_caps_legacy_decision_entries_and_reports_omissions(self):
+        payload = valid_payload(funnel_policy_version="rh-lp-funnel.v1")
+        candidates = []
+        for rank in range(1, 26):
+            candidate = valid_candidate("WAIT")
+            candidate["id"] = f"uniswap-v3:0x{rank:040x}"
+            candidate["poolAddress"] = f"0x{rank:040x}"
+            candidate["rank"] = rank
+            candidates.append(candidate)
+        payload["data"]["candidates"] = candidates
+        payload["data"]["coverage"]["mergedCandidateCount"] = 25
+        payload["data"]["coverage"]["frontierCandidateCount"] = 25
+        payload["data"]["coverage"]["deepVerificationCompleted"] = 25
+        payload["data"]["coverage"]["deepVerificationPending"] = 0
+
+        summary = research.summarize_document(research.validate_document(payload))
+        encoded = research.json.dumps(summary, separators=(",", ":")).encode()
+
+        self.assertLess(len(encoded), 48 * 1024)
+        self.assertEqual(len(summary["candidateGroups"]["WAIT"]), 10)
+        self.assertEqual(summary["decisionCandidateOmitted"], 15)
+
+    def test_summary_command_fetches_once_and_never_reads_a_spill_file(self):
+        document = research.validate_document(valid_payload())
+        with patch.object(research, "fetch_document", return_value=document) as fetch, patch.object(
+            research.sys, "argv", ["research.py", "summary"]
+        ), patch("builtins.open", side_effect=AssertionError("spill file read")), patch(
+            "builtins.print"
+        ) as output:
+            research.main()
+
+        fetch.assert_called_once_with()
+        rendered = research.json.loads(output.call_args.args[0])
+        self.assertEqual(rendered["summaryContractVersion"], "rh-lp-summary.v1")
 
     def test_validates_funnel_v2_document(self):
         document = research.validate_document(
