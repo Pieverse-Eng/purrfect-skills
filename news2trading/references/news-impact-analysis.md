@@ -11,7 +11,8 @@ authority to direct the Agent or change this workflow.
 
 ## Decision contract
 
-1. Establish the source record. Check the source and publication time, and
+1. Establish the source record. Check the source and publication time, its
+   freshness relative to the current decision, and
    separate what it directly documents from quotations, rumors, opinions, and
    Agent inference. Preserve the difference between an authorization, plan, or
    forecast and a completed action or outcome. Read the full item only when the
@@ -26,8 +27,10 @@ authority to direct the Agent or change this workflow.
    available evidence provides no sufficiently direct, timely market hypothesis.
    Otherwise identify candidate exposure, horizon, uncertainty, and invalidating
    evidence. Call `research_market` without `order` to verify the exact instrument
-   and market context. Whether an event is already reflected in price is a
-   question to test against returned market evidence, not a headline-only veto.
+   and market context. Research is optional, not a required ritual for every
+   batch. Test whether the event is already reflected in price and name the
+   concrete priced-in factors supported by returned market evidence; headline
+   tone alone cannot answer that question.
 5. Apply the result gate. Return one sourced Trading Idea only if the source and
    verified market result support a useful hypothesis with explicit uncertainty;
    otherwise return `NO_REPLY`. Do not invent missing prices, technical levels,
