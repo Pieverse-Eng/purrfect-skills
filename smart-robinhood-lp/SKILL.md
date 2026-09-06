@@ -8,7 +8,24 @@ description: "READ-ONLY Robinhood Chain LP discovery and return-to-risk research
 Use the Pieverse-hosted evidence API as the only fact source. This skill is a
 market scout, not an execution tool.
 
-## Read the current discovery feed
+## Read the current market summary
+
+```bash
+python3 scripts/research.py summary
+```
+
+Use `summary` for broad questions such as which pools are actionable, which
+need more evidence, or what the current market looks like. It validates the
+complete hosted document, then emits a bounded `rh-lp-summary.v1` view with
+exact status counts, up to ten server-ranked `CANDIDATE`/`WAIT` entries, and the
+first five server-ranked `DISCOVERY_ONLY` examples. The current
+`rh-lp-funnel.v2` deep-analysis limit is four, so all current decision entries
+fit. Always disclose nonzero `decisionCandidateOmitted` or
+`discoveryOnlyOmitted` counts. Do not run `feed` first, read terminal spill
+files, or write ad hoc Python/heredoc parsers for a broad market answer.
+
+Use the full feed only when the user explicitly asks to inspect the complete
+bounded frontier:
 
 ```bash
 python3 scripts/research.py feed
