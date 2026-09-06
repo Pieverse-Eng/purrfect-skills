@@ -3,6 +3,7 @@
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -17,22 +18,46 @@ except ModuleNotFoundError:
 
 
 class ContextMirrorError(Exception):
-	def __init__(self, code, message):
+	def __init__(self, code, message, *, channel_accepted=True):
 		super().__init__(message)
 		self.code = code
+		self.channel_accepted = channel_accepted
 
 	def diagnostic(self):
 		return {
 			'ok': False,
 			'code': self.code,
 			'error': str(self),
-			'channelAccepted': True,
+			'channelAccepted': self.channel_accepted,
 			'contextRecorded': False,
 		}
 
 
+def ensure_hermes_python():
+	# Agent terminal shells may select /usr/bin/python3, without Hermes modules.
+	# Use the image's existing venv; do not install packages or change global PATH.
+	python = '/opt/hermes/.venv/bin/python3'
+	if os.path.abspath(sys.executable) == python:
+		return
+	try:
+		os.execv(python, [python, *sys.argv])
+	except OSError:
+		raise ContextMirrorError(
+			'context_runtime_unavailable',
+			'Hermes Python is unavailable; no publication was attempted.',
+			channel_accepted=False,
+		) from None
+
+
 class HermesContextAdapter:
 	"""Thin adapter over the runtime's existing SessionDB and mirror APIs."""
+
+	def preflight(self):
+		from gateway.mirror import _find_session_id, mirror_to_session
+		from hermes_state import SessionDB
+
+		if not all(callable(value) for value in (_find_session_id, mirror_to_session, SessionDB)):
+			raise ImportError('Hermes context APIs unavailable')
 
 	def find_session_id(self, *, platform, chat_id, thread_id, user_id):
 		from gateway.mirror import _find_session_id
@@ -162,6 +187,15 @@ def mirror_receipt(receipt, text, adapter=None):
 
 
 def publish_and_mirror(batch_id, text, publisher=publish_batch, adapter=None):
+	adapter = adapter or HermesContextAdapter()
+	try:
+		adapter.preflight()
+	except Exception:
+		raise ContextMirrorError(
+			'context_runtime_unavailable',
+			'Hermes context APIs are unavailable; no publication was attempted.',
+			channel_accepted=False,
+		) from None
 	receipt = publisher(batch_id, text, expected_runtime='hermes')
 	result = mirror_receipt(receipt, text, adapter=adapter)
 	return {
@@ -231,6 +265,7 @@ def _parser():
 def main(argv=None):
 	args = _parser().parse_args(argv)
 	try:
+		ensure_hermes_python()
 		text = read_text_file(args.text_file)
 		print(json.dumps(
 			publish_and_mirror(args.batch_id, text), ensure_ascii=False, separators=(',', ':')

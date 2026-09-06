@@ -4,6 +4,7 @@ import os
 import sys
 import tempfile
 import unittest
+from unittest.mock import Mock, patch
 from pathlib import Path
 
 
@@ -21,6 +22,9 @@ def _load_publish_module():
 
 
 class FakeAdapter:
+	def preflight(self):
+		pass
+
 	def __init__(self, *, mirror_results=(True,), row=None, messages=None, found='session-1'):
 		self.mirror_results = list(mirror_results)
 		self.row = row or {
@@ -75,6 +79,30 @@ class HermesContextUnitTest(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls):
 		cls.publish = _load_publish_module()
+
+	def test_missing_runtime_modules_prevent_channel_publication(self):
+		publisher = Mock(return_value=_receipt())
+		with patch.dict(sys.modules, {'gateway.mirror': None, 'hermes_state': None}):
+			with self.assertRaises(self.publish.ContextMirrorError) as raised:
+				self.publish.publish_and_mirror(BATCH_ID, 'Final brief', publisher=publisher)
+		self.assertFalse(raised.exception.diagnostic()['channelAccepted'])
+		publisher.assert_not_called()
+
+	def test_cli_selects_existing_hermes_interpreter_before_publishing(self):
+		args = ['publish.py', '--batch-id', BATCH_ID, '--text-file', '/tmp/brief with spaces.txt']
+		with patch.object(sys, 'executable', '/usr/bin/python3'), patch.object(sys, 'argv', args), patch('os.execv', side_effect=SystemExit(0)) as execute:
+			with self.assertRaises(SystemExit):
+				self.publish.ensure_hermes_python()
+		execute.assert_called_once_with('/opt/hermes/.venv/bin/python3', ['/opt/hermes/.venv/bin/python3', *args])
+
+	def test_cli_does_not_reexec_inside_hermes_venv_and_reports_missing_interpreter_before_send(self):
+		with patch.object(sys, 'executable', '/opt/hermes/.venv/bin/python3'), patch('os.execv') as execute:
+			self.publish.ensure_hermes_python()
+			execute.assert_not_called()
+		with patch.object(sys, 'executable', '/usr/bin/python3'), patch('os.execv', side_effect=FileNotFoundError('missing')):
+			with self.assertRaises(self.publish.ContextMirrorError) as raised:
+				self.publish.ensure_hermes_python()
+		self.assertFalse(raised.exception.diagnostic()['channelAccepted'])
 
 	def test_validates_receipt_route_then_appends_marker_as_user_and_reads_back(self):
 		adapter = FakeAdapter()
