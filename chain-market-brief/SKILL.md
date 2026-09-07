@@ -50,10 +50,12 @@ If the core story cannot be established, say the evidence is insufficient. Unkno
 
 ## Answer
 
+For every token included in the answer, show its exact contract address (CA) returned by the CLI alongside its name and symbol.
+
 For a single-token narrative question, explain its core story and any source-supported asset relationship, with source links. Reuse prior findings rather than repeating research; do not force a chain overview or trading recommendation.
 
 For a chain overview, lead with a first view of this sample: where attention is, what the tokens claim to be, and which ideas are worth a closer look or a wait. Vague opportunity questions get the same first view plus one evidence-based next step. Do not interview for budget or risk first.
 
-Cover the candidates with the few numbers that explain the view, their narratives, and source links. When evidence supports it, say why an idea stands out, what would make participation more reasonable, and what would undermine it. If evidence does not support an opportunity, say what is worth watching. Do not invent entry prices, promise profits, or treat discovery as an order.
+For every token included in the answer, describe its core narrative using the researched sources: what the project is, the story or theme behind it, and any source-supported relationship to other assets. A ticker, pair name, price summary, or source link alone does not count as a narrative description. If the sources do not establish the core narrative, say so briefly. Connect that narrative with the relevant market evidence before giving a view. When evidence supports it, say why an idea stands out, what would make participation more reasonable, and what would undermine it. If evidence does not support an opportunity, say what is worth watching. Do not invent entry prices, promise profits, or treat discovery as an order.
 
 Include observation time and links for the main claims. If market data failed, describe narratives without claiming current momentum.
