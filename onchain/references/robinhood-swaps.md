@@ -5,7 +5,7 @@ through the hosted wallet. This includes stock/ETF tokens, memecoins, and other
 ERC-20 tokens with a supported route. The command quotes by default;
 `--execute` submits a transaction after user confirmation.
 
-## Select the assets
+## Usage Notes
 
 - Always specify `--chain robinhood` or `--chain-id 4663`.
 - Use `ETH` for native ETH, or registered tickers such as `WETH` and `USDG`.
@@ -18,7 +18,7 @@ ERC-20 tokens with a supported route. The command quotes by default;
   on Robinhood Chain or ask for the address if ambiguous. Do not substitute a
   same-name token or an address on another chain.
 
-## Quote and execute
+## Workflow
 
 1. Identify the input token, output token, and source-token amount. Check input
    funds and native ETH for gas using the [balance commands](balances.md).
@@ -38,6 +38,25 @@ ERC-20 tokens with a supported route. The command quotes by default;
    [read-only chain checks](read-only-chain-checks.md) before reporting success.
    Report updated balances after confirmation onchain. For an uncertain execution
    result, check transaction status before retrying.
+
+## Syntax
+
+```bash
+purr wallet uniswap --from <ticker_or_address> --to <ticker_or_address> --amount <decimal_amount> [--chain robinhood|--chain-id 4663] [--slippage <percent>] [--min-amount-out <raw_amount>] [--dedup-key <key>] [--execute]
+```
+
+## Parameters
+
+| Parameter | Required? | Description |
+| --- | --- | --- |
+| `--from <ticker_or_address>` | Required | Source asset. Use `ETH`, `WETH`, `USDG`, a registered stock/ETF ticker, or an exact Robinhood Chain token contract address. |
+| `--to <ticker_or_address>` | Required | Destination asset. Accepts the same ticker or contract-address forms as `--from`, including memecoin contracts. |
+| `--amount <decimal_amount>` | Required | Human-readable source-token amount, such as `0.003` ETH or `5` USDG; not wei/base units. |
+| `--chain robinhood` / `--chain-id 4663` | Recommended | Explicitly selects Robinhood Chain. Use either form. The command defaults to this chain and does not support other chains. |
+| `--slippage <percent>` | Optional | Slippage percentage: `0.5` means 0.5%, not 50%. Omit to use the backend default. |
+| `--min-amount-out <raw_amount>` | Optional | Minimum output in raw output-token base units. Pass the confirmed quote's `minimumToAmount` string when executing to preserve its output floor. |
+| `--dedup-key <key>` | Optional | Idempotency key. Normally omit to retain automatic deduplication; do not change it to bypass a duplicate-execution response. |
+| `--execute` | Optional | Submits the swap after user confirmation. Omit for quote-only mode. |
 
 ## Commands
 
@@ -62,13 +81,7 @@ purr wallet uniswap --from USDG --to SPCX --amount 5 --chain robinhood
 purr wallet uniswap --from SPCX --to AAPL --amount 0.01 --chain robinhood
 ```
 
-`--slippage` is a percentage (`0.5` = 0.5%), not basis points. Omit it to use
-the backend default. `--min-amount-out` uses raw output-token base units, unlike
-the human-readable input `--amount`. Keep it as a string from the quote.
-`--dedup-key` is optional; normally omit it to retain automatic deduplication.
-Do not change it merely to bypass a duplicate-execution response.
-
-## Read the result
+## Response Shape
 
 The CLI prints one JSON object. Relevant quote fields are:
 
@@ -83,9 +96,9 @@ The CLI prints one JSON object. Relevant quote fields are:
 Execute results additionally include `mode: "transaction"`, `hash`, and
 `transactionId`. Display amounts actually returned; do not invent missing fields.
 
-## Route availability and errors
+## Response Errors
 
-| Result/error | Action |
+| Error Message | Meaning / Action |
 | --- | --- |
 | `Unknown token ...` | The ticker is absent from the CLI registry. Resolve and use the exact Robinhood Chain contract address. |
 | `purr wallet uniswap currently supports Robinhood Chain only` | Use `--chain robinhood` or `--chain-id 4663`. |
