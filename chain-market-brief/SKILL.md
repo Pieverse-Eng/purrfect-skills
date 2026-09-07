@@ -1,6 +1,6 @@
 ---
 name: chain-market-brief
-description: Use when users ask what is happening on Robinhood Chain, BNB Chain, or Solana, which tokens or themes are gaining attention, what trading opportunities are worth exploring on these chains, or the narrative behind a specific token on these chains.
+description: Use for Robinhood/BNB/Solana market and token narrative asks.
 ---
 
 # Chain market brief
