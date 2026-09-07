@@ -253,19 +253,32 @@ class ContractTest(unittest.TestCase):
         skill = SKILL_PATH.read_text(encoding="utf-8")
         self.assertIn("python3 scripts/research.py summary", skill)
         self.assertIn("Do not run `feed` first, read terminal spill", skill)
-        self.assertIn("files, or write ad hoc Python/heredoc parsers", skill)
+        self.assertIn("Python/heredoc parsers for a broad market answer", skill)
         self.assertIn("up to ten server-ranked `CANDIDATE`/`WAIT` entries", skill)
 
     def test_skill_treats_server_status_as_authoritative(self):
         skill = SKILL_PATH.read_text(encoding="utf-8")
         self.assertIn("server-emitted `status` as its authoritative", skill)
-        self.assertIn("never infer, promote, demote, or\n  relabel", skill)
+        self.assertIn("never infer,\n  promote, demote, or relabel", skill)
         self.assertIn("reserved exclusively for candidates whose source", skill)
         self.assertIn('`status == "WAIT"`', skill)
         self.assertIn("build an `id -> status` map", skill)
         self.assertIn(
             "verify every discussed pool is under its mapped source status", skill
         )
+
+    def test_skill_separates_machine_evidence_from_normal_user_answers(self):
+        skill = SKILL_PATH.read_text(encoding="utf-8")
+
+        self.assertIn("Answer the user, not the evidence system", skill)
+        self.assertIn("Never narrate commands, tool\ncalls", skill)
+        self.assertIn("Do not paste helper output", skill)
+        self.assertIn("Discuss at most three pools by default", skill)
+        self.assertIn("Do not print the enum", skill)
+        self.assertIn("do not\n  recite `ECONOMICS_PENDING`", skill)
+        self.assertIn("Do not name an internal data\n  provider", skill)
+        self.assertIn("The internal map and raw enum names are not user-facing output", skill)
+        self.assertIn("Surface only\n   their plain-language consequence", skill)
 
     def test_validates_v2_document(self):
         document = research.validate_document(valid_payload())
