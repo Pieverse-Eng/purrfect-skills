@@ -1,6 +1,6 @@
 ---
 name: chain-market-brief
-description: Use for Robinhood/BNB/Solana market and token narrative asks.
+description: Use for Robinhood/BSC/Solana market and token narrative asks.
 ---
 
 # Chain market brief
