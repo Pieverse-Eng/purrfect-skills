@@ -7,8 +7,6 @@ description: Use when users ask what is happening on Robinhood Chain, BNB Chain,
 
 Read-only market discussion for Robinhood Chain, BNB Chain, or Solana. Discover current attention from CLI evidence; do not execute trades.
 
-Requires `purr market trending`, `purr market read-pages`, and `purr market snapshot`. Call those commands directly. If a command is missing, report that the CLI needs updating; do not fetch, browse, search, write replacement scripts, or invent results.
-
 ## Collect
 
 Map Robinhood Chain → `robinhood`, BNB Chain → `bnb`, Solana → `solana`.
