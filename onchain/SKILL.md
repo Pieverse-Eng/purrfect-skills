@@ -1,6 +1,6 @@
 ---
 name: onchain
-description: Wallet addresses and balances, .pie, transfers, Telegram, chain reads, and Robinhood Chain token swap quotes and execution.
+description: Address/balance lookup,.pie,transfers,Telegram,chain reads
 ---
 
 # Onchain
