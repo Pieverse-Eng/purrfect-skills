@@ -85,12 +85,6 @@ Execute results additionally include `mode: "transaction"`, `hash`, and
 
 ## Route availability and errors
 
-The backend tries the official Uniswap API first when configured. If no usable
-official quote or swap plan is available, it tries local AMM routing. The local
-V4 pool index currently covers a predefined token set and can miss other tokens;
-this restriction does not filter official API routes. Token-address acceptance
-or a successful quote does not guarantee that execution will succeed.
-
 | Result/error | Action |
 | --- | --- |
 | `Unknown token ...` | The ticker is absent from the CLI registry. Resolve and use the exact Robinhood Chain contract address. |
