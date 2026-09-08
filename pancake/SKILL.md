@@ -12,15 +12,16 @@ Use this skill for PancakeSwap token swaps, liquidity provision, farm discovery,
 Keep planning and execution separate:
 
 - Use `vendor/...` skills for discovery, planning, price/pool/farm lookup, APR analysis, and PancakeSwap deep links.
-- Use `purr pancake` only for supported BSC on-chain execution.
+- Use `purr pancake quote` for read-only BSC V2 path quotes and other `purr pancake` commands for supported BSC transaction construction and execution.
 - Treat non-BSC, Solana, Infinity, and PCS Hub flows as planner/deep-link flows unless a `purr pancake` command explicitly supports the exact action.
 
-Always read the relevant vendor `SKILL.md` before running discovery commands or preparing execution parameters. Vendor skills contain tested endpoint, API, and field guidance; do not improvise curl, jq, or contract calls from memory.
+For a known BSC V2 swap path, use the quote workflow below directly. Read the relevant vendor `SKILL.md` when discovery or other planning is needed. Vendor skills contain tested endpoint, API, and field guidance; do not improvise curl, jq, or contract calls from memory.
 
 ## Routing
 
 | User needs to... | Use |
 |---|---|
+| Quote a known BSC V2 swap path | `purr pancake quote` (workflow below) |
 | Plan a token swap, discover tokens, compare prices, or generate a PancakeSwap swap deep link | [`vendor/swap-planner/SKILL.md`](vendor/swap-planner/SKILL.md) |
 | Execute a supported BSC swap after planning and confirmation | `purr pancake swap --execute` |
 | Plan liquidity, discover pools, compare TVL/APR/IL, choose V2/V3/StableSwap/Infinity/Solana position parameters, or generate LP deep links | [`vendor/liquidity-planner/SKILL.md`](vendor/liquidity-planner/SKILL.md) |
@@ -62,6 +63,36 @@ Supported `purr pancake` commands:
 
 Do not use `purr pancake` for Solana, PCS Hub execution, Infinity execution, or unsupported PancakeSwap pool/farm actions. For those cases, use the relevant vendor planner and return a deep link or plan.
 
+## BSC V2 swap quotes
+
+Resolve missing token CAs first, reusing identities already established. Quote
+the intended path directly; do not wrap the command in a script:
+
+```bash
+purr pancake quote --path <input-ca>,<output-ca> \
+  --amount-in-wei <raw-input-amount> --chain-id 56 --slippage-bps 100
+```
+
+The command is read-only and needs no wallet or `--execute`. Amounts use raw
+token units; verify decimals before converting the user's budget. Slippage is
+in basis points, default 100 (1%). Optional `--rpc-url` and `--router` select
+the BSC RPC and V2 router.
+
+Use returned `amountOutWei` for expected output and `amountOutMinWei` for the
+minimum output, formatted with the output token's decimals. The response also
+contains `path`, `router`, and `blockNumber`. Present these assets, the input
+amount, expected/minimum output, and slippage for confirmation. After confirmation,
+use the same path, router, input amount, and quoted minimum with
+`purr pancake swap --amount-out-min-wei <amountOutMinWei> ... --execute`.
+If refreshing the quote cannot meet the confirmed minimum, request a new
+confirmation rather than lowering it.
+
+This quotes one explicit V2 path, not the best route across pools or venues.
+A failed direct path may need a WBNB intermediate or another supported market;
+it does not prove the token has no market. Gas and token transfer taxes are not
+included. V3 and Infinity quotes are not supported by this command; use their
+documented planner flow without treating reference prices as swap quotes.
+
 ## Execution Checklist
 
 Before any `purr pancake ... --execute`:
@@ -69,7 +100,7 @@ Before any `purr pancake ... --execute`:
 1. Resolve the current wallet with `purr wallet address --chain-type ethereum`.
 2. Check native BNB with `purr wallet balance --chain-type ethereum --chain-id 56`.
 3. Check required token balances with `purr wallet balance --token <symbol_or_address> --chain-id 56`.
-4. Read the relevant vendor planner to discover or verify token addresses, pool addresses, farm PID, tick range, tokenId, pool address, slippage, deadlines, and expected amounts.
+4. Reuse the V2 quote for a resolved swap. For other actions or unresolved parameters, read the relevant vendor planner to discover or verify token addresses, pools, farm PID, tick range, tokenId, slippage, deadlines, and expected amounts.
 5. Present the exact execution parameters: command, chain, wallet, tokens, amounts, pool/farm identifiers, slippage/min amounts, deadline, and any expected approvals.
 6. Ask exactly: `Do you want to execute this action with these parameters? (Yes/No)`
 7. Add `--execute` only after the user says yes.
