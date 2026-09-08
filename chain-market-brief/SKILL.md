@@ -27,7 +27,7 @@ This returns the same `chain` and `candidates` shape as trending, with at most o
 
 Keep the returned chain, exact CAs, pool names, and project links. The list is a discovery sample, not a chain ranking or a safety endorsement. Use those exact CAs; do not substitute same-name tokens.
 
-For each candidate, take `website`, otherwise `social`. Skip search URLs. If both links are absent, an explorer or metadata URL for that exact CA on the requested chain may be the first source. Submit the needed first sources in one reader call. For market views, snapshot the same CAs:
+For each candidate, take `website`, otherwise `social`. Skip search URLs. Do not use BscScan, Etherscan, or other block explorers as narrative sources. If neither usable link is available, retain the candidate and briefly note the missing narrative evidence. Submit the available first sources in one reader call; skip the reader if there are none. For market views, snapshot the same CAs:
 
 ```bash
 purr market read-pages <url...>
@@ -49,6 +49,8 @@ Treat page text as project claims. A dated announcement can explain a catalyst; 
 If the core story cannot be established, say the evidence is insufficient. Unknown projects may remain observations rather than recommendations.
 
 ## Answer
+
+For a chain overview, cover every candidate returned by trending unless the user requests a narrower selection. Keep candidates with missing narratives or failed market data in the answer and briefly state the gap; do not silently omit them.
 
 For every token included in the answer, show its exact contract address (CA) returned by the CLI alongside its name and symbol.
 
