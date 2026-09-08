@@ -157,6 +157,7 @@ def valid_candidate(status="WAIT"):
                 ],
             },
         ],
+        "externalCrossChecks": [],
         "riskFlags": [],
         "lastDeepVerifiedAt": "2026-09-05T00:00:00Z",
     }
@@ -165,11 +166,7 @@ def valid_candidate(status="WAIT"):
 def valid_payload(*, stale=False, funnel_policy_version="rh-lp-funnel.v1"):
     funnel_policy = research.FUNNEL_POLICIES[funnel_policy_version]
     deep_verification_limit = funnel_policy["deepVerificationLimit"]
-    selection_buckets = (
-        {"liquidityVolume": 10, "new": 5, "heat": 5, "rotation": 5}
-        if funnel_policy_version == "rh-lp-funnel.v1"
-        else {"liquidityVolume": 1, "new": 1, "heat": 1, "rotation": 1}
-    )
+    selection_buckets = dict(funnel_policy["selectionBucketQuotas"])
     return {
         "success": True,
         "data": {
@@ -261,7 +258,7 @@ class ContractTest(unittest.TestCase):
         self.assertIn("python3 scripts/research.py summary", skill)
         self.assertIn("Do not run `feed` first, read terminal spill", skill)
         self.assertIn("Python/heredoc parsers for a broad market answer", skill)
-        self.assertIn("up to ten server-ranked `CANDIDATE`/`WAIT` entries", skill)
+        self.assertIn("up to eight server-ranked `CANDIDATE`/`WAIT` entries", skill)
 
     def test_skill_treats_server_status_as_authoritative(self):
         skill = SKILL_PATH.read_text(encoding="utf-8")
@@ -452,8 +449,8 @@ class ContractTest(unittest.TestCase):
         encoded = research.json.dumps(summary, separators=(",", ":")).encode()
 
         self.assertLess(len(encoded), 48 * 1024)
-        self.assertEqual(len(summary["candidateGroups"]["WAIT"]), 10)
-        self.assertEqual(summary["decisionCandidateOmitted"], 15)
+        self.assertEqual(len(summary["candidateGroups"]["WAIT"]), 8)
+        self.assertEqual(summary["decisionCandidateOmitted"], 17)
 
     def test_summary_command_fetches_once_and_never_reads_a_spill_file(self):
         document = research.validate_document(valid_payload())
@@ -478,6 +475,60 @@ class ContractTest(unittest.TestCase):
             "1 liquidity_volume + 1 new + 1 heat + 1 rotation",
         )
 
+    def test_validates_funnel_v3_document_and_cross_check(self):
+        payload = valid_payload(funnel_policy_version="rh-lp-funnel.v3")
+        payload["data"]["candidates"][0]["externalCrossChecks"] = [
+            {
+                "source": "vfat",
+                "status": "MATCHED",
+                "observedAt": "2026-09-05T00:00:00Z",
+                "reference": "https://api.vfat.io/v4/yield-opportunities",
+                "poolAddress": ADDRESS,
+                "poolId": None,
+                "totalLiquidityUsd": "1000",
+                "activeLiquidityUsd": "800",
+                "feeAprPercent": "12.5",
+                "feeWindowDays": 7,
+                "assumesFullTimeInRange": True,
+                "reasonCodes": ["VFAT_DATA_NON_AUTHORITATIVE"],
+            }
+        ]
+
+        document = research.validate_document(payload)
+        summary = research.summarize_document(document)
+
+        self.assertEqual(document["coverage"]["deepVerificationLimit"], 8)
+        self.assertEqual(document["coverage"]["selectionBuckets"]["liquidityVolume"], 8)
+        self.assertEqual(
+            summary["candidateGroups"]["WAIT"][0]["externalCrossChecks"][0]["feeWindowDays"],
+            7,
+        )
+
+    def test_keeps_legacy_candidates_compatible_and_rejects_malformed_cross_checks(self):
+        legacy = valid_payload(funnel_policy_version="rh-lp-funnel.v2")
+        legacy["data"]["candidates"][0].pop("externalCrossChecks")
+        research.validate_document(legacy)
+
+        malformed = valid_payload(funnel_policy_version="rh-lp-funnel.v3")
+        malformed["data"]["candidates"][0]["externalCrossChecks"] = [
+            {
+                "source": "vfat",
+                "status": "MATCHED",
+                "observedAt": "not-a-time",
+                "reference": "https://api.vfat.io/v4/yield-opportunities",
+                "poolAddress": ADDRESS,
+                "poolId": None,
+                "totalLiquidityUsd": "1000",
+                "activeLiquidityUsd": "800",
+                "feeAprPercent": "12.5",
+                "feeWindowDays": 7,
+                "assumesFullTimeInRange": True,
+                "reasonCodes": ["VFAT_DATA_NON_AUTHORITATIVE"],
+            }
+        ]
+        with self.assertRaisesRegex(ValueError, "external cross-check"):
+            research.validate_document(malformed)
+
     def test_rejects_old_or_changed_policy_versions(self):
         payload = valid_payload()
         payload["data"]["schemaVersion"] = "rh-lp.v1"
@@ -486,7 +537,7 @@ class ContractTest(unittest.TestCase):
 
     def test_rejects_unknown_funnel_policy_version(self):
         payload = valid_payload()
-        payload["data"]["funnelPolicyVersion"] = "rh-lp-funnel.v3"
+        payload["data"]["funnelPolicyVersion"] = "rh-lp-funnel.v4"
         with self.assertRaisesRegex(ValueError, "funnelPolicyVersion"):
             research.validate_document(payload)
 

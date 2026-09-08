@@ -75,9 +75,9 @@ python3 scripts/research.py summary
 Use `summary` for broad questions such as which pools are actionable, which
 need more evidence, or what the current market looks like. It validates the
 complete hosted document, then emits a bounded `rh-lp-summary.v1` view with
-exact status counts, up to ten server-ranked `CANDIDATE`/`WAIT` entries, and the
-first five server-ranked `DISCOVERY_ONLY` examples. The current
-`rh-lp-funnel.v2` deep-analysis limit is four, so all current decision entries
+exact status counts, up to eight server-ranked `CANDIDATE`/`WAIT` entries, and
+the first five server-ranked `DISCOVERY_ONLY` examples. The current
+`rh-lp-funnel.v3` idle-prewarm limit is eight, so all current decision entries
 fit. Account for nonzero `decisionCandidateOmitted` or
 `discoveryOnlyOmitted` counts, but describe them in plain language only when
 they affect the answer (for example, "199 other pools have not been verified").
@@ -98,12 +98,13 @@ the user and do not call GeckoTerminal, DexPaprika, DexScreener, vfat, a chain
 RPC, factory, PoolManager, or Quoter directly from the skill.
 
 Validation requires `rh-lp.v2`, `rh-lp-score.v2`, `rh-lp-venues.v1`, and
-`chainId=4663`. During the bounded funnel migration it accepts exactly two
+`chainId=4663`. During the bounded funnel migration it accepts exactly three
 version-bound contracts: `rh-lp-funnel.v1` with a 25-pool limit and
 `10 + 5 + 5 + 5` selection, or `rh-lp-funnel.v2` with a 4-pool limit and
-`1 + 1 + 1 + 1` selection. It rejects unknown versions and cross-version field
-mixes. Stop on a malformed or unsupported response. Never improvise missing
-evidence.
+`1 + 1 + 1 + 1` selection, or `rh-lp-funnel.v3` with up to eight analyzable
+liquidity-by-volume reviewed-v3 prewarm rows and direct-request priority. It
+rejects unknown versions and cross-version field mixes. Stop on a malformed or
+unsupported response. Never improvise missing evidence.
 
 The feed is bounded to the current epoch's discovered scope. Say exactly that.
 Do not call it the whole Robinhood Chain market or an exhaustive Top list. For
@@ -128,9 +129,12 @@ the same identifier and `--request-id <uuid>` to recover the same jobs instead
 of starting another economic analysis. Never invent a second request ID while
 the first request may have been accepted.
 
-Identity is verified synchronously. Economics run asynchronously. The command
-polls only when `--wait-seconds` is nonzero and returns both the original
-submission and latest job states. If time expires while a job is still pending,
+Identity is verified synchronously. A fresh shared pool-economics cache hit is
+returned as a terminal job immediately; a miss is queued and writes through to
+that cache when complete. The cache has a 24-hour TTL, but only results at most
+six hours old are immediate hits. The command polls only when `--wait-seconds`
+is nonzero and returns both the original submission and latest job states. If
+time expires while a job is still pending,
 report its `jobId` and use:
 
 ```bash
@@ -188,9 +192,12 @@ When answering:
    `$1,000` reference position, 24-hour volume and fees, entry/exit cost,
    impermanent loss, net benefit, margin basis points, 50 bps measurement
    buffer, volatility, and stress result.
-6. Explain that source headline APR is discovery evidence only. Platform
-   economics come from a finalized 24-hour chain window and executable quotes;
-   they are not APY or promised yield.
+6. Explain that source headline APR is discovery evidence only. A vfat
+   cross-check, when present, remains side-by-side evidence with its own
+   timestamp, fee window, active/total liquidity, and full-time-in-range
+   assumption. Never average it into, substitute it for, or let it satisfy the
+   platform's finalized 24-hour chain economics and transfer-tax gates; it is
+   not APY or promised yield.
 7. Explain unknown hooks, unsupported semantic identity, transfer-tax tokens,
    token upgrade/admin-control evidence, missing coverage, young pools, and
    incomplete volatility history. The
