@@ -15,6 +15,26 @@ machinery out of an ordinary user-facing answer. Never narrate commands, tool
 calls, API reads, polling, intermediate deltas, or the process used to reach the
 answer. Do not paste helper output.
 
+Run the research silently and finish the analysis before replying. The first
+sentence must state the current decision; never open with what you will pull,
+fetch, read, check, query, or call. Before sending an ordinary answer, pass the
+complete draft through the deterministic output gate:
+
+```bash
+python3 scripts/answer_guard.py <<'ANSWER'
+<complete draft answer>
+ANSWER
+```
+
+The gate returns a valid draft unchanged and rejects process narration plus
+internal vocabulary such as `API`, `DEGRADED` (in any letter case),
+`documentStatus`, receipts, reason codes, funnels, backlogs, internal source
+names, schema labels, and uppercase machine constants such as
+`DISCOVERY_ONLY` or `ECONOMICS_PENDING`. Revise and run the gate again if it
+fails. Do not mention the gate to the user. This gate is for ordinary product
+answers; skip it only when the user explicitly asks for technical, developer,
+or audit detail.
+
 For a broad question such as "which LPs look good right now?":
 
 - Lead with the decision in one plain sentence: whether anything is currently
@@ -32,9 +52,10 @@ For a broad question such as "which LPs look good right now?":
   are still being measured or transfer-tax behavior is not yet verified; do not
   recite `ECONOMICS_PENDING` or `TRANSFER_TAX_UNMEASURED`.
 - Give the observation time in a human-readable form. If the document is stale
-  or degraded, say that the result may be incomplete because the snapshot is
-  old or some discovery data was unavailable. Do not name an internal data
-  provider merely because its receipt degraded.
+  or its machine status is `DEGRADED`, say that the result may be incomplete
+  because the snapshot is old or some discovery data was unavailable. Never
+  print the word `degraded` in an ordinary answer, in any letter case. Do not
+  name an internal data provider merely because its receipt has a failure.
 - End with one concise bottom line and, if useful, one next step. Do not repeat
   the same conclusion in several headings or describe the skill as
   "read-only"; if action is requested, simply say that you can research the
