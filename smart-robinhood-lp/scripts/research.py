@@ -10,6 +10,7 @@ import re
 import sys
 import time
 import uuid
+from decimal import Decimal
 from datetime import datetime
 from typing import Any
 from urllib.error import HTTPError, URLError
@@ -21,12 +22,37 @@ FEED_PATH = "/research/rh-lp"
 MAX_RESPONSE_BYTES = 4 * 1024 * 1024
 TIMEOUT_SECONDS = 20
 POLL_INTERVAL_SECONDS = 2
+SUMMARY_DISCOVERY_ONLY_LIMIT = 5
+SUMMARY_DECISION_LIMIT = 10
 
 ADDRESS_RE = re.compile(r"^0x[0-9a-fA-F]{40}$")
 BYTES32_RE = re.compile(r"^0x[0-9a-fA-F]{64}$")
 DECIMAL_RE = re.compile(r"^-?\d+(?:\.\d+)?$")
 REASON_RE = re.compile(r"^[A-Z][A-Z0-9_]*$")
 JOB_ID_RE = re.compile(r"^[a-f0-9]{64}$")
+
+FUNNEL_POLICIES = {
+    "rh-lp-funnel.v1": {
+        "deepVerificationLimit": 25,
+        "selectionRule": "10 liquidity_volume + 5 new + 5 heat + 5 rotation",
+        "selectionBucketQuotas": {
+            "liquidityVolume": 10,
+            "new": 5,
+            "heat": 5,
+            "rotation": 5,
+        },
+    },
+    "rh-lp-funnel.v2": {
+        "deepVerificationLimit": 4,
+        "selectionRule": "1 liquidity_volume + 1 new + 1 heat + 1 rotation",
+        "selectionBucketQuotas": {
+            "liquidityVolume": 1,
+            "new": 1,
+            "heat": 1,
+            "rotation": 1,
+        },
+    },
+}
 
 
 class FailClosedRedirects(HTTPRedirectHandler):
@@ -435,13 +461,15 @@ def validate_document(payload: Any) -> dict[str, Any]:
     document = _object(envelope.get("data"), "response document missing")
     expected_versions = {
         "schemaVersion": "rh-lp.v2",
-        "funnelPolicyVersion": "rh-lp-funnel.v1",
         "scorePolicyVersion": "rh-lp-score.v2",
         "venueRegistryVersion": "rh-lp-venues.v1",
     }
     for field, expected in expected_versions.items():
         if document.get(field) != expected:
             raise ValueError(f"unsupported {field}")
+    funnel_policy = FUNNEL_POLICIES.get(document.get("funnelPolicyVersion"))
+    if funnel_policy is None:
+        raise ValueError("unsupported funnelPolicyVersion")
     if (
         document.get("chainId") != 4663
         or not isinstance(document.get("epoch"), str)
@@ -455,21 +483,24 @@ def validate_document(payload: Any) -> dict[str, Any]:
     ):
         raise ValueError("document contract invalid")
     coverage = _object(document.get("coverage"), "funnel coverage missing")
+    deep_verification_limit = funnel_policy["deepVerificationLimit"]
     if (
         coverage.get("frontierLimit") != 200
-        or coverage.get("deepVerificationLimit") != 25
+        or coverage.get("deepVerificationLimit") != deep_verification_limit
         or not _nonnegative_int(coverage.get("mergedCandidateCount"))
         or not _nonnegative_int(coverage.get("frontierCandidateCount"))
         or coverage["frontierCandidateCount"] > 200
         or not _nonnegative_int(coverage.get("deepVerificationPlanned"))
-        or coverage["deepVerificationPlanned"] > 25
+        or coverage["deepVerificationPlanned"] > deep_verification_limit
         or not _nonnegative_int(coverage.get("deepVerificationCompleted"))
         or coverage["deepVerificationCompleted"] > coverage["deepVerificationPlanned"]
         or not _nonnegative_int(coverage.get("deepVerificationPending"))
+        or coverage["deepVerificationCompleted"] + coverage["deepVerificationPending"]
+        != coverage["deepVerificationPlanned"]
         or not _nonnegative_int(coverage.get("verified24h"))
         or coverage.get("frontierSelectionRule")
         != "80 liquidity_volume + 40 new + 40 heat + 40 source_diversity_rotation"
-        or coverage.get("selectionRule") != "10 liquidity_volume + 5 new + 5 heat + 5 rotation"
+        or coverage.get("selectionRule") != funnel_policy["selectionRule"]
     ):
         raise ValueError("funnel policy invalid")
     source_rows = _object(coverage.get("sourceFetchedRows"), "source row coverage missing")
@@ -481,6 +512,14 @@ def validate_document(payload: Any) -> dict[str, Any]:
             not _nonnegative_int(count) for count in buckets.values()
         ):
             raise ValueError(f"{field} invalid")
+        if field == "selectionBuckets":
+            remaining = coverage["deepVerificationPlanned"]
+            expected_buckets = {}
+            for bucket, quota in funnel_policy["selectionBucketQuotas"].items():
+                expected_buckets[bucket] = min(quota, remaining)
+                remaining -= expected_buckets[bucket]
+            if buckets != expected_buckets:
+                raise ValueError("selectionBuckets invalid")
     backlog = _object(coverage.get("economicsBacklog"), "economics backlog missing")
     if any(
         not isinstance(backlog.get(lane), int) or backlog[lane] < 0
@@ -608,6 +647,162 @@ def fetch_document() -> dict[str, Any]:
     return validate_document(request_json(FEED_PATH))
 
 
+def _max_decimal(observations: list[dict[str, Any]], field: str) -> str | None:
+    values = [
+        observation[field]
+        for observation in observations
+        if observation.get(field) is not None
+    ]
+    return max(values, key=Decimal) if values else None
+
+
+def _discovery_summary(candidate: dict[str, Any]) -> dict[str, Any]:
+    observations = candidate["discovery"]
+    transaction_counts = [
+        observation["transactions24h"]
+        for observation in observations
+        if observation.get("transactions24h") is not None
+    ]
+    newest = max(
+        observations,
+        key=lambda observation: datetime.fromisoformat(
+            observation["observedAt"].replace("Z", "+00:00")
+        ),
+    )
+    return {
+        "sources": list(
+            dict.fromkeys(observation["source"] for observation in observations)
+        ),
+        "observationCount": len(observations),
+        "newestObservedAt": newest["observedAt"],
+        "maxLiquidityUsd": _max_decimal(observations, "liquidityUsd"),
+        "maxVolume24hUsd": _max_decimal(observations, "volume24hUsd"),
+        "maxTransactions24h": max(transaction_counts) if transaction_counts else None,
+        "earliestCreatedAt": min(
+            (
+                observation["createdAt"]
+                for observation in observations
+                if observation.get("createdAt") is not None
+            ),
+            default=None,
+        ),
+    }
+
+
+def _identity_summary(candidate: dict[str, Any]) -> dict[str, Any]:
+    identity = candidate["identity"]
+    return {
+        "status": identity["status"],
+        "venueId": identity.get("venueId"),
+        "adapter": identity["adapter"],
+        "semanticReview": identity["semanticReview"],
+        "hookAddress": identity.get("hookAddress"),
+        "reasonCodes": identity["reasonCodes"],
+        "verifiedAtBlock": identity.get("verifiedAtBlock"),
+    }
+
+
+def _token_control_summary(candidate: dict[str, Any]) -> list[dict[str, Any]]:
+    return [
+        {
+            "tokenAddress": evidence["tokenAddress"],
+            "inspectionStatus": evidence["inspectionStatus"],
+            "observedControlSelectors": evidence["observedControlSelectors"],
+            "transferTaxAssessment": evidence["transferTaxAssessment"],
+            "transferTaxEvidence": evidence["transferTaxEvidence"],
+            "reasonCodes": evidence["reasonCodes"],
+        }
+        for evidence in candidate["tokenControlEvidence"]
+    ]
+
+
+def _candidate_summary(
+    candidate: dict[str, Any], *, include_economics: bool
+) -> dict[str, Any]:
+    summary = {
+        field: candidate.get(field)
+        for field in (
+            "id",
+            "rank",
+            "status",
+            "reasonCodes",
+            "selectionBucket",
+            "protocol",
+            "poolAddress",
+            "poolId",
+            "venueHint",
+            "tokens",
+            "riskFlags",
+            "lastDeepVerifiedAt",
+        )
+    }
+    summary["discoveryEvidence"] = _discovery_summary(candidate)
+    summary["identity"] = _identity_summary(candidate)
+    summary["tokenControlEvidence"] = _token_control_summary(candidate)
+    economics = candidate["economics"]
+    summary["economics"] = (
+        economics
+        if include_economics
+        else {"status": economics["status"], "reasonCodes": economics["reasonCodes"]}
+    )
+    return summary
+
+
+def summarize_document(
+    document: dict[str, Any],
+    *,
+    discovery_only_limit: int = SUMMARY_DISCOVERY_ONLY_LIMIT,
+    decision_limit: int = SUMMARY_DECISION_LIMIT,
+) -> dict[str, Any]:
+    """Produce a bounded, model-ready view without weakening the validated contract."""
+    if discovery_only_limit < 0 or decision_limit < 0:
+        raise ValueError("summary limit invalid")
+    groups = {status: [] for status in ("CANDIDATE", "WAIT", "DISCOVERY_ONLY")}
+    counts = {
+        status: sum(candidate["status"] == status for candidate in document["candidates"])
+        for status in groups
+    }
+    decisions_shown = 0
+    for status in ("CANDIDATE", "WAIT"):
+        for candidate in document["candidates"]:
+            if candidate["status"] != status or decisions_shown >= decision_limit:
+                continue
+            groups[status].append(_candidate_summary(candidate, include_economics=True))
+            decisions_shown += 1
+    for candidate in document["candidates"]:
+        if (
+            candidate["status"] == "DISCOVERY_ONLY"
+            and len(groups["DISCOVERY_ONLY"]) < discovery_only_limit
+        ):
+            groups["DISCOVERY_ONLY"].append(
+                _candidate_summary(candidate, include_economics=False)
+            )
+
+    return {
+        "summaryContractVersion": "rh-lp-summary.v1",
+        "schemaVersion": document["schemaVersion"],
+        "funnelPolicyVersion": document["funnelPolicyVersion"],
+        "scorePolicyVersion": document["scorePolicyVersion"],
+        "venueRegistryVersion": document["venueRegistryVersion"],
+        "chainId": document["chainId"],
+        "epoch": document["epoch"],
+        "generatedAt": document["generatedAt"],
+        "staleAt": document["staleAt"],
+        "isStale": document["isStale"],
+        "documentStatus": document["documentStatus"],
+        "reasonCodes": document["reasonCodes"],
+        "coverage": document["coverage"],
+        "sourceReceipts": document["sourceReceipts"],
+        "statusCounts": counts,
+        "candidateGroups": groups,
+        "decisionCandidateLimit": decision_limit,
+        "decisionCandidateOmitted":
+            counts["CANDIDATE"] + counts["WAIT"] - decisions_shown,
+        "discoveryOnlySampleLimit": discovery_only_limit,
+        "discoveryOnlyOmitted": counts["DISCOVERY_ONLY"] - len(groups["DISCOVERY_ONLY"]),
+    }
+
+
 def submit_analysis(identifier: str, kind: str, request_id: str) -> dict[str, Any]:
     if not _uuid(request_id):
         raise ValueError("request id invalid")
@@ -659,6 +854,9 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("feed", help="read the current bounded discovery feed")
+    subparsers.add_parser(
+        "summary", help="read a compact market summary for broad questions"
+    )
     analyze = subparsers.add_parser("analyze", help="analyze one exact token, pool, or pool ID")
     kinds = analyze.add_mutually_exclusive_group(required=True)
     kinds.add_argument("--token")
@@ -676,6 +874,8 @@ def main() -> None:
     try:
         if arguments.command == "feed":
             result: Any = fetch_document()
+        elif arguments.command == "summary":
+            result = summarize_document(fetch_document())
         elif arguments.command == "job":
             result = fetch_job(arguments.job_id)
         else:

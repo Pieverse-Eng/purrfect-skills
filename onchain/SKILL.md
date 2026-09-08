@@ -8,14 +8,16 @@ description: Address/balance lookup,.pie,transfers,Telegram,chain reads
 ## Overview
 
 This Skill covers wallet addresses, balances, Pie identity lookup, direct
-transfers, and read-only chain checks.
+transfers, read-only chain checks, and Robinhood Chain swaps for stock/ETF
+tokens, memecoins, and other ERC-20 tokens.
 
 This Skill is not for OWS wallet issues or workflows.
 
 Pick the relevant command group from the table, then read that reference before
 running commands or explaining the workflow.
 
-For EVM chain commands, include `--chain-id`. Common chain IDs:
+For EVM chain commands, include `--chain-id`; Robinhood swaps also accept
+`--chain robinhood`. Common chain IDs:
 
 | Chain | Chain ID | Native Token |
 | --- | ---: | --- |
@@ -72,5 +74,6 @@ For EVM chain commands, include `--chain-id`. Common chain IDs:
 | Pie Identity / PNS Lookups | Resolves `.pie` handles, paired Telegram accounts, account lists, and profiles. | [pie-identity.md](references/pie-identity.md) |
 | Direct `.pie` Transfers | Sends funds to a `.pie` handle or paired Telegram account. | [pie-transfers.md](references/pie-transfers.md) |
 | Raw Address Transfers | Sends funds directly to a raw EVM or Solana wallet address. | [raw-address-transfers.md](references/raw-address-transfers.md) |
+| Robinhood Chain Token Swaps | Quotes and executes swaps for stock/ETF tokens, memecoins, and other tokens using tickers or contract addresses. | [robinhood-swaps.md](references/robinhood-swaps.md) |
 | Robinhood Stock/ETF Tokens | Looks up canonical Robinhood Chain stock token and tokenized ETF contract addresses. | [robinhood-stock-etf-tokens.md](references/robinhood-stock-etf-tokens.md) |
 | Read-Only Chain Checks | Looks up transactions, receipts, logs, senders, token state, or balances through RPC/explorer workflows. | [read-only-chain-checks.md](references/read-only-chain-checks.md) |

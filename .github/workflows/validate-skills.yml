@@ -26,3 +26,5 @@ jobs:
         run: |
           python3 -m unittest discover -s news2trading/scripts -p 'test_*.py'
           node --test scripts/test-materialize-news2trading.mjs
+      - name: Smart Robinhood LP contract regression
+        run: python3 -m unittest discover -s smart-robinhood-lp/scripts -p 'test_*.py'
