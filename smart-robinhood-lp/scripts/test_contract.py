@@ -10,11 +10,18 @@ from unittest.mock import patch
 from urllib.error import URLError
 
 MODULE_PATH = Path(__file__).with_name("research.py")
+ANSWER_GUARD_PATH = Path(__file__).with_name("answer_guard.py")
 SKILL_PATH = Path(__file__).parents[1] / "SKILL.md"
 SPEC = importlib.util.spec_from_file_location("smart_robinhood_lp_research", MODULE_PATH)
 assert SPEC and SPEC.loader
 research = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(research)
+ANSWER_GUARD_SPEC = importlib.util.spec_from_file_location(
+    "smart_robinhood_lp_answer_guard", ANSWER_GUARD_PATH
+)
+assert ANSWER_GUARD_SPEC and ANSWER_GUARD_SPEC.loader
+answer_guard = importlib.util.module_from_spec(ANSWER_GUARD_SPEC)
+ANSWER_GUARD_SPEC.loader.exec_module(answer_guard)
 
 ADDRESS = "0x" + "1" * 40
 TOKEN = "0x" + "2" * 40
@@ -276,9 +283,59 @@ class ContractTest(unittest.TestCase):
         self.assertIn("Discuss at most three pools by default", skill)
         self.assertIn("Do not print the enum", skill)
         self.assertIn("do not\n  recite `ECONOMICS_PENDING`", skill)
-        self.assertIn("Do not name an internal data\n  provider", skill)
+        self.assertIn("Do not\n  name an internal data provider", skill)
         self.assertIn("The internal map and raw enum names are not user-facing output", skill)
         self.assertIn("Surface only\n   their plain-language consequence", skill)
+        self.assertIn("python3 scripts/answer_guard.py", skill)
+
+    def test_answer_guard_rejects_the_live_tool_narration_and_status_leak(self):
+        answer = (
+            "I'll pull the current market summary from the evidence API. "
+            "This snapshot is flagged as incomplete/degraded."
+        )
+
+        errors = answer_guard.validate_ordinary_answer(answer)
+
+        self.assertIn("answer narrates a command, tool, or data-fetching step", errors)
+        self.assertTrue(any("API" in error and "degraded" in error for error in errors))
+
+        smart_apostrophe_errors = answer_guard.validate_ordinary_answer(
+            "I’m going to fetch the latest pool data before I answer."
+        )
+        self.assertIn(
+            "answer narrates a command, tool, or data-fetching step",
+            smart_apostrophe_errors,
+        )
+
+    def test_answer_guard_rejects_provider_schema_and_machine_constants(self):
+        answer = (
+            "Dune reports the rh-lp.v2 document as DISCOVERY_ONLY because "
+            "ECONOMICS_PENDING remains in the reason codes."
+        )
+
+        errors = answer_guard.validate_ordinary_answer(answer)
+
+        self.assertTrue(any("Dune" in error for error in errors))
+        self.assertTrue(any("rh-lp.v2" in error for error in errors))
+        self.assertTrue(any("DISCOVERY_ONLY" in error for error in errors))
+        self.assertTrue(any("ECONOMICS_PENDING" in error for error in errors))
+
+    def test_answer_guard_allows_ordinary_slash_pair_and_capitalized_words(self):
+        answer = (
+            "WETH/USDG is not ready. Some discovery data is unavailable, "
+            "and the capital at risk could be affected by administrator controls."
+        )
+
+        self.assertEqual(answer_guard.validate_ordinary_answer(answer), [])
+
+    def test_answer_guard_allows_plain_language_material_risk(self):
+        answer = (
+            "I don't see a pool worth further research right now. "
+            "Some discovery data is unavailable, transfer-tax behavior has not been verified, "
+            "and the fee-versus-risk calculation is still being measured."
+        )
+
+        self.assertEqual(answer_guard.validate_ordinary_answer(answer), [])
 
     def test_validates_v2_document(self):
         document = research.validate_document(valid_payload())
