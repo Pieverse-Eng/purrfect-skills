@@ -29,6 +29,7 @@ for (const runtime of ['openclaw', 'hermes']) {
 			'SKILL.md',
 			join('references', 'news-impact-analysis.md'),
 			join('references', 'profile-api.md'),
+			join('references', 'profile-intent.md'),
 			join('scripts', 'news_client.py'),
 			join('scripts', 'publish.py'),
 		].sort())

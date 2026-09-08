@@ -38,6 +38,15 @@ value and term type. Never copy the derived `normalizedValue`. Also do not copy
 `instanceId`, `status`, `version`, `createdAt`, `updatedAt`, match cursors, or
 other server-owned fields into the PUT body.
 
+`interestOriginal` and `interestEn` are nullable writable text fields. For new
+or changed interests, use [profile-intent.md](profile-intent.md). Send the pair
+together as nonblank strings (at most 4,000 characters each), or both `null` to
+clear. Older Profiles may return null/missing fields. When only changing cadence
+or language, preserve existing texts. If an old client omits both fields, the
+server preserves them only when include/exclude/source selectors are unchanged;
+otherwise it clears the pair to avoid stale intent. Never assume saved text
+means vector matching has been enabled.
+
 For example, if GET returns this active Profile and the user asks only to change
 the language to `zh-CN`:
 
@@ -49,6 +58,8 @@ the language to `zh-CN`:
     "status": "active",
     "version": 7,
     "preferredLanguage": "en",
+    "interestOriginal": "关注以太坊；排除宏观数据新闻。",
+    "interestEn": "Follow Ethereum; exclude macroeconomic data news.",
     "sourceAllowlist": ["panews"],
     "sourceBlocklist": [],
     "includeTerms": [
@@ -72,6 +83,8 @@ the complete PUT body is:
 {
   "expectedVersion": 7,
   "preferredLanguage": "zh-CN",
+  "interestOriginal": "关注以太坊；排除宏观数据新闻。",
+  "interestEn": "Follow Ethereum; exclude macroeconomic data news.",
   "sourceAllowlist": ["panews"],
   "sourceBlocklist": [],
   "includeTerms": [{ "type": "asset", "value": "Ethereum" }],
@@ -89,6 +102,8 @@ terms into a shell command. For first opt-in, the full preference shape is:
 {
   "expectedVersion": 0,
   "preferredLanguage": "en",
+  "interestOriginal": "Follow Ethereum news.",
+  "interestEn": "Follow Ethereum news.",
   "sourceAllowlist": ["panews"],
   "sourceBlocklist": [],
   "includeTerms": [{ "type": "asset", "value": "Ethereum" }],
@@ -124,7 +139,7 @@ Profile constraints:
   `token_unlock_burn`, `buyback`, `liquidation`, and `macro_data`.
 - PANews is the current centralized source. Do not invent other sources.
 - At least one include term is required unless exploration is enabled.
-- Preserve current language, score, source lists, terms, exploration, and
+- Preserve current interest texts, language, score, source lists, terms, exploration, and
   cadence unless the user explicitly requests a change.
 
 ## Pause

@@ -28,6 +28,7 @@ const manifest = [
 	[runtimeFiles[args.runtime].skill, 'SKILL.md'],
 	[join(source, 'references', 'news-impact-analysis.md'), join('references', 'news-impact-analysis.md')],
 	[join(source, 'references', 'profile-api.md'), join('references', 'profile-api.md')],
+	[join(source, 'references', 'profile-intent.md'), join('references', 'profile-intent.md')],
 	[join(source, 'scripts', 'news_client.py'), join('scripts', 'news_client.py')],
 	[runtimeFiles[args.runtime].publish, join('scripts', 'publish.py')],
 ]
