@@ -41,8 +41,17 @@ other server-owned fields into the PUT body.
 `interestOriginal` and `interestEn` are nullable writable text fields. For new
 or changed interests, use [profile-intent.md](profile-intent.md). Send the pair
 together as nonblank strings (at most 4,000 characters each), or both `null` to
-clear. Older Profiles may return null/missing fields. When only changing cadence
-or language, preserve existing texts. If an old client omits both fields, the
+clear. Both fields present with `null` mean the API supports the fields but this
+Profile has no semantic interest. Missing fields mean support is unconfirmed,
+not the same as null: do not send new interest texts or claim they can be saved.
+Legacy cadence/language changes can omit both fields. If GET returns
+`data: null`, field support cannot be inferred from that response; new text
+writes require the platform's confirmed Profile API rollout. Otherwise explain
+that saving the complete intent must wait for that capability, rather than
+silently reducing it to legacy keywords.
+
+When only changing cadence or language, preserve existing texts. If an old
+client omits both fields, the
 server preserves them only when include/exclude/source selectors are unchanged;
 otherwise it clears the pair to avoid stale intent. Never assume saved text
 means vector matching has been enabled.
@@ -126,6 +135,13 @@ curl -sS --fail-with-body --max-time 15 --max-redirs 0 \
 If the API returns `409 version_conflict`, GET again, reapply only the same
 requested preference changes to the new complete Profile, and retry once. Never
 loop or silently replace concurrent changes.
+
+Before reporting an interest change as saved, check that the successful PUT
+response contains the exact agreed `interestOriginal`/`interestEn` pair. If the
+response is missing either field or differs, GET once to verify persisted state.
+Do not treat HTTP 200 alone as proof that an older API retained unknown fields.
+If the pair still differs, report that the full interest was not confirmed saved;
+do not blindly repeat PUT or claim semantic matching is active.
 
 Profile constraints:
 
