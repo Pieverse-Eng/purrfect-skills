@@ -284,6 +284,10 @@ class ContractTest(unittest.TestCase):
         self.assertIn("The internal map and raw enum names are not user-facing output", skill)
         self.assertIn("Surface only\n   their plain-language consequence", skill)
         self.assertIn("python3 scripts/answer_guard.py", skill)
+        self.assertIn(
+            "ordinary answer, call this an independent\n   seven-day fee-rate reference without naming vfat",
+            skill,
+        )
 
     def test_answer_guard_rejects_the_live_tool_narration_and_status_leak(self):
         answer = (

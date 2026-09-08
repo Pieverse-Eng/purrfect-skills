@@ -197,7 +197,10 @@ When answering:
    timestamp, fee window, active/total liquidity, and full-time-in-range
    assumption. Never average it into, substitute it for, or let it satisfy the
    platform's finalized 24-hour chain economics and transfer-tax gates; it is
-   not APY or promised yield.
+   not APY or promised yield. In an ordinary answer, call this an independent
+   seven-day fee-rate reference without naming vfat, because provider names are
+   reserved for technical or audit detail where the ordinary-answer gate is
+   skipped.
 7. Explain unknown hooks, unsupported semantic identity, transfer-tax tokens,
    token upgrade/admin-control evidence, missing coverage, young pools, and
    incomplete volatility history. The
