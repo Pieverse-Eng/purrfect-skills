@@ -32,7 +32,7 @@ Retrieve project content and current market data by discovering a suitable read-
 Choose tools and parameters from discovery results; reuse existing evidence.
 
 ```bash
-purr agentkey discover "<what you need to learn, including known URLs, chain and CAs>" --prefix <returned-directory-path>
+purr agentkey discover "<what you need to learn, including known URLs, chain and CAs>"
 purr agentkey describe <returned-tool-name-or-path>
 purr agentkey execute <execute_as.name> --params '<parameters matching the returned schema>'
 ```
