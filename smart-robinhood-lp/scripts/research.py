@@ -23,7 +23,7 @@ MAX_RESPONSE_BYTES = 4 * 1024 * 1024
 TIMEOUT_SECONDS = 20
 POLL_INTERVAL_SECONDS = 2
 SUMMARY_DISCOVERY_ONLY_LIMIT = 5
-SUMMARY_DECISION_LIMIT = 10
+SUMMARY_DECISION_LIMIT = 8
 
 ADDRESS_RE = re.compile(r"^0x[0-9a-fA-F]{40}$")
 BYTES32_RE = re.compile(r"^0x[0-9a-fA-F]{64}$")
@@ -50,6 +50,16 @@ FUNNEL_POLICIES = {
             "new": 1,
             "heat": 1,
             "rotation": 1,
+        },
+    },
+    "rh-lp-funnel.v3": {
+        "deepVerificationLimit": 8,
+        "selectionRule": "up to 8 analyzable liquidity_volume prewarm; direct requests take priority",
+        "selectionBucketQuotas": {
+            "liquidityVolume": 8,
+            "new": 0,
+            "heat": 0,
+            "rotation": 0,
         },
     },
 }
@@ -366,6 +376,39 @@ def validate_token_control_evidence(value: Any) -> None:
         raise ValueError("token control selectors invalid")
 
 
+def validate_external_cross_check(value: Any) -> None:
+    cross_check = _object(value, "external cross-check invalid")
+    if (
+        cross_check.get("source") != "vfat"
+        or cross_check.get("status") not in {"MATCHED", "NOT_FOUND", "UNAVAILABLE"}
+        or not _timestamp(cross_check.get("observedAt"))
+        or not _url(cross_check.get("reference"))
+        or not _reasons(cross_check.get("reasonCodes"))
+    ):
+        raise ValueError("external cross-check invalid")
+    pool_address = cross_check.get("poolAddress")
+    pool_id = cross_check.get("poolId")
+    if pool_address is not None and (
+        not isinstance(pool_address, str) or ADDRESS_RE.fullmatch(pool_address) is None
+    ):
+        raise ValueError("external cross-check pool address invalid")
+    if pool_id is not None and (
+        not isinstance(pool_id, str) or BYTES32_RE.fullmatch(pool_id) is None
+    ):
+        raise ValueError("external cross-check pool id invalid")
+    for field in ("totalLiquidityUsd", "activeLiquidityUsd", "feeAprPercent"):
+        if not _decimal(cross_check.get(field)):
+            raise ValueError(f"external cross-check {field} invalid")
+    fee_window = cross_check.get("feeWindowDays")
+    if fee_window is not None and (
+        not isinstance(fee_window, int) or isinstance(fee_window, bool) or fee_window <= 0
+    ):
+        raise ValueError("external cross-check fee window invalid")
+    assumption = cross_check.get("assumesFullTimeInRange")
+    if assumption is not None and not isinstance(assumption, bool):
+        raise ValueError("external cross-check range assumption invalid")
+
+
 def validate_candidate(value: Any) -> None:
     candidate = _object(value, "candidate invalid")
     rank = candidate.get("rank")
@@ -407,6 +450,13 @@ def validate_candidate(value: Any) -> None:
         for evidence in token_controls
     ):
         raise ValueError("candidate transfer tax gate invalid")
+    external_cross_checks = _list(
+        candidate.get("externalCrossChecks", []), "candidate external cross-checks invalid"
+    )
+    if len(external_cross_checks) > 1:
+        raise ValueError("candidate external cross-checks invalid")
+    for cross_check in external_cross_checks:
+        validate_external_cross_check(cross_check)
     risk_flags = _list(candidate.get("riskFlags"), "candidate risk flags invalid")
     for raw_flag in risk_flags:
         flag = _object(raw_flag, "candidate risk flag invalid")
@@ -739,6 +789,7 @@ def _candidate_summary(
     summary["discoveryEvidence"] = _discovery_summary(candidate)
     summary["identity"] = _identity_summary(candidate)
     summary["tokenControlEvidence"] = _token_control_summary(candidate)
+    summary["externalCrossChecks"] = candidate.get("externalCrossChecks", [])
     economics = candidate["economics"]
     summary["economics"] = (
         economics
