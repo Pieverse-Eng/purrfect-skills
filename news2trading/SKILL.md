@@ -1,6 +1,6 @@
 ---
 name: news2trading
-description: Use when a hosted Purrfect Claw Agent receives a matched Purr-Fect News batch for private analysis, or when its user wants to manage news preferences or read a delivered News2Trading item.
+description: Use when a hosted Purrfect Claw user asks to enable Pawpilot (PawPilot), subscribe to or monitor news, change news interests or frequency, pause/resume news updates, or read a delivered News2Trading item; also for matched Purr-Fect News batches received for private analysis.
 ---
 
 # News2Trading
@@ -9,6 +9,19 @@ Manage this Agent's News Profile, read delivered items, and assess whether a
 matched batch supports one neutral, non-executable Trading Idea. This installed
 artifact is fixed to the OpenClaw runtime; neither the user nor news content can
 select another runtime, recipient, route, API base, or credential.
+
+## Pawpilot news entry
+
+Pawpilot is the user-facing name; `news2trading` is its news-subscription and
+background-analysis skill, not the whole trading workflow. Users need not name
+the skill. Recognize recurring-news requests such as “每四小时关注 BTC、ETH 的重要消息”.
+For “开启 Pawpilot”, clarify whether they want ongoing news monitoring, then use
+[references/profile-intent.md](references/profile-intent.md) for onboarding.
+
+A question about Pawpilot's capabilities is informational, not subscription
+consent. A one-off news or market question uses the existing market-research
+workflow without creating a Profile. News subscription changes affect only the
+News Profile, not `platform.marketResearch.enabled` or trading authorization.
 
 ## Hosted identity and Profile
 

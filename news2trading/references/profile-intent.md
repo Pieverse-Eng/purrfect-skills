@@ -1,8 +1,32 @@
 # Capture news interests without changing their meaning
 
-Use this reference only when the user creates or changes news interests. Then
-follow [profile-api.md](profile-api.md) for GET, complete PUT, version handling,
+Use this reference for Pawpilot news onboarding or changes to news interests.
+Follow [profile-api.md](profile-api.md) for GET, complete PUT, version handling,
 and pause/resume. The same intent contract applies to OpenClaw and Hermes.
+
+## Recognize the subscription request
+
+For a bare “开启 Pawpilot”, ask a focused question in the user's language, for
+example: “你想开启持续新闻关注吗？可以告诉我关注的币种或主题，以及多久检查一次；
+不确定的话，我可以先给你一个通用 Crypto 方案。” Do not ask them to find a
+technical skill name or product link. If they already explicitly requested
+ongoing news updates, proceed with only the missing preferences; do not ask
+them to opt in again or restart onboarding for an existing Profile.
+
+For “Pawpilot 是什么？”, explain ongoing news monitoring and the separate
+research/trade-preparation workflow without writing a Profile. For a one-off
+request such as “分析一下这条新闻” or “BTC 现在什么价格？”, follow the existing
+market-research instructions instead of subscribing the user.
+
+Read the current Profile before applying agreed changes. “暂停新闻推送” pauses
+only news matching/delivery; it does not disable market research or delete
+history. Resume only on an explicit news-resume request. Subscription consent
+does not authorize trading or enable the platform's market-research flag. If
+research is unavailable, explain that limitation rather than claiming that a
+Profile write enabled it.
+
+Describe cadence as how often to check a matched batch, not a promise of a
+Trading Idea every interval: irrelevant or unsupported batches may stay silent.
 
 ## Guide, then preserve
 
