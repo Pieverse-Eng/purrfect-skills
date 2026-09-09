@@ -1,14 +1,6 @@
 ---
 name: orderly
 description: Use when the user asks to trade Orderly perpetuals, inspect Orderly markets or funding, manage an Orderly position or order, deposit collateral, withdraw assets, or set Orderly TP/SL.
-metadata:
-  pieverse:
-    marketSearch: true
-    tradeReady:
-      probe:
-        argv: [purr, orderly, status]
-        jsonEquals:
-          tradeReady: true
 ---
 
 # Orderly
@@ -19,10 +11,11 @@ Ed25519 API key and signs every private REST request inside the TEE. Do not
 call Orderly REST endpoints directly and never create or store an Orderly
 private key.
 
-## Market search
+## Public market data
 
-Public market data works before onboarding and does not need wallet
-credentials.
+These Orderly-specific public commands work before onboarding and do not need
+wallet credentials. Hosted market discovery, reference candles, and cross-venue
+comparison are provided by fx tools.
 
 1. Search with `purr orderly markets --query <TICKER>`.
 2. Verify the exact `PERP_<TOKEN>_USDC` symbol using
@@ -35,7 +28,7 @@ credentials.
 ## Readiness and onboarding
 
 Run `purr orderly status` before a private read or trade. `publicReady` alone
-permits research; only `tradeReady: true` permits account actions.
+permits public data access; only `tradeReady: true` permits account actions.
 
 If the account is not ready, first show the result of:
 
