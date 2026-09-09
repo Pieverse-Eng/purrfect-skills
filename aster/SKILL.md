@@ -4,11 +4,6 @@ description: Aster DEX,futures market,trade,account,transfer,deposit
 metadata:
   openclaw:
     primaryEnv: ASTER_USER_WALLET
-  pieverse:
-    marketSearch: true
-    tradeReady:
-      env:
-        - [ASTER_USER_WALLET]
 ---
 
 # Aster DEX (Perpetual Futures)
@@ -19,49 +14,6 @@ Interact with Aster DEX for perpetual futures trading. Authenticated API calls a
 
 - In scope: Futures market data, trading, account management, futures↔spot transfers, on-chain Aster deposits via `purr aster deposit`
 - Out of scope: On-chain withdrawals, spot trading execution, account creation (user must already have an Aster futures account)
-
-## Market Search
-
-For a host-provided read-only market-search request, use this section directly.
-Do not load a vendor skill. Aster Market Search covers USDT perpetual futures.
-
-- Public market data does not require credentials. Run `aster_api.py` from
-  `{baseDir}/vendor`, with one command per tool call and no shell composition.
-- Derive a short canonical base ticker, then verify the exact candidate with
-  `python3 aster_api.py ticker --symbol <BASE>USDT`.
-- Accept a candidate only when the command returns a JSON object whose `symbol`
-  exactly equals the requested symbol and whose `price` is numeric. An empty
-  object, an error object, or an invalid-symbol response is not a listing, even
-  when the process exits successfully.
-- Never run `python3 aster_api.py exchange-info` for market search. Do not fetch
-  or filter the complete Aster catalog.
-- After verification, retrieve exactly the bounded candle windows needed by the
-  host:
-  - `python3 aster_api.py klines --symbol <SYMBOL> --interval 15m --limit 20`
-  - `python3 aster_api.py klines --symbol <SYMBOL> --interval 1h --limit 20`
-  - `python3 aster_api.py klines --symbol <SYMBOL> --interval 4h --limit 20`
-- Return the venue-provided latest candle as the final element. Do not infer
-  candles or listing identity from a different symbol.
-
-### Market Cost
-
-- For a verified USDT perpetual, retrieve bounded depth with
-  `python3 aster_api.py depth --symbol <SYMBOL> --limit 100`.
-- For ordinary crypto USDT perpetuals, the official regular/default taker fee
-  is `0.04%`, so pass `takerFeeBps: "4"`. Do not apply the optional ASTER
-  payment discount.
-- Aster stock perpetuals use a different published schedule: the regular taker
-  fee is `0.2%`, so pass `takerFeeBps: "20"` only when the verified listing is
-  a stock perpetual. Do not infer product class from ticker spelling alone.
-- Fee sources: `https://docs.asterdex.com/trading/perpetuals/fees-and-specs/fees`
-  and `https://docs.asterdex.com/product/asterex-pro/stock-perps-contracts`.
-  Pass `additionalFeeBps: "0"` because this skill documents no additional
-  Pieverse execution fee for Aster.
-- Aster defines the base asset as the quantity of a symbol, and its depth
-  response reports that absolute quantity at each price level. For an exact
-  verified USDT perpetual, pass `baseSizePerUnit: "1"`; do not fetch the full
-  `exchange-info` catalog merely to establish the size unit. Source:
-  `https://docs.asterdex.com/product/asterex-pro/api/api-documentation`.
 
 ## Credentials
 

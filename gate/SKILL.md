@@ -1,12 +1,6 @@
 ---
 name: gate
 description: Gate CEX/DEX,spot/futures,earn,Web3 Pay,x402,news
-metadata:
-  pieverse:
-    marketSearch: true
-    tradeReady:
-      env:
-        - [GATE_API_KEY, GATE_API_SECRET]
 ---
 
 # Gate
@@ -15,57 +9,15 @@ This is the top-level Gate router. Classify the user's intent, choose the
 matching vendor skill under `vendor/`, then read that vendor `SKILL.md` before
 running commands or explaining a workflow.
 
-## Market Search
+## Public Market Data
 
-For a host-provided read-only market-search request, use this section directly;
-do not load a vendor skill. Gate market endpoints are public and do not require
-`GATE_API_KEY` or `GATE_API_SECRET`.
+Public market endpoints do not require trading credentials. Verify the exact
+returned instrument and its trading status before using it in an order.
 
-- Run each command as one direct `gate-cli` invocation. Do not wrap it in
-  `if`, `command -v`, variables, pipes, redirects, or command chains.
-- For a USDT perpetual, verify an exact contract with
-  `gate-cli cex futures market contract --contract <BASE>_USDT --settle usdt --format json`.
-  Use `gate-cli cex futures market contracts --settle usdt --format json` only
-  when the exact contract cannot be derived safely.
-- Fetch perpetual candles with
-  `gate-cli cex futures market candlesticks --contract <CONTRACT> --settle usdt --interval <15m|1h|4h> --limit 21 --format json`.
-- For spot, verify an exact pair with
-  `gate-cli cex spot market pair --pair <BASE>_<QUOTE> --format json`, and fetch
-  candles with
-  `gate-cli cex spot market candlesticks --pair <PAIR> --interval <15m|1h|4h> --limit 21 --format json`.
-- For a stock or tokenized-equity Spot request, do not conclude that Gate has no
-  listing from a failed lookup of `<TICKER>_<QUOTE>`. Run
-  `gate-cli cex spot market pairs --format json` once to read the live Spot
-  catalog. The result can be retained or truncated; search its exact result
-  handle with `read_tool_result` using the canonical ticker and issuer name.
-  Inspect matching pair id, base, quote, trade status, and currency identity
-  fields, using `gate-cli cex spot market currency --currency <BASE> --format json`
-  when the pair alone does not establish the underlying. Gate tokenized-equity
-  base assets may add a venue-specific suffix; treat any such affix only as a
-  candidate hint and verify it from Gate-provided metadata. Do not shell-filter
-  or rerun the complete catalog.
-- Accept a listing only when the exact contract or pair is returned as active.
-  Return at most the latest 20 candles per timeframe.
-
-### Market Cost
-
-- Retrieve Spot depth with
-  `gate-cli cex spot market orderbook --pair <PAIR> --depth 100 --format json`,
-  or USDT-perpetual depth with
-  `gate-cli cex futures market orderbook --contract <CONTRACT> --settle usdt --depth 100 --format json`.
-- For a perpetual, use `taker_fee_rate` from the exact public contract response
-  and multiply the decimal rate by `10000` for `takerFeeBps`. Use its
-  `quanto_multiplier` as `baseSizePerUnit` only when it represents units of the
-  underlying asset.
-- For Spot, use the exact pair response's public `fee` only when present. Gate
-  reports this value as a percentage, so multiply it by `100` for
-  `takerFeeBps` (`"0.2"` means `20` bps). The field is deprecated; if it is
-  absent, exclude the Spot candidate rather than using an authenticated,
-  account-specific fee or guessing.
-- Fee semantics are documented at
-  `https://www.gate.com/docs/developers/apiv4/en/spot/` and
-  `https://www.gate.com/docs/developers/apiv4/en/futures/`. Exclude GT/VIP
-  discounts and pass `additionalFeeBps: "0"`.
+- Spot pair: `gate-cli cex spot market pair --pair <PAIR> --format json`
+- Perpetual contract: `gate-cli cex futures market contract --contract <CONTRACT> --settle usdt --format json`
+- Spot candles: `gate-cli cex spot market candlesticks --pair <PAIR> --interval <INTERVAL> --limit <COUNT> --format json`
+- Perpetual candles: `gate-cli cex futures market candlesticks --contract <CONTRACT> --settle usdt --interval <INTERVAL> --limit <COUNT> --format json`
 
 ## Execution Boundary
 
