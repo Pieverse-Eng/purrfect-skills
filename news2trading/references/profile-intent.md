@@ -1,8 +1,8 @@
 # Capture news interests without changing their meaning
 
 Use this reference for Pawpilot news onboarding or changes to news interests.
-Follow [profile-api.md](profile-api.md) for GET, complete PUT, version handling,
-and pause/resume. The same intent contract applies to OpenClaw and Hermes.
+Follow [profile-api.md](profile-api.md) for the executable read/change/verify
+workflow. The same intent contract applies to OpenClaw and Hermes.
 
 ## Recognize the subscription request
 
@@ -45,12 +45,19 @@ Profile with this draft.
 
 Persist two text fields when saving an agreed interest:
 
-- `interestOriginal`: the complete current intent in the user's language. On
-  first creation retain their wording; on later edits apply only the requested
-  change to the existing intent, rather than replacing it with “also SOL”. For
-  an assistant-proposed draft, use the wording the user agreed to.
+- `interestOriginal`: the complete agreed interest in the input language, not
+  the requested reply language. On creation or a full restatement, retain the
+  user's interest wording/language. On an incremental edit (“also SOL”), amend
+  the existing complete interest in its existing language. An explicit request
+  to convert the stored Profile to another language overrides that default.
+  For an assistant-proposed draft, use the wording the user agreed to.
 - `interestEn`: a faithful, complete English rendering of the same intent, not
   a keyword list or summary. If already English, both may be identical.
+
+For English interests with “reply in Chinese”, keep both interest fields in
+English and set only `preferredLanguage` to `zh-CN`. A cadence-only or reply-
+language-only update contains only that changed field: the script preserves
+both interest texts exactly.
 
 Support the user's language, including simplified/traditional Chinese,
 Japanese, Korean, Russian and Spanish. Preserve negation, AND/OR groups,

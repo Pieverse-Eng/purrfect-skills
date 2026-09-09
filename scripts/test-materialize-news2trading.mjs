@@ -31,6 +31,7 @@ for (const runtime of ['openclaw', 'hermes']) {
 			join('references', 'profile-api.md'),
 			join('references', 'profile-intent.md'),
 			join('scripts', 'news_client.py'),
+			join('scripts', 'profile.py'),
 			join('scripts', 'publish.py'),
 		].sort())
 		const skill = readFileSync(join(output, 'SKILL.md'), 'utf8')
@@ -56,6 +57,16 @@ for (const runtime of ['openclaw', 'hermes']) {
 		assert.match(help.stdout, /--batch-id/)
 		assert.match(help.stdout, /--text-file/)
 		assert.doesNotMatch(help.stdout, /--runtime|--recipient|--base-url|--token/)
+		const profileHelp = spawnSync('python3', [join(output, 'scripts', 'profile.py'), '--help'], {
+			encoding: 'utf8',
+		})
+		assert.equal(profileHelp.status, 0, profileHelp.stderr)
+		assert.match(profileHelp.stdout, /get,.*create,.*update,.*pause,.*resume/)
+		const invalidIdentity = spawnSync('python3', [join(output, 'scripts', 'profile.py'), 'get'], {
+			encoding: 'utf8', env: { ...process.env, WALLET_API_TOKEN: '' },
+		})
+		assert.notEqual(invalidIdentity.status, 0)
+		assert.equal(JSON.parse(invalidIdentity.stdout).code, 'invalid_hosted_identity')
 	})
 }
 
@@ -78,7 +89,7 @@ test('Profile API JSON examples use routable event identifiers in requests and r
 			checked += 1
 		}
 	}
-	assert.ok(checked >= 2, 'Exercise both GET and PUT event examples')
+	assert.ok(checked >= 2, 'Exercise canonical routing terms in onboarding changes')
 })
 
 test('refuses to materialize over a non-empty directory', () => {

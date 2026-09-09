@@ -1,14 +1,6 @@
 ---
 name: hyperliquid
 description: Use when the user asks to trade or manage Hyperliquid — e.g. check my HL balance, open a long on ETH, set leverage to 5x, cancel my open orders, deposit USDC to Hyperliquid, withdraw from HL, buy TSLA perp on xyz, move USDC to spot, what is funding on BTC, enable Hyperliquid trading, or other Hyperliquid account, market-data, order, collateral, or deposit/withdraw requests.
-metadata:
-  pieverse:
-    marketSearch: true
-    tradeReady:
-      probe:
-        argv: [purr, hyperliquid, status]
-        jsonEquals:
-          enabled: true
 ---
 
 # Hyperliquid
@@ -25,47 +17,10 @@ integration (`status` / `enable` / `disable`).
 
 Pick the matching command group below, then read that reference before acting.
 
-## Market Search
+## Market Data
 
-For a host-provided read-only market-search request, use this section directly.
-Hyperliquid market search and candles use the public mainnet Info API and do
-not require the trading integration or wallet credentials.
-
-- First derive one or more plausible canonical tickers from the requested
-  company, asset, or exposure. `purr hyperliquid search` performs
-  case-insensitive substring filtering over Hyperliquid's raw market and token
-  names; it does not translate natural-language names into tickers.
-- Run `purr hyperliquid search --query <TICKER>` as one direct command. Do not
-  use pipes, redirects, variables, command substitution, command chains, or a
-  complete `markets` catalog for targeted discovery.
-- A substring match alone is not verification. Accept only an `active: true`
-  result whose exact symbol, base token, `baseFullName`, or returned annotation
-  identifies the intended underlying and product. Discard unrelated prefix or
-  substring matches.
-- For candles, pass a perp result's exact `symbol` as `--coin`; for a spot
-  result, pass its exact `pairId` (for example `@706`) instead of the display
-  symbol. Fetch 15m, 1h, and 4h with literal Unix-millisecond `--start-time`
-  values and return at most the latest 20 candles per timeframe.
-- If no result verifies the intended underlying, report no Hyperliquid listing.
-  A failed natural-language-name query is not evidence that the ticker is
-  absent; derive the canonical ticker before concluding that no listing exists.
-
-### Market Cost
-
-- Retrieve bounded depth for the exact verified market with
-  `purr hyperliquid l2 --coin <COIN>`. Use the complete returned book, whose
-  sizes are denominated in the base asset (`baseSizePerUnit: "1"`).
-- Hyperliquid's official default-tier taker fee is `0.045%` for validator-run
-  perpetuals (`takerFeeBps: "4.5"`) and `0.070%` for Spot
-  (`takerFeeBps: "7"`). Do not apply volume, staking, referral, aligned-quote,
-  stable-pair, or growth-mode discounts.
-- HIP-3 fees can differ from validator-run perpetuals. Use an HIP-3 candidate
-  only when its current fee scale and growth-mode state are available from
-  official market data and can be applied to the default perp rate. Otherwise
-  exclude it from cost comparison rather than assuming `4.5` bps.
-- Fee source: `https://hyperliquid.gitbook.io/hyperliquid-docs/trading/fees`.
-  The Pieverse execution path adds the separately documented `0.05%`
-  transaction fee, so pass `additionalFeeBps: "5"`.
+For public market queries and exact pre-order symbol resolution, read
+[`references/market-data.md`](./references/market-data.md).
 
 ## Scope
 

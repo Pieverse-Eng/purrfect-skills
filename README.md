@@ -2,38 +2,12 @@
 
 This directory contains the Pieverse built-in skills. Each folder is a skill unit organized by domain or protocol.
 
-## Market-search metadata
+## Market research and execution
 
-Venue skills exposed to the Pod-local Market Search Agent declare
-`metadata.pieverse.marketSearch: true`. Their `tradeReady` metadata describes
-how the runtime can determine locally whether the tenant configured trading:
-
-```yaml
-metadata:
-  pieverse:
-    marketSearch: true
-    tradeReady:
-      env:
-        - [EXCHANGE_API_KEY, EXCHANGE_API_SECRET]
-      probe:
-        argv: [exchange, auth, status, --json]
-        jsonEquals:
-          status: logged_in
-```
-
-Each `env` item is one complete credential set; satisfying any item satisfies
-the env condition. A `probe` is an alternative local authentication condition:
-the runtime executes its fixed argument vector without a shell and requires the
-JSON result to contain every `jsonEquals` field. Probes must be read-only,
-bounded, and fail closed. This metadata declares detection rules only and must
-never contain credentials or tenant state.
-
-Market-search venue skills also carry their own market-cost runbook. It tells
-the Market Search Agent how to retrieve bounded public order-book depth and a
-current official regular/default taker fee for each supported product. The
-Agent supplies those verified numbers to fx's deterministic cost calculator;
-the calculator and Platform do not contain per-exchange fee tables or CLI
-adapters.
+Hosted market discovery, reference candles, and cross-venue cost comparison
+run through fx tools. Platform checks which venues the tenant has configured.
+Venue skills document execution workflows and direct public market commands;
+they do not define a separate hosted Market Search Agent workflow.
 
 # Current Layout
 
@@ -81,7 +55,7 @@ adapters.
 | `kaia-skills` | Kaia knowledge bundle — network basics, gas, fee delegation, governance, SDKs, and transaction types. |
 | `mantle` | Mantle skill bundle — network reference, address lookup, risk evaluation, portfolio analysis, DeFi planning, indexing, debugging, simulation, and smart-contract lifecycle. |
 | `panewslab` | PANewsLab crypto news, Polymarket smart money boards, article publishing, and rendered PANews web pages. |
-| `news2trading` | Hosted News2Trading Profile management and full-item reads through the Pieverse platform API. It does not classify news or execute trades. |
+| `news2trading` | Pawpilot onboarding through a shared read/change/verify Profile CLI; private news assessment and runtime-specific publication. Credentials stay inside scripts. Never executes trades. |
 | `rootdata-crypto` | RootData crypto intelligence — project / investor / people search, funding rounds, trending projects, and personnel job changes. |
 | `surf` | Surf crypto intelligence — live prices, wallets, DeFi, on-chain SQL, social analytics, prediction markets, news, search, and fund data via the Surf CLI. |
 | `stock-spread` | READ-ONLY cross-venue tokenized-stock price & spread intelligence — resolves an equity to per-venue identifiers and reports the normalized CEX-vs-DEX spread across Gate, Bybit, Binance bStocks, Bitget, and Solana/Jupiter, warning when legs span different tokenization wrappers. Quotes & comparison only; never trades. |
