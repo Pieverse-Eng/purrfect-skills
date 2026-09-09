@@ -289,6 +289,15 @@ class ContractTest(unittest.TestCase):
             skill,
         )
 
+    def test_skill_submits_exact_analysis_without_waiting_in_the_chat_turn(self):
+        skill = SKILL_PATH.read_text(encoding="utf-8")
+
+        self.assertIn("python3 scripts/research.py analyze --pool 0x...", skill)
+        self.assertNotIn("--wait-seconds", skill)
+        self.assertIn("never polls the queued economics work in the same chat\nturn", skill)
+        self.assertIn("report its `jobId`", skill)
+        self.assertIn("Do not sleep, use\n`exec/process` to wait", skill)
+
     def test_answer_guard_rejects_the_live_tool_narration_and_status_leak(self):
         answer = (
             "I'll pull the current market summary from the evidence API. "
@@ -733,13 +742,43 @@ class ContractTest(unittest.TestCase):
         self.assertEqual(attempts[0], attempts[1])
         self.assertEqual(attempts[0], research.json.dumps(body, separators=(",", ":")).encode())
 
-    def test_polling_preserves_terminal_jobs_and_refreshes_pending(self):
-        with patch.object(research.time, "sleep"), patch.object(
-            research, "fetch_job", return_value=valid_job("COMPLETED")
-        ) as fetch:
-            jobs = research.poll_jobs([valid_job()], 3)
-        self.assertEqual(jobs[0]["state"], "COMPLETED")
-        fetch.assert_called_once_with(JOB_ID)
+    def test_analyze_returns_submitted_jobs_without_polling(self):
+        submission = {
+            "requestId": REQUEST_ID,
+            "identifierKind": "pool",
+            "identifier": ADDRESS,
+            "venueHint": None,
+            "poolKeyHint": None,
+            "resolvedPools": 1,
+            "jobs": [valid_job()],
+            "reasonCodes": [],
+        }
+        with patch.object(
+            research.sys,
+            "argv",
+            ["research.py", "analyze", "--pool", ADDRESS, "--request-id", REQUEST_ID],
+        ), patch.object(
+            research, "submit_analysis", return_value=submission
+        ) as submit, patch.object(
+            research, "fetch_job"
+        ) as fetch_job, patch.object(
+            research.time, "sleep"
+        ) as sleep, patch(
+            "builtins.print"
+        ) as output:
+            research.main()
+
+        submit.assert_called_once_with(ADDRESS, "pool", REQUEST_ID)
+        fetch_job.assert_not_called()
+        sleep.assert_not_called()
+        rendered = research.json.loads(output.call_args.args[0])
+        self.assertEqual(rendered["jobs"], [valid_job()])
+
+    def test_analyze_rejects_removed_synchronous_wait_option(self):
+        with patch.object(research.sys, "stderr"), self.assertRaises(SystemExit):
+            research.parse_args(
+                ["analyze", "--pool", ADDRESS, "--wait-seconds", "1"]
+            )
 
     def test_base_url_precedence_and_public_fallback(self):
         with patch.dict(os.environ, {}, clear=True):
