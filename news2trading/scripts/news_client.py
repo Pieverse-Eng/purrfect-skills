@@ -147,12 +147,18 @@ def publish_batch(batch_id, text, expected_runtime):
 
 def _required_env(name):
 	value = os.environ.get(name)
+	if value and ('\n' in value or '\r' in value):
+		raise NewsClientError('invalid_hosted_identity', 'Hosted publication identity is invalid.', False)
 	if not value or not value.strip():
 		raise NewsClientError(
 			'missing_hosted_identity',
 			'Hosted publication identity is unavailable.',
 			False,
 		)
+	if name == 'WALLET_API_TOKEN' and (
+		value == '***' or any(ord(char) < 33 or ord(char) > 126 for char in value)
+	):
+		raise NewsClientError('invalid_hosted_identity', 'Hosted publication credential is invalid.', False)
 	return value.strip()
 
 

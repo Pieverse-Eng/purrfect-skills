@@ -1,6 +1,7 @@
 import json
 import os
 import socket
+import subprocess
 import sys
 import tempfile
 import threading
@@ -94,6 +95,27 @@ def _receipt(runtime='openclaw'):
 
 
 class NewsClientTest(unittest.TestCase):
+	def test_malformed_credentials_fail_safely_without_sending(self):
+		def respond(handler):
+			_json_response(handler, 200, _receipt())
+
+		with _Server(respond) as server, self._env(server.url), tempfile.TemporaryDirectory() as directory:
+			text_file = Path(directory) / 'idea.txt'
+			text_file.write_text('Neutral idea', encoding='utf-8')
+			for token in (TOKEN + '\ninvalid', TOKEN + '\rinvalid', TOKEN + '\n continued', TOKEN + '密钥', TOKEN + '\v', TOKEN + '\u00a0'):
+				with self.subTest(token_type=repr(token[len(TOKEN):])), patch.dict(os.environ, {'WALLET_API_TOKEN': token}):
+					result = subprocess.run(
+						[sys.executable, str(SCRIPT_DIR / 'publish.py'), '--batch-id', BATCH_ID, '--text-file', str(text_file)],
+						capture_output=True, text=True, check=False,
+					)
+					self.assertEqual(result.returncode, 1)
+					self.assertNotIn(TOKEN, result.stdout + result.stderr)
+					self.assertNotIn('Traceback', result.stderr)
+					diagnostic = json.loads(result.stderr)
+					self.assertEqual(diagnostic['code'], 'invalid_hosted_identity')
+					self.assertIs(diagnostic['channelAccepted'], False)
+			self.assertEqual(server.requests, [])
+
 	def _env(self, url):
 		return patch.dict(
 			os.environ,
