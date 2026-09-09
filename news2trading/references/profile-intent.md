@@ -75,6 +75,13 @@ terms that reflect the agreed interest, but do not invent event types or erase
 the full text merely because the legacy fields cannot express it. Preserve
 unrelated fields from GET.
 
+Use the exact event identifiers in [profile-api.md](profile-api.md), including
+underscores. In the example above, `etf_flow` and `exploit_security` are supported;
+the asset/event combinations and airdrop exclusion are not fully expressible
+by V1 selectors. A save confirmation must distinguish the complete intent stored
+from the routing constraints actually supported, rather than promising exact
+filtering just because the text was accepted.
+
 Saved text is not proof that semantic matching is enabled for this Instance.
 Candidate recall may be broader than the intent, and vector similarity is not
 a strict boolean/exclusion engine. Never promise that every detailed natural-

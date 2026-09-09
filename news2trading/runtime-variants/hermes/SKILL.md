@@ -1,6 +1,6 @@
 ---
 name: news2trading
-description: Use when a hosted Purrfect Claw user asks to enable Pawpilot (PawPilot), subscribe to or monitor news, change news interests or frequency, pause/resume news updates, or read a delivered News2Trading item; also for matched Purr-Fect News batches received for private analysis.
+description: Use when managing Pawpilot news settings or news batches.
 ---
 
 # News2Trading
@@ -17,6 +17,15 @@ background-analysis skill, not the whole trading workflow. Users need not name
 the skill. Recognize recurring-news requests such as “每四小时关注 BTC、ETH 的重要消息”.
 For “开启 Pawpilot”, clarify whether they want ongoing news monitoring, then use
 [references/profile-intent.md](references/profile-intent.md) for onboarding.
+
+For an explicit news-preference or frequency change, read
+[references/profile-api.md](references/profile-api.md), GET this Agent's Profile,
+and apply the authorized change through that API. Read the intent reference for
+new or changed interests; keep cadence-only edits narrow. Follow the paused
+Profile and confirmation rules before PUT, then verify the returned preferences.
+Hosted credentials enable this operation without asking the user for an API key.
+If a request fails, report the observed error; do not invent a website-only
+restriction or replace the platform News Profile with a Hermes cron job.
 
 A question about Pawpilot's capabilities is informational, not subscription
 consent. A one-off news or market question uses the existing market-research

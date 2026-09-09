@@ -31,10 +31,22 @@ that confirmation. Never use PUT followed by pause: PUT creates a window in
 which matching and delivery are active.
 
 GET and PUT deliberately use different term shapes. Map **each** GET
-`includeTerms` and `excludeTerms` entry from
-`{type, displayValue, normalizedValue}` to
-`{type, value: displayValue}`. This preserves the user's stored presentation
-value and term type. Never copy the derived `normalizedValue`. Also do not copy
+`includeTerms` and `excludeTerms` entry to `{type, value}`:
+
+- `asset`: use `displayValue` (supported aliases are normalized by the API).
+- `event_type`: use the supported canonical identifier from `normalizedValue`,
+  such as `etf_flow` or `exploit_security`, as PUT `value`. A display label like
+  “ETF Flow” is not an identifier: the API lowercases it but does not replace
+  spaces with underscores, so it will not match Collector events.
+
+For new event selectors, use the exact identifiers listed below. If an existing
+event selector is not supported, flag it. A cadence/language-only edit preserves
+its `displayValue` as `value` without silently repairing unrelated preferences;
+explain that its routing remains unverified. Resolve invalid selectors as part
+of an authorized interest correction.
+
+Do not copy response-only fields (`displayValue`, `normalizedValue`) as PUT
+field names. Also do not copy
 `instanceId`, `status`, `version`, `createdAt`, `updatedAt`, match cursors, or
 other server-owned fields into the PUT body.
 
@@ -72,10 +84,10 @@ the language to `zh-CN`:
     "sourceAllowlist": ["panews"],
     "sourceBlocklist": [],
     "includeTerms": [
-      { "type": "asset", "displayValue": "Ethereum", "normalizedValue": "ethereum" }
+      { "type": "asset", "displayValue": "Ethereum", "normalizedValue": "eth" }
     ],
     "excludeTerms": [
-      { "type": "event_type", "displayValue": "Macro Data", "normalizedValue": "macro data" }
+      { "type": "event_type", "displayValue": "macro_data", "normalizedValue": "macro_data" }
     ],
     "minScore": 50,
     "explorationEnabled": false,
@@ -97,7 +109,7 @@ the complete PUT body is:
   "sourceAllowlist": ["panews"],
   "sourceBlocklist": [],
   "includeTerms": [{ "type": "asset", "value": "Ethereum" }],
-  "excludeTerms": [{ "type": "event_type", "value": "Macro Data" }],
+  "excludeTerms": [{ "type": "event_type", "value": "macro_data" }],
   "minScore": 50,
   "explorationEnabled": false,
   "deliveryIntervalMinutes": 360
@@ -136,11 +148,14 @@ If the API returns `409 version_conflict`, GET again, reapply only the same
 requested preference changes to the new complete Profile, and retry once. Never
 loop or silently replace concurrent changes.
 
-Before reporting an interest change as saved, check that the successful PUT
-response contains the exact agreed `interestOriginal`/`interestEn` pair. If the
-response is missing either field or differs, GET once to verify persisted state.
+Before reporting success, check the successful PUT response for the requested
+cadence, reply language, active status, and preserved/changed selectors. For
+new or changed event selectors, verify their `normalizedValue` equals the
+canonical identifier sent, not a spaced display label. For an interest change,
+also check the exact agreed `interestOriginal`/`interestEn` pair. If a required
+field is missing or differs, GET once to verify persisted state.
 Do not treat HTTP 200 alone as proof that an older API retained unknown fields.
-If the pair still differs, report that the full interest was not confirmed saved;
+If verification still differs, report which settings were not confirmed saved;
 do not blindly repeat PUT or claim semantic matching is active.
 
 Profile constraints:
@@ -153,6 +168,10 @@ Profile constraints:
 - Event types are `listing_delisting`, `funding_investment`,
   `partnership_launch`, `exploit_security`, `regulation_legal`, `etf_flow`,
   `token_unlock_burn`, `buyback`, `liquidation`, and `macro_data`.
+- `airdrop` is not a supported V1 event selector. Preserve “exclude airdrops”
+  in the interest texts, but do not claim it is an enforced Matcher exclusion
+  or invent a selector. Explain unsupported constraints when confirming saved
+  preferences; if strict filtering is required, clarify before activating.
 - PANews is the current centralized source. Do not invent other sources.
 - At least one include term is required unless exploration is enabled.
 - Preserve current interest texts, language, score, source lists, terms, exploration, and

@@ -36,6 +36,16 @@ for (const runtime of ['openclaw', 'hermes']) {
 		const skill = readFileSync(join(output, 'SKILL.md'), 'utf8')
 		assert.match(skill, /^---\nname: news2trading\n/m)
 		assert.doesNotMatch(skill, /runtime-variants/)
+		if (runtime === 'hermes') {
+			// Hermes skill_utils.extract_skill_description displays at most 60 characters.
+			const description = skill.match(/^description: (.+)$/m)?.[1]
+			assert.ok(description)
+			const visible = description.length > 60 ? `${description.slice(0, 57)}...` : description
+			assert.match(visible, /Pawpilot/i)
+			assert.match(visible, /news/i)
+			assert.match(visible, /settings|preferences|frequency/i)
+			assert.match(visible, /batch/i)
+		}
 		for (const reference of skill.matchAll(/\]\((references\/[^)]+)\)/g)) {
 			assert.doesNotThrow(() => readFileSync(join(output, reference[1])))
 		}
@@ -48,6 +58,28 @@ for (const runtime of ['openclaw', 'hermes']) {
 		assert.doesNotMatch(help.stdout, /--runtime|--recipient|--base-url|--token/)
 	})
 }
+
+test('Profile API JSON examples use routable event identifiers in requests and responses', () => {
+	const reference = readFileSync(join(repo, 'news2trading', 'references', 'profile-api.md'), 'utf8')
+	// These are the public V1 Collector event identifiers, not presentation labels.
+	const events = new Set([
+		'listing_delisting', 'funding_investment', 'partnership_launch',
+		'exploit_security', 'regulation_legal', 'etf_flow', 'token_unlock_burn',
+		'buyback', 'liquidation', 'macro_data',
+	])
+	let checked = 0
+	for (const [, json] of reference.matchAll(/```json\n([\s\S]*?)\n```/g)) {
+		const body = JSON.parse(json)
+		const profile = body.data ?? body
+		for (const term of [...(profile.includeTerms ?? []), ...(profile.excludeTerms ?? [])]) {
+			if (term.type !== 'event_type') continue
+			const value = term.value ?? term.normalizedValue
+			assert.ok(events.has(value), `Unroutable event identifier in API example: ${value}`)
+			checked += 1
+		}
+	}
+	assert.ok(checked >= 2, 'Exercise both GET and PUT event examples')
+})
 
 test('refuses to materialize over a non-empty directory', () => {
 	const parent = mkdtempSync(join(tmpdir(), 'news2trading-nonempty-'))
