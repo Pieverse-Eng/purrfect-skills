@@ -20,8 +20,10 @@ import generate
 SKILL_DIR = Path(__file__).resolve().parents[1]
 SKILL = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
 HELPER = Path(__file__).with_name("generate.py").read_text(encoding="utf-8")
-NOW = datetime(2026, 9, 1, 4, 0, tzinfo=timezone.utc)
-PAST = "2026-08-01T04:00:00.000Z"
+# Both fixtures and the CLI clock use this instant, never the execution date.
+NOW = datetime(2000, 1, 1, tzinfo=timezone.utc)
+FUTURE = (NOW + timedelta(days=7)).isoformat()
+PAST = (NOW - timedelta(seconds=1)).isoformat()
 CLIP_URL = "https://v3b.fal.media/files/b/example/clip.mp4"
 ORIGINAL_GENERIC_PROMPT = (
     "Generate a photorealistic video of a Japanese man buying lamb skewers "
@@ -35,9 +37,7 @@ IMAGE_TO_VIDEO_PROMPT = "Turn this image into a video"
 def ok_payload(**overrides):
     data = {
         "url": CLIP_URL,
-        "urlExpiresAt": (
-            datetime.now(timezone.utc) + timedelta(days=7)
-        ).isoformat(timespec="milliseconds").replace("+00:00", "Z"),
+        "urlExpiresAt": FUTURE,
         "secondsBilled": 5,
     }
     data.update(overrides)
@@ -193,6 +193,10 @@ class ValidateSuccessTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "future"):
             generate.validate_success(ok_payload(urlExpiresAt=PAST), now=NOW)
 
+    def test_rejects_expiry_at_current_instant(self):
+        with self.assertRaisesRegex(ValueError, "future"):
+            generate.validate_success(ok_payload(urlExpiresAt=NOW.isoformat()), now=NOW)
+
     def test_rejects_billed_not_five(self):
         with self.assertRaisesRegex(ValueError, "secondsBilled"):
             generate.validate_success(ok_payload(secondsBilled=3), now=NOW)
@@ -230,7 +234,10 @@ class GenerateCliTests(unittest.TestCase):
         stderr = io.StringIO()
         with patch.dict(os.environ, env or self.env, clear=False), patch.object(
             generate, "open_url", opener
-        ), patch("sys.stdout", stdout), patch("sys.stderr", stderr):
+        ), patch("sys.stdout", stdout), patch("sys.stderr", stderr), patch.object(
+            generate, "datetime", wraps=datetime
+        ) as clock:
+            clock.now.return_value = NOW
             code = generate.main(argv)
         return code, stdout.getvalue(), stderr.getvalue()
 
@@ -264,6 +271,15 @@ class GenerateCliTests(unittest.TestCase):
         clip = json.loads(out.strip().split("\n", 1)[1])
         self.assertEqual(clip["secondsBilled"], 5)
         self.assertNotIn("pcp_secret", out)
+
+    def test_expired_success_does_not_publish_clip(self):
+        def open_url(request, timeout=None):
+            return FakeResponse(200, json.dumps(ok_payload(urlExpiresAt=PAST)).encode())
+
+        code, out, err = self.run_cli(open_url)
+        self.assertEqual(code, 1)
+        self.assertIn("INVALID_SUCCESS", err)
+        self.assertNotIn(CLIP_URL, out)
 
     def test_http_403_is_exit_4(self):
         def open_url(request, timeout=None):
