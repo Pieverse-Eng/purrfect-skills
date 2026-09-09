@@ -86,6 +86,7 @@ purr orderly orders cancel-all --symbol PERP_BTC_USDC
 purr orderly position close --symbol PERP_BTC_USDC --percentage 100
 purr orderly leverage set --symbol PERP_BTC_USDC --leverage 3
 purr orderly algo create --symbol PERP_BTC_USDC --side SELL --quantity <qty> --take-profit <price> --stop-loss <price>
+purr orderly algo cancel --order-id <id> --symbol <PERP_TOKEN_USDC>
 ```
 
 Confirm a fill only after checking `purr orderly fills`, `orders`, or
