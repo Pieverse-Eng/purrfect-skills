@@ -75,6 +75,11 @@ Show a brief read-back of the intended subscription in the user's language.
 Keep `preferredLanguage` as the user's reply language; English retrieval text
 does not authorize changing it to English.
 
+In an ongoing subscription conversation, “改成中文通知” or “偏好语言改成 Chinese”
+is a Profile language update, even if memory already says Chinese. Use the
+verified script workflow. If the user specifies chat-only replies, leave the
+Profile unchanged; clarify when the scope is genuinely ambiguous.
+
 ## Retain compatible legacy fields without promising exact filtering
 
 The API still needs its legacy preference fields. Use supported asset/event
@@ -89,7 +94,15 @@ by V1 selectors. A save confirmation must distinguish the complete intent stored
 from the routing constraints actually supported, rather than promising exact
 filtering just because the text was accepted.
 
+Check the V1 scoring contract in [profile-api.md](profile-api.md) against the
+draft's selectors and minimum score. Event-only selectors with the default score
+50 cannot yield candidates; explain and obtain agreement on a viable draft.
+Do not silently add broad asset selectors or lower an existing threshold.
+
 Saved text is not proof that semantic matching is enabled for this Instance.
+Do not claim an unsupported selector “works through semantic matching” simply
+because its wording was saved. Describe it as retained intent for Agent analysis,
+not a guaranteed candidate filter.
 Candidate recall may be broader than the intent, and vector similarity is not
 a strict boolean/exclusion engine. Never promise that every detailed natural-
 language restriction will be enforced before the Agent reads candidates. If

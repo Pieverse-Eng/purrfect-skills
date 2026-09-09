@@ -56,9 +56,12 @@ card would not fit. Include:
    unrelated research findings to the delivered article.
 3. The hypothesis, horizon, strongest contrary or no-impact case, and what would
    invalidate it. A possible direction is conditional, not a predicted outcome.
-4. A short invitation to discuss or prepare a trade, making clear no order is
-   prepared or executed. Only a later user request starts the existing trading
-   workflow; confirmation requires an actual displayed, unexpired order.
+4. A short invitation to discuss or prepare a trade, making clear this isolated
+   stage has not prepared or executed an order. In the destination conversation,
+   an explicit platform handoff follows the host's `AGENTS.md` News path; a user
+   follow-up follows the host's appropriate trading path. Do not impose another
+   opt-in before a card when the host already requests preparation. Neither an
+   Idea nor a platform handoff is permission to execute a trade.
 
 Return only the final research message or exactly `NO_REPLY`. No progress reports,
 raw batch, tool diagnostics, or internal analysis should become the final result.

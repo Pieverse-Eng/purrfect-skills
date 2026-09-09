@@ -20,24 +20,30 @@ or ask the user for it. Do not rewrite the script to bypass a failure.
    ```
 
 2. Clarify only missing consent/preferences. For new or changed interests, read
-   [profile-intent.md](profile-intent.md). For a cadence-only edit, do not rebuild
+   [profile-intent.md](profile-intent.md). For a cadence/language-only edit, do not rebuild
    interests, source lists or selectors.
 3. Use the runtime file tool to write **only the authorized changed fields** to
-   one fresh local UTF-8 JSON file. This is a request draft, not a saved
-   subscription. Use that exact file path in the next command.
+   one fresh local UTF-8 JSON file in the allowed workspace. The examples use
+   `./pawpilot-changes.json` relative to the installed skill directory; resolve
+   that to an absolute path for the file tool, and use the same path for the CLI.
+   Hermes restricts file-tool writes to `/opt/data`; do not use `/tmp` or loosen
+   its write boundary. This file is a request draft, not a saved subscription.
 4. Execute the appropriate operation below. The script GETs again, checks the
    expected version, preserves other writable fields, maps API term shapes,
    constructs the full PUT, and verifies the returned identity, version, status,
    preferences and normalized selectors.
 5. Report saved settings only after `ok: true` and `verified: true`, using
    `profile` from that receipt. Explain any warnings and unsupported filters.
-   Memory may be updated afterward; it cannot replace this operation.
+   Memory is optional and cannot replace this operation. If updated, preserve
+   unrelated memory and distinguish interest language from reply language; the
+   platform receipt, not a remembered version, remains authoritative.
 
 ### First opt-in
 
 `get` must return `profile: null`. Use `create` only after the user explicitly
 requests a subscription or approves your onboarding draft. A capabilities
-question is not opt-in. Example changes file:
+question is not opt-in. Example after the user agrees to event-only matching
+with `minScore: 30` (see V1 scoring below):
 
 ```json
 {
@@ -48,12 +54,13 @@ question is not opt-in. Example changes file:
     { "type": "event_type", "value": "etf_flow" },
     { "type": "event_type", "value": "exploit_security" }
   ],
-  "deliveryIntervalMinutes": 30
+  "deliveryIntervalMinutes": 30,
+  "minScore": 30
 }
 ```
 
 ```bash
-python3 scripts/profile.py create --changes-file /tmp/pawpilot-changes.json
+python3 scripts/profile.py create --changes-file ./pawpilot-changes.json
 ```
 
 Unspecified new-Profile defaults: check every 360 minutes, minScore 50,
@@ -70,12 +77,17 @@ user asks only for 20 minutes, the entire changes file is:
 ```
 
 ```bash
-python3 scripts/profile.py update --expected-version 7 --changes-file /tmp/pawpilot-changes.json
+python3 scripts/profile.py update --expected-version 7 --changes-file ./pawpilot-changes.json
 ```
 
 `update` refuses paused Profiles: the underlying PUT activates them. Ask whether
 to resume if the user asked only to change preferences while paused. Do not
 resume and then pause as a workaround.
+
+For a notification-language-only request such as “偏好语言改成 Chinese”, use the
+same GET/update/verified-receipt workflow with only
+`{"preferredLanguage":"zh-CN"}` in the draft. A memory write is not success.
+An explicit request to change only the current chat language needs no Profile write.
 
 ### Pause / resume
 
@@ -117,6 +129,14 @@ Canonical event identifiers (underscores are significant):
 `listing_delisting`, `funding_investment`, `partnership_launch`,
 `exploit_security`, `regulation_legal`, `etf_flow`, `token_unlock_burn`,
 `buyback`, `liquidation`, `macro_data`.
+
+V1 scores each matched category once: asset = 50, event type = 30; a provider's
+important flag adds 15. Multiple event terms do not add another 30. An event-only
+Profile with exploration off therefore cannot meet `minScore > 45`, including
+the default 50. During onboarding, explain this and propose 30 for event-only
+recall; include it in the agreed draft. For an existing Profile, surface the
+incompatibility and ask before changing the score or broadening asset selectors.
+A cadence/language-only edit still preserves the existing score and selectors.
 
 V1 recognizes Bitcoin/BTC, Ethereum/ETH and Solana/SOL. PANews is the current
 centralized source. Do not invent supported sources or event enums.

@@ -1,6 +1,6 @@
 ---
 name: news2trading
-description: Use when a hosted Purrfect Claw user asks to enable Pawpilot (PawPilot), subscribe to or monitor news, change news interests or frequency, pause/resume news updates, or read a delivered News2Trading item; also for matched Purr-Fect News batches received for private analysis.
+description: Use when a hosted Purrfect Claw user asks to enable Pawpilot (PawPilot), subscribe to or monitor news, change news interests, frequency or notification language, pause/resume news updates, or read a delivered News2Trading item; also for matched Purr-Fect News batches received for private analysis.
 ---
 
 # News2Trading
@@ -26,7 +26,9 @@ News Profile, not `platform.marketResearch.enabled` or trading authorization.
 ## Execute Pawpilot onboarding and subscription changes
 
 The platform News API stores this Agent's subscription; memory and workspace
-files do not configure news delivery.
+files do not configure news delivery. In a subscription conversation, a follow-up
+such as “偏好语言改成 Chinese” changes the platform notification language through
+this workflow. An explicit chat-only language request does not change the Profile.
 
 For subscription reads or changes, use the shared executable workflow in
 [references/profile-api.md](references/profile-api.md):
@@ -52,8 +54,15 @@ Neither onboarding nor a Profile save enables trading or market-research flags.
 Read [references/news-impact-analysis.md](references/news-impact-analysis.md).
 A Profile match means topical interest, not market impact or direction. Decide
 whether market research is useful; do not force every batch into research or a
-trade. Any `research_market` call omits `order`. Never choose amount, leverage,
-margin mode, funding, account preflight, execution venue, or an order card.
+trade. In this isolated stage, any `research_market` call omits `order`. Never
+choose amount, leverage, margin mode, funding, account preflight, execution venue,
+or an order card.
+
+After publication, an explicit platform handoff in the destination conversation
+uses the host's `AGENTS.md` News path and its research/execution skills. This
+skill does not redefine their card, venue, sizing or confirmation rules. A
+research-only brief describes this stage; it is not a permanent user preference
+against cards. A user's explicit discussion-only restriction still applies.
 
 Only an exact trusted activation-control line outside article/item fields enables
 publication:
