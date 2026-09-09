@@ -118,9 +118,9 @@ progress reported by the validated contract.
 Use one command matching the identifier type:
 
 ```bash
-python3 scripts/research.py analyze --token 0x... --wait-seconds 180
-python3 scripts/research.py analyze --pool 0x... --wait-seconds 180
-python3 scripts/research.py analyze --pool-id 0x... --wait-seconds 180
+python3 scripts/research.py analyze --token 0x...
+python3 scripts/research.py analyze --pool 0x...
+python3 scripts/research.py analyze --pool-id 0x...
 ```
 
 The helper creates a UUID `requestId` before submission. If transport fails
@@ -132,10 +132,14 @@ the first request may have been accepted.
 Identity is verified synchronously. A fresh shared pool-economics cache hit is
 returned as a terminal job immediately; a miss is queued and writes through to
 that cache when complete. The cache has a 24-hour TTL, but only results at most
-six hours old are immediate hits. The command polls only when `--wait-seconds`
-is nonzero and returns both the original submission and latest job states. If
-time expires while a job is still pending,
-report its `jobId` and use:
+six hours old are immediate hits. The command returns after that synchronous
+submission step and never polls the queued economics work in the same chat
+turn. If any returned job is still queued or running, immediately preserve its
+authoritative `WAIT` classification, report its `jobId`, and say in plain
+language that the analysis is continuing in the background. Do not sleep, use
+`exec/process` to wait, or call `job` again in the same turn.
+
+On a later user follow-up, use the preserved identifier with:
 
 ```bash
 python3 scripts/research.py job <jobId>

@@ -21,7 +21,6 @@ DEFAULT_APP_API_URL = "https://purr.pieverse.io/api/app"
 FEED_PATH = "/research/rh-lp"
 MAX_RESPONSE_BYTES = 4 * 1024 * 1024
 TIMEOUT_SECONDS = 20
-POLL_INTERVAL_SECONDS = 2
 SUMMARY_DISCOVERY_ONLY_LIMIT = 5
 SUMMARY_DECISION_LIMIT = 8
 
@@ -885,22 +884,6 @@ def fetch_job(job_id: str) -> dict[str, Any]:
     return validate_job(payload.get("data"))
 
 
-def poll_jobs(jobs: list[dict[str, Any]], wait_seconds: int) -> list[dict[str, Any]]:
-    deadline = time.monotonic() + wait_seconds
-    current = jobs
-    while any(job["state"] not in {"COMPLETED", "FAILED"} for job in current):
-        if time.monotonic() >= deadline:
-            break
-        time.sleep(POLL_INTERVAL_SECONDS)
-        current = [
-            fetch_job(job["jobId"])
-            if job["state"] not in {"COMPLETED", "FAILED"}
-            else job
-            for job in current
-        ]
-    return current
-
-
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -914,7 +897,6 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     kinds.add_argument("--pool")
     kinds.add_argument("--pool-id")
     analyze.add_argument("--request-id", help="UUID reused to recover the same analysis jobs")
-    analyze.add_argument("--wait-seconds", type=int, default=0, choices=range(0, 601), metavar="0..600")
     job = subparsers.add_parser("job", help="read one analysis job")
     job.add_argument("job_id")
     return parser.parse_args(argv)
@@ -936,8 +918,7 @@ def main() -> None:
                 raise ValueError(f"{kind} identifier invalid")
             request_id = arguments.request_id or str(uuid.uuid4())
             submission = submit_analysis(identifier.lower(), kind, request_id)
-            jobs = poll_jobs(submission["jobs"], arguments.wait_seconds)
-            result = {"submission": submission, "jobs": jobs}
+            result = {"submission": submission, "jobs": submission["jobs"]}
         print(json.dumps(result, separators=(",", ":"), ensure_ascii=False))
     except (RuntimeError, ValueError) as error:
         die(str(error))
