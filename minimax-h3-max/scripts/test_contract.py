@@ -7,7 +7,7 @@ import os
 import tempfile
 import threading
 import unittest
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from email.message import Message
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
@@ -21,7 +21,6 @@ SKILL_DIR = Path(__file__).resolve().parents[1]
 SKILL = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
 HELPER = Path(__file__).with_name("generate.py").read_text(encoding="utf-8")
 NOW = datetime(2026, 9, 1, 4, 0, tzinfo=timezone.utc)
-FUTURE = "2026-09-08T04:00:00.000Z"
 PAST = "2026-08-01T04:00:00.000Z"
 CLIP_URL = "https://v3b.fal.media/files/b/example/clip.mp4"
 ORIGINAL_GENERIC_PROMPT = (
@@ -36,7 +35,9 @@ IMAGE_TO_VIDEO_PROMPT = "Turn this image into a video"
 def ok_payload(**overrides):
     data = {
         "url": CLIP_URL,
-        "urlExpiresAt": FUTURE,
+        "urlExpiresAt": (
+            datetime.now(timezone.utc) + timedelta(days=7)
+        ).isoformat(timespec="milliseconds").replace("+00:00", "Z"),
         "secondsBilled": 5,
     }
     data.update(overrides)
