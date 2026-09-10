@@ -31,6 +31,8 @@ Retrieve project content and current market data by discovering a suitable read-
 
 Choose tools and parameters from discovery results; reuse existing evidence.
 
+After describing a suitable tool, execute it to retrieve the required evidence. Discovery and descriptions alone are not research results.
+
 ```bash
 purr agentkey discover "<what you need to learn, including known URLs, chain and CAs>"
 purr agentkey describe <returned-tool-name-or-path>
