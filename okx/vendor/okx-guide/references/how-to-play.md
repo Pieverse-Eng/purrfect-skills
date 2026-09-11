@@ -78,3 +78,4 @@ If the user types something other than a numbered pick or `login`, answer in the
 4. **Turn budget** — ≤ 3 turns end-to-end for a new user; ≤ 2 turns for a returning user picking a workflow + login.
 5. **Disclaimer placement** — the disclaimer is the final segment of every rendered banner (both variants, both auth states).
 6. **Stale-session fallback** — when `wallet status` returns `loggedIn: true` but `wallet balance` fails (e.g. expired refresh token) or lacks the address / balance fields, the flow prompts re-login (routes to Login) instead of rendering a partial or fabricated logged-in banner; after re-login it renders the logged-in banner.
+

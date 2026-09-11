@@ -397,7 +397,7 @@
 			"id": "okx",
 			"repo": "https://github.com/okx/onchainos-skills.git",
 			"commit": "17daea5dd2d4846ed5a812219afec07965c14b80",
-			"notes": "Official OnchainOS v4.5.3 (release tag commit). Complete seven-skill tree, hidden vendor frontmatter, and a checked-in patch removing three upstream links to absent documents. The top-level okx wrapper owns platform runtime policy and routing.",
+			"notes": "Official OnchainOS v4.5.3 (release tag commit). Complete seven-skill tree, identical to upstream except for the two hidden vendor frontmatter fields. The top-level okx wrapper owns platform runtime policy and routing.",
 			"skills": [
 				{
 					"name": "okx-vendor-okx-agent-payments-protocol-SKILL.md",
@@ -1005,8 +1005,7 @@
 					"targetPath": "okx/vendor/okx-guide/references/welcome.md"
 				}
 			],
-			"hideVendorSkills": true,
-			"patchPath": "scripts/patches/okx-v4.5.3-reference-links.patch"
+			"hideVendorSkills": true
 		},
 		{
 			"id": "morph",

@@ -95,10 +95,6 @@ while IFS= read -r provider; do
 		git -C "$provider_tmp" fetch --quiet --depth=1 origin "$commit"
 		git -C "$provider_tmp" checkout --quiet "$commit"
 	fi
-	patch_path="$(jq -r '.patchPath // empty' <<<"$provider")"
-	if [[ -n "$patch_path" ]]; then
-		git -C "$provider_tmp" apply --unidiff-zero "$ROOT_DIR/$patch_path"
-	fi
 
 	while IFS= read -r skill; do
 		[[ -n "$skill" ]] || continue
