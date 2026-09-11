@@ -75,6 +75,7 @@ Common BSC inputs include `USDT` and native `BNB`:
 
 ```bash
 purr pancake swap --from USDT --to <TOKEN_CA> --amount 100
+purr pancake swap --from USDC --to <TOKEN_CA> --amount 100
 purr pancake swap --from BNB --to <TOKEN_CA> --amount 0.1
 ```
 
