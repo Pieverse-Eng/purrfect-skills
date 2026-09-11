@@ -71,6 +71,13 @@ Resolve missing token CAs first, reusing identities already established:
 purr pancake swap --from <input-ca> --to <output-ca> --amount <human-readable-amount> --slippage 0.5
 ```
 
+Common BSC inputs include `USDT` and native `BNB`:
+
+```bash
+purr pancake swap --from USDT --to <TOKEN_CA> --amount 100
+purr pancake swap --from BNB --to <TOKEN_CA> --amount 0.1
+```
+
 Without `--execute`, this only quotes. Amount is in input-token units (for example,
 `100` USDT); slippage is a percentage, default 0.5%. Platform selects the highest
 output among covered V2/V3 routes before gas. Native BNB uses V2. Do not supply
