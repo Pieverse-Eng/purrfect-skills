@@ -1004,14 +1004,13 @@
 					"upstreamPath": "skills/okx-guide/references/welcome.md",
 					"targetPath": "okx/vendor/okx-guide/references/welcome.md"
 				}
-			],
-			"hideVendorSkills": true
+			]
 		},
 		{
 			"id": "morph",
 			"repo": "https://github.com/morph-l2/morph-skill.git",
 			"commit": "e203bc4b981f13a3c358cff68831f8ca68e16648",
-			"notes": "Morph L2 skill — wallet, explorer, DEX, bridge, altfee, EIP-7702, EIP-8004 identity, x402 payment. Reads via vendor morph_api.py; writes via purr CLI or helper scripts under morph/scripts/.",
+			"notes": "Morph L2 skill \u2014 wallet, explorer, DEX, bridge, altfee, EIP-7702, EIP-8004 identity, x402 payment. Reads via vendor morph_api.py; writes via purr CLI or helper scripts under morph/scripts/.",
 			"skills": [
 				{
 					"name": "morph-wallet",

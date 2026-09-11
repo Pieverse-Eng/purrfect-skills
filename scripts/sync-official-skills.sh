@@ -111,18 +111,6 @@ while IFS= read -r provider; do
 			exit 1
 		}
 
-		# Wrapper-owned vendor skills must stay hidden after both sync and check.
-		if [[ "$(jq -r '.hideVendorSkills // false' <<<"$provider")" == "true" && "${src##*/}" == "SKILL.md" ]]; then
-			adapted="$provider_tmp/hidden-skill.md"
-			awk '
-				NR == 1 { print; print "disable-model-invocation: true"; print "user-invocable: false"; frontmatter = 1; next }
-				frontmatter && /^---$/ { frontmatter = 0 }
-				frontmatter && /^(disable-model-invocation|user-invocable):/ { next }
-				{ print }
-			' "$src" > "$adapted"
-			src="$adapted"
-		fi
-
 		if [[ "$MODE" == "check" ]]; then
 			if [[ ! -f "$dst" ]]; then
 				echo "DRIFT: missing file $target_path"
