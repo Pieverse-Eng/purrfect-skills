@@ -396,101 +396,623 @@
 		{
 			"id": "okx",
 			"repo": "https://github.com/okx/onchainos-skills.git",
-			"commit": "3ed6574ecec3ba23dea26a23adb3d2f988f793b9",
-			"notes": "Imported verbatim under okx/vendor as official reference material (v3.0.0). Each skill dir may also include _shared/, references/, and protocols/ subdirs. Platform routing and execution must still be adapted locally before enabling write flows.",
+			"commit": "17daea5dd2d4846ed5a812219afec07965c14b80",
+			"notes": "Official OnchainOS v4.5.3 (release tag commit). Complete seven-skill tree, hidden vendor frontmatter, and a checked-in patch removing three upstream links to absent documents. The top-level okx wrapper owns platform runtime policy and routing.",
 			"skills": [
 				{
-					"name": "okx-a2a-payment",
-					"upstreamPath": "skills/okx-a2a-payment/SKILL.md",
-					"targetPath": "okx/vendor/okx-a2a-payment/SKILL.md"
+					"name": "okx-vendor-okx-agent-payments-protocol-SKILL.md",
+					"upstreamPath": "skills/okx-agent-payments-protocol/SKILL.md",
+					"targetPath": "okx/vendor/okx-agent-payments-protocol/SKILL.md"
 				},
 				{
-					"name": "okx-agentic-wallet",
+					"name": "okx-vendor-okx-agent-payments-protocol-_shared-amount-display.md",
+					"upstreamPath": "skills/okx-agent-payments-protocol/_shared/amount-display.md",
+					"targetPath": "okx/vendor/okx-agent-payments-protocol/_shared/amount-display.md"
+				},
+				{
+					"name": "okx-vendor-okx-agent-payments-protocol-_shared-preflight.md",
+					"upstreamPath": "skills/okx-agent-payments-protocol/_shared/preflight.md",
+					"targetPath": "okx/vendor/okx-agent-payments-protocol/_shared/preflight.md"
+				},
+				{
+					"name": "okx-vendor-okx-agent-payments-protocol-references-a2a_charge.md",
+					"upstreamPath": "skills/okx-agent-payments-protocol/references/a2a_charge.md",
+					"targetPath": "okx/vendor/okx-agent-payments-protocol/references/a2a_charge.md"
+				},
+				{
+					"name": "okx-vendor-okx-agent-payments-protocol-references-a2mcp-mcp.md",
+					"upstreamPath": "skills/okx-agent-payments-protocol/references/a2mcp-mcp.md",
+					"targetPath": "okx/vendor/okx-agent-payments-protocol/references/a2mcp-mcp.md"
+				},
+				{
+					"name": "okx-vendor-okx-agent-payments-protocol-references-accepts-schemes.md",
+					"upstreamPath": "skills/okx-agent-payments-protocol/references/accepts-schemes.md",
+					"targetPath": "okx/vendor/okx-agent-payments-protocol/references/accepts-schemes.md"
+				},
+				{
+					"name": "okx-vendor-okx-agent-payments-protocol-references-charge.md",
+					"upstreamPath": "skills/okx-agent-payments-protocol/references/charge.md",
+					"targetPath": "okx/vendor/okx-agent-payments-protocol/references/charge.md"
+				},
+				{
+					"name": "okx-vendor-okx-agent-payments-protocol-references-multi-scheme.md",
+					"upstreamPath": "skills/okx-agent-payments-protocol/references/multi-scheme.md",
+					"targetPath": "okx/vendor/okx-agent-payments-protocol/references/multi-scheme.md"
+				},
+				{
+					"name": "okx-vendor-okx-agent-payments-protocol-references-session.md",
+					"upstreamPath": "skills/okx-agent-payments-protocol/references/session.md",
+					"targetPath": "okx/vendor/okx-agent-payments-protocol/references/session.md"
+				},
+				{
+					"name": "okx-vendor-okx-agent-payments-protocol-references-subscription.md",
+					"upstreamPath": "skills/okx-agent-payments-protocol/references/subscription.md",
+					"targetPath": "okx/vendor/okx-agent-payments-protocol/references/subscription.md"
+				},
+				{
+					"name": "okx-vendor-okx-agentic-wallet-SKILL.md",
 					"upstreamPath": "skills/okx-agentic-wallet/SKILL.md",
 					"targetPath": "okx/vendor/okx-agentic-wallet/SKILL.md"
 				},
 				{
-					"name": "okx-audit-log",
-					"upstreamPath": "skills/okx-audit-log/SKILL.md",
-					"targetPath": "okx/vendor/okx-audit-log/SKILL.md"
+					"name": "okx-vendor-okx-agentic-wallet-_shared-chain-support.md",
+					"upstreamPath": "skills/okx-agentic-wallet/_shared/chain-support.md",
+					"targetPath": "okx/vendor/okx-agentic-wallet/_shared/chain-support.md"
 				},
 				{
-					"name": "okx-dapp-discovery",
+					"name": "okx-vendor-okx-agentic-wallet-_shared-preflight.md",
+					"upstreamPath": "skills/okx-agentic-wallet/_shared/preflight.md",
+					"targetPath": "okx/vendor/okx-agentic-wallet/_shared/preflight.md"
+				},
+				{
+					"name": "okx-vendor-okx-agentic-wallet-references-account-faq.md",
+					"upstreamPath": "skills/okx-agentic-wallet/references/account-faq.md",
+					"targetPath": "okx/vendor/okx-agentic-wallet/references/account-faq.md"
+				},
+				{
+					"name": "okx-vendor-okx-agentic-wallet-references-audit-log.md",
+					"upstreamPath": "skills/okx-agentic-wallet/references/audit-log.md",
+					"targetPath": "okx/vendor/okx-agentic-wallet/references/audit-log.md"
+				},
+				{
+					"name": "okx-vendor-okx-agentic-wallet-references-brc20-cli-reference.md",
+					"upstreamPath": "skills/okx-agentic-wallet/references/brc20-cli-reference.md",
+					"targetPath": "okx/vendor/okx-agentic-wallet/references/brc20-cli-reference.md"
+				},
+				{
+					"name": "okx-vendor-okx-agentic-wallet-references-bridge-cli-reference.md",
+					"upstreamPath": "skills/okx-agentic-wallet/references/bridge-cli-reference.md",
+					"targetPath": "okx/vendor/okx-agentic-wallet/references/bridge-cli-reference.md"
+				},
+				{
+					"name": "okx-vendor-okx-agentic-wallet-references-bridge-troubleshooting.md",
+					"upstreamPath": "skills/okx-agentic-wallet/references/bridge-troubleshooting.md",
+					"targetPath": "okx/vendor/okx-agentic-wallet/references/bridge-troubleshooting.md"
+				},
+				{
+					"name": "okx-vendor-okx-agentic-wallet-references-bridge.md",
+					"upstreamPath": "skills/okx-agentic-wallet/references/bridge.md",
+					"targetPath": "okx/vendor/okx-agentic-wallet/references/bridge.md"
+				},
+				{
+					"name": "okx-vendor-okx-agentic-wallet-references-gas-station-troubleshooting.md",
+					"upstreamPath": "skills/okx-agentic-wallet/references/gas-station-troubleshooting.md",
+					"targetPath": "okx/vendor/okx-agentic-wallet/references/gas-station-troubleshooting.md"
+				},
+				{
+					"name": "okx-vendor-okx-agentic-wallet-references-gas-station.md",
+					"upstreamPath": "skills/okx-agentic-wallet/references/gas-station.md",
+					"targetPath": "okx/vendor/okx-agentic-wallet/references/gas-station.md"
+				},
+				{
+					"name": "okx-vendor-okx-agentic-wallet-references-gateway-cli-reference.md",
+					"upstreamPath": "skills/okx-agentic-wallet/references/gateway-cli-reference.md",
+					"targetPath": "okx/vendor/okx-agentic-wallet/references/gateway-cli-reference.md"
+				},
+				{
+					"name": "okx-vendor-okx-agentic-wallet-references-gateway.md",
+					"upstreamPath": "skills/okx-agentic-wallet/references/gateway.md",
+					"targetPath": "okx/vendor/okx-agentic-wallet/references/gateway.md"
+				},
+				{
+					"name": "okx-vendor-okx-agentic-wallet-references-portfolio-cli-reference.md",
+					"upstreamPath": "skills/okx-agentic-wallet/references/portfolio-cli-reference.md",
+					"targetPath": "okx/vendor/okx-agentic-wallet/references/portfolio-cli-reference.md"
+				},
+				{
+					"name": "okx-vendor-okx-agentic-wallet-references-portfolio.md",
+					"upstreamPath": "skills/okx-agentic-wallet/references/portfolio.md",
+					"targetPath": "okx/vendor/okx-agentic-wallet/references/portfolio.md"
+				},
+				{
+					"name": "okx-vendor-okx-agentic-wallet-references-security-cli-reference.md",
+					"upstreamPath": "skills/okx-agentic-wallet/references/security-cli-reference.md",
+					"targetPath": "okx/vendor/okx-agentic-wallet/references/security-cli-reference.md"
+				},
+				{
+					"name": "okx-vendor-okx-agentic-wallet-references-security.md",
+					"upstreamPath": "skills/okx-agentic-wallet/references/security.md",
+					"targetPath": "okx/vendor/okx-agentic-wallet/references/security.md"
+				},
+				{
+					"name": "okx-vendor-okx-agentic-wallet-references-strategy-cli-reference.md",
+					"upstreamPath": "skills/okx-agentic-wallet/references/strategy-cli-reference.md",
+					"targetPath": "okx/vendor/okx-agentic-wallet/references/strategy-cli-reference.md"
+				},
+				{
+					"name": "okx-vendor-okx-agentic-wallet-references-strategy.md",
+					"upstreamPath": "skills/okx-agentic-wallet/references/strategy.md",
+					"targetPath": "okx/vendor/okx-agentic-wallet/references/strategy.md"
+				},
+				{
+					"name": "okx-vendor-okx-agentic-wallet-references-swap-cli-reference.md",
+					"upstreamPath": "skills/okx-agentic-wallet/references/swap-cli-reference.md",
+					"targetPath": "okx/vendor/okx-agentic-wallet/references/swap-cli-reference.md"
+				},
+				{
+					"name": "okx-vendor-okx-agentic-wallet-references-swap-troubleshooting.md",
+					"upstreamPath": "skills/okx-agentic-wallet/references/swap-troubleshooting.md",
+					"targetPath": "okx/vendor/okx-agentic-wallet/references/swap-troubleshooting.md"
+				},
+				{
+					"name": "okx-vendor-okx-agentic-wallet-references-swap.md",
+					"upstreamPath": "skills/okx-agentic-wallet/references/swap.md",
+					"targetPath": "okx/vendor/okx-agentic-wallet/references/swap.md"
+				},
+				{
+					"name": "okx-vendor-okx-agentic-wallet-references-utxo-cli-reference.md",
+					"upstreamPath": "skills/okx-agentic-wallet/references/utxo-cli-reference.md",
+					"targetPath": "okx/vendor/okx-agentic-wallet/references/utxo-cli-reference.md"
+				},
+				{
+					"name": "okx-vendor-okx-agentic-wallet-references-wallet-cli-reference.md",
+					"upstreamPath": "skills/okx-agentic-wallet/references/wallet-cli-reference.md",
+					"targetPath": "okx/vendor/okx-agentic-wallet/references/wallet-cli-reference.md"
+				},
+				{
+					"name": "okx-vendor-okx-agentic-wallet-references-wallet-mev-protection.md",
+					"upstreamPath": "skills/okx-agentic-wallet/references/wallet-mev-protection.md",
+					"targetPath": "okx/vendor/okx-agentic-wallet/references/wallet-mev-protection.md"
+				},
+				{
+					"name": "okx-vendor-okx-agentic-wallet-references-wallet-plugin-preflight.md",
+					"upstreamPath": "skills/okx-agentic-wallet/references/wallet-plugin-preflight.md",
+					"targetPath": "okx/vendor/okx-agentic-wallet/references/wallet-plugin-preflight.md"
+				},
+				{
+					"name": "okx-vendor-okx-agentic-wallet-references-wallet-portal-actions.md",
+					"upstreamPath": "skills/okx-agentic-wallet/references/wallet-portal-actions.md",
+					"targetPath": "okx/vendor/okx-agentic-wallet/references/wallet-portal-actions.md"
+				},
+				{
+					"name": "okx-vendor-okx-agentic-wallet-references-wallet-troubleshooting.md",
+					"upstreamPath": "skills/okx-agentic-wallet/references/wallet-troubleshooting.md",
+					"targetPath": "okx/vendor/okx-agentic-wallet/references/wallet-troubleshooting.md"
+				},
+				{
+					"name": "okx-vendor-okx-agentic-wallet-references-wallet.md",
+					"upstreamPath": "skills/okx-agentic-wallet/references/wallet.md",
+					"targetPath": "okx/vendor/okx-agentic-wallet/references/wallet.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-SKILL.md",
+					"upstreamPath": "skills/okx-ai/SKILL.md",
+					"targetPath": "okx/vendor/okx-ai/SKILL.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-chat-cli-reference.md",
+					"upstreamPath": "skills/okx-ai/references/chat-cli-reference.md",
+					"targetPath": "okx/vendor/okx-ai/references/chat-cli-reference.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-chat-comm-init.md",
+					"upstreamPath": "skills/okx-ai/references/chat-comm-init.md",
+					"targetPath": "okx/vendor/okx-ai/references/chat-comm-init.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-chat-file-attachment.md",
+					"upstreamPath": "skills/okx-ai/references/chat-file-attachment.md",
+					"targetPath": "okx/vendor/okx-ai/references/chat-file-attachment.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-identity-discover.md",
+					"upstreamPath": "skills/okx-ai/references/identity-discover.md",
+					"targetPath": "okx/vendor/okx-ai/references/identity-discover.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-identity-errors.md",
+					"upstreamPath": "skills/okx-ai/references/identity-errors.md",
+					"targetPath": "okx/vendor/okx-ai/references/identity-errors.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-identity-invariants.md",
+					"upstreamPath": "skills/okx-ai/references/identity-invariants.md",
+					"targetPath": "okx/vendor/okx-ai/references/identity-invariants.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-identity-manage.md",
+					"upstreamPath": "skills/okx-ai/references/identity-manage.md",
+					"targetPath": "okx/vendor/okx-ai/references/identity-manage.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-identity-register.md",
+					"upstreamPath": "skills/okx-ai/references/identity-register.md",
+					"targetPath": "okx/vendor/okx-ai/references/identity-register.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-identity-reputation.md",
+					"upstreamPath": "skills/okx-ai/references/identity-reputation.md",
+					"targetPath": "okx/vendor/okx-ai/references/identity-reputation.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-identity-update.md",
+					"upstreamPath": "skills/okx-ai/references/identity-update.md",
+					"targetPath": "okx/vendor/okx-ai/references/identity-update.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-intent-keyword-extraction.md",
+					"upstreamPath": "skills/okx-ai/references/intent-keyword-extraction.md",
+					"targetPath": "okx/vendor/okx-ai/references/intent-keyword-extraction.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-task-asp-accept.md",
+					"upstreamPath": "skills/okx-ai/references/task-asp-accept.md",
+					"targetPath": "okx/vendor/okx-ai/references/task-asp-accept.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-task-asp.md",
+					"upstreamPath": "skills/okx-ai/references/task-asp.md",
+					"targetPath": "okx/vendor/okx-ai/references/task-asp.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-task-cli-reference.md",
+					"upstreamPath": "skills/okx-ai/references/task-cli-reference.md",
+					"targetPath": "okx/vendor/okx-ai/references/task-cli-reference.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-task-core.md",
+					"upstreamPath": "skills/okx-ai/references/task-core.md",
+					"targetPath": "okx/vendor/okx-ai/references/task-core.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-task-evaluator-decision-rubric.md",
+					"upstreamPath": "skills/okx-ai/references/task-evaluator-decision-rubric.md",
+					"targetPath": "okx/vendor/okx-ai/references/task-evaluator-decision-rubric.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-task-evaluator-staking.md",
+					"upstreamPath": "skills/okx-ai/references/task-evaluator-staking.md",
+					"targetPath": "okx/vendor/okx-ai/references/task-evaluator-staking.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-task-evaluator.md",
+					"upstreamPath": "skills/okx-ai/references/task-evaluator.md",
+					"targetPath": "okx/vendor/okx-ai/references/task-evaluator.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-task-exception-escalation.md",
+					"upstreamPath": "skills/okx-ai/references/task-exception-escalation.md",
+					"targetPath": "okx/vendor/okx-ai/references/task-exception-escalation.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-task-state-machine.md",
+					"upstreamPath": "skills/okx-ai/references/task-state-machine.md",
+					"targetPath": "okx/vendor/okx-ai/references/task-state-machine.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-task-sub-copy-reference.md",
+					"upstreamPath": "skills/okx-ai/references/task-sub-copy-reference.md",
+					"targetPath": "okx/vendor/okx-ai/references/task-sub-copy-reference.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-task-subscription-signal.md",
+					"upstreamPath": "skills/okx-ai/references/task-subscription-signal.md",
+					"targetPath": "okx/vendor/okx-ai/references/task-subscription-signal.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-task-user-actions-publish.md",
+					"upstreamPath": "skills/okx-ai/references/task-user-actions-publish.md",
+					"targetPath": "okx/vendor/okx-ai/references/task-user-actions-publish.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-task-user-actions.md",
+					"upstreamPath": "skills/okx-ai/references/task-user-actions.md",
+					"targetPath": "okx/vendor/okx-ai/references/task-user-actions.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-task-user-intent-routing.md",
+					"upstreamPath": "skills/okx-ai/references/task-user-intent-routing.md",
+					"targetPath": "okx/vendor/okx-ai/references/task-user-intent-routing.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-task-user-playbook.md",
+					"upstreamPath": "skills/okx-ai/references/task-user-playbook.md",
+					"targetPath": "okx/vendor/okx-ai/references/task-user-playbook.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-task-user-sub-playbook.md",
+					"upstreamPath": "skills/okx-ai/references/task-user-sub-playbook.md",
+					"targetPath": "okx/vendor/okx-ai/references/task-user-sub-playbook.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-watch-background-recovery.md",
+					"upstreamPath": "skills/okx-ai/references/watch-background-recovery.md",
+					"targetPath": "okx/vendor/okx-ai/references/watch-background-recovery.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-watch-core.md",
+					"upstreamPath": "skills/okx-ai/references/watch-core.md",
+					"targetPath": "okx/vendor/okx-ai/references/watch-core.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-watch-outdated-list.md",
+					"upstreamPath": "skills/okx-ai/references/watch-outdated-list.md",
+					"targetPath": "okx/vendor/okx-ai/references/watch-outdated-list.md"
+				},
+				{
+					"name": "okx-vendor-okx-ai-references-watch-wake-scheduling.md",
+					"upstreamPath": "skills/okx-ai/references/watch-wake-scheduling.md",
+					"targetPath": "okx/vendor/okx-ai/references/watch-wake-scheduling.md"
+				},
+				{
+					"name": "okx-vendor-okx-dapp-discovery-SKILL.md",
 					"upstreamPath": "skills/okx-dapp-discovery/SKILL.md",
 					"targetPath": "okx/vendor/okx-dapp-discovery/SKILL.md"
 				},
 				{
-					"name": "okx-defi-invest",
-					"upstreamPath": "skills/okx-defi-invest/SKILL.md",
-					"targetPath": "okx/vendor/okx-defi-invest/SKILL.md"
+					"name": "okx-vendor-okx-dapp-discovery-references-keyword-glossary.md",
+					"upstreamPath": "skills/okx-dapp-discovery/references/keyword-glossary.md",
+					"targetPath": "okx/vendor/okx-dapp-discovery/references/keyword-glossary.md"
 				},
 				{
-					"name": "okx-defi-portfolio",
-					"upstreamPath": "skills/okx-defi-portfolio/SKILL.md",
-					"targetPath": "okx/vendor/okx-defi-portfolio/SKILL.md"
+					"name": "okx-vendor-okx-dapp-discovery-references-protocol-keywords.md",
+					"upstreamPath": "skills/okx-dapp-discovery/references/protocol-keywords.md",
+					"targetPath": "okx/vendor/okx-dapp-discovery/references/protocol-keywords.md"
 				},
 				{
-					"name": "okx-dex-bridge",
-					"upstreamPath": "skills/okx-dex-bridge/SKILL.md",
-					"targetPath": "okx/vendor/okx-dex-bridge/SKILL.md"
+					"name": "okx-vendor-okx-defi-SKILL.md",
+					"upstreamPath": "skills/okx-defi/SKILL.md",
+					"targetPath": "okx/vendor/okx-defi/SKILL.md"
 				},
 				{
-					"name": "okx-dex-market",
+					"name": "okx-vendor-okx-defi-_shared-preflight.md",
+					"upstreamPath": "skills/okx-defi/_shared/preflight.md",
+					"targetPath": "okx/vendor/okx-defi/_shared/preflight.md"
+				},
+				{
+					"name": "okx-vendor-okx-defi-references-invest-cli-reference.md",
+					"upstreamPath": "skills/okx-defi/references/invest-cli-reference.md",
+					"targetPath": "okx/vendor/okx-defi/references/invest-cli-reference.md"
+				},
+				{
+					"name": "okx-vendor-okx-defi-references-invest-troubleshooting.md",
+					"upstreamPath": "skills/okx-defi/references/invest-troubleshooting.md",
+					"targetPath": "okx/vendor/okx-defi/references/invest-troubleshooting.md"
+				},
+				{
+					"name": "okx-vendor-okx-defi-references-invest.md",
+					"upstreamPath": "skills/okx-defi/references/invest.md",
+					"targetPath": "okx/vendor/okx-defi/references/invest.md"
+				},
+				{
+					"name": "okx-vendor-okx-defi-references-portfolio-cli-reference.md",
+					"upstreamPath": "skills/okx-defi/references/portfolio-cli-reference.md",
+					"targetPath": "okx/vendor/okx-defi/references/portfolio-cli-reference.md"
+				},
+				{
+					"name": "okx-vendor-okx-defi-references-portfolio-troubleshooting.md",
+					"upstreamPath": "skills/okx-defi/references/portfolio-troubleshooting.md",
+					"targetPath": "okx/vendor/okx-defi/references/portfolio-troubleshooting.md"
+				},
+				{
+					"name": "okx-vendor-okx-defi-references-portfolio.md",
+					"upstreamPath": "skills/okx-defi/references/portfolio.md",
+					"targetPath": "okx/vendor/okx-defi/references/portfolio.md"
+				},
+				{
+					"name": "okx-vendor-okx-dex-market-SKILL.md",
 					"upstreamPath": "skills/okx-dex-market/SKILL.md",
 					"targetPath": "okx/vendor/okx-dex-market/SKILL.md"
 				},
 				{
-					"name": "okx-dex-signal",
-					"upstreamPath": "skills/okx-dex-signal/SKILL.md",
-					"targetPath": "okx/vendor/okx-dex-signal/SKILL.md"
+					"name": "okx-vendor-okx-dex-market-_shared-chain-support.md",
+					"upstreamPath": "skills/okx-dex-market/_shared/chain-support.md",
+					"targetPath": "okx/vendor/okx-dex-market/_shared/chain-support.md"
 				},
 				{
-					"name": "okx-dex-swap",
-					"upstreamPath": "skills/okx-dex-swap/SKILL.md",
-					"targetPath": "okx/vendor/okx-dex-swap/SKILL.md"
+					"name": "okx-vendor-okx-dex-market-_shared-payment-notifications.md",
+					"upstreamPath": "skills/okx-dex-market/_shared/payment-notifications.md",
+					"targetPath": "okx/vendor/okx-dex-market/_shared/payment-notifications.md"
 				},
 				{
-					"name": "okx-dex-token",
-					"upstreamPath": "skills/okx-dex-token/SKILL.md",
-					"targetPath": "okx/vendor/okx-dex-token/SKILL.md"
+					"name": "okx-vendor-okx-dex-market-_shared-preflight.md",
+					"upstreamPath": "skills/okx-dex-market/_shared/preflight.md",
+					"targetPath": "okx/vendor/okx-dex-market/_shared/preflight.md"
 				},
 				{
-					"name": "okx-dex-trenches",
-					"upstreamPath": "skills/okx-dex-trenches/SKILL.md",
-					"targetPath": "okx/vendor/okx-dex-trenches/SKILL.md"
+					"name": "okx-vendor-okx-dex-market-references-market-cli-reference.md",
+					"upstreamPath": "skills/okx-dex-market/references/market-cli-reference.md",
+					"targetPath": "okx/vendor/okx-dex-market/references/market-cli-reference.md"
 				},
 				{
-					"name": "okx-dex-ws",
-					"upstreamPath": "skills/okx-dex-ws/SKILL.md",
-					"targetPath": "okx/vendor/okx-dex-ws/SKILL.md"
+					"name": "okx-vendor-okx-dex-market-references-market-keyword-glossary.md",
+					"upstreamPath": "skills/okx-dex-market/references/market-keyword-glossary.md",
+					"targetPath": "okx/vendor/okx-dex-market/references/market-keyword-glossary.md"
 				},
 				{
-					"name": "okx-onchain-gateway",
-					"upstreamPath": "skills/okx-onchain-gateway/SKILL.md",
-					"targetPath": "okx/vendor/okx-onchain-gateway/SKILL.md"
+					"name": "okx-vendor-okx-dex-market-references-market-troubleshooting.md",
+					"upstreamPath": "skills/okx-dex-market/references/market-troubleshooting.md",
+					"targetPath": "okx/vendor/okx-dex-market/references/market-troubleshooting.md"
 				},
 				{
-					"name": "okx-security",
-					"upstreamPath": "skills/okx-security/SKILL.md",
-					"targetPath": "okx/vendor/okx-security/SKILL.md"
+					"name": "okx-vendor-okx-dex-market-references-market-ws-protocol.md",
+					"upstreamPath": "skills/okx-dex-market/references/market-ws-protocol.md",
+					"targetPath": "okx/vendor/okx-dex-market/references/market-ws-protocol.md"
 				},
 				{
-					"name": "okx-wallet-portfolio",
-					"upstreamPath": "skills/okx-wallet-portfolio/SKILL.md",
-					"targetPath": "okx/vendor/okx-wallet-portfolio/SKILL.md"
+					"name": "okx-vendor-okx-dex-market-references-market.md",
+					"upstreamPath": "skills/okx-dex-market/references/market.md",
+					"targetPath": "okx/vendor/okx-dex-market/references/market.md"
 				},
 				{
-					"name": "okx-x402-payment",
-					"upstreamPath": "skills/okx-x402-payment/SKILL.md",
-					"targetPath": "okx/vendor/okx-x402-payment/SKILL.md"
+					"name": "okx-vendor-okx-dex-market-references-signal-cli-reference.md",
+					"upstreamPath": "skills/okx-dex-market/references/signal-cli-reference.md",
+					"targetPath": "okx/vendor/okx-dex-market/references/signal-cli-reference.md"
+				},
+				{
+					"name": "okx-vendor-okx-dex-market-references-signal-keyword-glossary.md",
+					"upstreamPath": "skills/okx-dex-market/references/signal-keyword-glossary.md",
+					"targetPath": "okx/vendor/okx-dex-market/references/signal-keyword-glossary.md"
+				},
+				{
+					"name": "okx-vendor-okx-dex-market-references-signal-troubleshooting.md",
+					"upstreamPath": "skills/okx-dex-market/references/signal-troubleshooting.md",
+					"targetPath": "okx/vendor/okx-dex-market/references/signal-troubleshooting.md"
+				},
+				{
+					"name": "okx-vendor-okx-dex-market-references-signal-ws-protocol.md",
+					"upstreamPath": "skills/okx-dex-market/references/signal-ws-protocol.md",
+					"targetPath": "okx/vendor/okx-dex-market/references/signal-ws-protocol.md"
+				},
+				{
+					"name": "okx-vendor-okx-dex-market-references-signal.md",
+					"upstreamPath": "skills/okx-dex-market/references/signal.md",
+					"targetPath": "okx/vendor/okx-dex-market/references/signal.md"
+				},
+				{
+					"name": "okx-vendor-okx-dex-market-references-social-cli-reference.md",
+					"upstreamPath": "skills/okx-dex-market/references/social-cli-reference.md",
+					"targetPath": "okx/vendor/okx-dex-market/references/social-cli-reference.md"
+				},
+				{
+					"name": "okx-vendor-okx-dex-market-references-social-keyword-glossary.md",
+					"upstreamPath": "skills/okx-dex-market/references/social-keyword-glossary.md",
+					"targetPath": "okx/vendor/okx-dex-market/references/social-keyword-glossary.md"
+				},
+				{
+					"name": "okx-vendor-okx-dex-market-references-social-troubleshooting.md",
+					"upstreamPath": "skills/okx-dex-market/references/social-troubleshooting.md",
+					"targetPath": "okx/vendor/okx-dex-market/references/social-troubleshooting.md"
+				},
+				{
+					"name": "okx-vendor-okx-dex-market-references-social.md",
+					"upstreamPath": "skills/okx-dex-market/references/social.md",
+					"targetPath": "okx/vendor/okx-dex-market/references/social.md"
+				},
+				{
+					"name": "okx-vendor-okx-dex-market-references-token-cli-reference.md",
+					"upstreamPath": "skills/okx-dex-market/references/token-cli-reference.md",
+					"targetPath": "okx/vendor/okx-dex-market/references/token-cli-reference.md"
+				},
+				{
+					"name": "okx-vendor-okx-dex-market-references-token-keyword-glossary.md",
+					"upstreamPath": "skills/okx-dex-market/references/token-keyword-glossary.md",
+					"targetPath": "okx/vendor/okx-dex-market/references/token-keyword-glossary.md"
+				},
+				{
+					"name": "okx-vendor-okx-dex-market-references-token-troubleshooting.md",
+					"upstreamPath": "skills/okx-dex-market/references/token-troubleshooting.md",
+					"targetPath": "okx/vendor/okx-dex-market/references/token-troubleshooting.md"
+				},
+				{
+					"name": "okx-vendor-okx-dex-market-references-token-ws-protocol.md",
+					"upstreamPath": "skills/okx-dex-market/references/token-ws-protocol.md",
+					"targetPath": "okx/vendor/okx-dex-market/references/token-ws-protocol.md"
+				},
+				{
+					"name": "okx-vendor-okx-dex-market-references-token.md",
+					"upstreamPath": "skills/okx-dex-market/references/token.md",
+					"targetPath": "okx/vendor/okx-dex-market/references/token.md"
+				},
+				{
+					"name": "okx-vendor-okx-dex-market-references-trenches-cli-reference.md",
+					"upstreamPath": "skills/okx-dex-market/references/trenches-cli-reference.md",
+					"targetPath": "okx/vendor/okx-dex-market/references/trenches-cli-reference.md"
+				},
+				{
+					"name": "okx-vendor-okx-dex-market-references-trenches-keyword-glossary.md",
+					"upstreamPath": "skills/okx-dex-market/references/trenches-keyword-glossary.md",
+					"targetPath": "okx/vendor/okx-dex-market/references/trenches-keyword-glossary.md"
+				},
+				{
+					"name": "okx-vendor-okx-dex-market-references-trenches-troubleshooting.md",
+					"upstreamPath": "skills/okx-dex-market/references/trenches-troubleshooting.md",
+					"targetPath": "okx/vendor/okx-dex-market/references/trenches-troubleshooting.md"
+				},
+				{
+					"name": "okx-vendor-okx-dex-market-references-trenches-ws-protocol.md",
+					"upstreamPath": "skills/okx-dex-market/references/trenches-ws-protocol.md",
+					"targetPath": "okx/vendor/okx-dex-market/references/trenches-ws-protocol.md"
+				},
+				{
+					"name": "okx-vendor-okx-dex-market-references-trenches.md",
+					"upstreamPath": "skills/okx-dex-market/references/trenches.md",
+					"targetPath": "okx/vendor/okx-dex-market/references/trenches.md"
+				},
+				{
+					"name": "okx-vendor-okx-dex-market-references-ws-troubleshooting.md",
+					"upstreamPath": "skills/okx-dex-market/references/ws-troubleshooting.md",
+					"targetPath": "okx/vendor/okx-dex-market/references/ws-troubleshooting.md"
+				},
+				{
+					"name": "okx-vendor-okx-dex-market-references-ws.md",
+					"upstreamPath": "skills/okx-dex-market/references/ws.md",
+					"targetPath": "okx/vendor/okx-dex-market/references/ws.md"
+				},
+				{
+					"name": "okx-vendor-okx-guide-SKILL.md",
+					"upstreamPath": "skills/okx-guide/SKILL.md",
+					"targetPath": "okx/vendor/okx-guide/SKILL.md"
+				},
+				{
+					"name": "okx-vendor-okx-guide-_shared-preflight.md",
+					"upstreamPath": "skills/okx-guide/_shared/preflight.md",
+					"targetPath": "okx/vendor/okx-guide/_shared/preflight.md"
+				},
+				{
+					"name": "okx-vendor-okx-guide-references-ai-guide.md",
+					"upstreamPath": "skills/okx-guide/references/ai-guide.md",
+					"targetPath": "okx/vendor/okx-guide/references/ai-guide.md"
+				},
+				{
+					"name": "okx-vendor-okx-guide-references-ai-support.md",
+					"upstreamPath": "skills/okx-guide/references/ai-support.md",
+					"targetPath": "okx/vendor/okx-guide/references/ai-support.md"
+				},
+				{
+					"name": "okx-vendor-okx-guide-references-how-to-play.md",
+					"upstreamPath": "skills/okx-guide/references/how-to-play.md",
+					"targetPath": "okx/vendor/okx-guide/references/how-to-play.md"
+				},
+				{
+					"name": "okx-vendor-okx-guide-references-intro.md",
+					"upstreamPath": "skills/okx-guide/references/intro.md",
+					"targetPath": "okx/vendor/okx-guide/references/intro.md"
+				},
+				{
+					"name": "okx-vendor-okx-guide-references-registered-home.md",
+					"upstreamPath": "skills/okx-guide/references/registered-home.md",
+					"targetPath": "okx/vendor/okx-guide/references/registered-home.md"
+				},
+				{
+					"name": "okx-vendor-okx-guide-references-unregistered-role-selection.md",
+					"upstreamPath": "skills/okx-guide/references/unregistered-role-selection.md",
+					"targetPath": "okx/vendor/okx-guide/references/unregistered-role-selection.md"
+				},
+				{
+					"name": "okx-vendor-okx-guide-references-welcome.md",
+					"upstreamPath": "skills/okx-guide/references/welcome.md",
+					"targetPath": "okx/vendor/okx-guide/references/welcome.md"
 				}
-			]
+			],
+			"hideVendorSkills": true,
+			"patchPath": "scripts/patches/okx-v4.5.3-reference-links.patch"
 		},
 		{
 			"id": "morph",
 			"repo": "https://github.com/morph-l2/morph-skill.git",
 			"commit": "e203bc4b981f13a3c358cff68831f8ca68e16648",
-			"notes": "Morph L2 skill \u2014 wallet, explorer, DEX, bridge, altfee, EIP-7702, EIP-8004 identity, x402 payment. Reads via vendor morph_api.py; writes via purr CLI or helper scripts under morph/scripts/.",
+			"notes": "Morph L2 skill — wallet, explorer, DEX, bridge, altfee, EIP-7702, EIP-8004 identity, x402 payment. Reads via vendor morph_api.py; writes via purr CLI or helper scripts under morph/scripts/.",
 			"skills": [
 				{
 					"name": "morph-wallet",

@@ -1,5 +1,9 @@
 # `charge` intent (one-shot)
 
+> **CLI down-sink:** receipt-decode is now `onchainos payment
+> decode-receipt (--header <b64> | --receipt <json>)`. Transaction-vs-hash mode
+> routing stays with the agent.
+
 > Loaded from `../SKILL.md` when the dispatcher decoded a `WWW-Authenticate: Payment` 402 challenge with `intent="charge"`. Decode + display + wallet-status check have already happened upstream — start here at "Decide mode".
 
 One-shot payment. CLI TEE-signs an EIP-3009 authorization (or wraps a client-broadcast tx hash) and returns a ready `authorization_header`. Optional `methodDetails.splits[]` (max 10 entries) splits the amount across multiple recipients in a single signed authorization.
@@ -34,10 +38,10 @@ Save `data.authorization_header` and proceed to [Replay](#replay).
 When `feePayer=false`, the user must broadcast `transferWithAuthorization` themselves before the CLI can wrap the credential. Ask:
 
 > The seller isn't paying gas, so you need to send the payment transaction on-chain yourself first, then give me the tx hash. How would you like to send it?
-> 1. **Help me send it** — switch to `okx-onchain-gateway` (recommended)
+> 1. **Help me send it** — switch to `okx-agentic-wallet` (recommended)
 > 2. **I'll send it manually** — paste the tx hash when ready
 
-Option 1: hand off to `okx-onchain-gateway`, return here with the resulting `0x...` hash. Option 2: wait for the user to paste a 66-char `0x...` hash.
+Option 1: hand off to `okx-agentic-wallet`, return here with the resulting `0x...` hash. Option 2: wait for the user to paste a 66-char `0x...` hash.
 
 Then:
 
@@ -77,4 +81,4 @@ Use **`../SKILL.md` → "Reading seller errors"** (priority order + `❌ Seller 
 | `--tx-hash` rejected: must be `0x` + 64 hex | Malformed hash | Copy full 66-char hash |
 | `chain not found` | Unsupported chainId | `onchainos wallet chains` |
 | Challenge expired (`expires` in the past) | Stale challenge | Re-send original request to fetch fresh 402 |
-| `feePayer=false` but user has no wallet to broadcast | Hash mode prerequisite missing | Either log in to OKX wallet via `okx-agentic-wallet` or use `okx-onchain-gateway` to broadcast |
+| `feePayer=false` but user has no wallet to broadcast | Hash mode prerequisite missing | Either log in to OKX wallet via `okx-agentic-wallet` or use `okx-agentic-wallet` to broadcast |

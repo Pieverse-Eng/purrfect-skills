@@ -95,6 +95,10 @@ while IFS= read -r provider; do
 		git -C "$provider_tmp" fetch --quiet --depth=1 origin "$commit"
 		git -C "$provider_tmp" checkout --quiet "$commit"
 	fi
+	patch_path="$(jq -r '.patchPath // empty' <<<"$provider")"
+	if [[ -n "$patch_path" ]]; then
+		git -C "$provider_tmp" apply --unidiff-zero "$ROOT_DIR/$patch_path"
+	fi
 
 	while IFS= read -r skill; do
 		[[ -n "$skill" ]] || continue
@@ -110,6 +114,18 @@ while IFS= read -r provider; do
 			echo "ERROR: upstream file not found for $id/$name: $upstream_path" >&2
 			exit 1
 		}
+
+		# Wrapper-owned vendor skills must stay hidden after both sync and check.
+		if [[ "$(jq -r '.hideVendorSkills // false' <<<"$provider")" == "true" && "${src##*/}" == "SKILL.md" ]]; then
+			adapted="$provider_tmp/hidden-skill.md"
+			awk '
+				NR == 1 { print; print "disable-model-invocation: true"; print "user-invocable: false"; frontmatter = 1; next }
+				frontmatter && /^---$/ { frontmatter = 0 }
+				frontmatter && /^(disable-model-invocation|user-invocable):/ { next }
+				{ print }
+			' "$src" > "$adapted"
+			src="$adapted"
+		fi
 
 		if [[ "$MODE" == "check" ]]; then
 			if [[ ! -f "$dst" ]]; then

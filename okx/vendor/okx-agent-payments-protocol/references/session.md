@@ -1,5 +1,11 @@
 # `session` intent (channel: open / voucher / topUp / close)
 
+> **CLI down-sink:** voucher reuse-vs-sign, cumulative math, the
+> top-up inequality, resign-on-drift, and refund-on-close are now decided by the
+> CLI. Run `onchainos payment session <open|voucher|topup|close>` and relay
+> `data.{strategy, needsTopUp, cumulative_amount, refund, recovery, reason_text}`
+> — don't recompute them. NL→command routing for each op stays here.
+
 > Loaded from `../SKILL.md` when the dispatcher decoded a `WWW-Authenticate: Payment` 402 challenge with `intent="session"`. Decode + display + wallet-status check have already happened upstream — start here at "Phase S1: Open Channel".
 >
 > **Also enter this reference for any mid-session operation** (close / topUp / settle / voucher / refund) when the user mentions an existing `channel_id`, even without a fresh 402. Jump directly to the matching phase below.
@@ -105,7 +111,7 @@ onchainos payment session open \
 
 CLI TEE-signs EIP-3009 `receiveWithAuthorization` (deposit into escrow) + EIP-712 baseline Voucher (channelId, cum=initial_cum). Output: `data.{authorization_header, channel_id, escrow, chain_id, deposit, wallet}` — save all to session state. Initial `current_cum` = the initial-cum value (default `"0"`).
 
-**Hash mode (`feePayer=false`)** — user must send the on-chain "open channel" tx themselves first (delegate to `okx-onchain-gateway` or manual). Then:
+**Hash mode (`feePayer=false`)** — user must send the on-chain "open channel" tx themselves first (delegate to `okx-agentic-wallet` or manual). Then:
 
 ```bash
 onchainos payment session open \
@@ -117,7 +123,7 @@ onchainos payment session open \
   [--from '<0xPayer>']
 ```
 
-`--salt` MUST be the same bytes32 the user passed to the on-chain `escrow.open(...)` call. The CLI recomputes `channelId = keccak256(abi.encode(payer, payee, token, salt, authorizedSigner, escrow, chainId))` and the seller compares it to what the on-chain event emitted — supply a fresh random salt and the open is rejected with a channelId mismatch. If the user broadcast through `okx-onchain-gateway`, the salt is the bytes32 they (or you) passed into the gateway's contract-call arguments.
+`--salt` MUST be the same bytes32 the user passed to the on-chain `escrow.open(...)` call. The CLI recomputes `channelId = keccak256(abi.encode(payer, payee, token, salt, authorizedSigner, escrow, chainId))` and the seller compares it to what the on-chain event emitted — supply a fresh random salt and the open is rejected with a channelId mismatch. If the user broadcast through `okx-agentic-wallet`, the salt is the bytes32 they (or you) passed into the gateway's contract-call arguments.
 
 CLI still TEE-signs the initial voucher; only the deposit tx is replaced by the supplied hash.
 
@@ -324,7 +330,7 @@ Use **`../SKILL.md` → "Reading seller errors"** (priority order + `❌ Seller 
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| `not logged in` / `session expired` | Wallet session missing or expired | `onchainos wallet login` or `onchainos wallet login <email>` |
+| `not logged in` / `session expired` | Wallet session missing or expired | `onchainos wallet login` |
 | Voucher rejected: `70012 amount_exceeds_deposit` | cum > channel deposit | Phase S2b TopUp first |
 | Voucher rejected: `70000 invalid_params` (cum not strictly increasing) | new_cum ≤ current_cum | Increase strictly; ensure you're tracking current_cum |
 | Voucher rejected: `70013 voucher_delta_too_small` | Delta below `minVoucherDelta` | Raise cum by at least the minimum |

@@ -1,5 +1,11 @@
 # Multi-scheme recommendation (SKILL.md Step A3.5)
 
+> **CLI down-sink:** balance-fetch, full-amount sufficiency filtering, tie-break
+> scoring, and recommendation-card math now live in the CLI. `onchainos payment
+> quote` returns `candidates` / `alternatives` already ranked — present
+> `recommended:true`, confirm the selection, then `payment pay --payment-id`.
+> This file is retained for the legacy manual A3.5 path only.
+
 Loaded from `SKILL.md` **Step A3.5** when the combined candidate pool contains **2 or more** of `{exact, aggr_deferred, charge}`. Single-candidate flows skip this file and go straight to Step A4. This file owns the full recommend-and-confirm flow and hands the **selected candidate** back to Step A4 / Step A6.
 
 > **🔇 Silence rule for A3.5 internals.** Substeps A3.5.1–A3.5.4 (candidate enumeration, wallet-status check, balance fetch, address/chain-mapping normalization, balance filtering, tie-breaker application) are **internal** — produce **no user-facing narration** during them. The only A3.5 output the user sees is (a) the login prompt in A3.5.2 *if* the wallet isn't logged in, and (b) the recommendation card / alternatives list in A3.5.5. Do **not** announce "I'm checking your balance", "Let me verify the chain mapping", "After filtering, X candidates remain", "Per Rule 2 carve-out…", or any other progress chatter between Step A3 finishing and the recommendation card appearing. Just go silent and emit the card.
@@ -25,11 +31,17 @@ Each candidate carries `{scheme, chainId, tokenAddress, tokenSymbol, amount (ato
     onchainos wallet balance
     ```
 
-## A3.5.3: Filter by has-balance
+## A3.5.3: Filter by sufficient balance
 
-Keep only candidates where the wallet has a non-zero balance for the matching `(chainId, tokenAddress)`.
+Keep only candidates whose `balanceStatus == "sufficient"` for the matching
+`(chainId, tokenAddress)`. A positive balance smaller than the required amount
+is `insufficient`, not payable/recommendable.
 
-**Edge case — zero candidates pass the filter**: list **all original candidates** to the user (no recommendation badge, no tie-breakers applied). User picks one; carry it to Step A4.
+**Edge case — zero candidates pass the filter**: list **all original candidates**
+to the user (no recommendation badge, no tie-breakers applied). Each row shows
+only `sufficient`, `insufficient — shortfall <shortfall>`, or `unavailable` at
+this pre-selection stage. Do not display the deposit address and do not generate
+a QR until the user picks one. Carry the selected candidate to Step A4.
 
 ## A3.5.4: Tie-breakers (apply in order; stop when one wins)
 
@@ -51,13 +63,14 @@ The survivor is the **recommended candidate**. The rest are **alternatives**.
 > - **Token**: `<symbol>` (`<token address>`)
 > - **Amount**: `<human> (<atomic>)`
 > - **Pay to**: `<recipient>`
+> - **Balance**: `sufficient` (the CLI only recommends a sufficient candidate)
 >
 > `<N == 0 ? "No other methods available." : "There are <N> other supported method(s) you could use instead.">` Use the recommended method? (yes / show others)
 
 **⚠️ Do NOT inline alternatives in the summary line.** Forbidden: ❌ "There are 2 other methods (exact 0.001 USD₮0, charge 0.0005 USD₮0)". Required: ✅ "There are 2 other supported methods you could use instead." Detail only appears after the user picks "show others".
 
 - **yes** (or `N == 0`) → the recommended candidate becomes the **selected candidate**; continue at Step A4.
-- **show others** → only now expand the alternatives list, each row as `<index>. scheme=<exact | aggr_deferred | charge>, network=<…>, token=<…>, amount=<…>`. User picks one by index → that becomes the selected candidate; continue at Step A4.
+- **show others** → only now expand the alternatives list, each row as `<index>. scheme=<exact | aggr_deferred | charge>, network=<…>, token=<…>, amount=<…>, balance=<sufficient | insufficient — shortfall … | unavailable>`. Do not show `depositAddress` or generate a QR in this list. User picks one by index → that becomes the selected candidate; continue at Step A4. If the selected candidate is insufficient, Step A4 adds the runtime-appropriate QR funding guidance (PNG for `image-notify`, Unicode for `terminal-unicode`) to that same single confirmation card.
 
 ## A3.5.6: Carry the selection forward
 
