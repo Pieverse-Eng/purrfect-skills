@@ -12,16 +12,16 @@ Use this skill for PancakeSwap token swaps, liquidity provision, farm discovery,
 Keep planning and execution separate:
 
 - Use `vendor/...` skills for discovery, planning, price/pool/farm lookup, APR analysis, and PancakeSwap deep links.
-- Use `purr pancake quote` for read-only BSC V2 path quotes and other `purr pancake` commands for supported BSC transaction construction and execution.
-- Treat non-BSC, Solana, Infinity, and PCS Hub flows as planner/deep-link flows unless a `purr pancake` command explicitly supports the exact action.
+- Use `purr pancake swap` for read-only BSC swap quotes; add `--execute` after confirmation. The official API selects the route; the managed wallet handles execution.
+- Treat non-BSC, Infinity liquidity/farming, and PCS Hub flows as planner/deep-link flows unless a `purr pancake` command explicitly supports the exact action.
 
-For a known BSC V2 swap path, use the quote workflow below directly. Read the relevant vendor `SKILL.md` when discovery or other planning is needed. Vendor skills contain tested endpoint, API, and field guidance; do not improvise curl, jq, or contract calls from memory.
+For known BSC input and output tokens, use the swap workflow below directly. Read the relevant vendor `SKILL.md` when discovery or other planning is needed. Vendor skills contain tested endpoint, API, and field guidance; do not improvise curl, jq, or contract calls from memory.
 
 ## Routing
 
 | User needs to... | Use |
 |---|---|
-| Quote a known BSC V2 swap path | `purr pancake quote` (workflow below) |
+| Quote a BSC token swap | `purr pancake swap` (workflow below) |
 | Plan a token swap, discover tokens, compare prices, or generate a PancakeSwap swap deep link | [`vendor/swap-planner/SKILL.md`](vendor/swap-planner/SKILL.md) |
 | Execute a supported BSC swap after planning and confirmation | `purr pancake swap --execute` |
 | Plan liquidity, discover pools, compare TVL/APR/IL, choose V2/V3/StableSwap/Infinity/Solana position parameters, or generate LP deep links | [`vendor/liquidity-planner/SKILL.md`](vendor/liquidity-planner/SKILL.md) |
@@ -48,7 +48,7 @@ For a known BSC V2 swap path, use the quote workflow below directly. Read the re
 
 ## `purr pancake` Execution
 
-Use `purr pancake` only for BSC execution that maps to an existing command. Planning, discovery, and parameter lookup still come from the vendor skills first.
+Use `purr pancake` only for BSC execution that maps to an existing command. Use the swap workflow below for resolved tokens; use vendor skills for missing identities and other action parameters.
 
 Supported `purr pancake` commands:
 
@@ -61,37 +61,39 @@ Supported `purr pancake` commands:
 | BSC V3 farm | `purr pancake v3-stake --execute`, `v3-unstake --execute`, `v3-harvest --execute` |
 | BSC Syrup Pool stake/unstake | `purr pancake syrup-stake --execute`, `purr pancake syrup-unstake --execute` |
 
-Do not use `purr pancake` for Solana, PCS Hub execution, Infinity execution, or unsupported PancakeSwap pool/farm actions. For those cases, use the relevant vendor planner and return a deep link or plan.
+Do not use `purr pancake` for Solana, PCS Hub execution, or unsupported PancakeSwap pool/farm actions. For those cases, use the relevant vendor planner and return a deep link or plan.
 
-## BSC V2 swap quotes
+## BSC swaps
 
-Resolve missing token CAs first, reusing identities already established. Quote
-the intended path directly; do not wrap the command in a script:
+Resolve missing token CAs first, reusing identities already established:
 
 ```bash
-purr pancake quote --path <input-ca>,<output-ca> \
-  --amount-in-wei <raw-input-amount> --chain-id 56 --slippage-bps 100
+purr pancake swap --from <input-ca> --to <output-ca> --amount <human-readable-amount> --slippage 0.5
 ```
 
-The command is read-only and needs no wallet or `--execute`. Amounts use raw
-token units; verify decimals before converting the user's budget. Slippage is
-in basis points, default 100 (1%). Optional `--rpc-url` and `--router` select
-the BSC RPC and V2 router.
+Common BSC inputs include `USDT` and native `BNB`:
 
-Use returned `amountOutWei` for expected output and `amountOutMinWei` for the
-minimum output, formatted with the output token's decimals. The response also
-contains `path`, `router`, and `blockNumber`. Present these assets, the input
-amount, expected/minimum output, and slippage for confirmation. After confirmation,
-use the same path, router, input amount, and quoted minimum with
-`purr pancake swap --amount-out-min-wei <amountOutMinWei> ... --execute`.
-If refreshing the quote cannot meet the confirmed minimum, request a new
-confirmation rather than lowering it.
+```bash
+purr pancake swap --from USDT --to <TOKEN_CA> --amount 100
+purr pancake swap --from USDC --to <TOKEN_CA> --amount 100
+purr pancake swap --from BNB --to <TOKEN_CA> --amount 0.1
+```
 
-This quotes one explicit V2 path, not the best route across pools or venues.
-A failed direct path may need a WBNB intermediate or another supported market;
-it does not prove the token has no market. Gas and token transfer taxes are not
-included. V3 and Infinity quotes are not supported by this command; use their
-documented planner flow without treating reference prices as swap quotes.
+Without `--execute`, this only quotes. Amount is in input-token units (for example,
+`100` USDT); slippage is a percentage, default 0.5%. The official PancakeSwap API
+selects the route. The CLI uses the instance wallet automatically.
+
+Present the tokens, amount, route, expected output, minimum output and slippage
+for confirmation. Then repeat the command with `--execute`:
+
+```bash
+purr pancake swap --from <input-ca> --to <output-ca> --amount <human-readable-amount> --slippage 0.5 --execute
+```
+
+Execution gets a fresh quote and applies slippage to that quote; it does not lock
+the earlier displayed price. Approvals and signing use the managed wallet.
+Do not supply a pool, path, fee tier, router, wallet, deadline or minimum-output flag.
+A failed quote does not prove the token has no market.
 
 ## Execution Checklist
 
@@ -100,8 +102,8 @@ Before any `purr pancake ... --execute`:
 1. Resolve the current wallet with `purr wallet address --chain-type ethereum`.
 2. Check native BNB with `purr wallet balance --chain-type ethereum --chain-id 56`.
 3. Check required token balances with `purr wallet balance --token <symbol_or_address> --chain-id 56`.
-4. Reuse the V2 quote for a resolved swap. For other actions or unresolved parameters, read the relevant vendor planner to discover or verify token addresses, pools, farm PID, tick range, tokenId, slippage, deadlines, and expected amounts.
-5. Present the exact execution parameters: command, chain, wallet, tokens, amounts, pool/farm identifiers, slippage/min amounts, deadline, and any expected approvals.
+4. For swaps, use the quote and confirmation workflow above. For other actions, read the relevant vendor planner to discover or verify token addresses, pools, farm PID, tick range, tokenId, slippage, deadlines, and expected amounts.
+5. Present the execution parameters and expected approvals. For swaps, wallet and deadline are platform-managed; include pool/farm identifiers and deadlines when required by other actions.
 6. Ask exactly: `Do you want to execute this action with these parameters? (Yes/No)`
 7. Add `--execute` only after the user says yes.
 
@@ -122,7 +124,7 @@ Do not execute PancakeSwap writes with private keys, `cast send`, direct contrac
 |---|---|
 | Multiple token matches | Present candidates and ask the user which token they mean. |
 | Unknown token decimals | Verify via token list, RPC, or vendor planner before computing wei amounts. |
-| `getAmountsOut` returns zero or reverts | Treat as no liquidity; try a WBNB path, smaller size, or different pool only after explaining the issue. |
+| No swap route returned | Check token identities and the reported error; consider a smaller amount or another supported market. Do not manually guess a path or router. |
 | Swap or LP transaction would exceed slippage | Requote, widen slippage only if the user accepts the risk, or reduce size. |
 | V2 farm deposit/withdraw fails with unavailable address or PID | Stop and rediscover the PID through `farming-planner`. |
 | V3 collect/stake/unstake/harvest fails | Verify wallet owns or has staked the position tokenId and that the position is on BSC. |

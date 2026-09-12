@@ -91,7 +91,7 @@ The CLI prints one JSON object. Relevant quote fields are:
 | `fromAmount`, `fromAmountBaseUnits` | Human-readable input and raw input amount. |
 | `estimatedToAmountFormatted` | Estimated output-token quantity. |
 | `minimumToAmountFormatted`, `minimumToAmount` | Human-readable and raw minimum output. |
-| `quoteSource` | `official` for the Uniswap API, or `amm` for the local AMM fallback. |
+| `quoteSource` | `official` — Platform uses the Uniswap Trading API. |
 
 Execute results additionally include `mode: "transaction"`, `hash`, and
 `transactionId`. Display amounts actually returned; do not invent missing fields.
