@@ -12,8 +12,8 @@ Use this skill for PancakeSwap token swaps, liquidity provision, farm discovery,
 Keep planning and execution separate:
 
 - Use `vendor/...` skills for discovery, planning, price/pool/farm lookup, APR analysis, and PancakeSwap deep links.
-- Use `purr pancake swap` for read-only BSC swap quotes; add `--execute` after confirmation. Platform selects the route and handles execution.
-- Treat non-BSC, Solana, Infinity, and PCS Hub flows as planner/deep-link flows unless a `purr pancake` command explicitly supports the exact action.
+- Use `purr pancake swap` for read-only BSC swap quotes; add `--execute` after confirmation. The official API selects the route; the managed wallet handles execution.
+- Treat non-BSC, Infinity liquidity/farming, and PCS Hub flows as planner/deep-link flows unless a `purr pancake` command explicitly supports the exact action.
 
 For known BSC input and output tokens, use the swap workflow below directly. Read the relevant vendor `SKILL.md` when discovery or other planning is needed. Vendor skills contain tested endpoint, API, and field guidance; do not improvise curl, jq, or contract calls from memory.
 
@@ -61,7 +61,7 @@ Supported `purr pancake` commands:
 | BSC V3 farm | `purr pancake v3-stake --execute`, `v3-unstake --execute`, `v3-harvest --execute` |
 | BSC Syrup Pool stake/unstake | `purr pancake syrup-stake --execute`, `purr pancake syrup-unstake --execute` |
 
-Do not use `purr pancake` for Solana, PCS Hub execution, Infinity execution, or unsupported PancakeSwap pool/farm actions. For those cases, use the relevant vendor planner and return a deep link or plan.
+Do not use `purr pancake` for Solana, PCS Hub execution, or unsupported PancakeSwap pool/farm actions. For those cases, use the relevant vendor planner and return a deep link or plan.
 
 ## BSC swaps
 
@@ -80,24 +80,20 @@ purr pancake swap --from BNB --to <TOKEN_CA> --amount 0.1
 ```
 
 Without `--execute`, this only quotes. Amount is in input-token units (for example,
-`100` USDT); slippage is a percentage, default 0.5%. Platform selects the highest
-output among covered V2/V3 routes before gas. Native BNB uses V2. Do not supply
-path, fee tier, router, wallet, or deadline; Platform manages these.
+`100` USDT); slippage is a percentage, default 0.5%. The official PancakeSwap API
+selects the route. The CLI uses the instance wallet automatically.
 
-Present the tokens, input amount, returned route, `estimatedToAmountFormatted`,
-`minimumToAmountFormatted`, and slippage for confirmation. Then execute with the
-same tokens, amount and slippage, preserving the confirmed minimum:
+Present the tokens, amount, route, expected output, minimum output and slippage
+for confirmation. Then repeat the command with `--execute`:
 
 ```bash
-purr pancake swap --from <input-ca> --to <output-ca> --amount <human-readable-amount> --slippage 0.5 \
-  --min-amount-out <minimumToAmount> --execute
+purr pancake swap --from <input-ca> --to <output-ca> --amount <human-readable-amount> --slippage 0.5 --execute
 ```
 
-Copy `minimumToAmount` in raw output-token units. Platform requotes and handles
-approvals and signing with the instance wallet. If the refreshed quote cannot
-meet that minimum, request a new confirmation rather than lowering it.
-Selection is limited to covered routes, not every pool or venue; a failed quote
-does not prove the token has no market. Token transfer taxes are not included.
+Execution gets a fresh quote and applies slippage to that quote; it does not lock
+the earlier displayed price. Approvals and signing use the managed wallet.
+Do not supply a pool, path, fee tier, router, wallet, deadline or minimum-output flag.
+A failed quote does not prove the token has no market.
 
 ## Execution Checklist
 
