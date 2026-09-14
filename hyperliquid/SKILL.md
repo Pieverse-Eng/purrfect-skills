@@ -24,11 +24,10 @@ Read the reference for the user's task before acting:
 | Order parameters and quantity calculation | [order-commands.md](references/order-commands.md) |
 | Error, partial execution, or uncertain submission | [errors.md](references/errors.md) |
 
-For a trade, prepare the complete command sequence before presenting the
-card; loading this entrypoint alone is not execution preparation. Do not
-guess flags or use a rejected order to discover funds, fees, or minimums.
+Prepare the required commands and verify their inputs before confirmation.
+Use the references relevant to the operation, including their prerequisites.
 Report meaningful progress, blockers, and results without narrating routine
-lookups. Call the connected wallet "your wallet", not "TEE".
+lookups. Use familiar user-facing terms such as "your wallet".
 
 ## Confirmation Contract
 

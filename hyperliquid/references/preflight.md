@@ -64,31 +64,38 @@ purr hyperliquid disable
 - Prefer `snapshot` for a quick portfolio overview once trading is enabled; use
   `state` for exact collateral and position details needed to trade.
 
-## Workflow
+## Select Checks by Operation
 
-Use this preflight before a trade card; execute writes only under the
-Confirmation Contract in [SKILL.md](../SKILL.md).
+Execute writes only under the Confirmation Contract in [SKILL.md](../SKILL.md).
+Use the narrowest reads that establish the requested operation's prerequisites.
 
-1. Run `purr hyperliquid status`. If disabled, stop for confirmation and
-   `enable` before gateway account commands.
-2. Run `purr hyperliquid account` to show the Hyperliquid account address.
-3. Run `purr hyperliquid state --all-dexs` for balance overviews and trade-card
-   preflight. It discovers all perp DEXs and reads spot once. Read each entry
-   in `perps` (`dex`, `state`) and the separate `spot` state. Check `complete`
-   and `errors`; failed reads are unknown, never zero.
-4. Use the target DEX's state for order readiness, including existing positions
-   and margin usage. Report funds in other ledgers separately and identify any
-   required transfer. Do not sum different collateral currencies or equate
-   account equity with available collateral. For a targeted refresh, use
-   `state --kind perp --dex xyz` (omit `--dex` for default perps).
-5. Before confirming any order-placement command (`limit-order`,
-   `bracket-order`, `stop-loss`, `take-profit`, or `protect-position`) or
-   changing leverage/collateral for it, run `builder-fee-status` and follow
-   **Order Fee Preflight** below.
-6. For trade cards and funding, run the wallet checks below and distinguish
-   wallet funds from exchange collateral.
-7. Check `abstraction` when the user asks about Standard / unified / portfolio
-   margin mode. Only call `set-abstraction` after confirmation.
+| Operation | Checks |
+| --- | --- |
+| Gateway account read/write | Integration status; confirm enabling if required |
+| Account-wide balance, allocation, or funding plan | Account identity and all-DEX state; wallet checks when wallet funds affect the plan |
+| Open/increase a position or buy spot | Target collateral, current exposure, market constraints, executable quote, and order fee status |
+| Close/reduce or protect a position | Live position side/size, applicable market constraints, quote, and order fee status |
+| Modify an order | Exact open order/status, replacement constraints; live position if position-sized |
+| Cancel an order | Exact open order/status |
+| Deposit or withdraw | Identity, source funds, destination, fees and settlement checks from [deposit-withdraw.md](deposit-withdraw.md) |
+| Transfer collateral | Source available funds and destination ledger from [collateral.md](collateral.md) |
+| Change account mode | Current abstraction and the confirmed target mode |
+| Disable trading | All-DEX balances and relevant open orders/exposure |
+
+### Account-Wide Funds
+
+Run `purr hyperliquid account` for identity and
+`purr hyperliquid state --all-dexs` for the account-wide view. It discovers all
+perp DEXs and reads spot once. Inspect each `perps` entry (`dex`, `state`)
+and the separate `spot` state. Check `complete` and `errors`; failed reads
+are unknown, never zero.
+
+For order readiness, use the target DEX's available collateral and margin
+usage. Identify funds in other ledgers and any required transfer separately.
+Do not add unlike currencies or treat account equity as available collateral.
+For a targeted refresh use `state --kind perp --dex <dex>`, omitting
+`--dex` for default perps. Follow the main agent's additional preflight
+requirements when supplied.
 
 ## Order Fee Preflight
 
@@ -155,8 +162,8 @@ user explicitly wants a mode change.
 
 ## Wallet Funding Checks
 
-Before a trade card or deposit, read wallet identity, Arbitrum USDC, and
-native ETH gas together:
+When wallet funds affect allocation or an on-chain transfer is needed, read
+wallet identity, Arbitrum USDC, and native ETH gas:
 
 ```bash
 purr wallet address --chain-type ethereum
@@ -164,10 +171,9 @@ purr wallet balance --chain-type ethereum --chain-id 42161 --token USDC
 purr wallet balance --chain-type ethereum --chain-id 42161
 ```
 
-Omitting `--token` reads native ETH; do not pass `--token ETH`.
-Verify that the receiving wallet matches `purr hyperliquid account`.
-A failed read is unknown, not zero. Check gas before asking for funding,
-not only after a deposit fails.
+Omitting `--token` reads native ETH. Verify wallet identity against
+`purr hyperliquid account` and sufficient token/gas balances before transfers.
+Report missing or unverified prerequisites in funding instructions.
 
 Sending USDC to the wallet does not credit Hyperliquid automatically.
 A separate authorized `deposit` moves it to default perp collateral; a

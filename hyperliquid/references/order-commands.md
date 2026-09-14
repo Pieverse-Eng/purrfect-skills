@@ -47,19 +47,18 @@ Use decimal arithmetic and check total required margin plus fees against
 available target collateral. Do not spend occupied margin or native gas.
 
 Example: $8 margin at 3x is $24 notional. At $100 per asset and two size
-decimals, `--size` is 0.24, not 0.08 or 24.
+decimals, `--size` is 0.24.
 
 Use the confirmed entry price for a resting order. For `FrontendMarket`,
 use a fresh executable quote; its worst-price boundary is a separate control,
 not the sizing price. Check supported margin mode, size/price precision,
 and the applicable venue minimum after rounding, before submission.
-If a leg is below minimum, report the constraint; do not submit to probe
-the minimum or silently increase size to clear a rejection.
+If the rounded order does not meet applicable constraints, report the gap
+and apply the Confirmation Contract before changing its parameters.
 
 Show margin, leverage, approximate notional, and derived size in the plan.
 If price or constraints are unknown, resolve them before executing.
-Preserve the confirmed allocation proportions within precision and reserves;
-do not replace them with minimum-sized orders.
+Preserve the confirmed allocation proportions within precision and reserves.
 
 ## Place Orders
 

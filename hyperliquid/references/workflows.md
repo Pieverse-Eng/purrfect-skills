@@ -7,32 +7,36 @@ internal transfers use [collateral.md](collateral.md).
 
 ## Prepare Before Confirmation
 
-1. Read [preflight.md](preflight.md) and run its account/funding checks.
-   Establish available collateral across ledgers and wallet funds separately,
-   not only the target dex balance. Identify any required deposit or transfer.
+Apply these checks to the requested operation. Opening or increasing a
+position needs funding and sizing checks; closing, protecting, modifying,
+and cancelling use the live position/order checks in their sections below.
+
+1. Read [preflight.md](preflight.md) and select the relevant checks.
+   For allocation or funding decisions, establish available collateral and
+   identify any required deposit or transfer.
 2. Read [market-data.md](market-data.md). Resolve each exact market and retain
    `coin`, `assetId`, `szDecimals`, dex, supported margin mode, and fresh
    executable price context. Use current market metadata for constraints.
-3. Read [order-commands.md](order-commands.md) for the selected order type,
+3. Read [order-commands.md](order-commands.md) for order parameters,
    quantity calculation, price boundaries, and precision. For leverage changes,
-   also read [trading.md](trading.md#leverage). Calculate every leg's margin,
-   notional, and asset size; verify minimums before any order submission.
+   also read [trading.md](trading.md#leverage). Derive size from the requested
+   budget or live position/order as appropriate, and verify applicable constraints.
 4. If funds must move, read the relevant deposit/transfer reference now.
    Prepare source, destination, amount, fee scope, and command syntax along
    with leverage and entry/protection commands. Batch independent reads.
-5. Present one concrete plan under the main agent's budget/card rules and
-   the Confirmation Contract. Include execution boundaries, not just trigger
-   levels. If using proportional sizing after funding, disclose the rule.
+5. Present the concrete parameters, funding requirements, and execution
+   boundaries under the Confirmation Contract. Follow the main agent's
+   allocation and presentation rules when provided.
 
 If required data is unavailable, mark readiness unverified and resolve the
-gap before writes. Do not guess command flags or submit trial orders.
-A generic help lookup is unnecessary when the referenced syntax is available.
+gap before dependent writes. Verify command syntax from the reference or
+CLI help rather than trial orders.
 
 ## Execute the Confirmed Plan
 
-Refresh time-sensitive balances and executable quotes within the confirmed
-constraints. Apply the Confirmation Contract to any parameter changes. Verify rounded
-sizes, minimums, fees, and target collateral again.
+Refresh the state and quotes relevant to the operation, and revalidate
+parameters affected by those changes. Apply the Confirmation Contract to
+any parameter changes.
 
 Apply the Confirmation Contract before each account-changing step.
 Perform the required steps in dependency order:
@@ -48,13 +52,12 @@ Perform the required steps in dependency order:
 
 Fee approval must precede orders; if account initialization prevents approval
 earlier, complete the authorized deposit first. Skip already satisfied steps.
-Do not repeat documentation discovery after confirmation unless a concrete
-error or changed capability requires it. Reconcile uncertain/partial results
-using [errors.md](errors.md); never repeat successful legs.
+Reuse verified command parameters and resolve any new errors through
+[errors.md](errors.md). Reconcile uncertain/partial results before continuing.
 
 For HIP-3 markets, only the target dex's available collateral funds an order.
-Spot entries require spot funds. A transfer must be verified before ordering,
-not discovered through a rejected order.
+Spot entries require spot funds. Verify transferred collateral before
+dependent orders.
 
 ## Open a Position
 
