@@ -10,7 +10,7 @@ purr hyperliquid snapshot
 purr hyperliquid enable
 purr hyperliquid disable
 purr hyperliquid account
-purr hyperliquid state [--kind perp|spot|both] [--dex <dex>]
+purr hyperliquid state [--kind perp|spot|both] [--dex <dex> | --all-dexs]
 purr hyperliquid builder-fee-status
 purr hyperliquid abstraction
 purr hyperliquid set-abstraction --mode disabled|unifiedAccount|portfolioMargin
@@ -71,11 +71,15 @@ or balance inspection is starting, and do not narrate the remaining steps.
 1. Run `purr hyperliquid status`. If disabled, stop for confirmation and
    `enable` before any other exchange command.
 2. Run `purr hyperliquid account` to show the Hyperliquid account address.
-3. Run `purr hyperliquid state --kind both` for a full collateral and position
-   snapshot. Use `--kind perp` or `--kind spot` when only one side is needed.
-   Optionally use `snapshot` when the user wants a high-level summary.
-4. When the user targets a builder dex (for example equity perps on `xyz`),
-   also run `state --kind both --dex xyz` (or the relevant dex name).
+3. Run `purr hyperliquid state --all-dexs` for balance overviews and trade-card
+   preflight. It discovers all perp DEXs and reads spot once. Read each entry
+   in `perps` (`dex`, `state`) and the separate `spot` state. Check `complete`
+   and `errors`; failed reads are unknown, never zero.
+4. Use the target DEX's state for order readiness, including existing positions
+   and margin usage. Report funds in other ledgers separately and identify any
+   required transfer. Do not sum different collateral currencies or equate
+   account equity with available collateral. For a targeted refresh, use
+   `state --kind perp --dex xyz` (omit `--dex` for default perps).
 5. Before confirming any order-placement command (`limit-order`,
    `bracket-order`, `stop-loss`, `take-profit`, or `protect-position`) or
    changing leverage/collateral for it, run `builder-fee-status` and follow
@@ -115,6 +119,8 @@ fee.” Command and response names may retain `builder-fee` internally.
 - Open positions, free collateral, and margin usage come from perp state.
 - Spot balances matter for spot orders and for `usd-class-transfer` planning.
 - `--kind` defaults to `both` when omitted.
+- `--all-dexs` supports `perp` or `both` and cannot be combined with `--dex`.
+  Without it, `state` and `snapshot` do not provide an all-DEX balance overview.
 - `--dex` applies only to the **perp** leg. Spot state is always the account’s
   spot clearinghouse (not filtered by builder dex).
 

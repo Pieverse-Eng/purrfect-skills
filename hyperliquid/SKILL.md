@@ -81,7 +81,9 @@ For public market queries and exact pre-order symbol resolution, read
     before confirmation or any account-changing preparation for the order.
     Never use an order as the authorization check, and never authorize the fixed
     additional `0.05%` fee silently.
-15. For every non-default dex market, query that dex's state and treat only its
+15. Before a balance overview or trade card, run `purr hyperliquid state --all-dexs`
+    and check completeness (see preflight reference). For every non-default
+    dex market, read that dex's state from the result and treat only its
     available collateral as usable for the order. Default perp collateral does
     not fund a builder-dex order. If the target dex is short, confirm and run
     `send-asset`, then verify the destination balance before changing leverage
