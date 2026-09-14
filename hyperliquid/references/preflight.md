@@ -12,6 +12,7 @@ purr hyperliquid disable
 purr hyperliquid account
 purr hyperliquid state [--kind perp|spot|both] [--dex <dex> | --all-dexs]
 purr hyperliquid builder-fee-status
+purr hyperliquid approve-builder-fee
 purr hyperliquid abstraction
 purr hyperliquid set-abstraction --mode disabled|unifiedAccount|portfolioMargin
 ```
@@ -30,10 +31,10 @@ purr hyperliquid set-abstraction --mode disabled|unifiedAccount|portfolioMargin
 
 ## Trading Integration Gate
 
-All exchange routes under the Hyperliquid gateway (`account`, `state`,
-`markets`, typed order commands, `deposit`, `snapshot`, and the rest) require
-the trading integration to be **enabled**. Only `status`, `enable`, and
-`disable` remain available when trading is disabled.
+Gateway account reads and writes require the trading integration to be enabled.
+Public `search`, `symbol`, `markets`, `l2`, and `candles` remain available without
+wallet credentials; see [market-data.md](market-data.md). Authorization to
+enable/disable follows [SKILL.md](../SKILL.md#confirmation-contract).
 
 Run this check silently when starting any Hyperliquid workflow:
 
@@ -44,7 +45,7 @@ purr hyperliquid status
 | Result | Action |
 | --- | --- |
 | `enabled: true` | Continue |
-| `enabled: false` | Explain that Hyperliquid Trading is off. Confirm → `enable`. Do not enable silently |
+| `enabled: false` | Explain that Hyperliquid Trading is off. Verify authorization → `enable`; ask only if not covered |
 | Error | Report and stop; do not assume enabled |
 
 ```bash
@@ -58,18 +59,18 @@ purr hyperliquid disable
   builder-dex account has open positions, open orders, positive account value,
   or withdrawable funds, or when any positive spot balance or dust remains.
   Show the `blockers` payload, clear the reported exposure and funds, then
-  retry disable only after a new confirmation. Do not treat a rounded display
+  retry only within the confirmed scope. Do not treat a rounded display
   value of zero as proof that exact dust is absent.
 - Prefer `snapshot` for a quick portfolio overview once trading is enabled; use
   `state` for exact collateral and position details needed to trade.
 
 ## Workflow
 
-Run these checks silently. Do not announce that preflight, market resolution,
-or balance inspection is starting, and do not narrate the remaining steps.
+Use this preflight before a trade card; execute writes only under the
+Confirmation Contract in [SKILL.md](../SKILL.md).
 
-1. Run `purr hyperliquid status`. If disabled, stop for confirmation and
-   `enable` before any other exchange command.
+1. Run `purr hyperliquid status`. If disabled, obtain authorization if needed
+   and `enable` before gateway account commands.
 2. Run `purr hyperliquid account` to show the Hyperliquid account address.
 3. Run `purr hyperliquid state --all-dexs` for balance overviews and trade-card
    preflight. It discovers all perp DEXs and reads spot once. Read each entry
@@ -84,7 +85,9 @@ or balance inspection is starting, and do not narrate the remaining steps.
    `bracket-order`, `stop-loss`, `take-profit`, or `protect-position`) or
    changing leverage/collateral for it, run `builder-fee-status` and follow
    **Order Fee Preflight** below.
-6. Check `abstraction` when the user asks about Standard / unified / portfolio
+6. For trade cards and funding, run the wallet checks below and distinguish
+   wallet funds from exchange collateral.
+7. Check `abstraction` when the user asks about Standard / unified / portfolio
    margin mode. Only call `set-abstraction` after confirmation.
 
 ## Order Fee Preflight
@@ -102,11 +105,11 @@ Handle the result before building the final order confirmation:
 | Status | Action |
 | --- | --- |
 | `approved` | Continue normally; do not ask for fee consent again |
-| `approval_required` | Briefly request authorization for the persistent additional 0.05% transaction fee using the exact consent prompt in `SKILL.md`, then run `approve-builder-fee` |
+| `approval_required` | Disclose the standing fee under the Confirmation Contract in `SKILL.md`; obtain consent if not already covered, then approve and verify |
 | Error or unknown value | Stop and report it; do not place an order as a status probe |
 
-After successful authorization, continue to the ordinary order summary and
-confirmation. The authorization itself does not submit or fill an order.
+After authorization, verify status and continue the covered plan.
+Authorization itself does not submit or fill an order.
 
 In user-facing text, say “additional 0.05% transaction fee,” never “builder
 fee.” Command and response names may retain `builder-fee` internally.
@@ -150,14 +153,27 @@ Do not pass `default` or removed modes such as
 `dexAbstraction` to `set-abstraction`. Prefer leaving mode unchanged unless the
 user explicitly wants a mode change.
 
-## Related Checks Outside Hyperliquid
+## Wallet Funding Checks
 
-For on-chain Arbitrum USDC before deposit:
+Before a trade card or deposit, read wallet identity, Arbitrum USDC, and
+native ETH gas together:
 
 ```bash
 purr wallet address --chain-type ethereum
 purr wallet balance --chain-type ethereum --chain-id 42161 --token USDC
+purr wallet balance --chain-type ethereum --chain-id 42161
 ```
 
-Native gas on Arbitrum may also be required for the deposit transfer. If the
-deposit command fails for insufficient gas or USDC, report the shortage and stop.
+Omitting `--token` reads native ETH; do not pass `--token ETH`.
+Verify that the receiving wallet matches `purr hyperliquid account`.
+A failed read is unknown, not zero. Check gas before asking for funding,
+not only after a deposit fails.
+
+Sending USDC to the wallet does not credit Hyperliquid automatically.
+A separate authorized `deposit` moves it to default perp collateral; a
+further transfer may be needed for spot or a builder dex. Explain these
+steps and give the wallet address, Arbitrum One USDC, and native ETH gas
+requirement when funding is needed. The deposit minimum applies to the
+Hyperliquid deposit, not to receiving tokens in the wallet.
+
+See [deposit-withdraw.md](deposit-withdraw.md) for execution and settlement.

@@ -1,7 +1,8 @@
 # Errors and Failure Policy
 
-Prefer stopping and explaining over inventing retries. Check state, orders,
-fills, or balances when an action may have partially applied.
+Check state, orders, fills, or balances when an action may have partially
+applied. All consent decisions follow the Confirmation Contract in
+[SKILL.md](../SKILL.md); errors do not create new per-step consent gates.
 
 ## Global Rules
 
@@ -10,8 +11,8 @@ fills, or balances when an action may have partially applied.
 2. A CLI argument error occurs before a platform request. Correct it only from
    known user intent; never guess a missing value, discard an option silently,
    switch order type, or fall back to a raw payload.
-3. If corrected execution parameters differ from the confirmed action, present
-   the complete correction and obtain confirmation again.
+3. Changes outside the confirmed plan or its disclosed sizing rule require
+   a revised confirmation.
 4. Surface the exact CLI/platform error and code when present.
 5. Never double-deposit or double-withdraw to fix a hang.
 
@@ -19,8 +20,8 @@ fills, or balances when an action may have partially applied.
 
 | Code / condition | Meaning | Agent action |
 | --- | --- | --- |
-| `HYPERLIQUID_TRADING_DISABLED` | Trading integration is off; exchange routes are blocked | Explain; confirm `enable`; require fresh confirmation before retrying account-changing work |
-| `HYPERLIQUID_TRADING_DISABLE_BLOCKED` | Positions, orders, default/builder funds, spot balances, or dust prevent disable | Present exact blockers; close/cancel exposure, consolidate and withdraw funds, then re-confirm disable |
+| `HYPERLIQUID_TRADING_DISABLED` | Trading integration is off; exchange routes are blocked | Explain; verify authorization covers `enable`, then continue within scope |
+| `HYPERLIQUID_TRADING_DISABLE_BLOCKED` | Positions, orders, default/builder funds, spot balances, or dust prevent disable | Present exact blockers; close/cancel exposure, consolidate and withdraw funds, then verify authorization covers disable |
 | `HYPERLIQUID_TRADING_DISABLE_CHECK_UNAVAILABLE` | Platform could not verify exposure | Stop; inspect `state` / `orders` / `snapshot`; do not force-disable |
 | `HYPERLIQUID_SYMBOL_AMBIGUOUS` | Multiple markets match | Present candidates and wait for selection |
 | `HYPERLIQUID_SYMBOL_NOT_FOUND` | No matching market | Try exact `dex:COIN`, `--dex default`, or `markets`; never invent an asset ID |
@@ -31,7 +32,7 @@ fills, or balances when an action may have partially applied.
 | `HYPERLIQUID_MIXED_ORDER_ASSET_CLASSES_UNSUPPORTED` | One request mixes perp and spot | Stop; typed commands do not expose a mixed batch |
 | Fee status fails or is unknown | Authorization cannot be established | Stop; do not use an order as a probe |
 | `HYPERLIQUID_API_PARTIAL_SUCCESS` | Some multi-leg orders succeeded | Report exact legs; reconcile frontend orders, state, and statuses; do not resubmit the whole action |
-| `HYPERLIQUID_API_ERROR` | Venue rejected the action | Report the venue message; fix only with user intent and re-confirm changed parameters |
+| `HYPERLIQUID_API_ERROR` | Venue rejected the action | Report the venue message; reconcile and apply the shared confirmation contract |
 | `HYPERLIQUID_REQUEST_INVALID` | Platform rejected the CLI-built request | Report as an implementation/compatibility error; never bypass the CLI with raw JSON |
 | `HYPERLIQUID_TRANSPORT_ERROR` / timeout | Submission outcome may be unknown | Do not retry a possible write; reconcile first |
 | Policy deferred / manual approval | Wallet policy requires another approval path | Explain and wait; do not spam resubmit |
@@ -46,7 +47,7 @@ The CLI rejects these before sending a platform request:
 | --- | --- |
 | Missing value or required argument | Obtain the actual value; do not substitute `true` or a default |
 | Duplicate option | Resolve which value the user intends |
-| Unknown option | Check [order-commands.md](order-commands.md); do not silently delete a meaningful parameter |
+| Unknown option | Read the reference for that command (market data, trading, or order commands); do not delete meaningful parameters |
 | Unexpected positional argument | Rebuild using named options only |
 | Invalid side, TIF, execution, boolean, integer, decimal, OID, or cloid | Surface the exact invalid value and accepted form |
 | Both worst-price and limit-price forms | Preserve the requested execution mode and pass only its matching option |
@@ -60,7 +61,7 @@ The CLI rejects these before sending a platform request:
 
 Syntax correction alone does not authorize a changed trade. If the effective
 order remains exactly what the user confirmed, correct only the syntax; if any
-field or execution behavior changes, confirm again.
+field or execution behavior changes outside the disclosed sizing rule, confirm again.
 
 ## Order Lifecycle Failures
 
@@ -85,11 +86,12 @@ The primary flow is `builder-fee-status` before every order-placement command.
 If placement still returns
 `HYPERLIQUID_BUILDER_FEE_APPROVAL_REQUIRED`:
 
-1. Stop. The rejected order was not submitted.
-2. Use the brief fee wording and exact consent prompt from `SKILL.md`.
-3. After explicit consent, run `purr hyperliquid approve-builder-fee`.
-4. Present the rejected order again and obtain fresh confirmation before
-   submitting it.
+1. Stop and reconcile any other legs. This rejected order was not submitted.
+2. Recheck `builder-fee-status` and follow Order Fee Preflight in
+   [preflight.md](preflight.md).
+3. Obtain standing fee consent if not already covered, then approve and verify.
+4. Retry only the rejected order within the confirmed scope, never the entire
+   plan. An unknown submission outcome must be reconciled first.
 
 Never expose internal builder details or request fee parameters. There is no
 CLI revoke command.

@@ -1,354 +1,119 @@
-# Typical Workflows
+# Trading Workflows
+
+This is the execution sequence for trade cards and order management.
+Authorization follows [SKILL.md](../SKILL.md#confirmation-contract).
+Funding-only requests use [deposit-withdraw.md](deposit-withdraw.md);
+internal transfers use [collateral.md](collateral.md).
+
+## Prepare Before Confirmation
+
+1. Read [preflight.md](preflight.md) and run its account/funding checks.
+   Establish available collateral across ledgers and wallet funds separately,
+   not only the target dex balance. Identify any required deposit or transfer.
+2. Read [market-data.md](market-data.md). Resolve each exact market and retain
+   `coin`, `assetId`, `szDecimals`, dex, supported margin mode, and fresh
+   executable price context. Use current market metadata for constraints.
+3. Read [order-commands.md](order-commands.md) for the selected order type,
+   quantity calculation, price boundaries, and precision. For leverage changes,
+   also read [trading.md](trading.md#leverage). Calculate every leg's margin,
+   notional, and asset size; verify minimums before any order submission.
+4. If funds must move, read the relevant deposit/transfer reference now.
+   Prepare source, destination, amount, fee scope, and command syntax along
+   with leverage and entry/protection commands. Batch independent reads.
+5. Present one concrete plan under the main agent's budget/card rules and
+   the Confirmation Contract. Include execution boundaries, not just trigger
+   levels. If using proportional sizing after funding, disclose the rule.
+
+If required data is unavailable, mark readiness unverified and resolve the
+gap before writes. Do not guess command flags or submit trial orders.
+A generic help lookup is unnecessary when the referenced syntax is available.
+
+## Execute the Confirmed Plan
+
+Refresh time-sensitive balances and executable quotes within the confirmed
+constraints. Recalculate only under the disclosed sizing rule. Verify rounded
+sizes, minimums, fees, and target collateral again.
+
+Perform only the required, authorized steps, in dependency order:
+
+1. Enable trading if covered and necessary.
+2. Deposit wallet USDC if needed; verify credited default perp collateral.
+3. Transfer to spot or the selected builder dex if needed; verify that ledger.
+4. Complete any disclosed standing fee approval and verify its status.
+5. Set the confirmed leverage/margin mode; stop if it fails.
+6. Submit the prepared typed order with its required protection.
+7. Verify actual positions, open entries, and every protection leg with the
+   inspection commands in [trading.md](trading.md).
+
+Fee approval must precede orders; if account initialization prevents approval
+earlier, complete the authorized deposit first. Skip already satisfied steps.
+Do not repeat documentation discovery after confirmation unless a concrete
+error or changed capability requires it. Reconcile uncertain/partial results
+using [errors.md](errors.md); never repeat successful legs.
+
+For HIP-3 markets, only the target dex's available collateral funds an order.
+Spot entries require spot funds. A transfer must be verified before ordering,
+not discovered through a rejected order.
+
+## Open a Position
+
+Select `limit-order` for an ordinary limit or bounded market-style entry;
+select `bracket-order` for an entry with attached TP/SL.
+Use the exact syntax and sizing rules in
+[order-commands.md](order-commands.md#place-orders).
+
+For long positions, TP is above and SL below the intended entry; reverse for
+shorts. Confirm trigger execution mode and worst/limit prices. Store entry
+and child OIDs. A resting entry is pending, not a filled position.
+
+## Protect an Existing Position
+
+Read the actual non-zero position side and size from fresh perp state.
+Use `protect-position` for paired market protection, or `stop-loss` /
+`take-profit` for an individual trigger. Read the position-sizing semantics
+in [order-commands.md](order-commands.md): position TP/SL scales with the live
+position, unlike a fixed-size bracket child.
+
+Stop if a proposed trigger is already crossed. Apply fee preflight and
+confirm the triggers and execution boundaries. Verify the new child OIDs
+with frontend orders; the historical entry OID is not the protection target.
+
+## Modify an Order
+
+Read frontend orders and exact status using [trading.md](trading.md).
+Identify the still-open target, its type, and `isPositionTpsl`.
+Reconstruct the full replacement using the field mapping and
+`--always-place` rules in [order-commands.md](order-commands.md).
+Modify commands are replacements, not partial patches.
+
+Use current `sz`, not `origSz`, for ordinary orders/fixed-size children;
+refresh live position state for position-sized TP/SL. Confirm all replacement
+fields and any always-place duplicate-order risk. Modify each protection leg
+by its own OID, then verify. A filled entry cannot be modified.
+
+## Close or Reduce
+
+Read the live position, resolve the market, and apply fee preflight.
+Use the opposite side with `limit-order --reduce-only true`, sized to the
+confirmed reduction. There is no `close-position` command; market-style
+execution still needs its disclosed worst-price boundary.
+
+Verify the remaining position and inspect protection orders. Handle leftover
+orders only within the authorized scope; do not claim flat from submission.
 
-End-to-end recipes. Follow the Confirmation Contract in `SKILL.md` for every
-account-changing action. Use only the parameterized commands in
-[order-commands.md](order-commands.md); never construct or submit raw order,
-modify, or cancel payloads.
+## Cancel an Order
 
-Perform preparatory queries silently and surface only decisions,
-confirmations, meaningful results, or errors that change the workflow.
+Locate the exact open OID/cloid and confirm its target under the
+Confirmation Contract. Use the cancel commands in [trading.md](trading.md),
+then verify status. A filled historical entry cannot be cancelled.
 
-## Shared Preflight
+## Disable Trading
 
-At the start of any exchange workflow:
+Read all-DEX balances and each relevant dex's open orders. Positive default,
+builder-dex, or spot balances (including dust), positions, and orders can
+block disable. Use reported blockers from [preflight.md](preflight.md).
 
-```bash
-purr hyperliquid status
-```
-
-If disabled, explain and confirm `enable`. Only `status`, `enable`, and
-`disable` work while disabled.
-
-Resolve every new market:
-
-```bash
-purr hyperliquid symbol --coin <coin> [--dex <dex>]
-```
-
-On `HYPERLIQUID_SYMBOL_AMBIGUOUS`, present each candidate's `coin`, `dex`,
-`assetId`, and `szDecimals` and wait for the user. Use the selected candidate
-directly; do not resolve it again.
-
-Before `limit-order`, `bracket-order`, `stop-loss`, `take-profit`, or
-`protect-position`, follow **Order Fee Preflight** in
-[preflight.md](preflight.md). Never authorize or retry automatically.
-
-## A. First-Time Fund and Status
-
-1. Read integration, identity, and Arbitrum USDC:
-
-```bash
-purr hyperliquid status
-purr hyperliquid account
-purr wallet balance --chain-type ethereum --chain-id 42161 --token USDC
-```
-
-2. Confirm a deposit of at least 5 USDC, then run:
-
-```bash
-purr hyperliquid deposit --amount <amount>
-```
-
-3. Recheck:
-
-```bash
-purr hyperliquid state --kind both
-```
-
-Report the Hyperliquid address, remaining Arbitrum USDC, and credited perp
-collateral.
-
-## B. Open a Perp Position
-
-1. Resolve the market and read target collateral:
-
-```bash
-purr hyperliquid symbol --coin <coin> [--dex <dex>]
-purr hyperliquid state --kind perp [--dex <dex>]
-purr hyperliquid prices [--dex <dex>]
-purr hyperliquid l2 --coin <canonical-coin>
-```
-
-2. Run fee preflight. Check size precision, margin, and any requested leverage
-change.
-
-3. For an ordinary entry, confirm and run:
-
-```bash
-purr hyperliquid limit-order \
-  --asset <asset-id> \
-  --side buy|sell \
-  --size <asset-size> \
-  --price <price> \
-  --tif Gtc|Ioc|Alo|FrontendMarket \
-  --reduce-only false
-```
-
-4. When the user wants entry plus TP/SL, use one bracket action:
-
-```bash
-purr hyperliquid bracket-order \
-  --asset <asset-id> \
-  --side buy|sell \
-  --size <asset-size> \
-  --entry-price <price> \
-  --entry-tif Gtc|Ioc|Alo|FrontendMarket \
-  --take-profit-price <tp-trigger> \
-  --stop-loss-price <sl-trigger> \
-  --execution market \
-  --take-profit-worst-price <tp-worst> \
-  --stop-loss-worst-price <sl-worst>
-```
-
-For limit-executed children, replace both worst-price options with their
-matching TP/SL limit-price options. Confirm all three legs. For long entries,
-TP should be above and SL below the intended entry/current market; reverse
-that for shorts.
-
-5. If leverage is changing, include it in the same final confirmation, run it
-first, and submit the order only after it succeeds.
-
-6. Reconcile:
-
-```bash
-purr hyperliquid orders --kind frontend [--dex <dex>]
-purr hyperliquid state --kind perp [--dex <dex>]
-purr hyperliquid fills
-```
-
-Capture entry and child OIDs instead of relying on conversational context.
-
-## C. Equity / HIP-3 Perp
-
-Resolve the exact builder-dex market:
-
-```bash
-purr hyperliquid symbol --coin TSLA --dex xyz
-# or
-purr hyperliquid symbol --coin xyz:TSLA
-```
-
-Run fee preflight, then inspect both default and builder-dex collateral:
-
-```bash
-purr hyperliquid state --kind both
-purr hyperliquid state --kind both --dex xyz
-```
-
-Only the target dex's available collateral funds this order. If it is short
-and default perp has enough, confirm `send-asset` separately:
-
-```bash
-purr hyperliquid send-asset --destination-dex xyz --amount <amount>
-```
-
-Re-read target state before leverage or order submission. Then use the ordinary
-or bracket perp workflow above with the builder-dex `assetId`. Optional funding
-context:
-
-```bash
-purr hyperliquid funding --coin xyz:TSLA --start-time <ms>
-```
-
-## D. Spot Buy
-
-1. Inspect balances and move USDC from perp to spot if needed:
-
-```bash
-purr hyperliquid state --kind both
-purr hyperliquid usd-class-transfer --amount <amount> --to-perp false
-```
-
-The transfer requires its own confirmation.
-
-2. Resolve the spot market, run fee preflight, and place a typed
-`limit-order` with the spot `assetId`.
-
-3. Recheck `state --kind spot`, `fills`, and open orders.
-
-## E. Add TP/SL to an Existing Position
-
-1. Read the live position; do not use the historical entry size:
-
-```bash
-purr hyperliquid state --kind perp [--dex <dex>]
-purr hyperliquid prices [--dex <dex>]
-purr hyperliquid l2 --coin <canonical-coin>
-```
-
-2. Map `assetPositions[].position.szi` to side and size using
-[order-commands.md](order-commands.md). Verify the exact asset, non-zero
-position side, and absolute current size.
-Choose either full-position protection or a user-confirmed proportional
-portion. Position TP/SL size scales with later position changes; do not promise
-a fixed absolute partial-close size. For a long, TP normally belongs above
-current price and SL below it. For a short, reverse this. Stop if a trigger is
-already crossed.
-
-3. Run fee preflight. Confirm every trigger and execution boundary.
-
-4. Add paired market protection:
-
-```bash
-purr hyperliquid protect-position \
-  --asset <asset-id> \
-  --position-side long|short \
-  --size <protected-size-at-placement> \
-  --take-profit-price <tp-trigger> \
-  --stop-loss-price <sl-trigger> \
-  --execution market \
-  --take-profit-worst-price <tp-worst> \
-  --stop-loss-worst-price <sl-worst>
-```
-
-Use `stop-loss` or `take-profit` when only one leg is requested or limit
-trigger execution is needed.
-
-5. Capture the new protection OIDs:
-
-```bash
-purr hyperliquid orders --kind frontend [--dex <dex>]
-```
-
-The filled entry OID is not the target and is not required.
-
-## F. Modify TP/SL or an Entry
-
-1. Locate and verify the exact open target:
-
-```bash
-purr hyperliquid orders --kind frontend [--dex <dex>]
-purr hyperliquid order-status --oid <oid-or-cloid>
-```
-
-2. Reconstruct the complete replacement parameters from the current order plus
-the requested change using the frontend-field mapping in
-[order-commands.md](order-commands.md). Use current `sz`, not `origSz`, for an
-ordinary order or fixed-size child; re-read live position state for a
-position-sized TP/SL. Confirm the target OID and all fields.
-
-3. Use `modify-limit-order` for an open entry/ordinary limit,
-`modify-stop-loss` for an SL child, or `modify-take-profit` for a TP child.
-
-A bracket or paired position protection is not modified as one object. Modify
-each still-open leg by its own OID. A filled entry cannot be modified; manage
-the position or its protection instead.
-
-4. Re-read frontend orders or exact status.
-
-## G. Close or Reduce a Position
-
-1. Read the current position, resolve the asset, and run fee preflight.
-2. Confirm an opposite-side, reduce-only order sized to the requested amount.
-3. Run:
-
-```bash
-purr hyperliquid limit-order \
-  --asset <asset-id> \
-  --side <opposite-side> \
-  --size <close-size> \
-  --price <price-or-frontend-market-boundary> \
-  --tif Gtc|Ioc|FrontendMarket \
-  --reduce-only true
-```
-
-There is no separate `close-position` command. `FrontendMarket` still requires
-an explicit user-confirmed protection price.
-
-4. Verify the remaining position with `state`. Do not claim flat from the
-submission response alone.
-
-## H. Cancel an Open Order
-
-```bash
-purr hyperliquid orders --kind frontend [--dex <dex>]
-purr hyperliquid order-status --oid <oid-or-cloid>
-```
-
-After confirming the exact target:
-
-```bash
-purr hyperliquid cancel --asset <asset-id> --oid <numeric-oid>
-# or
-purr hyperliquid cancel-by-cloid --asset <asset-id> --cloid <cloid>
-```
-
-Re-list open/frontend orders. A filled historical order cannot be cancelled.
-
-## I. Withdraw Profits
-
-1. Read free collateral with `state --kind both`.
-2. Confirm and submit `withdraw --amount <amount>`.
-3. Keep the returned `nonce`. A successful submit is not proof of Arbitrum
-arrival.
-4. When requested, check:
-
-```bash
-purr hyperliquid withdraw-status --nonce <nonce>
-```
-
-`pending` means wait without resubmitting. On `arrived`, report
-`amountUsdc`, `feeUsdc`, and `txHash`. If no nonce was captured, reconcile
-balances only; never invent one.
-
-## J. Research Only
-
-Trading must still be enabled for gateway reads:
-
-```bash
-purr hyperliquid symbol --coin <coin> [--dex <dex>]
-purr hyperliquid markets --kind both [--dex <dex>]
-purr hyperliquid prices [--dex <dex>]
-purr hyperliquid l2 --coin <coin>
-purr hyperliquid candles --coin <coin> --interval 1h --start-time <ms>
-purr hyperliquid funding --coin <coin> --start-time <ms>
-```
-
-Do not place or change orders in this path.
-
-## K. Dead-Man Switch
-
-Confirm a human-readable time before scheduling:
-
-```bash
-purr hyperliquid schedule-cancel --time <unix-ms>
-```
-
-Confirm clear intent before removing a schedule:
-
-```bash
-purr hyperliquid schedule-cancel
-```
-
-## L. Disable Trading Integration
-
-Inspect all exposure:
-
-```bash
-purr hyperliquid snapshot
-purr hyperliquid state --kind both
-purr hyperliquid orders --kind frontend
-```
-
-Also inspect every relevant builder dex with `state --kind both --dex <dex>`
-and `orders --kind frontend --dex <dex>`. Disable is blocked not only by
-positions and orders, but also by positive default/builder account value,
-withdrawable funds, and any positive spot balance or dust.
-
-Close positions and cancel open orders with separate confirmations. Clear any
-non-USDC spot holdings with separately confirmed spot orders, then move spot
-USDC to perp with `usd-class-transfer --to-perp true`. Move each builder-dex
-balance to default with:
-
-```bash
-purr hyperliquid send-asset \
-  --source-dex <builder-dex> \
-  --destination-dex= \
-  --amount <amount>
-```
-
-Withdraw the consolidated default balance, then re-read state and orders before
-confirming `disable`. On `HYPERLIQUID_TRADING_DISABLE_BLOCKED`, show the exact
-blockers; clear them and obtain a new confirmation before retrying. If positive
-dust cannot be transferred or withdrawn, report that disable remains blocked
-instead of retrying in a loop or claiming success.
+Prepare any needed closes, cancellations, spot conversions, collateral
+consolidation, and withdrawal under the Confirmation Contract. Use the same
+workflows/references above, verify they completed, then disable. Report
+unmovable dust or other blockers instead of retrying in a loop.
