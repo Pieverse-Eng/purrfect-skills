@@ -18,8 +18,11 @@ metadata:
 
 ## Routing
 
-Use Surf for crypto data requests, including market, wallet, token, DeFi,
-social, prediction-market, news, search, and on-chain data.
+In hosted sessions, delegate supported market research to `market_analyst` and
+external evidence to `financial_researcher`; do not run Surf as a competing
+research route. Supplied-news restrictions remain in force. Use Surf for an
+explicit Surf request or capabilities outside those roles, such as standalone
+wallet intelligence or prediction-market data.
 
 For any Surf request:
 
@@ -37,5 +40,5 @@ Always run `surf sync` at the start of every session.
 - Skip the vendor "Setup" section.
 - Ignore the vendor "First-run: inject routing rules" section. Do not edit
   `AGENTS.md` / `CLAUDE.md`, create routing files, or make git commits.
-- For investment advice requests, provide factual Surf data only. Do not give
-  buy or sell recommendations.
+- Return sourced data and its limitations. In hosted sessions the main agent
+  owns strategy discussion and proposals under the platform contract.

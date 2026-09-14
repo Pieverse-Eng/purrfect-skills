@@ -29,7 +29,7 @@ For public market queries and exact pre-order symbol resolution, read
 | Hyperliquid market research, trading, funding, and account management | Direct Hyperliquid REST/SDK calls or hand-built signatures |
 | Perp, spot, and builder-dex markets (e.g. `xyz`) | Testnet / `--network` |
 | Arbitrum USDC deposit into HL and HL withdraw | Bridging from other chains (use other skills first) |
-| Leverage, cancel, modify, collateral moves | Cross-venue stock arb execution (use `stock-spread` for quote research) |
+| Leverage, cancel, modify, collateral moves | Cross-venue execution orchestration (owned by the main agent) |
 | Enable/disable Hyperliquid Trading integration | Revoking the fixed 0.05% transaction fee |
 
 ## Core Rules
@@ -110,21 +110,19 @@ Before any account-changing action (all order-placement commands, all
 1. Summarize the concrete parameters (market/`assetId`, side, size, price or
    amount, and any collateral impact). For enable/disable, state the integration
    effect clearly.
-2. Ask exactly:
-   `Do you want to execute this Hyperliquid action with these parameters? (Yes/No)`
-3. Run the action only after an explicit yes on the immediately preceding user
-   turn for that unchanged action. The initial request, any changed detail, or
-   an intervening request requires confirmation again.
+2. In hosted trading, accept the platform Confirm response for the unchanged
+   proposal. It covers every explicitly listed leg, disclosed leverage change
+   and protection order. Do not ask the same question again after read-only
+   preflight or intervening research. Execute leverage changes before the
+   dependent orders and verify each step.
+3. For a standalone action, present its concrete parameters and obtain explicit
+   confirmation. Changed assets, amounts, prices or constraints require a new
+   proposal; an initial request alone is not final confirmation.
 
-One confirmation normally authorizes one action only. The sole workflow
-exception is a leverage change immediately followed by its order: one final
-trade confirmation may authorize both when the summary explicitly includes
-the leverage value, margin mode, and complete order parameters. Execute the
-leverage change first and submit the order only after it succeeds. Fee
-authorization and collateral transfers always require separate confirmations.
-
-Fee authorization uses the separate consent prompt below instead of this
-generic action prompt.
+Standing fee authorization, integration enablement, funding and collateral
+transfers require their separate consent. They are not implied by a trade card.
+Partial or uncertain submission requires reconciliation before another write;
+never resubmit all legs or claim the entire strategy filled.
 
 ## Transaction Fee Authorization
 

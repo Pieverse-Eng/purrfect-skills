@@ -9,6 +9,18 @@ This is the top-level Gate router. Classify the user's intent, choose the
 matching vendor skill under `vendor/`, then read that vendor `SKILL.md` before
 running commands or explaining a workflow.
 
+## Hosted research boundary
+
+When platform research roles are available, the main agent owns research routing,
+strategy and News-to-trade synthesis. Use `market_analyst` for supported market
+evidence and `financial_researcher` for external evidence; do not run the vendor
+Info/News pipeline for the same hosted question. Supplied-news restrictions still
+apply. Info/News routes below remain standalone references and do not override
+that boundary. Public execution quotes and unsupported product/account workflows
+remain available. Recognize platform confirmation for unchanged, explicitly
+listed legs; do not repeat ordinary vendor confirmation prompts after read-only
+preflight. Separate funding/fee/onboarding consent remains separate.
+
 ## Public Market Data
 
 Public market endpoints do not require trading credentials. Verify the exact
@@ -167,10 +179,10 @@ single-purpose questions.
 
 | Workflow | Route |
 | --- | --- |
-| Research to CEX trade | `vendor/gate-info-research` -> `vendor/gate-exchange-spot` or `vendor/gate-exchange-futures` |
+| Standalone research to CEX trade | `vendor/gate-info-research` -> `vendor/gate-exchange-spot` or `vendor/gate-exchange-futures` |
 | CEX balance to order | `vendor/gate-exchange-assets` -> `vendor/gate-exchange-spot` |
 | DEX swap | `vendor/gate-dex-wallet-cli` -> `vendor/gate-dex-market-cli` -> `vendor/gate-dex-trade-cli` |
 | DEX x402 or DApp signing | `vendor/gate-dex-wallet` |
 | Earn discovery to subscribe/redeem | `vendor/gate-exchange-earn` or the specific earn product skill |
-| News to action | `vendor/gate-news-intel` -> `vendor/gate-info-research` -> execution skill |
+| Standalone news discussion | `vendor/gate-news-intel`; any action requires its own execution authorization |
 | Portfolio review | `vendor/gate-exchange-assets` -> `vendor/gate-info-research` |

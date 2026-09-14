@@ -201,17 +201,19 @@ with `--yes`, `approve-partner-fee`, `reconcile-deposit`):
    price (for market orders, state that price is the worst acceptable fill),
    order type / TIF, chain and amount for funding, destination for withdraws,
    and any margin or leverage impact.
-2. Ask exactly:
-   `Do you want to execute this Lighter action with these parameters? (Yes/No)`
-3. Run only after an explicit yes on the immediately preceding user turn for
-   that unchanged action. The initial request, any changed detail, or an
-   intervening request requires confirmation again.
+2. In hosted trading, accept the platform Confirm response for the unchanged
+   proposal. It covers every explicitly listed leg, disclosed leverage change
+   and protection order. Do not ask the same question again after read-only
+   preflight or intervening research. Execute leverage changes before the
+   dependent orders and verify each step.
+3. For a standalone action, present its concrete parameters and obtain explicit
+   confirmation. Changed assets, amounts, prices or constraints require a new
+   proposal; an initial request alone is not final confirmation.
 
-One confirmation authorizes one action. The sole exception is a leverage change
-immediately followed by its order: one final confirmation may authorize both
-when the summary includes the leverage value, margin mode, and full order
-parameters. Execute leverage first; submit the order only after it succeeds.
-Transaction fee approval always requires its own consent prompt.
+Standing fee authorization, integration enablement, funding and collateral
+transfers require their separate consent. They are not implied by a trade card.
+Partial or uncertain submission requires reconciliation before another write;
+never resubmit all legs or claim the entire strategy filled.
 
 ## Transaction Fee Authorization
 

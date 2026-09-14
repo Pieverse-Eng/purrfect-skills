@@ -120,6 +120,6 @@ purr hyperliquid funding --coin ETH --start-time 1710000000000
 ## Research vs Trading
 
 Market-data commands alone never trade. For cross-venue tokenized-stock
-comparison (CEX vs DEX spreads), prefer the research-only `stock-spread` skill.
+comparison (CEX vs DEX spreads), use the hosted `market_analyst` role when available. Standalone CLI reads remain available.
 Use Hyperliquid market-data commands when the user wants Hyperliquid-specific
 books, funding, or later execution on Hyperliquid.

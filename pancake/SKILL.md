@@ -15,6 +15,8 @@ Keep planning and execution separate:
 - Use `purr pancake swap` for read-only BSC swap quotes; add `--execute` after confirmation. The official API selects the route; the managed wallet handles execution.
 - Treat non-BSC, Infinity liquidity/farming, and PCS Hub flows as planner/deep-link flows unless a `purr pancake` command explicitly supports the exact action.
 
+Hosted identity and cross-venue market research use `market_analyst`; public quotes and LP/farm planning below remain execution-specific capabilities.
+
 For known BSC input and output tokens, use the swap workflow below directly. Read the relevant vendor `SKILL.md` when discovery or other planning is needed. Vendor skills contain tested endpoint, API, and field guidance; do not improvise curl, jq, or contract calls from memory.
 
 ## Routing
@@ -104,8 +106,8 @@ Before any `purr pancake ... --execute`:
 3. Check required token balances with `purr wallet balance --token <symbol_or_address> --chain-id 56`.
 4. For swaps, use the quote and confirmation workflow above. For other actions, read the relevant vendor planner to discover or verify token addresses, pools, farm PID, tick range, tokenId, slippage, deadlines, and expected amounts.
 5. Present the execution parameters and expected approvals. For swaps, wallet and deadline are platform-managed; include pool/farm identifiers and deadlines when required by other actions.
-6. Ask exactly: `Do you want to execute this action with these parameters? (Yes/No)`
-7. Add `--execute` only after the user says yes.
+6. Accept an existing platform Confirm for the unchanged parameters and explicitly listed legs. Otherwise obtain explicit confirmation of the concrete action. Read-only preflight does not require confirmation again.
+7. Add `--execute` only within that authorization. Changed constraints require a revised proposal. After uncertain submission, reconcile transaction status and balances before any retry.
 
 Do not execute PancakeSwap writes with private keys, `cast send`, direct contract write commands, or official UI automation. Use `purr pancake` for supported BSC execution so the platform wallet path owns signing and broadcasting.
 

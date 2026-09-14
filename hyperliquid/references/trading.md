@@ -224,7 +224,7 @@ Leverage / margin (if changed): …
 Collateral notes: …
 Network: Hyperliquid mainnet
 
-Do you want to execute this Hyperliquid action with these parameters? (Yes/No)
+Reply Confirm to proceed or Reject to discard.
 ```
 
 Omit irrelevant fields, but never omit a field that controls order execution.
