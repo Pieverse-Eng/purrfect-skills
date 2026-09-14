@@ -31,14 +31,34 @@ when the user actually wants an ordinary resting or market-style exit order.
 Every typed order's `--size` is in asset units, not USD. Resolve `assetId` and
 `szDecimals` with `symbol`; do not infer either one.
 
-If the user specifies a USD notional, never copy that number into `--size`.
-Convert it to asset units as `USD notional / sizing price`, then round down to
-at most `szDecimals` decimal places. Use the user-confirmed price for a resting
-order. For `FrontendMarket`, use a fresh displayed executable quote and state
-that the final notional is approximate because the fill price can move; its
-worst-price boundary is a separate risk control. Confirm the USD notional,
-sizing price, and derived asset size. If no reliable sizing price exists or the
-rounded size is zero, ask the user for an asset size instead.
+For perpetual margin budgets, calculate in this order:
+
+```text
+leg margin = available allocation after reserves × confirmed leg weight
+leg notional = leg margin × confirmed leverage
+asset size = round down(leg notional / sizing price, szDecimals)
+actual notional = asset size × sizing price
+required margin = actual notional / leverage
+```
+
+If the user specified notional, skip multiplying by leverage. Spot uses the
+input budget without leverage. Setting leverage does not multiply `--size`.
+Use decimal arithmetic and check total required margin plus fees against
+available target collateral. Do not spend occupied margin or native gas.
+
+Example: $8 margin at 3x is $24 notional. At $100 per asset and two size
+decimals, `--size` is 0.24.
+
+Use the confirmed entry price for a resting order. For `FrontendMarket`,
+use a fresh executable quote; its worst-price boundary is a separate control,
+not the sizing price. Check supported margin mode, size/price precision,
+and the applicable venue minimum after rounding, before submission.
+If the rounded order does not meet applicable constraints, report the gap
+and apply the Confirmation Contract before changing its parameters.
+
+Show margin, leverage, approximate notional, and derived size in the plan.
+If price or constraints are unknown, resolve them before executing.
+Preserve the confirmed allocation proportions within precision and reserves.
 
 ## Place Orders
 
@@ -313,4 +333,4 @@ All named options require explicit values. A CLI validation error means no
 platform request was sent. Surface the error and do not silently delete an
 option, guess a missing value, change the order type, or fall back to a raw
 payload. If the corrected order parameters differ from the confirmed action,
-show the complete corrected action and obtain confirmation again.
+apply the Confirmation Contract in [SKILL.md](../SKILL.md) before retrying.

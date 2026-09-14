@@ -46,7 +46,7 @@ The CLI rejects these before sending a platform request:
 | --- | --- |
 | Missing value or required argument | Obtain the actual value; do not substitute `true` or a default |
 | Duplicate option | Resolve which value the user intends |
-| Unknown option | Check [order-commands.md](order-commands.md); do not silently delete a meaningful parameter |
+| Unknown option | Read the reference for that command (market data, trading, or order commands); do not delete meaningful parameters |
 | Unexpected positional argument | Rebuild using named options only |
 | Invalid side, TIF, execution, boolean, integer, decimal, OID, or cloid | Surface the exact invalid value and accepted form |
 | Both worst-price and limit-price forms | Preserve the requested execution mode and pass only its matching option |

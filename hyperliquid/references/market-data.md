@@ -1,7 +1,7 @@
 # Market Data
 
 Hyperliquid market data commands only inspect data and do not require
-confirmation. `search`, `symbol`, `markets`, and `candles` use Hyperliquid's
+confirmation. `search`, `symbol`, `markets`, `l2`, and `candles` use Hyperliquid's
 public mainnet Info API without wallet credentials; the other commands use the
 platform gateway and require the trading integration.
 

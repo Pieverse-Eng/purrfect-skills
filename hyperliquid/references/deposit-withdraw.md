@@ -1,6 +1,7 @@
 # Deposit and Withdraw
 
-Bridge USDC between **Arbitrum** and Hyperliquid. Confirm every transfer. Minimum
+Bridge USDC between **Arbitrum** and Hyperliquid. Authorization follows
+[SKILL.md](../SKILL.md#confirmation-contract). Minimum
 deposit is **5 USDC**. Deposit, withdraw, and withdraw-status require the
 Hyperliquid Trading integration to be enabled (see [preflight.md](preflight.md)).
 
@@ -27,14 +28,9 @@ Platform behavior:
 
 ### Preflight
 
-```bash
-purr wallet address --chain-type ethereum
-purr wallet balance --chain-type ethereum --chain-id 42161 --token USDC
-purr hyperliquid account
-purr hyperliquid state --kind both
-```
-
-Ensure the wallet has enough Arbitrum USDC and gas for the bridge transfer.
+Run the account and wallet checks in [preflight.md](preflight.md), including
+native ETH gas. Verify wallet identity, sufficient USDC, and deposit amount.
+Sending tokens to the wallet is not a Hyperliquid deposit.
 
 ### Execute
 
@@ -87,8 +83,10 @@ Platform behavior:
 purr hyperliquid state --kind both
 ```
 
-Ensure free/withdrawable collateral covers the amount (and any venue fees if
-shown by the venue/response).
+For an account-wide withdrawal, first use `state --all-dexs` to locate funds.
+Consolidate only authorized, available spot/builder-dex collateral into default
+perp using [collateral.md](collateral.md). Verify default withdrawable funds
+cover the amount and any venue fees; occupied margin is not withdrawable.
 
 ### Execute
 
@@ -156,32 +154,6 @@ If `withdraw` returned no `nonce` (timeout / unknown outcome before nonce was
 captured), **do not invent a nonce**. Reconcile with Hyperliquid `state` and
 Arbitrum USDC balance; never re-submit withdraw to “create” a new status
 handle.
-
-## Confirmation Templates
-
-### Deposit
-
-```text
-Action: deposit USDC to Hyperliquid
-Amount: <n> USDC (minimum 5)
-Source: Arbitrum USDC on wallet <addr>
-Destination: Hyperliquid perp collateral (same address)
-Network: mainnet
-
-Do you want to execute this Hyperliquid action with these parameters? (Yes/No)
-```
-
-### Withdraw
-
-```text
-Action: withdraw USDC from Hyperliquid
-Amount: <n> USDC
-Source: Hyperliquid collateral on wallet <addr>
-Destination: Arbitrum (same address)
-Network: mainnet
-
-Do you want to execute this Hyperliquid action with these parameters? (Yes/No)
-```
 
 ## Safety
 

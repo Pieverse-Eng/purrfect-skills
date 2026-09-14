@@ -1,104 +1,33 @@
 ---
 name: hyperliquid
-description: Use when the user asks to trade or manage Hyperliquid — e.g. check my HL balance, open a long on ETH, set leverage to 5x, cancel my open orders, deposit USDC to Hyperliquid, withdraw from HL, buy TSLA perp on xyz, move USDC to spot, what is funding on BTC, enable Hyperliquid trading, or other Hyperliquid account, market-data, order, collateral, or deposit/withdraw requests.
+description: Trade and manage Hyperliquid perpetuals, spot, and HIP-3 markets through purr CLI, including balances, orders, leverage, collateral transfers, and Arbitrum USDC deposits and withdrawals.
 ---
 
 # Hyperliquid
 
-## Overview
+Use `purr hyperliquid` for mainnet execution. Do not construct exchange
+signatures, use direct REST/SDK writes, or pass `--network`. Hosted market
+discovery and cross-venue comparison belong to the main agent's research tools.
 
-Hyperliquid mainnet trading and account management: market research, perpetual
-and spot orders, leverage and risk controls, open-order and fill tracking,
-perp/spot and builder-dex collateral moves, Arbitrum USDC deposits into
-Hyperliquid, and withdrawals back to Arbitrum. Includes HIP-3 builder-dex
-markets (for example equity perps on `xyz`) and symbol resolution when bare
-tickers are ambiguous. Trading is gated by the instance Hyperliquid Trading
-integration (`status` / `enable` / `disable`).
+## Start Here
 
-Pick the matching command group below, then read that reference before acting.
+Read the reference for the user's task before acting:
 
-## Market Data
-
-For public market queries and exact pre-order symbol resolution, read
-[`references/market-data.md`](./references/market-data.md).
-
-## Scope
-
-| In scope | Out of scope |
+| Task | Required reference |
 | --- | --- |
-| Hyperliquid market research, trading, funding, and account management | Direct Hyperliquid REST/SDK calls or hand-built signatures |
-| Perp, spot, and builder-dex markets (e.g. `xyz`) | Testnet / `--network` |
-| Arbitrum USDC deposit into HL and HL withdraw | Bridging from other chains (use other skills first) |
-| Leverage, cancel, modify, collateral moves | Cross-venue stock arb execution (use `stock-spread` for quote research) |
-| Enable/disable Hyperliquid Trading integration | Revoking the fixed 0.05% transaction fee |
+| Prepare a trade card, open/close, protect, modify, or cancel | [workflows.md](references/workflows.md), then the command references it selects |
+| Explain funds, inspect accounts, enable/disable, change account mode | [preflight.md](references/preflight.md) |
+| Resolve a market or inspect public market data | [market-data.md](references/market-data.md) |
+| Deposit or withdraw | [deposit-withdraw.md](references/deposit-withdraw.md) |
+| Transfer collateral inside Hyperliquid | [collateral.md](references/collateral.md) |
+| Inspect orders/fills, set leverage, schedule cancellation | [trading.md](references/trading.md) |
+| Order parameters and quantity calculation | [order-commands.md](references/order-commands.md) |
+| Error, partial execution, or uncertain submission | [errors.md](references/errors.md) |
 
-## Core Rules
-
-1. Use `purr hyperliquid <command>` for every Hyperliquid action. Do not call
-   Hyperliquid APIs or construct exchange signatures yourself.
-2. Before any account read or write under the Hyperliquid gateway (account,
-   state, orders, deposit, snapshot, etc.), ensure the trading integration is
-   enabled. Run `purr hyperliquid status` first when unsure. If disabled,
-   explain and obtain confirmation, then run `enable` — never enable silently.
-   Public `search`, `symbol`, `markets`, and `candles` commands remain available
-   while trading is off and do not require wallet credentials.
-3. Resolve markets with `purr hyperliquid symbol` and use the returned
-   `assetId`, full `coin`, and `szDecimals` before placing or modifying orders.
-   Never guess asset indices.
-4. On symbol ambiguity, list candidates and ask the user; do not pick silently.
-5. Looking up markets, balances, positions, orders, fills, status, snapshot, and
-   withdraw status needs no confirmation. Any action that can change orders,
-   positions, leverage, collateral, account settings, fee authorization,
-   integration enablement, or on-chain funds requires explicit confirmation
-   first (see Confirmation Contract).
-6. Perform market resolution, balance checks, price lookups, and other
-   preparation silently. Do not announce tool calls, preflight checks, or the
-   upcoming sequence with phrases such as “Let me…” or “What we need to do.”
-   Speak when a user decision or confirmation is needed, when an action
-   finishes, or when an error changes the workflow.
-7. Use only the parameterized order commands documented in
-   [order-commands.md](references/order-commands.md). Never call the removed
-   raw `order` or `modify` commands, pass raw bodies to cancel commands, or
-   fall back to direct gateway payloads. A stop-loss or take-profit must use a
-   trigger command; never substitute a plain `limit-order`.
-8. Before modifying or cancelling, identify the exact open order OID and
-   verify its status. Never infer a target from market or position alone. A
-   filled entry is historical and cannot be modified; manage its resulting
-   position or open protection orders instead.
-9. Deposits must be at least **5 USDC**. Platform rejects smaller amounts.
-10. Hyperliquid keeps **perp** and **spot** USDC separate. Deposits land on the
-   **perp** side. Move collateral with `usd-class-transfer` or `send-asset`
-   when the user needs spot or a builder dex.
-11. Do not retry account-changing actions after unknown broadcast, deferred
-    policy, or partial success. Reconcile by checking state, orders, or fills.
-12. Do not claim a fill from a submit response alone. Verify with
-    `order-status`, `orders`, `fills`, or `state`. Do not claim a withdraw has
-    arrived on Arbitrum from the withdraw submit alone — keep the returned
-    `nonce` and verify with `withdraw-status` (or balances if nonce is missing).
-13. Never pass `--network`. The CLI and platform are mainnet-only.
-14. After resolving a market for an order (perp **or** spot), check the
-    additional fee authorization with `purr hyperliquid builder-fee-status`
-    before confirmation or any account-changing preparation for the order.
-    Never use an order as the authorization check, and never authorize the fixed
-    additional `0.05%` fee silently.
-15. For every non-default dex market, query that dex's state and treat only its
-    available collateral as usable for the order. Default perp collateral does
-    not fund a builder-dex order. If the target dex is short, confirm and run
-    `send-asset`, then verify the destination balance before changing leverage
-    or submitting the order. Never use a rejected order to discover this.
-
-## Command Groups
-
-| Group | What it does | Reference |
-| --- | --- | --- |
-| Integration | Enable/disable trading, status, dashboard snapshot | [preflight.md](references/preflight.md) |
-| Preflight / account | Wallet address, account state, positions, balances, fee authorization, abstraction mode | [preflight.md](references/preflight.md) |
-| Market data | Symbol resolve, markets, prices, L2 book, candles, funding | [market-data.md](references/market-data.md) |
-| Trading | Typed order creation, protection, modify, cancel, leverage, status, fills | [trading.md](references/trading.md), [order-commands.md](references/order-commands.md) |
-| Collateral | Perp↔spot USDC and default↔builder-dex USDC | [collateral.md](references/collateral.md) |
-| Deposit / withdraw | Arbitrum USDC bridge in; withdraw to Arbitrum; withdraw arrival status by nonce | [deposit-withdraw.md](references/deposit-withdraw.md) |
-| Full recipes | First fund, crypto perp, equity perp, spot, close, withdraw | [workflows.md](references/workflows.md) |
-| Errors | Codes and stop / reconcile policy | [errors.md](references/errors.md) |
+Prepare the required commands and verify their inputs before confirmation.
+Use the references relevant to the operation, including their prerequisites.
+Report meaningful progress, blockers, and results without narrating routine
+lookups. Use familiar user-facing terms such as "your wallet".
 
 ## Confirmation Contract
 
@@ -156,3 +85,16 @@ Never use an order as a status probe. If an order returns
 
 Do not request fee rate or builder address parameters. The CLI does not provide
 a revoke command.
+
+## Execution Invariants
+
+- Resolve exact markets and use returned `coin`, `assetId`, and `szDecimals`.
+  Ask on unresolved ambiguity; never guess an asset ID or order OID.
+- Wallet funds, default perp, spot, and builder-dex collateral are distinct.
+  Use [preflight.md](references/preflight.md) for all-DEX and wallet checks.
+- Use typed order commands; TP/SL requires trigger orders. Filled entry orders
+  are historical: manage the position or its open protection instead.
+- Verify each prerequisite before dependent writes. On uncertain or partial
+  submission, reconcile before continuing; never blindly resubmit a plan.
+- Verify fills and protection using state/orders/status. Retain withdrawal
+  nonce and verify settlement separately; submission is not arrival.

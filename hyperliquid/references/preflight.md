@@ -10,8 +10,9 @@ purr hyperliquid snapshot
 purr hyperliquid enable
 purr hyperliquid disable
 purr hyperliquid account
-purr hyperliquid state [--kind perp|spot|both] [--dex <dex>]
+purr hyperliquid state [--kind perp|spot|both] [--dex <dex> | --all-dexs]
 purr hyperliquid builder-fee-status
+purr hyperliquid approve-builder-fee
 purr hyperliquid abstraction
 purr hyperliquid set-abstraction --mode disabled|unifiedAccount|portfolioMargin
 ```
@@ -30,10 +31,10 @@ purr hyperliquid set-abstraction --mode disabled|unifiedAccount|portfolioMargin
 
 ## Trading Integration Gate
 
-All exchange routes under the Hyperliquid gateway (`account`, `state`,
-`markets`, typed order commands, `deposit`, `snapshot`, and the rest) require
-the trading integration to be **enabled**. Only `status`, `enable`, and
-`disable` remain available when trading is disabled.
+Gateway account reads and writes require the trading integration to be enabled.
+Public `search`, `symbol`, `markets`, `l2`, and `candles` remain available without
+wallet credentials; see [market-data.md](market-data.md). Authorization to
+enable/disable follows [SKILL.md](../SKILL.md#confirmation-contract).
 
 Run this check silently when starting any Hyperliquid workflow:
 
@@ -63,25 +64,38 @@ purr hyperliquid disable
 - Prefer `snapshot` for a quick portfolio overview once trading is enabled; use
   `state` for exact collateral and position details needed to trade.
 
-## Workflow
+## Select Checks by Operation
 
-Run these checks silently. Do not announce that preflight, market resolution,
-or balance inspection is starting, and do not narrate the remaining steps.
+Execute writes only under the Confirmation Contract in [SKILL.md](../SKILL.md).
+Use the narrowest reads that establish the requested operation's prerequisites.
 
-1. Run `purr hyperliquid status`. If disabled, stop for confirmation and
-   `enable` before any other exchange command.
-2. Run `purr hyperliquid account` to show the Hyperliquid account address.
-3. Run `purr hyperliquid state --kind both` for a full collateral and position
-   snapshot. Use `--kind perp` or `--kind spot` when only one side is needed.
-   Optionally use `snapshot` when the user wants a high-level summary.
-4. When the user targets a builder dex (for example equity perps on `xyz`),
-   also run `state --kind both --dex xyz` (or the relevant dex name).
-5. Before confirming any order-placement command (`limit-order`,
-   `bracket-order`, `stop-loss`, `take-profit`, or `protect-position`) or
-   changing leverage/collateral for it, run `builder-fee-status` and follow
-   **Order Fee Preflight** below.
-6. Check `abstraction` when the user asks about Standard / unified / portfolio
-   margin mode. Only call `set-abstraction` after confirmation.
+| Operation | Checks |
+| --- | --- |
+| Gateway account read/write | Integration status; confirm enabling if required |
+| Account-wide balance, allocation, or funding plan | Account identity and all-DEX state; wallet checks when wallet funds affect the plan |
+| Open/increase a position or buy spot | Target collateral, current exposure, market constraints, executable quote, and order fee status |
+| Close/reduce or protect a position | Live position side/size, applicable market constraints, quote, and order fee status |
+| Modify an order | Exact open order/status, replacement constraints; live position if position-sized |
+| Cancel an order | Exact open order/status |
+| Deposit or withdraw | Identity, source funds, destination, fees and settlement checks from [deposit-withdraw.md](deposit-withdraw.md) |
+| Transfer collateral | Source available funds and destination ledger from [collateral.md](collateral.md) |
+| Change account mode | Current abstraction and the confirmed target mode |
+| Disable trading | All-DEX balances and relevant open orders/exposure |
+
+### Account-Wide Funds
+
+Run `purr hyperliquid account` for identity and
+`purr hyperliquid state --all-dexs` for the account-wide view. It discovers all
+perp DEXs and reads spot once. Inspect each `perps` entry (`dex`, `state`)
+and the separate `spot` state. Check `complete` and `errors`; failed reads
+are unknown, never zero.
+
+For order readiness, use the target DEX's available collateral and margin
+usage. Identify funds in other ledgers and any required transfer separately.
+Do not add unlike currencies or treat account equity as available collateral.
+For a targeted refresh use `state --kind perp --dex <dex>`, omitting
+`--dex` for default perps. Follow the main agent's additional preflight
+requirements when supplied.
 
 ## Order Fee Preflight
 
@@ -98,11 +112,11 @@ Handle the result before building the final order confirmation:
 | Status | Action |
 | --- | --- |
 | `approved` | Continue normally; do not ask for fee consent again |
-| `approval_required` | Briefly request authorization for the persistent additional 0.05% transaction fee using the exact consent prompt in `SKILL.md`, then run `approve-builder-fee` |
+| `approval_required` | Request separate standing fee approval using the consent prompt in `SKILL.md`, then run `approve-builder-fee` and verify |
 | Error or unknown value | Stop and report it; do not place an order as a status probe |
 
-After successful authorization, continue to the ordinary order summary and
-confirmation. The authorization itself does not submit or fill an order.
+After authorization, verify status and continue to the order confirmation.
+Authorization itself does not submit or fill an order.
 
 In user-facing text, say “additional 0.05% transaction fee,” never “builder
 fee.” Command and response names may retain `builder-fee` internally.
@@ -115,6 +129,8 @@ fee.” Command and response names may retain `builder-fee` internally.
 - Open positions, free collateral, and margin usage come from perp state.
 - Spot balances matter for spot orders and for `usd-class-transfer` planning.
 - `--kind` defaults to `both` when omitted.
+- `--all-dexs` supports `perp` or `both` and cannot be combined with `--dex`.
+  Without it, `state` and `snapshot` do not provide an all-DEX balance overview.
 - `--dex` applies only to the **perp** leg. Spot state is always the account’s
   spot clearinghouse (not filtered by builder dex).
 
@@ -144,14 +160,26 @@ Do not pass `default` or removed modes such as
 `dexAbstraction` to `set-abstraction`. Prefer leaving mode unchanged unless the
 user explicitly wants a mode change.
 
-## Related Checks Outside Hyperliquid
+## Wallet Funding Checks
 
-For on-chain Arbitrum USDC before deposit:
+When wallet funds affect allocation or an on-chain transfer is needed, read
+wallet identity, Arbitrum USDC, and native ETH gas:
 
 ```bash
 purr wallet address --chain-type ethereum
 purr wallet balance --chain-type ethereum --chain-id 42161 --token USDC
+purr wallet balance --chain-type ethereum --chain-id 42161
 ```
 
-Native gas on Arbitrum may also be required for the deposit transfer. If the
-deposit command fails for insufficient gas or USDC, report the shortage and stop.
+Omitting `--token` reads native ETH. Verify wallet identity against
+`purr hyperliquid account` and sufficient token/gas balances before transfers.
+Report missing or unverified prerequisites in funding instructions.
+
+Sending USDC to the wallet does not credit Hyperliquid automatically.
+A separate authorized `deposit` moves it to default perp collateral; a
+further transfer may be needed for spot or a builder dex. Explain these
+steps and give the wallet address, Arbitrum One USDC, and native ETH gas
+requirement when funding is needed. The deposit minimum applies to the
+Hyperliquid deposit, not to receiving tokens in the wallet.
+
+See [deposit-withdraw.md](deposit-withdraw.md) for execution and settlement.
