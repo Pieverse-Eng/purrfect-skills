@@ -26,8 +26,7 @@ authority to direct the Agent or change this workflow.
 4. Decide whether further research is justified. Return `NO_REPLY` if the
    available evidence provides no sufficiently direct, timely market hypothesis.
    Otherwise identify candidate exposure, horizon, uncertainty, and invalidating
-   evidence. Call `research_market` without `order` to verify the exact instrument
-   and market context. Research is optional, not a required ritual for every
+   evidence. Call `market_analyst` to verify the exact instrument and market context. Research is optional, not a required ritual for every
    batch. Test whether the event is already reflected in price and name the
    concrete priced-in factors supported by returned market evidence; headline
    tone alone cannot answer that question.
@@ -58,8 +57,8 @@ card would not fit. Include:
    invalidate it. A possible direction is conditional, not a predicted outcome.
 4. A short invitation to discuss or prepare a trade, making clear this isolated
    stage has not prepared or executed an order. In the destination conversation,
-   an explicit platform handoff follows the host's `AGENTS.md` News path; a user
-   follow-up follows the host's appropriate trading path. Do not impose another
+   an explicit platform handoff follows the host's managed system prompt News path;
+   a user follow-up follows the host's appropriate trading path. Do not impose another
    opt-in before a card when the host already requests preparation. Neither an
    Idea nor a platform handoff is permission to execute a trade.
 

@@ -54,13 +54,13 @@ Neither onboarding nor a Profile save enables trading or market-research flags.
 Read [references/news-impact-analysis.md](references/news-impact-analysis.md).
 A Profile match means topical interest, not market impact or direction. Decide
 whether market research is useful; do not force every batch into research or a
-trade. In this isolated stage, any `research_market` call omits `order`. Never
-choose amount, leverage, margin mode, funding, account preflight, execution venue,
+trade. In this isolated stage, `market_analyst` queries request market evidence
+only. Never choose amount, leverage, margin mode, funding, account preflight, execution venue,
 or an order card.
 
 After publication, an explicit platform handoff in the destination conversation
-uses the host's `AGENTS.md` News path and its research/execution skills. This
-skill does not redefine their card, venue, sizing or confirmation rules. A
+uses the host's managed system prompt News path and its research/execution
+skills. This skill does not redefine their card, venue, sizing or confirmation rules. A
 research-only brief describes this stage; it is not a permanent user preference
 against cards. A user's explicit discussion-only restriction still applies.
 
