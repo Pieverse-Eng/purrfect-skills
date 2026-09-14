@@ -31,16 +31,17 @@ A generic help lookup is unnecessary when the referenced syntax is available.
 ## Execute the Confirmed Plan
 
 Refresh time-sensitive balances and executable quotes within the confirmed
-constraints. Recalculate only under the disclosed sizing rule. Verify rounded
+constraints. Apply the Confirmation Contract to any parameter changes. Verify rounded
 sizes, minimums, fees, and target collateral again.
 
-Perform only the required, authorized steps, in dependency order:
+Apply the Confirmation Contract before each account-changing step.
+Perform the required steps in dependency order:
 
-1. Enable trading if covered and necessary.
+1. Confirm and enable trading if necessary.
 2. Deposit wallet USDC if needed; verify credited default perp collateral.
 3. Transfer to spot or the selected builder dex if needed; verify that ledger.
 4. Complete any disclosed standing fee approval and verify its status.
-5. Set the confirmed leverage/margin mode; stop if it fails.
+5. Confirm leverage/margin mode with the order, then set it; stop if it fails.
 6. Submit the prepared typed order with its required protection.
 7. Verify actual positions, open entries, and every protection leg with the
    inspection commands in [trading.md](trading.md).

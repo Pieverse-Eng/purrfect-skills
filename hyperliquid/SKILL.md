@@ -32,29 +32,60 @@ lookups. Call the connected wallet "your wallet", not "TEE".
 
 ## Confirmation Contract
 
-Read-only checks need no confirmation. Account-changing operations require
-authorization covering their concrete parameters and effects.
+Before any account-changing action (all order-placement commands, all
+`modify-*` commands, `cancel`, `cancel-by-cloid`, `enable`, `disable`,
+`update-leverage`, `schedule-cancel`, `set-abstraction`,
+`usd-class-transfer`, `send-asset`, `deposit`, or `withdraw`):
 
-When the main agent's hosted workflow explicitly authorizes one confirmation
-for a complete disclosed plan, follow that scope, including funding, collateral
-moves, fees, leverage, and protection. Do not ask again for covered steps.
-A disclosed proportional sizing rule is part of that plan; other parameter
-changes require a revised confirmation. This contract governs all references
-below; references do not introduce additional confirmation gates.
+1. Summarize the concrete parameters (market/`assetId`, side, size, price or
+   amount, and any collateral impact). For enable/disable, state the integration
+   effect clearly.
+2. Ask exactly:
+   `Do you want to execute this Hyperliquid action with these parameters? (Yes/No)`
+3. Run the action only after an explicit yes on the immediately preceding user
+   turn for that unchanged action. The initial request, any changed detail, or
+   an intervening request requires confirmation again.
 
-Otherwise, summarize and confirm each standalone action before executing it.
-One trade confirmation may cover its disclosed leverage change and order.
-Standing fee approval, enabling trading, deposits, and collateral transfers
-are not implied by an order-only confirmation. Read-only work does not
-invalidate existing consent for unchanged parameters.
+One confirmation normally authorizes one action only. The sole workflow
+exception is a leverage change immediately followed by its order: one final
+trade confirmation may authorize both when the summary explicitly includes
+the leverage value, margin mode, and complete order parameters. Execute the
+leverage change first and submit the order only after it succeeds. Fee
+authorization and collateral transfers always require separate confirmations.
 
-Disclose the additional **0.05% transaction fee on executed notional** and
-its scope for **future Hyperliquid trades** before obtaining standing fee
-approval. Say "additional transaction fee", not "builder fee"; do not expose
-builder addresses or ask for fee parameters. Without a covering hosted plan,
-ask: "Do you approve the additional 0.05% transaction fee for future
-Hyperliquid trades? (Yes/No)". An approved status needs no repeat approval.
-The CLI has no fee-revocation command.
+Fee authorization uses the separate consent prompt below instead of this
+generic action prompt.
+
+## Transaction Fee Authorization
+
+Hyperliquid order-placement commands (`limit-order`, `bracket-order`,
+`stop-loss`, `take-profit`, and `protect-position`) carry a fixed additional
+`0.05%` transaction fee on executed notional. Non-order actions (cancel,
+leverage, transfer, deposit, withdraw, etc.) do not carry this fee. Before
+confirmation or any account-changing preparation for a new order, follow
+[preflight.md](references/preflight.md).
+
+When authorization is required, keep the user-facing message to these two
+sentences:
+`Hyperliquid trades include an additional 0.05% transaction fee.`
+
+Then ask exactly:
+`Do you approve the additional 0.05% transaction fee for future Hyperliquid trades? (Yes/No)`
+
+Keep this user-facing explanation brief. Never call it a “builder fee” or
+expose builder addresses, builder codes, or internal command names to the user.
+Do not explain implementation details or persistence unless the user asks.
+After successful authorization, report only that the `0.05% transaction fee`
+was authorized, then continue preparation silently until the next confirmation.
+
+Only an explicit yes on the immediately preceding turn authorizes
+`approve-builder-fee`. On no, status-check failure, or unknown status, stop.
+Never use an order as a status probe. If an order returns
+`HYPERLIQUID_BUILDER_FEE_APPROVAL_REQUIRED`, follow the 428 fallback in
+[errors.md](references/errors.md); never auto-retry it.
+
+Do not request fee rate or builder address parameters. The CLI does not provide
+a revoke command.
 
 ## Execution Invariants
 

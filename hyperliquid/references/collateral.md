@@ -1,8 +1,6 @@
 # Collateral Transfers
 
-Move USDC inside Hyperliquid without leaving the venue. Authorization follows
-[SKILL.md](../SKILL.md#confirmation-contract); a covered transfer needs no
-additional per-step confirmation.
+Move USDC inside Hyperliquid without leaving the venue. Confirm every transfer.
 
 ## Commands
 
@@ -49,7 +47,7 @@ purr hyperliquid usd-class-transfer --amount 10.5 --to-perp false
 Workflow:
 
 1. `state --kind both` — note free balances on each side.
-2. Verify authorization covers amount and direction.
+2. Confirm amount and direction with the user.
 3. Run `usd-class-transfer`.
 4. Re-run `state --kind both`.
 
@@ -88,14 +86,27 @@ Notes:
 Workflow:
 
 1. `state --kind both` and `state --kind both --dex <destination>`.
-2. Verify authorization covers amount and dex path.
+2. Confirm amount and dex path.
 3. Run `send-asset`.
 4. Re-check both default and destination dex state.
+
+## Confirmation Template
+
+```text
+Action: usd-class-transfer | send-asset
+Amount: <USDC>
+From → to: <perp/spot or dex names>
+Network: Hyperliquid mainnet
+
+Do you want to execute this Hyperliquid action with these parameters? (Yes/No)
+```
 
 ## Safety
 
 - Never transfer more than free/available collateral shown in `state`.
 - Do not auto-balance without user confirmation.
-- If a trade failed for missing collateral, reconcile the rejected order and
-  balances first. Transfer and retry only within the confirmed plan; otherwise
-  present the needed change. Normal preflight must find this before ordering.
+- If a trade failed for missing spot or builder-dex USDC, explain the needed
+  transfer, confirm, move funds, then retry the trade only after a new
+  confirmation for the trade itself. This is a recovery path only; normal
+  order preflight must detect the missing target-ledger collateral before the
+  first submission.

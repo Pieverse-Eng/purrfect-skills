@@ -45,7 +45,7 @@ purr hyperliquid status
 | Result | Action |
 | --- | --- |
 | `enabled: true` | Continue |
-| `enabled: false` | Explain that Hyperliquid Trading is off. Verify authorization → `enable`; ask only if not covered |
+| `enabled: false` | Explain that Hyperliquid Trading is off. Confirm → `enable`. Do not enable silently |
 | Error | Report and stop; do not assume enabled |
 
 ```bash
@@ -59,7 +59,7 @@ purr hyperliquid disable
   builder-dex account has open positions, open orders, positive account value,
   or withdrawable funds, or when any positive spot balance or dust remains.
   Show the `blockers` payload, clear the reported exposure and funds, then
-  retry only within the confirmed scope. Do not treat a rounded display
+  retry disable only after a new confirmation. Do not treat a rounded display
   value of zero as proof that exact dust is absent.
 - Prefer `snapshot` for a quick portfolio overview once trading is enabled; use
   `state` for exact collateral and position details needed to trade.
@@ -69,8 +69,8 @@ purr hyperliquid disable
 Use this preflight before a trade card; execute writes only under the
 Confirmation Contract in [SKILL.md](../SKILL.md).
 
-1. Run `purr hyperliquid status`. If disabled, obtain authorization if needed
-   and `enable` before gateway account commands.
+1. Run `purr hyperliquid status`. If disabled, stop for confirmation and
+   `enable` before gateway account commands.
 2. Run `purr hyperliquid account` to show the Hyperliquid account address.
 3. Run `purr hyperliquid state --all-dexs` for balance overviews and trade-card
    preflight. It discovers all perp DEXs and reads spot once. Read each entry
@@ -105,10 +105,10 @@ Handle the result before building the final order confirmation:
 | Status | Action |
 | --- | --- |
 | `approved` | Continue normally; do not ask for fee consent again |
-| `approval_required` | Disclose the standing fee under the Confirmation Contract in `SKILL.md`; obtain consent if not already covered, then approve and verify |
+| `approval_required` | Request separate standing fee approval using the consent prompt in `SKILL.md`, then run `approve-builder-fee` and verify |
 | Error or unknown value | Stop and report it; do not place an order as a status probe |
 
-After authorization, verify status and continue the covered plan.
+After authorization, verify status and continue to the order confirmation.
 Authorization itself does not submit or fill an order.
 
 In user-facing text, say “additional 0.05% transaction fee,” never “builder

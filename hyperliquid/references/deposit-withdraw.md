@@ -34,7 +34,7 @@ Sending tokens to the wallet is not a Hyperliquid deposit.
 
 ### Execute
 
-1. Verify authorization covers the amount (≥ 5 USDC) and Arbitrum → Hyperliquid.
+1. Confirm amount (≥ 5 USDC) and that funds leave Arbitrum for Hyperliquid.
 2. Run:
 
 ```bash
@@ -63,8 +63,7 @@ If the user needs **builder-dex** collateral (e.g. `xyz`):
 purr hyperliquid send-asset --destination-dex xyz --amount <amount>
 ```
 
-These are distinct operations. Execute them if covered by the confirmed plan;
-otherwise obtain authorization under the shared contract. See
+Both are separate transfers and need their own confirmation — see
 [collateral.md](collateral.md).
 
 ## Withdraw (Hyperliquid → Arbitrum)
@@ -91,7 +90,7 @@ cover the amount and any venue fees; occupied margin is not withdrawable.
 
 ### Execute
 
-1. Verify authorization covers the amount and Hyperliquid → Arbitrum.
+1. Confirm amount and that funds leave Hyperliquid toward Arbitrum.
 2. Run:
 
 ```bash
