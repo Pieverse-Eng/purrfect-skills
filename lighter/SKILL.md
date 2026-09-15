@@ -121,7 +121,7 @@ Pick the matching command group below, then read that reference before acting.
 | Integration / readiness | status, enable/disable, account, open-account, transaction fee, balances, positions | [preflight.md](references/preflight.md) |
 | Market data | markets, books, depth, trades, candles, funding | [market-data.md](references/market-data.md) |
 | Symbols | Dual spot/perp tickers and `--market-type` rule | [symbols.md](references/symbols.md) |
-| Trading | order, preview, cancel, modify, leverage, margin | [trading.md](references/trading.md) |
+| Trading | order, bracket-order (linked entry + TP/SL), preview, cancel, modify, leverage, margin | [trading.md](references/trading.md) |
 | Deposit / withdraw | multi-chain deposit, secure + fast withdraw, reconcile | [deposit-withdraw.md](references/deposit-withdraw.md) |
 | Full recipes | first open, fund, perp, spot, close, withdraw | [workflows.md](references/workflows.md) |
 | Errors | codes and stop / reconcile policy | [errors.md](references/errors.md) |
@@ -142,7 +142,7 @@ https://app.lighter.xyz/explorer/logs/<txHash>
 
 | Command | May return Lighter `txHash` |
 | --- | --- |
-| `order`, `place-orders` | yes |
+| `order`, `place-orders`, `bracket-order` | yes |
 | `cancel`, `cancel-all` | yes |
 | `modify` | yes |
 | `update-leverage`, `update-margin` | yes |
@@ -193,7 +193,7 @@ track `deposit-status` / `account` for credit readiness.
 ## Confirmation Contract
 
 Before any account-changing action (`enable`, `disable`, `open-account`,
-`deposit`, `order`, `place-orders`, `cancel`, `cancel-all`, `modify`,
+`deposit`, `order`, `place-orders`, `bracket-order`, `cancel`, `cancel-all`, `modify`,
 `update-leverage`, `update-margin`, `withdraw` with `--yes`, `fast-withdraw`
 with `--yes`, `approve-partner-fee`, `reconcile-deposit`):
 
@@ -206,6 +206,10 @@ with `--yes`, `approve-partner-fee`, `reconcile-deposit`):
 3. Run only after an explicit yes on the immediately preceding user turn for
    that unchanged action. The initial request, any changed detail, or an
    intervening request requires confirmation again.
+
+A `bracket-order` is one native grouped action: include the entry, both exit
+triggers and limits, and their shared expiry in its confirmation. See
+[Limit entry with attached TP/SL](references/trading.md#limit-entry-with-attached-tpsl).
 
 One confirmation authorizes one action. The sole exception is a leverage change
 immediately followed by its order: one final confirmation may authorize both
