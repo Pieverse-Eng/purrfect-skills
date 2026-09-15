@@ -113,11 +113,7 @@ then verify status. A filled historical entry cannot be cancelled.
 
 ## Disable Trading
 
-Read all-DEX balances and each relevant dex's open orders. Positive default,
-builder-dex, or spot balances (including dust), positions, and orders can
-block disable. Use reported blockers from [preflight.md](preflight.md).
-
-Prepare any needed closes, cancellations, spot conversions, collateral
-consolidation, and withdrawal under the Confirmation Contract. Use the same
-workflows/references above, verify they completed, then disable. Report
-unmovable dust or other blockers instead of retrying in a loop.
+Inspect state and open orders, then confirm `disable`. On
+`HYPERLIQUID_TRADING_DISABLE_BLOCKED`, clear only the reported `blockers`
+with the workflows above and confirm disable again. Do not recompute whether
+leftover balances should block.
