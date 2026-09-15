@@ -118,13 +118,9 @@ Never present a preview result as a live order.
 
 ## Limit entry with attached TP/SL
 
-Use `bracket-order` for a **perpetual GTT limit entry with both stop-loss-limit
-and take-profit-limit exits**. It submits one native OTOCO group: the entry
-activates the linked exits, which cancel each other when executed. Do not
-substitute three standalone orders or leave adding protection to a later chat.
-
-Resolve the market and precision, inspect positions, and confirm the complete
-group under the existing Confirmation Contract before submitting:
+Use `bracket-order` for a non-reduce-only perpetual GTT limit entry with
+linked stop-loss-limit and take-profit-limit exits. Confirm the complete group
+under the existing Confirmation Contract, then submit it once:
 
 ```bash
 purr lighter bracket-order \
@@ -135,42 +131,18 @@ purr lighter bracket-order \
   --expires-in <duration>
 ```
 
-- Entry is non-reduce-only, `limit` / `gtt`. This command does not support spot,
-  market entries, post-only entries, or only one exit.
-- Both children use the same market and the opposite side, and are reduce-only.
-  The gateway uses the protocol's linked-size value (`BaseAmount: 0`); do not
-  submit separate fixed-size exits. Inspect existing positions before adding
-  exposure and verify the resulting protection after fills or position changes.
-- For a buy entry: SL trigger < entry limit < TP trigger; exit sell limits are
-  at or below their triggers. Reverse these inequalities for a sell entry.
-  Use user-approved prices; never invent an execution buffer.
-- One explicit expiry applies to **all three orders**. `--expires-at` or
-  `--order-expiry` may replace `--expires-in` (same constraints as ordinary
-  orders). A seven-day expiry means the exits also expire at that timestamp,
-  not seven days after entry fills.
-- A stop-limit can remain unfilled after its trigger if price gaps past its
-  limit. It does not guarantee a maximum loss or a completed close.
-
-After submission, keep the request ID and transaction hash. Check
-`active-orders`, `inactive-orders`, `trades`, and `positions` as needed:
-
-- Verify the entry and both children's linkage (`to_trigger_order_id_0/1`,
-  `parent_order_id`, and `to_cancel_order_id_0`), prices, and common expiry.
-  Preserve IDs as strings.
-- Children awaiting the parent are not yet active exits. Report an unfilled
-  entry as pending, not as an opened or protected position.
-- A successful submission alone does not prove the entire group was accepted
-  by the matching engine. If children or linkage cannot be verified, report
-  protection as unverified and reconcile; do not claim completion or submit
-  replacement orders blindly.
-
-If the installed CLI or gateway does not support `bracket-order`, stop and
-report the missing capability. Do not fall back to an unprotected entry.
-
-Protocol references: [group validation](https://github.com/elliottech/lighter-go/blob/v1.0.7/types/txtypes/create_grouped_orders.go),
-[official grouped-order example](https://github.com/elliottech/lighter-python/blob/main/examples/orders/create_grouped_ioc_with_attached_sl_tp.py).
-The example uses an IOC parent; this command uses the GTT limit parent allowed
-by the protocol validation.
+- Resolve market precision and inspect existing positions. Children use linked
+  sizing and the opposite side, reduce-only; do not replace them with standalone
+  exits. If this command is unavailable, stop rather than submit an unprotected entry.
+- For buys, SL trigger < entry < TP trigger, with exit limits at or below their
+  triggers; reverse for sells. Use confirmed prices, not invented buffers.
+- All three orders share one explicit expiry (`--expires-in`, `--expires-at`,
+  or `--order-expiry`). Protection expires at that timestamp, regardless of fill
+  time. Stop-limit orders can trigger without filling.
+- Keep request and transaction IDs. Verify entry/exit linkage, parameters, and
+  status through orders, trades, and positions. Distinguish pending entry from
+  filled position and verified protection. Recheck after position changes;
+  reconcile uncertain results before retrying.
 
 ## Cancel and modify
 
