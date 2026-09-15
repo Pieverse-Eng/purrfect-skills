@@ -52,7 +52,7 @@ purr lighter deposits --limit 5
 
 4. Summarize L1 address, account status, remaining source-chain USDC and gas.
    If `depositTxHash` / `approvalTxHash` are present, add source-chain explorer
-   links (see Explorer Links in `SKILL.md`), not the Lighter logs URL.
+   links (see Source-chain transaction links in deposit-withdraw.md), not the Lighter logs URL.
 
 ## B. Add funds after open
 

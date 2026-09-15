@@ -164,7 +164,7 @@ Silent preparation:
    submit alone. If the submit (or later `request-status`) includes `txHash`,
    add
    `https://app.lighter.xyz/explorer/logs/<txHash>`
-   to the user summary (see Explorer Links in `SKILL.md`).
+   to the user summary (see L2 transaction links below).
 
 ## Idempotency and recovery
 
@@ -179,3 +179,37 @@ purr lighter positions
 ```
 
 Do not resubmit the same order to “fix” an unknown. See [errors.md](errors.md).
+
+## L2 transaction links
+
+Successful L2 account actions may return `txHash` on the write response (also
+on `request-status` after reconcile). When present:
+
+```text
+https://app.lighter.xyz/explorer/logs/<txHash>
+```
+
+| Command | May return Lighter `txHash` |
+| --- | --- |
+| `order`, `place-orders` | yes |
+| `cancel`, `cancel-all` | yes |
+| `modify` | yes |
+| `update-leverage`, `update-margin` | yes |
+| `withdraw --yes`, `fast-withdraw --yes` | yes |
+| `approve-partner-fee` | yes |
+| `order-preview`, reads, previews without `--yes` | no |
+
+Example after a verified close:
+
+```text
+Position closed successfully.
+• Sold: 0.209 SOL
+• Exit: $76.448
+• Realized trading PnL: +$0.0017 before fees
+• SOL position: 0
+• No active orders
+• Transaction: https://app.lighter.xyz/explorer/logs/2ecb8bb98aee246c42a04c18a7d22137a2e5dfbd06d2a5de17166a9e4d32763545e5631b8bda2693
+```
+
+Never invent hashes. Prefer a labeled link (`Transaction: <url>`) over a bare
+hash. Use each hash **exactly** as returned (do not invent `0x` prefixing).
