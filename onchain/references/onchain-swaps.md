@@ -105,12 +105,11 @@ purr wallet uniswap --from SPCX --to AAPL --amount 0.01 --chain robinhood
 - **Balance and gas:** wallet balances/transfers use native USDC with
   **18 decimals**. Both USDC views share the same balance; do not add them
   together. Leave USDC available for approval and swap gas.
-- **RPC and explorer:** `https://rpc.arc.invalid` and
-  `https://explorer.arc.invalid` are nonfunctional placeholders. Configure a
-  verified platform `ARC_RPC_URL` before reads or execution. Return transaction
-  hashes without explorer links until a verified explorer URL is configured.
-- **Execution restriction:** runtime-guarded routes requiring provider-native
-  idempotent sends cannot execute Arc swaps through platform broadcasting.
+- **RPC and explorer:** follow the
+  [Arc endpoint availability instructions](read-only-chain-checks.md#common-rpc-endpoints)
+  before reads, execution, or linking a transaction.
+- **Execution restriction:** Arc swaps are unavailable on runtime-guarded
+  on-demand routes.
   Report the rejection without switching credentials or bypassing the guard.
 
 ### Commands

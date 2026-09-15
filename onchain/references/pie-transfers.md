@@ -10,6 +10,9 @@ or paired Telegram account.
 3. Run the matching `purr .pie transfer` command.
 4. Return the transaction result.
 
+Arc transfers are unavailable on runtime-guarded on-demand routes; report the
+platform rejection without bypassing the guard.
+
 ## Syntax
 
 ```bash

@@ -35,24 +35,6 @@ For EVM chain commands, include `--chain-id`; swaps also accept
 | X Layer | 196 | OKB |
 | Solana | use `--chain-type solana` | SOL |
 
-### Arc Mainnet (chain ID 5042)
-
-- Native USDC uses **18 decimals** and pays gas from the same balance. For
-  balances, use `--chain-type ethereum --chain-id 5042`; for transfers use
-  `--chain-id 5042`. Omit `--token` to select native USDC.
-- CLI versions with Arc ticker support also accept `--chain arc` and
-  `--token USDC` for wallet balances/transfers. An explicit `--token <CA>`
-  selects ERC-20 and uses that contract's decimals.
-- The USDC ERC-20 view uses 6 decimals and shares the native USDC balance;
-  never sum both views as separate holdings.
-- RPC `https://rpc.arc.invalid` and explorer `https://explorer.arc.invalid` are
-  nonfunctional placeholders. Use a verified RPC (platform: `ARC_RPC_URL`) before
-  chain reads or execution. Until a verified explorer is configured, return hashes
-  and addresses without explorer links.
-- Managed sends use platform broadcasting and require platform Arc support.
-  Runtime-guarded on-demand sends requiring provider-native idempotency remain
-  unsupported; report the platform rejection instead of bypassing the guard.
-
 ### Common Token Addresses (BSC)
 
 | Token | Address |
@@ -91,9 +73,12 @@ For EVM chain commands, include `--chain-id`; swaps also accept
 | USDC (native / gas) | native | 18 |
 | USDC (ERC-20 interface) | `0x3600000000000000000000000000000000000000` | 6 |
 
-Both rows represent the same balance; do not add them together. Wallet balances
-and transfers default to native USDC when `--token` is omitted. Swaps use the
-ERC-20 interface; `purr wallet uniswap --chain arc` resolves `USDC` to that address.
+Both rows represent the same balance, which also pays gas; do not add them
+together. For wallet balances/transfers on `--chain-id 5042`, omit `--token`
+to select native USDC. CLI versions with Arc ticker support also accept
+`--chain arc` and `--token USDC`. An explicit `--token <CA>` selects ERC-20
+and uses that contract's decimals. [Swaps](references/onchain-swaps.md#arc-mainnet)
+use the USDC ERC-20 interface.
 
 ## Command Groups
 

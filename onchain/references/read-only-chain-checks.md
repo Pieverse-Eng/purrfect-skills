@@ -28,6 +28,12 @@ log inspection, sender tracing, and token state checks.
 | Robinhood Chain | `https://rpc.mainnet.chain.robinhood.com` |
 | Arc Mainnet (5042) | `https://rpc.arc.invalid` (placeholder; replace before use) |
 
+Arc mainnet RPC and explorer URLs are pending. `https://rpc.arc.invalid` and
+`https://explorer.arc.invalid` are nonfunctional placeholders. Use a verified
+RPC before chain reads or execution; the platform configures it through
+`ARC_RPC_URL`. Until a verified explorer is configured, return transaction hashes
+and addresses without explorer links.
+
 ## Syntax
 
 ```bash

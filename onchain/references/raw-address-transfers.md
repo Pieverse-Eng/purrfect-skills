@@ -10,6 +10,9 @@ address.
 3. Run the matching `purr wallet transfer` command.
 4. Return the transaction result.
 
+Arc transfers are unavailable on runtime-guarded on-demand routes; report the
+platform rejection without bypassing the guard.
+
 ## Syntax
 
 ```bash
