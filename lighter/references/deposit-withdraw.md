@@ -33,13 +33,6 @@ purr lighter deposit-networks
 | Avalanche C-Chain | `43114` | Intent address + USDC transfer | **5 USDC** |
 | HyperEVM | `999` | Intent address + USDC transfer | **5 USDC** |
 
-Prefer a supported source chain specified by the user or known to hold funds.
-Verify its USDC and native gas first; expand the search when those funds cannot
-support the plan or the user requests a broader comparison. Do not scan every
-supported chain by default. If a token alias is unsupported, resolve the token
-contract from a trusted token reference before querying by address; a failed
-lookup is unverified, not zero.
-
 Treat `deposit-networks` `minAmount` as source of truth. USDC must already be on
 the source chain in the instance wallet; bridging from elsewhere is another
 skill.
@@ -235,3 +228,6 @@ If only one hash is present, link that one. If both approval and deposit hashes
 exist, label them separately (e.g. `Approval:` / `Deposit:`). An L1 link proves
 the source-chain broadcast — not that Lighter has finished crediting; still
 track `deposit-status` / `account` for credit readiness.
+
+Never invent hashes. Prefer a labeled link (`Transaction: <url>`) over a bare
+hash. Use each hash **exactly** as returned (do not invent `0x` prefixing).

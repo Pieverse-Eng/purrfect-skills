@@ -7,9 +7,9 @@ and `update-margin` are account-changing. Follow the Confirmation Contract in
 `order-preview` is non-mutating: it only computes. No execution confirmation.
 
 Trading integration must be enabled and `account.status` should be `ready`
-before writes. For order placement or fee-checked modification, complete
+before writes. Complete
 [Transaction Fee Authorization](../SKILL.md#transaction-fee-authorization)
-once ready and before submitting when required.
+first when required.
 
 ## Inspect orders and activity
 
@@ -108,8 +108,7 @@ Constraints:
 
 ### Order preview
 
-Prefer CLI flags for ordinary orders. `order-preview` is body-only (flags
-above are **not** accepted). Keep payload files outside `/tmp`:
+Body-only (flags above are **not** accepted on this command):
 
 ```bash
 purr lighter order-preview --body-json '{"marketId":12,"side":"buy","type":"limit","size":"1","price":"100"}'
@@ -150,13 +149,22 @@ purr lighter update-margin \
 - Prefer one combined confirmation when a leverage change immediately precedes
   its order (see Confirmation Contract). Execute leverage first.
 
-## Workflow
+## Suggested order workflow
 
-Use [workflows.md](workflows.md) for preparation and execution order, and
-[preflight.md](preflight.md) for readiness branches. Resolve commands and
-market constraints before confirmation; account-dependent checks require
-`ready`. Cancellation and leverage-only actions do not require order fee
-approval.
+Silent preparation:
+
+1. `status` → enable if needed (confirmed).
+2. `account` → must reach `ready` (open-account / wait otherwise).
+3. `partner-fee-status` → if needed, user consent for the 0.05% transaction fee,
+   then `approve-partner-fee` (confirmed).
+4. `market` resolve + `order-book-depth` + `positions` / `balances`.
+5. User confirmation with full parameters.
+6. `order` (or leverage then `order`).
+7. Verify with `active-orders` / `trades` / `positions` — never claim fill from
+   submit alone. If the submit (or later `request-status`) includes `txHash`,
+   add
+   `https://app.lighter.xyz/explorer/logs/<txHash>`
+   to the user summary (see L2 transaction links below).
 
 ## Idempotency and recovery
 
@@ -191,5 +199,17 @@ https://app.lighter.xyz/explorer/logs/<txHash>
 | `approve-partner-fee` | yes |
 | `order-preview`, reads, previews without `--yes` | no |
 
-Use each returned hash exactly, without adding a prefix. An L2 link does not
-prove settlement in the destination wallet.
+Example after a verified close:
+
+```text
+Position closed successfully.
+• Sold: 0.209 SOL
+• Exit: $76.448
+• Realized trading PnL: +$0.0017 before fees
+• SOL position: 0
+• No active orders
+• Transaction: https://app.lighter.xyz/explorer/logs/2ecb8bb98aee246c42a04c18a7d22137a2e5dfbd06d2a5de17166a9e4d32763545e5631b8bda2693
+```
+
+Never invent hashes. Prefer a labeled link (`Transaction: <url>`) over a bare
+hash. Use each hash **exactly** as returned (do not invent `0x` prefixing).
