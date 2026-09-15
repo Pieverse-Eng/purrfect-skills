@@ -24,7 +24,7 @@ purr wallet balance [--chain-type <ethereum|solana>] [--chain-id <chain_id>] [--
 | --- | --- | --- |
 | `--chain-type <ethereum|solana>` | Required for Solana and native EVM balances | Selects the wallet family. Use `ethereum` for native EVM balances when a Solana wallet also exists; use `solana` for Solana balances. |
 | `--chain-id <chain_id>` | Required for EVM | Selects the EVM chain by numeric chain ID, such as `56` for BNB Smart Chain, `10` for OP Mainnet, `130` for Unichain, `143` for Monad, `8453` for Base, or `4663` for Robinhood Chain. |
-| `--token <ticker_or_address>` | Optional | Selects a token balance instead of the native coin. Accepts a known ticker such as `USDT` or `USDC`, or a raw token contract/mint address. |
+| `--token <ticker_or_address>` | Optional | Omit for the native coin. Accepts a known ticker such as `USDT` or `USDC`, or a raw token contract/mint address. Native tickers select the native balance. |
 
 ## Commands
 
@@ -36,7 +36,8 @@ purr wallet balance --chain-type ethereum --chain-id 10                    # nat
 purr wallet balance --chain-type ethereum --chain-id 130                   # native ETH on Unichain
 purr wallet balance --chain-type ethereum --chain-id 8453                  # native ETH on Base
 purr wallet balance --chain-type ethereum --chain-id 5042                  # native USDC on Arc (18 decimals)
-purr wallet balance --chain-id 5042 --token <CA>                           # explicit ERC-20 contract on Arc
+purr wallet balance --chain arc --token USDC                              # native USDC; CLI with Arc ticker support
+purr wallet balance --chain-id 5042 --token <CA>                           # ERC-20 on Arc; uses contract decimals
 purr wallet balance --token USDT --chain-id 56                             # USDT on BSC
 purr wallet balance --token USDC --chain-id 8453                           # USDC on Base
 purr wallet balance --chain-type ethereum --chain-id 196                   # native OKB on X Layer

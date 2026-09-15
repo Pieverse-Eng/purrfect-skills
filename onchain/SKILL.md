@@ -74,11 +74,7 @@ For EVM chain commands, include `--chain-id`; swaps also accept
 | USDC (ERC-20 interface) | `0x3600000000000000000000000000000000000000` | 6 |
 
 Both rows represent the same balance, which also pays gas; do not add them
-together. For wallet balances/transfers on `--chain-id 5042`, omit `--token`
-to select native USDC. CLI versions with Arc ticker support also accept
-`--chain arc` and `--token USDC`. An explicit `--token <CA>` selects ERC-20
-and uses that contract's decimals. [Swaps](references/onchain-swaps.md#arc-mainnet)
-use the USDC ERC-20 interface.
+together.
 
 ## Command Groups
 

@@ -41,6 +41,7 @@ purr wallet transfer --to 0x... --amount 0.01 --chain-id 10                    #
 purr wallet transfer --to 0x... --amount 0.01 --chain-id 130                   # native ETH on Unichain
 purr wallet transfer --to 0x... --amount 5 --chain-id 8453 --token USDC        # USDC on Base
 purr wallet transfer --to 0x... --amount 1.25 --chain-id 5042                 # native USDC on Arc (18 decimals)
+purr wallet transfer --to 0x... --amount 1.25 --chain arc --token USDC       # native USDC; CLI with Arc ticker support
 purr wallet transfer --to 0x... --amount 1.25 --chain-id 5042 --token <CA> --decimals <n>  # ERC-20 on Arc; use contract decimals
 purr wallet transfer --to 0x... --amount 0.1 --chain-id 196                    # native OKB on X Layer
 purr wallet transfer --to 0x... --amount 0.1 --chain-id 196 --token USDT0      # USDT0 on X Layer
