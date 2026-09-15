@@ -50,17 +50,19 @@ Pick the matching command group below, then read that reference before acting.
    ambiguity the CLI returns `LIGHTER_MARKET_AMBIGUOUS` — ask the user; never
    pick silently.
 5. **`--type` ≠ `--market-type`.** `--market-type` filters perp vs spot.
-   `--type` is only for `order` / `place-orders` (order type) and `trades`
+   `--type` is only for `order` / `place-orders` / `bracket-order` (order type) and `trades`
    (side filter). Passing `--type perp` is always wrong.
 6. Resolve markets with
    `purr lighter market --market <SYM> --market-type <perp|spot>` (or
    `--market-id`) and use the returned decimals / market id. Never invent
    market ids or precision.
-7. **`--price` is required on every order, including market orders.** For a
+7. **`order` / `place-orders` require `--price`, including market orders.** For a
    market order it is the worst acceptable fill (slippage bound). Walk
    `order-book-depth` for the exact size, put the bound and its distance from
    touch/VWAP in the confirmation, and stop if depth is insufficient. If the
    user gave no slippage tolerance, ask — never invent a default buffer.
+   Market `bracket-order` instead uses an explicitly approved `--slippage-bps`;
+   the gateway derives the bound from a fresh quote.
 8. Looking up status, markets, books, candles, funding, account, balances,
    positions, orders, trades, pnl, deposits, requests, and previews needs no
    confirmation. Anything that can change orders, positions, leverage, margin,
@@ -208,8 +210,8 @@ with `--yes`, `approve-partner-fee`, `reconcile-deposit`):
    intervening request requires confirmation again.
 
 A `bracket-order` is one native grouped action: include the entry, both exit
-triggers and limits, and their shared expiry in its confirmation. See
-[Limit entry with attached TP/SL](references/trading.md#limit-entry-with-attached-tpsl).
+triggers and limits, protection expiry, and entry price or market slippage in
+its confirmation. See [Entry with attached TP/SL](references/trading.md#entry-with-attached-tpsl).
 
 One confirmation authorizes one action. The sole exception is a leverage change
 immediately followed by its order: one final confirmation may authorize both
