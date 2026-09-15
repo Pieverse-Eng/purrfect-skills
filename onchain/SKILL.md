@@ -45,7 +45,10 @@ For EVM chain commands, include `--chain-id`; swaps also accept
   selects ERC-20 and uses that contract's decimals.
 - The USDC ERC-20 view uses 6 decimals and shares the native USDC balance;
   never sum both views as separate holdings.
-- RPC: `http://rpc.arc-scan.org`. Explorer: `https://explorer.arc.io`.
+- RPC `https://rpc.arc.invalid` and explorer `https://explorer.arc.invalid` are
+  nonfunctional placeholders. Use a verified RPC (platform: `ARC_RPC_URL`) before
+  chain reads or execution. Until a verified explorer is configured, return hashes
+  and addresses without explorer links.
 - Managed sends use platform broadcasting and require platform Arc support.
   Runtime-guarded on-demand sends requiring provider-native idempotency remain
   unsupported; report the platform rejection instead of bypassing the guard.

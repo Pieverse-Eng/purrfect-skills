@@ -42,7 +42,8 @@ tokens, memecoins, and other ERC-20 tokens with a supported route. The command q
    An already confirmed matching trade card does not need a second confirmation.
 5. Return the transaction hash and explorer link for the selected chain:
    Robinhood `https://robinhoodchain.blockscout.com/tx/<tx_hash>`;
-   Arc `https://explorer.arc.io/tx/<tx_hash>`.
+   Arc `https://explorer.arc.invalid/tx/<tx_hash>` is a placeholder; omit the
+   explorer link until a verified explorer URL is configured.
    A returned hash means submission; check the receipt through
    [read-only chain checks](read-only-chain-checks.md) before reporting success.
    Report updated balances after confirmation onchain. For an uncertain execution
