@@ -16,8 +16,8 @@ This Skill is not for OWS wallet issues or workflows.
 Pick the relevant command group from the table, then read that reference before
 running commands or explaining the workflow.
 
-For EVM chain commands, include `--chain-id`; swaps also accept
-`--chain robinhood` or `--chain arc`. Common chain IDs:
+Select the chain explicitly using the flags documented in the relevant command
+reference. Common chain IDs:
 
 | Chain | Chain ID | Native Token |
 | --- | ---: | --- |
