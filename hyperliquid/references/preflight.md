@@ -22,7 +22,7 @@ purr hyperliquid set-abstraction --mode disabled|unifiedAccount|portfolioMargin
 | `status` | Whether Hyperliquid Trading is enabled for this instance (integration gate) |
 | `snapshot` | Dashboard-style summary: account value, PnL, margin used, open positions, risk (requires trading enabled) |
 | `enable` | Turn on Hyperliquid Trading so exchange routes work; confirm first |
-| `disable` | Turn off Hyperliquid Trading; blocked while positions, orders, or funds remain |
+| `disable` | Turn off Hyperliquid Trading; blocked while positions, orders, or recoverable funds above the 1 USDC withdrawal fee remain |
 | `account` | Hyperliquid account address, network, and wallet metadata |
 | `state` | Perp margin/positions and/or spot balances for that address |
 | `builder-fee-status` | Whether the fixed 0.05% transaction fee is authorized for orders |
@@ -56,11 +56,15 @@ purr hyperliquid disable
 - `enable` / `disable` require confirmation (see Confirmation Contract in
   `SKILL.md`).
 - `disable` fails with `HYPERLIQUID_TRADING_DISABLE_BLOCKED` when any default or
-  builder-dex account has open positions, open orders, positive account value,
-  or withdrawable funds, or when any positive spot balance or dust remains.
-  Show the `blockers` payload, clear the reported exposure and funds, then
-  retry disable only after a new confirmation. Do not treat a rounded display
-  value of zero as proof that exact dust is absent.
+  builder-dex account has open positions or open orders, or when account-wide
+  recoverable USD is above the 1 USDC withdrawal fee. Recoverable USD sums
+  default and builder-dex collateral, spot USDC (including hold/escrow), and
+  sellable non-USDC spot (`qty >= 10^(-szDecimals)` at mark). Sub-lot tokens
+  and residual collateral that cannot net a positive Arbitrum withdrawal do
+  not block disable. Show the `blockers` payload (and `recoverableUsd` when
+  present), clear the reported exposure and recoverable funds, then retry
+  disable only after a new confirmation. Do not treat a rounded display value
+  of zero as proof that exact dust is absent.
 - Prefer `snapshot` for a quick portfolio overview once trading is enabled; use
   `state` for exact collateral and position details needed to trade.
 
