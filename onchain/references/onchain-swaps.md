@@ -117,8 +117,8 @@ Replace `<TOKEN_CA>` with the selected Arc token's exact contract address and
 the raw output minimum uses **6 decimals**.
 
 ```bash
-# Arc USDC -> ARGUS: quote using the exact CA (availability must be checked afresh)
-purr wallet uniswap --from USDC --to 0xeCe5cA8bf9220718E5727754026757512212cb3c --amount 1 --chain arc
+# Arc USDC -> a token identified by contract: quote
+purr wallet uniswap --from USDC --to <TOKEN_CA> --amount 1 --chain arc
 
 # Arc USDC -> another token: quote, then execute with the confirmed raw floor
 purr wallet uniswap --from USDC --to <TOKEN_CA> --amount 1 --chain-id 5042 --slippage 0.5
