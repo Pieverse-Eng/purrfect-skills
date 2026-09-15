@@ -1,6 +1,6 @@
 # Trading — orders, cancel, modify, leverage, margin
 
-`order`, `place-orders`, `cancel`, `cancel-all`, `modify`, `update-leverage`,
+`order`, `place-orders`, `bracket-order`, `cancel`, `cancel-all`, `modify`, `update-leverage`,
 and `update-margin` are account-changing. Follow the Confirmation Contract in
 `SKILL.md`.
 
@@ -44,12 +44,12 @@ purr lighter order \
 ```
 
 `place-orders` takes the same flags and submits **one** order via `/orders`. It
-is not a multi-leg batch. To place several orders, issue several confirmed
-commands.
+is not a multi-leg batch. For independent orders, issue separate confirmed
+commands. For an entry with attached TP/SL, use the linked group below.
 
 ### Price is required — including market orders
 
-The platform schema requires a positive `price` for every order type. For
+`order` / `place-orders` require a positive `price` for every order type. For
 `market` orders, price is the **worst acceptable fill** (slippage bound):
 
 - Buy market → highest price you accept
@@ -115,6 +115,35 @@ purr lighter order-preview --body-json '{"marketId":12,"side":"buy","type":"limi
 ```
 
 Never present a preview result as a live order.
+
+## Entry with attached TP/SL
+
+Use `bracket-order` for a non-reduce-only perpetual entry with linked-size,
+opposite-side, reduce-only SL-limit and TP-limit exits. Resolve market precision,
+inspect positions, and confirm the complete group under the Confirmation Contract.
+
+```bash
+purr lighter bracket-order \
+  --market <SYM> --market-type perp \
+  --side buy|sell --size <size> --price <entry-limit> \
+  --stop-loss-trigger <trigger> --stop-loss-price <limit> \
+  --take-profit-trigger <trigger> --take-profit-price <limit> \
+  --expires-in <duration>
+```
+
+For Market/IOC entry, replace `--price` with `--type market --slippage-bps <bps>`
+(integer, 0–9999). Obtain explicit slippage approval; the gateway bounds a fresh
+quote. Unfilled quantity is canceled.
+
+- For buys: SL trigger < entry < TP trigger; exit limits ≤ triggers. Reverse
+  for sells. Market quote and bound must both fit between triggers. Never invent buffers.
+- Explicit expiry applies to both exits and any GTT entry, regardless of fill
+  time. Stop-limit exits can trigger without filling.
+- Submit once; never substitute standalone orders or an unprotected entry.
+  If unsupported, stop.
+- Keep request/transaction IDs. Verify fills, linked protection, parameters, and
+  expiry; distinguish pending, partial, and filled states. Recheck after position
+  changes and reconcile uncertain submissions before retrying.
 
 ## Cancel and modify
 

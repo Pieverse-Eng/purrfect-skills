@@ -50,17 +50,19 @@ Pick the matching command group below, then read that reference before acting.
    ambiguity the CLI returns `LIGHTER_MARKET_AMBIGUOUS` — ask the user; never
    pick silently.
 5. **`--type` ≠ `--market-type`.** `--market-type` filters perp vs spot.
-   `--type` is only for `order` / `place-orders` (order type) and `trades`
+   `--type` is only for `order` / `place-orders` / `bracket-order` (order type) and `trades`
    (side filter). Passing `--type perp` is always wrong.
 6. Resolve markets with
    `purr lighter market --market <SYM> --market-type <perp|spot>` (or
    `--market-id`) and use the returned decimals / market id. Never invent
    market ids or precision.
-7. **`--price` is required on every order, including market orders.** For a
+7. **`order` / `place-orders` require `--price`, including market orders.** For a
    market order it is the worst acceptable fill (slippage bound). Walk
    `order-book-depth` for the exact size, put the bound and its distance from
    touch/VWAP in the confirmation, and stop if depth is insufficient. If the
    user gave no slippage tolerance, ask — never invent a default buffer.
+   Market `bracket-order` instead uses an explicitly approved `--slippage-bps`;
+   the gateway derives the bound from a fresh quote.
 8. Looking up status, markets, books, candles, funding, account, balances,
    positions, orders, trades, pnl, deposits, requests, and previews needs no
    confirmation. Anything that can change orders, positions, leverage, margin,
@@ -121,7 +123,7 @@ Pick the matching command group below, then read that reference before acting.
 | Integration / readiness | status, enable/disable, account, open-account, transaction fee, balances, positions | [preflight.md](references/preflight.md) |
 | Market data | markets, books, depth, trades, candles, funding | [market-data.md](references/market-data.md) |
 | Symbols | Dual spot/perp tickers and `--market-type` rule | [symbols.md](references/symbols.md) |
-| Trading | order, preview, cancel, modify, leverage, margin | [trading.md](references/trading.md) |
+| Trading | order, bracket-order (linked entry + TP/SL), preview, cancel, modify, leverage, margin | [trading.md](references/trading.md) |
 | Deposit / withdraw | multi-chain deposit, secure + fast withdraw, reconcile | [deposit-withdraw.md](references/deposit-withdraw.md) |
 | Full recipes | first open, fund, perp, spot, close, withdraw | [workflows.md](references/workflows.md) |
 | Errors | codes and stop / reconcile policy | [errors.md](references/errors.md) |
@@ -142,7 +144,7 @@ https://app.lighter.xyz/explorer/logs/<txHash>
 
 | Command | May return Lighter `txHash` |
 | --- | --- |
-| `order`, `place-orders` | yes |
+| `order`, `place-orders`, `bracket-order` | yes |
 | `cancel`, `cancel-all` | yes |
 | `modify` | yes |
 | `update-leverage`, `update-margin` | yes |
@@ -193,7 +195,7 @@ track `deposit-status` / `account` for credit readiness.
 ## Confirmation Contract
 
 Before any account-changing action (`enable`, `disable`, `open-account`,
-`deposit`, `order`, `place-orders`, `cancel`, `cancel-all`, `modify`,
+`deposit`, `order`, `place-orders`, `bracket-order`, `cancel`, `cancel-all`, `modify`,
 `update-leverage`, `update-margin`, `withdraw` with `--yes`, `fast-withdraw`
 with `--yes`, `approve-partner-fee`, `reconcile-deposit`):
 
@@ -206,6 +208,10 @@ with `--yes`, `approve-partner-fee`, `reconcile-deposit`):
 3. Run only after an explicit yes on the immediately preceding user turn for
    that unchanged action. The initial request, any changed detail, or an
    intervening request requires confirmation again.
+
+A `bracket-order` is one native grouped action: include the entry, both exit
+triggers and limits, protection expiry, and entry price or market slippage in
+its confirmation. See [Entry with attached TP/SL](references/trading.md#entry-with-attached-tpsl).
 
 One confirmation authorizes one action. The sole exception is a leverage change
 immediately followed by its order: one final confirmation may authorize both
