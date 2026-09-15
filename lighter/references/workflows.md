@@ -103,8 +103,7 @@ purr lighter positions
 purr lighter trades --market SOL --market-type perp --limit 5
 ```
 
-If the order (or leverage) response has `txHash`, include
-`https://app.lighter.xyz/explorer/logs/<txHash>` in the result summary.
+Report results and links following [Explorer Links](../SKILL.md#explorer-links).
 
 ## D. Spot buy (example: LIT)
 

@@ -182,9 +182,8 @@ purr lighter request-status --request-id <id>
 purr lighter balances
 ```
 
-On successful withdraw / fast-withdraw submit, if `txHash` is present, include
-`https://app.lighter.xyz/explorer/logs/<txHash>`. That is the Lighter L2 log
-link; it does not prove L1 arrival.
+On withdraw / fast-withdraw updates, follow
+[Explorer Links](../SKILL.md#explorer-links). An L2 log does not prove L1 arrival.
 
 Common failures:
 
