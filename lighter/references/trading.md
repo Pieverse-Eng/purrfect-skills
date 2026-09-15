@@ -7,9 +7,9 @@ and `update-margin` are account-changing. Follow the Confirmation Contract in
 `order-preview` is non-mutating: it only computes. No execution confirmation.
 
 Trading integration must be enabled and `account.status` should be `ready`
-before writes. Complete
+before writes. For order placement or fee-checked modification, complete
 [Transaction Fee Authorization](../SKILL.md#transaction-fee-authorization)
-first when required.
+once ready and before submitting when required.
 
 ## Inspect orders and activity
 
@@ -108,7 +108,8 @@ Constraints:
 
 ### Order preview
 
-Body-only (flags above are **not** accepted on this command):
+Prefer CLI flags for ordinary orders. `order-preview` is body-only (flags
+above are **not** accepted). Keep payload files outside `/tmp`:
 
 ```bash
 purr lighter order-preview --body-json '{"marketId":12,"side":"buy","type":"limit","size":"1","price":"100"}'
@@ -149,22 +150,13 @@ purr lighter update-margin \
 - Prefer one combined confirmation when a leverage change immediately precedes
   its order (see Confirmation Contract). Execute leverage first.
 
-## Suggested order workflow
+## Workflow
 
-Silent preparation:
-
-1. `status` → enable if needed (confirmed).
-2. `account` → must reach `ready` (open-account / wait otherwise).
-3. `partner-fee-status` → if needed, user consent for the 0.05% transaction fee,
-   then `approve-partner-fee` (confirmed).
-4. `market` resolve + `order-book-depth` + `positions` / `balances`.
-5. User confirmation with full parameters.
-6. `order` (or leverage then `order`).
-7. Verify with `active-orders` / `trades` / `positions` — never claim fill from
-   submit alone. If the submit (or later `request-status`) includes `txHash`,
-   add
-   `https://app.lighter.xyz/explorer/logs/<txHash>`
-   to the user summary (see Explorer Links in `SKILL.md`).
+Use [workflows.md](workflows.md) for preparation and execution order, and
+[preflight.md](preflight.md) for readiness branches. Resolve commands and
+market constraints before confirmation; account-dependent checks require
+`ready`. Cancellation and leverage-only actions do not require order fee
+approval.
 
 ## Idempotency and recovery
 
@@ -179,3 +171,25 @@ purr lighter positions
 ```
 
 Do not resubmit the same order to “fix” an unknown. See [errors.md](errors.md).
+
+## L2 transaction links
+
+Successful L2 account actions may return `txHash` on the write response (also
+on `request-status` after reconcile). When present:
+
+```text
+https://app.lighter.xyz/explorer/logs/<txHash>
+```
+
+| Command | May return Lighter `txHash` |
+| --- | --- |
+| `order`, `place-orders` | yes |
+| `cancel`, `cancel-all` | yes |
+| `modify` | yes |
+| `update-leverage`, `update-margin` | yes |
+| `withdraw --yes`, `fast-withdraw --yes` | yes |
+| `approve-partner-fee` | yes |
+| `order-preview`, reads, previews without `--yes` | no |
+
+Use each returned hash exactly, without adding a prefix. An L2 link does not
+prove settlement in the destination wallet.

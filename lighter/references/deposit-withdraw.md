@@ -33,6 +33,13 @@ purr lighter deposit-networks
 | Avalanche C-Chain | `43114` | Intent address + USDC transfer | **5 USDC** |
 | HyperEVM | `999` | Intent address + USDC transfer | **5 USDC** |
 
+Prefer a supported source chain specified by the user or known to hold funds.
+Verify its USDC and native gas first; expand the search when those funds cannot
+support the plan or the user requests a broader comparison. Do not scan every
+supported chain by default. If a token alias is unsupported, resolve the token
+contract from a trusted token reference before querying by address; a failed
+lookup is unverified, not zero.
+
 Treat `deposit-networks` `minAmount` as source of truth. USDC must already be on
 the source chain in the instance wallet; bridging from elsewhere is another
 skill.
@@ -81,7 +88,7 @@ purr lighter deposit-status --request-id <id>
 ```
 
 When `depositTxHash` or `approvalTxHash` appears, include **source-chain**
-explorer links (not Lighter logs). See Explorer Links in `SKILL.md` for
+explorer links (not Lighter logs). See Source-chain transaction links below for
 per-chain URL patterns. Example for Base (`8453`):
 
 ```text
@@ -118,7 +125,7 @@ async credit recovery, not as a substitute for a new deposit.
 
 On funding updates, surface L1 explorer links for any returned
 `depositTxHash` / `approvalTxHash` using the source `sourceChainId` table in
-`SKILL.md` Explorer Links. Do not use `app.lighter.xyz/explorer/logs/` for
+Source-chain transaction links below. Do not use `app.lighter.xyz/explorer/logs/` for
 those hashes.
 
 ### Policy vs on-chain approval
@@ -200,3 +207,31 @@ There is **no** `purr lighter transfer`. Do not invent one. Lighter accounts are
 not managed with agent-side account-index transfers through this CLI. If the
 user wants funds off Lighter, use withdraw / fast-withdraw to the bound TEE
 wallet address.
+
+## Source-chain transaction links
+
+`open-account` and `deposit` do **not** use the Lighter logs URL. Responses and
+`deposit-status` may include **source-chain** fields such as:
+
+| Field | Meaning |
+| --- | --- |
+| `depositTxHash` | USDC transfer / gateway deposit tx on the source chain |
+| `approvalTxHash` | ERC-20 approve tx on the source chain (when present) |
+
+Never put these hashes under `app.lighter.xyz/explorer/logs/`. Link with the
+source chain explorer for `--source-chain-id` (or `sourceChainId` on the
+request). Prefer an `explorer` base from `purr lighter deposit-networks` when
+the network object includes one; otherwise use:
+
+| `--source-chain-id` | Explorer tx URL |
+| ---: | --- |
+| `1` (Ethereum) | `https://etherscan.io/tx/<hash>` |
+| `42161` (Arbitrum) | `https://arbiscan.io/tx/<hash>` |
+| `8453` (Base) | `https://basescan.org/tx/<hash>` |
+| `43114` (Avalanche) | `https://snowtrace.io/tx/<hash>` |
+| `999` (HyperEVM) | `https://hyperevmscan.io/tx/<hash>` |
+
+If only one hash is present, link that one. If both approval and deposit hashes
+exist, label them separately (e.g. `Approval:` / `Deposit:`). An L1 link proves
+the source-chain broadcast — not that Lighter has finished crediting; still
+track `deposit-status` / `account` for credit readiness.

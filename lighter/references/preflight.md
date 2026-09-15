@@ -36,7 +36,8 @@ The platform refuses disable while the Lighter account still has:
 
 Accounts that have never been opened can be disabled directly.
 
-Before proposing disable, inspect:
+For an opened, ready account, inspect the relevant blockers before proposing
+disable (unopened accounts skip credential-dependent reads):
 
 ```bash
 purr lighter active-orders
@@ -80,56 +81,31 @@ When opening is still in progress, async responses may include
 Re-run the same `open-account` parameters only when the platform/CLI indicates
 resume — identical active operations resume rather than double-funding.
 
-## First use: open-account
+## Select Checks by Readiness and Operation
 
-```bash
-purr lighter deposit-networks
-purr wallet balance --chain-type ethereum --chain-id <source> --token USDC
-purr wallet balance --chain-type ethereum --chain-id <source>   # native gas
-purr lighter open-account --amount <USDC> --source-chain-id <1|42161|8453|43114|999> [--route-type perps]
-```
+Read `status`, then inspect `account.status` before scheduling dependent reads.
+A successful CLI exit does not imply `ready`; do not chain credential-dependent
+commands after `account` with `&&` without inspecting its JSON status.
 
-- `open-account` owns **initial funding + credential setup**. It is not the same
-  as a later `deposit`.
-- USDC **and native gas** must already sit on the chosen source chain in the
-  instance TEE wallet.
-- Minimums: Ethereum mainnet (`1`) **1 USDC**; other chains **5 USDC**. Confirm
-  with `deposit-networks` / `minAmount`.
-- `--route-type` currently defaults to `perps` (platform only accepts `perps`).
-- Re-run only when `nextAction` is `resume_account_opening`. Policy deferred →
-  observe deposits; never open a second funding request. Details in
-  [deposit-withdraw.md](deposit-withdraw.md).
-
-After open succeeds (or while initializing), re-check:
-
-```bash
-purr lighter account
-purr lighter deposits --limit 5
-```
-
-Ordinary `deposit` before open fails with `LIGHTER_ACCOUNT_NOT_READY`; the CLI
-suggests the matching `open-account` command.
-
-## Transaction fee
-
-Fixed additional **0.05%** transaction fee on orders.
-
-```bash
-purr lighter partner-fee-status
-purr lighter approve-partner-fee
-```
-
-| Status | Meaning |
+| State / task | Checks and preparation |
 | --- | --- |
-| `not_configured` | Fee authorization not required for orders |
-| `approval_required` | Approval missing or insufficient for the fixed 0.05% fee |
-| `approved` | Current approval covers maker/taker spot and perp |
-| `expired` | Prior approval past `approvalExpiry` |
+| `account_opening_required` | Read [deposit-withdraw.md](deposit-withdraw.md); select a supported source and verify wallet USDC/gas. Prepare initial funding and public market parameters. Skip `balances`, `positions`, order reads, and `partner-fee-status` until ready. |
+| Opening/registration in progress | Observe the existing account/deposit request using the readiness table above. No duplicate funding or credential-dependent trading calls. |
+| `ready`, prepare an order | Resolve market/depth, relevant balances/positions/orders, and `partner-fee-status`. Follow fee consent in [SKILL.md](../SKILL.md#transaction-fee-authorization). |
+| `ready`, cancel or inspect orders | Read relevant active orders; no funding or order fee approval needed for cancellation. |
+| `ready`, deposit/withdraw | Follow the funding reference; inspect source funds or withdrawal balance/preview for that operation. |
+| Account error or unreadable readiness | Report the blocker; do not assume readiness or zero balances. |
 
-When required, check status **before** order confirmation or any
-account-changing preparation for an order. Consent language lives in
-`SKILL.md` (Transaction Fee Authorization). `approve-partner-fee` is
-account-changing and needs its own yes.
+After integration is enabled, independent public market reads can run alongside
+account or wallet checks; they do not require account opening. Batch independent
+reads, but keep readiness decisions and dependent writes sequential. Reuse
+verified market metadata and command syntax within the workflow; refresh
+volatile quotes, balances, and order state when needed for execution.
+
+`open-account` owns initial funding and credential setup. Ordinary `deposit`
+requires an opened account. Neither is authorized by read-only preparation.
+Fee status can be checked only after readiness; before then, describe that
+remaining prerequisite without attempting the call or claiming approval.
 
 ## Portfolio reads
 
@@ -159,12 +135,3 @@ Notes:
   must be RFC 3339 with timezone (`Z` or offset).
 - Read paths use a **20s** client timeout and are safe to retry. Writes wait for
   the platform and must not be auto-retried after timeout.
-
-## Silent preflight checklist
-
-Run without narrating the plan:
-
-1. `status` — enable if needed (with confirmation).
-2. `account` — if not `ready`, follow open / wait / escalate branches above.
-3. For orders: resolve market, depth, balances/positions, partner-fee-status.
-4. Confirm the user-facing action, then submit.

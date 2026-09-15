@@ -4,22 +4,26 @@ End-to-end recipes. Follow the Confirmation Contract in `SKILL.md` for every
 account-changing step. Prepare silently; surface decisions, confirmations,
 results, and blocking errors only.
 
-## Shared gates
+## Prepare a trade plan
 
-At the start of any exchange workflow:
+1. Follow [preflight.md](preflight.md) for integration and account readiness.
+   Read [trading.md](trading.md) and [market-data.md](market-data.md) for the
+   selected order's syntax, market precision, size limits, and price bounds.
+2. Collect independent public market and permitted account/wallet reads in
+   parallel. Use only the readiness branch that applies. If opening/funding
+   is needed, also read [deposit-withdraw.md](deposit-withdraw.md).
+3. Prepare concrete size, margin mode/leverage, entry, protection, and required
+   funding steps before confirmation. An unopened account does not prevent
+   preparing a plan; clearly identify checks that must wait until ready.
+4. Execute only the actions covered by the applicable confirmation. Verify
+   opening/funding readiness before fee checks and dependent trading writes.
+   Follow the existing separate-consent rules in `SKILL.md`.
+5. Verify actual fills, working orders, and protection. On a partial or unknown
+   result, reconcile the affected request before continuing.
 
-```bash
-purr lighter status
-# if disabled: explain → confirm → enable
-purr lighter account
-```
-
-If `account.status` is not `ready`, follow first-open or wait paths before
-promising a trade.
-
-For every order path: after the account is ready, run
-`purr lighter partner-fee-status` and complete 0.05% transaction fee consent
-when required.
+The recipes below describe operation-specific steps, not additional mandatory
+checks for every task. Funding command details and recovery live in the funding
+reference; order flags live in trading.md.
 
 ## A. First open and fund
 
@@ -28,9 +32,7 @@ when required.
 ```bash
 purr lighter status
 purr lighter account
-purr lighter deposit-networks
-purr wallet balance --chain-type ethereum --chain-id <source> --token USDC
-purr wallet balance --chain-type ethereum --chain-id <source>   # native gas on source chain
+# Inspect readiness, then select a funding source as described in deposit-withdraw.md.
 ```
 
 2. If `account_opening_required`, confirm initial amount and chain (enough USDC
@@ -52,7 +54,7 @@ purr lighter deposits --limit 5
 
 4. Summarize L1 address, account status, remaining source-chain USDC and gas.
    If `depositTxHash` / `approvalTxHash` are present, add source-chain explorer
-   links (see Explorer Links in `SKILL.md`), not the Lighter logs URL.
+   links (see deposit-withdraw.md), not the Lighter logs URL.
 
 ## B. Add funds after open
 
@@ -71,7 +73,7 @@ purr lighter deposit --amount 50 --source-chain-id 42161
 
 ## C. Crypto perp open (example: long SOL)
 
-1. Gates: `status`, `account` ready, `partner-fee-status`.
+1. Follow the applicable preflight branch; execution requires `ready` and fee consent when required.
 2. Resolve market and book:
 
 ```bash
@@ -108,7 +110,7 @@ If the order (or leverage) response has `txHash`, include
 
 ## D. Spot buy (example: LIT)
 
-1. Gates + fee status.
+1. Follow the applicable preflight branch and order fee requirements.
 2. Resolve **spot** explicitly (LIT also has a perp):
 
 ```bash
