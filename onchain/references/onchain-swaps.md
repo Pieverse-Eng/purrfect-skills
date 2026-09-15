@@ -2,34 +2,28 @@
 
 Use `purr wallet uniswap` to quote, buy, sell, or swap tokens on Robinhood Chain
 (4663) and Arc Mainnet (5042) through the hosted wallet. This includes stock/ETF
-tokens, memecoins, and other ERC-20 tokens with a supported route. The command quotes by default;
-`--execute` submits a transaction after user confirmation.
+tokens, memecoins, and other ERC-20 tokens with a supported route. The command
+quotes by default; `--execute` submits a transaction after user confirmation.
+
+Follow the shared workflow below and the selected chain's section:
+[Robinhood Chain](#robinhood-chain) or [Arc Mainnet](#arc-mainnet).
 
 ## Usage Notes
 
-- Always specify the chain: `--chain robinhood` / `--chain-id 4663`, or
-  `--chain arc` / `--chain-id 5042`. Omitting it defaults to Robinhood.
-- Arc swaps require CLI and Platform versions with Arc Uniswap support.
-- On Robinhood, use `ETH` for native ETH, or registered tickers such as `WETH` and `USDG`.
-- On Arc, `USDC` in this swap command selects the ERC-20 interface at
-  `0x3600000000000000000000000000000000000000`, with **6 decimals**.
-  `--amount 1` means 1 USDC. Do not use a native zero-address sentinel.
-  Wallet balances/transfers still use native USDC with 18 decimals; both views
-  share the same balance, which also pays gas.
-- For stock/ETF ticker lookup, use the
-  [stock/ETF address directory](robinhood-stock-etf-tokens.md).
-- For other tokens, use the exact contract address on the selected chain in
-  `--from` or `--to`. A token does not need to appear in the stock directory
+- Always specify the chain using the flags in its section. Omitting it defaults
+  to Robinhood.
+- For tokens without a registered ticker, use the exact contract address on the
+  selected chain in `--from` or `--to`. A token does not need to appear in the stock directory
   or CLI ticker registry to be quoted by address.
 - If the caller supplies only an unregistered token name, resolve its contract
   on the selected chain or ask for the address if ambiguous. Do not substitute a
   same-name token or an address on another chain.
 
-## Workflow
+## Shared Workflow
 
 1. Identify the input token, output token, and source-token amount. Check input
    funds and the chain's native gas balance using the [balance commands](balances.md).
-   For Arc, leave USDC available for approval and swap gas.
+   Reserve enough native currency for approval and swap gas.
 2. Quote without `--execute`. `--amount` is in source-token units: `0.003`
    ETH means 0.003 ETH, not $0.003 or wei.
 3. Show the chain, token identities (including an unregistered token's contract),
@@ -40,10 +34,8 @@ tokens, memecoins, and other ERC-20 tokens with a supported route. The command q
    `--min-amount-out` to preserve the confirmed output floor. Execution requotes;
    if the constraints cannot be met, present a new quote for confirmation.
    An already confirmed matching trade card does not need a second confirmation.
-5. Return the transaction hash and explorer link for the selected chain:
-   Robinhood `https://robinhoodchain.blockscout.com/tx/<tx_hash>`;
-   Arc `https://explorer.arc.invalid/tx/<tx_hash>` is a placeholder; omit the
-   explorer link until a verified explorer URL is configured.
+5. Return the transaction hash. Add an explorer link only when the chain's
+   section provides a verified explorer URL.
    A returned hash means submission; check the receipt through
    [read-only chain checks](read-only-chain-checks.md) before reporting success.
    Report updated balances after confirmation onchain. For an uncertain execution
@@ -68,7 +60,17 @@ purr wallet uniswap --from <ticker_or_address> --to <ticker_or_address> --amount
 | `--dedup-key <key>` | Optional | Idempotency key. Normally omit to retain automatic deduplication; do not change it to bypass a duplicate-execution response. |
 | `--execute` | Optional | Submits the swap after user confirmation. Omit for quote-only mode. |
 
-## Commands
+## Robinhood Chain
+
+- **Chain:** `--chain robinhood` or `--chain-id 4663`.
+- **Tokens:** use `ETH` for native ETH, or registered tickers such as `WETH`
+  and `USDG`. Quote responses represent native ETH with the zero address.
+  For stock/ETF tickers and contract addresses, use the
+  [stock/ETF address directory](robinhood-stock-etf-tokens.md).
+- **Gas:** keep native ETH available, including when swapping ERC-20 tokens.
+- **Explorer:** `https://robinhoodchain.blockscout.com/tx/<tx_hash>`.
+
+### Commands
 
 Replace `<TOKEN_CA>` with the selected token's exact contract address and
 `<MIN_OUT_RAW>` with the quote's `minimumToAmount` string.
@@ -89,7 +91,35 @@ purr wallet uniswap --from USDG --to <TOKEN_CA> --amount 5 --chain-id 4663
 # Registered stock tickers use the same workflow
 purr wallet uniswap --from USDG --to SPCX --amount 5 --chain robinhood
 purr wallet uniswap --from SPCX --to AAPL --amount 0.01 --chain robinhood
+```
 
+## Arc Mainnet
+
+- **Chain:** `--chain arc` or `--chain-id 5042`. Requires CLI and Platform
+  versions with Arc Uniswap support.
+- **Tokens and units:** swap `USDC` selects the ERC-20 interface at
+  `0x3600000000000000000000000000000000000000`, with **6 decimals**.
+  `--amount 1` means 1 USDC. Use `USDC` or this contract address for either
+  swap direction; other tokens accept their exact CA and use their own decimals.
+  Do not use a native zero-address sentinel.
+- **Balance and gas:** wallet balances/transfers use native USDC with
+  **18 decimals**. Both USDC views share the same balance; do not add them
+  together. Leave USDC available for approval and swap gas.
+- **RPC and explorer:** `https://rpc.arc.invalid` and
+  `https://explorer.arc.invalid` are nonfunctional placeholders. Configure a
+  verified platform `ARC_RPC_URL` before reads or execution. Return transaction
+  hashes without explorer links until a verified explorer URL is configured.
+- **Execution restriction:** runtime-guarded routes requiring provider-native
+  idempotent sends cannot execute Arc swaps through platform broadcasting.
+  Report the rejection without switching credentials or bypassing the guard.
+
+### Commands
+
+Replace `<TOKEN_CA>` with the selected Arc token's exact contract address and
+`<MIN_OUT_RAW>` with the quote's `minimumToAmount` string. When selling for USDC,
+the raw output minimum uses **6 decimals**.
+
+```bash
 # Arc USDC -> ARGUS: quote using the exact CA (availability must be checked afresh)
 purr wallet uniswap --from USDC --to 0xeCe5cA8bf9220718E5727754026757512212cb3c --amount 1 --chain arc
 
@@ -101,13 +131,20 @@ purr wallet uniswap --from USDC --to <TOKEN_CA> --amount 1 --chain-id 5042 --sli
 purr wallet uniswap --from <TOKEN_CA> --to USDC --amount 100 --chain arc
 ```
 
-## Response Shape
+### Arc Errors
+
+| Error Message | Meaning / Action |
+| --- | --- |
+| `Arc swaps require the USDC ERC-20 address, not a native token sentinel` | Use `--from USDC` / `--to USDC`, or the USDC ERC-20 address. |
+| Arc swaps unsupported on runtime-guarded routes | The route cannot execute Arc swaps under the execution restriction above. Report the rejection. |
+
+## Shared Response Shape
 
 The CLI prints one JSON object. Relevant quote fields are:
 
 | Field | Meaning |
 | --- | --- |
-| `chainId`, `fromToken`, `toToken` | Chain and exact token identities; Robinhood native ETH uses the zero address, Arc USDC uses its ERC-20 address. |
+| `chainId`, `fromToken`, `toToken` | Chain and exact token identities, using the representation described in the chain's section. |
 | `fromAmount`, `fromAmountBaseUnits` | Human-readable input and raw input amount. |
 | `estimatedToAmountFormatted` | Estimated output-token quantity. |
 | `minimumToAmountFormatted`, `minimumToAmount` | Human-readable and raw minimum output. |
@@ -116,14 +153,12 @@ The CLI prints one JSON object. Relevant quote fields are:
 Execute results additionally include `mode: "transaction"`, `hash`, and
 `transactionId`. Display amounts actually returned; do not invent missing fields.
 
-## Response Errors
+## Shared Errors
 
 | Error Message | Meaning / Action |
 | --- | --- |
 | `Unknown token ...` | The ticker is absent from the CLI registry. Resolve and use the exact contract address on the selected chain. |
 | `purr wallet uniswap supports Robinhood Chain (4663) and Arc (5042) only` | Select a supported chain. |
-| `Arc swaps require the USDC ERC-20 address, not a native token sentinel` | Use `--from USDC` / `--to USDC`, or the USDC ERC-20 address. |
-| Arc swaps unsupported on runtime-guarded routes | The route requires provider-native idempotent sends; Arc uses platform broadcasting. Report the rejection without switching credentials or bypassing the guard. |
 | `No quotes available` / `No route found` | Report that the current router found no usable route for this pair and amount; do not claim the token has no market. |
 | `Latest Uniswap quote is below minAmountOut` | Preserve the confirmed floor; obtain a new quote for confirmation rather than silently lowering it. |
-| Insufficient funds or gas | Check source-token and native gas balances before retrying; on Arc both consume the same USDC balance. |
+| Insufficient funds or gas | Check source-token and native gas balances before retrying, following the chain's balance and gas rules. |
