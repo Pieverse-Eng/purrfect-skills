@@ -28,19 +28,6 @@ log inspection, sender tracing, and token state checks.
 | Robinhood Chain | `https://rpc.mainnet.chain.robinhood.com` |
 | Arc Mainnet (5042) | `http://rpc.arc-scan.org` |
 
-### Arc Mainnet reads
-
-Use `https://explorer.arc.io/address/<address>` or
-`https://explorer.arc.io/tx/<hash>` for explorer links. If the explorer asks for
-access or the RPC reports an upstream error, report the read as unavailable;
-`eth_chainId` alone does not prove balances or transactions are readable.
-
-Arc's `eth_getBalance` result is native USDC in **18-decimal** base units. An
-explicit ERC-20 `eth_call` uses the contract's decimals; the USDC ERC-20 view
-uses 6 decimals and shares the native balance. Do not sum both views. Managed
-wallet commands use the platform's RPC configuration; setting `ARC_RPC_URL` on
-the platform overrides its default endpoint.
-
 ## Syntax
 
 ```bash
@@ -65,6 +52,11 @@ Look up a transaction receipt:
 
 ```bash
 curl -s https://bsc-rpc.publicnode.com \
+  -H 'content-type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"eth_getTransactionReceipt","params":["0x..."]}'
+
+# Arc Mainnet receipt; explorer: https://explorer.arc.io/tx/<hash>
+curl -s http://rpc.arc-scan.org \
   -H 'content-type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"eth_getTransactionReceipt","params":["0x..."]}'
 ```
@@ -97,3 +89,5 @@ sender, recipient, logs, token movement, or balance.
 
 HTTP failures such as `400`, `401`, `403`, `404`, `429`, or `5xx` come from the
 RPC provider or explorer and should be reported with the provider message.
+Report RPC errors or explorer access restrictions as unavailable reads;
+`eth_chainId` alone does not prove balances or transactions are readable.

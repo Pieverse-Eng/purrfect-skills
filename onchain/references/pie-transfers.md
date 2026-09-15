@@ -40,22 +40,12 @@ purr .pie transfer --pie <handle>.pie --amount 5 --chain-id 143 --token USDC    
 purr .pie transfer --pie <handle>.pie --amount 0.01 --chain-id 10                         # native ETH on OP Mainnet to a Pie handle
 purr .pie transfer --pie <handle>.pie --amount 0.01 --chain-id 130                        # native ETH on Unichain to a Pie handle
 purr .pie transfer --pie <handle>.pie --amount 1.25 --chain-id 5042                      # native USDC on Arc to a Pie handle
+purr .pie transfer --pie <handle>.pie --amount 1.25 --chain-id 5042 --token <CA> --decimals <n>  # ERC-20 on Arc; use contract decimals
 purr .pie transfer --pie <handle>.pie --amount 0.01 --chain-id 4663                       # native ETH on Robinhood Chain to a Pie handle
 purr .pie transfer --pie <handle>.pie --amount 1 --chain-id 4663 --token 0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168 --decimals 6  # USDG on Robinhood Chain to a Pie handle
 purr .pie transfer --channel telegram --account <username> --amount 0.01 --chain-id 56    # native BNB on BSC to a Telegram-paired Pie identity
 purr .pie transfer --channel telegram --account <username> --amount 10 --chain-id 56 --token USDT # USDT on BSC to a Telegram-paired Pie identity
 ```
-
-### Arc Mainnet
-
-Use `--chain-id 5042` without `--token` for native USDC (18 decimals); gas comes
-from the same USDC balance. CLI versions with Arc ticker support also accept
-`--token USDC`. For contract tokens, pass `--token <CA>` and use that contract's
-decimals, optionally through `--decimals <n>`. No Arc mainnet CAs are assumed.
-
-The resolved recipient uses the existing platform broadcast path. Runtime-guarded
-on-demand sends requiring provider-native idempotency remain unsupported; report
-the rejection instead of bypassing the guard.
 
 ## Response Shape
 

@@ -36,6 +36,7 @@ purr wallet balance --chain-type ethereum --chain-id 10                    # nat
 purr wallet balance --chain-type ethereum --chain-id 130                   # native ETH on Unichain
 purr wallet balance --chain-type ethereum --chain-id 8453                  # native ETH on Base
 purr wallet balance --chain-type ethereum --chain-id 5042                  # native USDC on Arc (18 decimals)
+purr wallet balance --chain-id 5042 --token <CA>                           # explicit ERC-20 contract on Arc
 purr wallet balance --token USDT --chain-id 56                             # USDT on BSC
 purr wallet balance --token USDC --chain-id 8453                           # USDC on Base
 purr wallet balance --chain-type ethereum --chain-id 196                   # native OKB on X Layer
@@ -48,14 +49,6 @@ purr wallet balance --chain-id 4663 --token 0x5fc5360D0400a0Fd4f2af552ADD042D716
 purr wallet balance --chain-type solana                                    # native SOL
 purr wallet balance --chain-type solana --token USDC                       # USDC on Solana
 ```
-
-### Arc USDC balances
-
-Use `--chain-type ethereum --chain-id 5042` without `--token` for native USDC.
-CLI versions with Arc ticker support also accept `--chain arc --token USDC`.
-For an ERC-20 balance, pass its explicit CA with `--token <CA>`; the contract's
-decimals apply. The USDC ERC-20 view uses 6 decimals and shares the native
-18-decimal balance, so never count both as separate funds.
 
 ## Response Shape
 
