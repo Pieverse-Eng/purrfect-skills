@@ -37,6 +37,7 @@ purr wallet transfer --to 0x... --amount 5 --chain-id 143 --token USDC         #
 purr wallet transfer --to 0x... --amount 0.01 --chain-id 10                    # native ETH on OP Mainnet
 purr wallet transfer --to 0x... --amount 0.01 --chain-id 130                   # native ETH on Unichain
 purr wallet transfer --to 0x... --amount 5 --chain-id 8453 --token USDC        # USDC on Base
+purr wallet transfer --to 0x... --amount 1.25 --chain-id 5042                 # native USDC on Arc (18 decimals)
 purr wallet transfer --to 0x... --amount 0.1 --chain-id 196                    # native OKB on X Layer
 purr wallet transfer --to 0x... --amount 0.1 --chain-id 196 --token USDT0      # USDT0 on X Layer
 purr wallet transfer --to 0x... --amount 0.1 --chain-id 196 --token USDC       # USDC on X Layer
@@ -47,6 +48,19 @@ purr wallet transfer --to 0x... --amount 1 --chain-id 4663 --token 0x5fc5360D040
 purr wallet transfer --to FuQPd1q... --amount 0.5 --chain-type solana          # native SOL
 purr wallet transfer --to FuQPd1q... --amount 100 --chain-type solana --token USDC  # USDC on Solana
 ```
+
+### Arc native USDC and contract tokens
+
+On chain `5042`, omit `--token` to send native USDC with 18 decimals. CLI versions
+with Arc ticker support also accept `--chain arc --token USDC`. Reserve gas from
+the same USDC balance. An explicit `--token <CA>` uses ERC-20 instead; let the
+platform resolve its decimals or provide `--decimals <n>`. Do not assume a
+mainnet contract address or use 6 decimals for a native transfer.
+
+The platform signs through the TEE and broadcasts through its Arc RPC. Existing
+runtime-guarded on-demand sends requiring provider-native idempotency remain
+unsupported. Report a rejection as a failure; do not retry via an alternate
+broadcast path to bypass the guard.
 
 ## Response Shape
 

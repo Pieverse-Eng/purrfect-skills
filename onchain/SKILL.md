@@ -26,6 +26,7 @@ For EVM chain commands, include `--chain-id`; Robinhood swaps also accept
 | Monad Testnet | 10143 | MON |
 | Ethereum | 1 | ETH |
 | Base | 8453 | ETH |
+| Arc Mainnet | 5042 | USDC (native, 18 decimals) |
 | Robinhood Chain | 4663 | ETH |
 | Arbitrum One | 42161 | ETH |
 | Polygon | 137 | MATIC |
@@ -33,6 +34,21 @@ For EVM chain commands, include `--chain-id`; Robinhood swaps also accept
 | Unichain | 130 | ETH |
 | X Layer | 196 | OKB |
 | Solana | use `--chain-type solana` | SOL |
+
+### Arc Mainnet (chain ID 5042)
+
+- Native USDC uses **18 decimals** and pays gas from the same balance. For
+  balances, use `--chain-type ethereum --chain-id 5042`; for transfers use
+  `--chain-id 5042`. Omit `--token` to select native USDC.
+- CLI versions with Arc ticker support also accept `--chain arc` and
+  `--token USDC` for wallet balances/transfers. An explicit `--token <CA>`
+  selects ERC-20 and uses that contract's decimals. No mainnet CAs are assumed.
+- The USDC ERC-20 view uses 6 decimals and shares the native USDC balance;
+  never sum both views as separate holdings.
+- RPC: `http://rpc.arc-scan.org`. Explorer: `https://explorer.arc.io`.
+- Managed sends use platform broadcasting and require platform Arc support.
+  Runtime-guarded on-demand sends requiring provider-native idempotency remain
+  unsupported; report the platform rejection instead of bypassing the guard.
 
 ### Common Token Addresses (BSC)
 

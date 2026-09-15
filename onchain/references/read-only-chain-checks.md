@@ -26,6 +26,20 @@ log inspection, sender tracing, and token state checks.
 | Polygon | `https://polygon-bor-rpc.publicnode.com` |
 | X Layer | `https://rpc.xlayer.tech` |
 | Robinhood Chain | `https://rpc.mainnet.chain.robinhood.com` |
+| Arc Mainnet (5042) | `http://rpc.arc-scan.org` |
+
+### Arc Mainnet reads
+
+Use `https://explorer.arc.io/address/<address>` or
+`https://explorer.arc.io/tx/<hash>` for explorer links. If the explorer asks for
+access or the RPC reports an upstream error, report the read as unavailable;
+`eth_chainId` alone does not prove balances or transactions are readable.
+
+Arc's `eth_getBalance` result is native USDC in **18-decimal** base units. An
+explicit ERC-20 `eth_call` uses the contract's decimals; the USDC ERC-20 view
+uses 6 decimals and shares the native balance. Do not sum both views. Managed
+wallet commands use the platform's RPC configuration; setting `ARC_RPC_URL` on
+the platform overrides its default endpoint.
 
 ## Syntax
 
