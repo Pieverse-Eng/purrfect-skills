@@ -1,6 +1,6 @@
 ---
 name: onchain
-description: Wallet addresses and balances, .pie transfers, chain reads, and Robinhood/Arc token swaps.
+description: Address/balance lookup,.pie,transfers,Telegram,chain reads
 ---
 
 # Onchain
