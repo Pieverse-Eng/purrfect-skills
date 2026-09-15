@@ -62,7 +62,6 @@ curl -s https://bsc-rpc.publicnode.com \
   -d '{"jsonrpc":"2.0","id":1,"method":"eth_getTransactionReceipt","params":["0x..."]}'
 
 # Arc Mainnet receipt; set ARC_RPC_URL to a verified endpoint first.
-# Explorer placeholder: https://explorer.arc.invalid/tx/<hash> (do not use).
 curl -s "${ARC_RPC_URL:?Set ARC_RPC_URL to a verified Arc RPC endpoint}" \
   -H 'content-type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"eth_getTransactionReceipt","params":["0x..."]}'

@@ -102,9 +102,7 @@ purr wallet uniswap --from SPCX --to AAPL --amount 0.01 --chain robinhood
   `--amount 1` means 1 USDC. Use `USDC` or this contract address for either
   swap direction; other tokens accept their exact CA and use their own decimals.
   Do not use a native zero-address sentinel.
-- **Balance and gas:** wallet balances/transfers use native USDC with
-  **18 decimals**. Both USDC views share the same balance; do not add them
-  together. Leave USDC available for approval and swap gas.
+- **Gas:** leave USDC available for approval and swap gas.
 - **RPC and explorer:** follow the
   [Arc endpoint availability instructions](read-only-chain-checks.md#common-rpc-endpoints)
   before reads, execution, or linking a transaction.
@@ -135,7 +133,6 @@ purr wallet uniswap --from <TOKEN_CA> --to USDC --amount 100 --chain arc
 | Error Message | Meaning / Action |
 | --- | --- |
 | `Arc swaps require the USDC ERC-20 address, not a native token sentinel` | Use `--from USDC` / `--to USDC`, or the USDC ERC-20 address. |
-| Arc swaps unsupported on runtime-guarded routes | The route cannot execute Arc swaps under the execution restriction above. Report the rejection. |
 
 ## Shared Response Shape
 
