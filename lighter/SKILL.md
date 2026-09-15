@@ -87,10 +87,7 @@ Pick the matching command group below, then read that reference before acting.
     `active-orders`, `inactive-orders`, `trades`, or `positions`. Do not claim
     a withdraw has arrived from submit alone — keep any `request_id` and check
     `request-status` / balances.
-14. When a write returns a hash, include a clickable explorer link in the user
-    summary (see Explorer Links): L2 `txHash` → Lighter logs URL; deposit /
-    open-account `depositTxHash` / `approvalTxHash` → source-chain explorer.
-    Never invent a hash. If no hash is present, omit the link.
+14. Report results and links using [Result Reporting](#result-reporting).
 15. Mainnet only. Pass only documented flags; the platform rejects unknown
     query/body keys.
 16. Before confirming **any** order (or modify that can re-apply fee checks),
@@ -128,69 +125,17 @@ Pick the matching command group below, then read that reference before acting.
 | Full recipes | first open, fund, perp, spot, close, withdraw | [workflows.md](references/workflows.md) |
 | Errors | codes and stop / reconcile policy | [errors.md](references/errors.md) |
 
-## Explorer Links
+## Result Reporting
 
-Never invent hashes. Prefer a labeled link (`Transaction: <url>`) over a bare
-hash. Use each hash **exactly** as returned (do not invent `0x` prefixing).
+Report verified order IDs (when applicable), action status, and
+`https://app.lighter.xyz/explorer/accounts/<accountIndex>` using the verified
+account index. Label it as an account page, not an order-detail page; omit the
+link if the account index is unknown. Do not include transaction/log explorer
+links, including source-chain transaction links.
 
-### Lighter L2 (`txHash`)
-
-Successful L2 account actions may return `txHash` on the write response (also
-on `request-status` after reconcile). When present:
-
-```text
-https://app.lighter.xyz/explorer/logs/<txHash>
-```
-
-| Command | May return Lighter `txHash` |
-| --- | --- |
-| `order`, `place-orders`, `bracket-order` | yes |
-| `cancel`, `cancel-all` | yes |
-| `modify` | yes |
-| `update-leverage`, `update-margin` | yes |
-| `withdraw --yes`, `fast-withdraw --yes` | yes |
-| `approve-partner-fee` | yes |
-| `order-preview`, reads, previews without `--yes` | no |
-
-Example after a verified close:
-
-```text
-Position closed successfully.
-• Sold: 0.209 SOL
-• Exit: $76.448
-• Realized trading PnL: +$0.0017 before fees
-• SOL position: 0
-• No active orders
-• Transaction: https://app.lighter.xyz/explorer/logs/2ecb8bb98aee246c42a04c18a7d22137a2e5dfbd06d2a5de17166a9e4d32763545e5631b8bda2693
-```
-
-### Source-chain L1 (deposits / open-account)
-
-`open-account` and `deposit` do **not** use the Lighter logs URL. Responses and
-`deposit-status` may include **source-chain** fields such as:
-
-| Field | Meaning |
-| --- | --- |
-| `depositTxHash` | USDC transfer / gateway deposit tx on the source chain |
-| `approvalTxHash` | ERC-20 approve tx on the source chain (when present) |
-
-Never put these hashes under `app.lighter.xyz/explorer/logs/`. Link with the
-source chain explorer for `--source-chain-id` (or `sourceChainId` on the
-request). Prefer an `explorer` base from `purr lighter deposit-networks` when
-the network object includes one; otherwise use:
-
-| `--source-chain-id` | Explorer tx URL |
-| ---: | --- |
-| `1` (Ethereum) | `https://etherscan.io/tx/<hash>` |
-| `42161` (Arbitrum) | `https://arbiscan.io/tx/<hash>` |
-| `8453` (Base) | `https://basescan.org/tx/<hash>` |
-| `43114` (Avalanche) | `https://snowtrace.io/tx/<hash>` |
-| `999` (HyperEVM) | `https://hyperevmscan.io/tx/<hash>` |
-
-If only one hash is present, link that one. If both approval and deposit hashes
-exist, label them separately (e.g. `Approval:` / `Deposit:`). An L1 link proves
-the source-chain broadcast — not that Lighter has finished crediting; still
-track `deposit-status` / `account` for credit readiness.
+Keep returned request IDs and transaction hashes for reconciliation. Verify
+outcomes through orders, trades, positions, or funding status as appropriate;
+a submission alone does not prove a fill or credited funds.
 
 ## Confirmation Contract
 

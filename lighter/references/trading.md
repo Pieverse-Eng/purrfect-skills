@@ -190,10 +190,8 @@ Silent preparation:
 5. User confirmation with full parameters.
 6. `order` (or leverage then `order`).
 7. Verify with `active-orders` / `trades` / `positions` — never claim fill from
-   submit alone. If the submit (or later `request-status`) includes `txHash`,
-   add
-   `https://app.lighter.xyz/explorer/logs/<txHash>`
-   to the user summary (see Explorer Links in `SKILL.md`).
+   submit alone. Report results and links following
+   [Result Reporting](../SKILL.md#result-reporting).
 
 ## Idempotency and recovery
 
