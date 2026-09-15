@@ -80,13 +80,7 @@ purr lighter deposits --limit 10
 purr lighter deposit-status --request-id <id>
 ```
 
-When `depositTxHash` or `approvalTxHash` appears, include **source-chain**
-explorer links (not Lighter logs). See Explorer Links in `SKILL.md` for
-per-chain URL patterns. Example for Base (`8453`):
-
-```text
-• Deposit: https://basescan.org/tx/<depositTxHash>
-```
+Report results following [Result Reporting](../SKILL.md#result-reporting).
 
 ## Subsequent deposits
 
@@ -115,11 +109,6 @@ purr lighter reconcile-deposit --request-id <id>
 
 `reconcile-deposit` is account-changing — confirm first. Use it for stuck
 async credit recovery, not as a substitute for a new deposit.
-
-On funding updates, surface L1 explorer links for any returned
-`depositTxHash` / `approvalTxHash` using the source `sourceChainId` table in
-`SKILL.md` Explorer Links. Do not use `app.lighter.xyz/explorer/logs/` for
-those hashes.
 
 ### Policy vs on-chain approval
 
@@ -183,7 +172,7 @@ purr lighter balances
 ```
 
 On withdraw / fast-withdraw updates, follow
-[Explorer Links](../SKILL.md#explorer-links). An L2 log does not prove L1 arrival.
+[Result Reporting](../SKILL.md#result-reporting).
 
 Common failures:
 

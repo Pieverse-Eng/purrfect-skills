@@ -87,7 +87,7 @@ Pick the matching command group below, then read that reference before acting.
     `active-orders`, `inactive-orders`, `trades`, or `positions`. Do not claim
     a withdraw has arrived from submit alone — keep any `request_id` and check
     `request-status` / balances.
-14. Report results and links using [Explorer Links](#explorer-links).
+14. Report results and links using [Result Reporting](#result-reporting).
 15. Mainnet only. Pass only documented flags; the platform rejects unknown
     query/body keys.
 16. Before confirming **any** order (or modify that can re-apply fee checks),
@@ -125,51 +125,17 @@ Pick the matching command group below, then read that reference before acting.
 | Full recipes | first open, fund, perp, spot, close, withdraw | [workflows.md](references/workflows.md) |
 | Errors | codes and stop / reconcile policy | [errors.md](references/errors.md) |
 
-## Explorer Links
+## Result Reporting
 
-Never invent hashes. Prefer a labeled link (`Transaction: <url>`) over a bare
-hash. Use each hash **exactly** as returned (do not invent `0x` prefixing).
-
-### Lighter L2 (`txHash`)
-
-For L2 actions, report verified order IDs and status, and link to
+Report verified order IDs (when applicable), action status, and
 `https://app.lighter.xyz/explorer/accounts/<accountIndex>` using the verified
-account index. Label this as an account page, not an order-detail page.
+account index. Label it as an account page, not an order-detail page; omit the
+link if the account index is unknown. Do not include transaction/log explorer
+links, including source-chain transaction links.
 
-Include `https://app.lighter.xyz/explorer/logs/<hash>` only when the
-corresponding Explorer log is verified. A returned `txHash` or successful
-transaction lookup alone does not establish that an Explorer log exists.
-If the log cannot be verified, use the account link. Missing logs do not imply
-execution failure; verify outcomes through orders, trades, positions, or
-funding status as appropriate.
-
-### Source-chain L1 (deposits / open-account)
-
-`open-account` and `deposit` do **not** use the Lighter logs URL. Responses and
-`deposit-status` may include **source-chain** fields such as:
-
-| Field | Meaning |
-| --- | --- |
-| `depositTxHash` | USDC transfer / gateway deposit tx on the source chain |
-| `approvalTxHash` | ERC-20 approve tx on the source chain (when present) |
-
-Never put these hashes under `app.lighter.xyz/explorer/logs/`. Link with the
-source chain explorer for `--source-chain-id` (or `sourceChainId` on the
-request). Prefer an `explorer` base from `purr lighter deposit-networks` when
-the network object includes one; otherwise use:
-
-| `--source-chain-id` | Explorer tx URL |
-| ---: | --- |
-| `1` (Ethereum) | `https://etherscan.io/tx/<hash>` |
-| `42161` (Arbitrum) | `https://arbiscan.io/tx/<hash>` |
-| `8453` (Base) | `https://basescan.org/tx/<hash>` |
-| `43114` (Avalanche) | `https://snowtrace.io/tx/<hash>` |
-| `999` (HyperEVM) | `https://hyperevmscan.io/tx/<hash>` |
-
-If only one hash is present, link that one. If both approval and deposit hashes
-exist, label them separately (e.g. `Approval:` / `Deposit:`). An L1 link proves
-the source-chain broadcast — not that Lighter has finished crediting; still
-track `deposit-status` / `account` for credit readiness.
+Keep returned request IDs and transaction hashes for reconciliation. Verify
+outcomes through orders, trades, positions, or funding status as appropriate;
+a submission alone does not prove a fill or credited funds.
 
 ## Confirmation Contract
 

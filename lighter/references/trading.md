@@ -191,7 +191,7 @@ Silent preparation:
 6. `order` (or leverage then `order`).
 7. Verify with `active-orders` / `trades` / `positions` — never claim fill from
    submit alone. Report results and links following
-   [Explorer Links](../SKILL.md#explorer-links).
+   [Result Reporting](../SKILL.md#result-reporting).
 
 ## Idempotency and recovery
 
