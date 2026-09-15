@@ -84,6 +84,17 @@ For EVM chain commands, include `--chain-id`; swaps also accept
 | WETH | `WETH` | `0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73` | 18 | [Blockscout](https://robinhoodchain.blockscout.com/token/0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73) |
 | USDG | `USDG` | `0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168` | 6 | [Blockscout](https://robinhoodchain.blockscout.com/token/0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168) |
 
+### Common Token Addresses (Arc Mainnet, chain ID 5042)
+
+| Token | Address | Decimals |
+| --- | --- | ---: |
+| USDC (native / gas) | native | 18 |
+| USDC (ERC-20 interface) | `0x3600000000000000000000000000000000000000` | 6 |
+
+Both rows represent the same balance; do not add them together. Wallet balances
+and transfers default to native USDC when `--token` is omitted. Swaps use the
+ERC-20 interface; `purr wallet uniswap --chain arc` resolves `USDC` to that address.
+
 ## Command Groups
 
 | Group | What It Does | Reference |
