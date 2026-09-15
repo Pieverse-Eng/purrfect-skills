@@ -113,14 +113,7 @@ then verify status. A filled historical entry cannot be cancelled.
 
 ## Disable Trading
 
-Read all-DEX balances and each relevant dex's open orders. Positions, open
-orders, or account-wide recoverable USD above the 1 USDC withdrawal fee block
-disable. Recoverable USD is default plus builder-dex collateral, spot USDC,
-and sellable non-USDC spot (`qty >= 10^(-szDecimals)`). Sub-lot tokens and
-leftover collateral that cannot net a positive Arbitrum withdrawal do not
-block disable. Use reported blockers from [preflight.md](preflight.md).
-
-Prepare any needed closes, cancellations, sellable spot conversions,
-collateral consolidation, and withdrawal under the Confirmation Contract. Use
-the same workflows/references above, verify they completed, then disable. Do
-not loop on sub-lot or unwithdrawable dust — that is not a disable blocker.
+Inspect state and open orders, then confirm `disable`. On
+`HYPERLIQUID_TRADING_DISABLE_BLOCKED`, clear only the reported `blockers`
+with the workflows above and confirm disable again. Do not recompute whether
+leftover balances should block.

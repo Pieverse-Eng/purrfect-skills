@@ -20,7 +20,7 @@ fills, or balances when an action may have partially applied.
 | Code / condition | Meaning | Agent action |
 | --- | --- | --- |
 | `HYPERLIQUID_TRADING_DISABLED` | Trading integration is off; exchange routes are blocked | Explain; confirm `enable`; require fresh confirmation before retrying account-changing work |
-| `HYPERLIQUID_TRADING_DISABLE_BLOCKED` | Positions, orders, or recoverable funds above the 1 USDC withdrawal fee prevent disable | Present exact blockers and `recoverableUsd`; close/cancel exposure, consolidate and withdraw recoverable funds, then re-confirm disable. Sub-lot or unwithdrawable dust is not a blocker |
+| `HYPERLIQUID_TRADING_DISABLE_BLOCKED` | Platform refused disable because exposure remains | Present `blockers`; clear them; re-confirm disable. Do not recompute the rule or retry the same blockers in a loop |
 | `HYPERLIQUID_TRADING_DISABLE_CHECK_UNAVAILABLE` | Platform could not verify exposure | Stop; inspect `state` / `orders` / `snapshot`; do not force-disable |
 | `HYPERLIQUID_SYMBOL_AMBIGUOUS` | Multiple markets match | Present candidates and wait for selection |
 | `HYPERLIQUID_SYMBOL_NOT_FOUND` | No matching market | Try exact `dex:COIN`, `--dex default`, or `markets`; never invent an asset ID |

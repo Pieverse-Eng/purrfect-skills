@@ -22,7 +22,7 @@ purr hyperliquid set-abstraction --mode disabled|unifiedAccount|portfolioMargin
 | `status` | Whether Hyperliquid Trading is enabled for this instance (integration gate) |
 | `snapshot` | Dashboard-style summary: account value, PnL, margin used, open positions, risk (requires trading enabled) |
 | `enable` | Turn on Hyperliquid Trading so exchange routes work; confirm first |
-| `disable` | Turn off Hyperliquid Trading; blocked while positions, orders, or recoverable funds above the 1 USDC withdrawal fee remain |
+| `disable` | Turn off Hyperliquid Trading; confirm first. Platform rejects while exposure remains |
 | `account` | Hyperliquid account address, network, and wallet metadata |
 | `state` | Perp margin/positions and/or spot balances for that address |
 | `builder-fee-status` | Whether the fixed 0.05% transaction fee is authorized for orders |
@@ -55,16 +55,9 @@ purr hyperliquid disable
 
 - `enable` / `disable` require confirmation (see Confirmation Contract in
   `SKILL.md`).
-- `disable` fails with `HYPERLIQUID_TRADING_DISABLE_BLOCKED` when any default or
-  builder-dex account has open positions or open orders, or when account-wide
-  recoverable USD is above the 1 USDC withdrawal fee. Recoverable USD sums
-  default and builder-dex collateral, spot USDC (including hold/escrow), and
-  sellable non-USDC spot (`qty >= 10^(-szDecimals)` at mark). Sub-lot tokens
-  and residual collateral that cannot net a positive Arbitrum withdrawal do
-  not block disable. Show the `blockers` payload (and `recoverableUsd` when
-  present), clear the reported exposure and recoverable funds, then retry
-  disable only after a new confirmation. Do not treat a rounded display value
-  of zero as proof that exact dust is absent.
+- `disable` fails with `HYPERLIQUID_TRADING_DISABLE_BLOCKED` when the platform
+  still sees exposure. Show `blockers`, clear only what they list, then confirm
+  disable again. Do not recompute the disable rule from balances.
 - Prefer `snapshot` for a quick portfolio overview once trading is enabled; use
   `state` for exact collateral and position details needed to trade.
 
