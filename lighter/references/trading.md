@@ -118,37 +118,32 @@ Never present a preview result as a live order.
 
 ## Entry with attached TP/SL
 
-Use `bracket-order` for a non-reduce-only perpetual entry with
-linked stop-loss-limit and take-profit-limit exits. Confirm the complete group
-under the existing Confirmation Contract, then submit it once:
+Use `bracket-order` for a non-reduce-only perpetual entry with linked-size,
+opposite-side, reduce-only SL-limit and TP-limit exits. Resolve market precision,
+inspect positions, and confirm the complete group under the Confirmation Contract.
 
 ```bash
 purr lighter bracket-order \
   --market <SYM> --market-type perp \
-  --side buy|sell --size <entry-size> --price <entry-limit> \
+  --side buy|sell --size <size> --price <entry-limit> \
   --stop-loss-trigger <trigger> --stop-loss-price <limit> \
   --take-profit-trigger <trigger> --take-profit-price <limit> \
   --expires-in <duration>
 ```
 
-- For market entry, replace `--price` with `--type market --slippage-bps <bps>`
-  (explicit integer, 0–9999). This submits a true Market/IOC parent, bounded
-  from a fresh ask for buys or bid for sells. Unfilled quantity is canceled;
-  full execution is not guaranteed. Never invent the slippage tolerance.
-- Resolve market precision and inspect existing positions. Children use linked
-  sizing and the opposite side, reduce-only; do not replace them with standalone
-  exits. If this command is unavailable, stop rather than submit an unprotected entry.
-- For buys, SL trigger < entry < TP trigger, with exit limits at or below their
-  triggers; reverse for sells. Both the market quote and slippage bound must fit
-  between the triggers. Use confirmed prices, not invented buffers.
-- Both exits share one explicit expiry (`--expires-in`, `--expires-at`, or
-  `--order-expiry`), as does a GTT limit entry. A market parent has no expiry.
-  Protection expires at that timestamp, regardless of fill time. Stop-limit
-  orders can trigger without filling.
-- Keep request and transaction IDs. Verify entry/exit linkage, parameters, and
-  status through orders, trades, and positions. Distinguish pending entry from
-  partial/full fills and verified protection. Recheck after position changes;
-  reconcile uncertain results before retrying.
+For Market/IOC entry, replace `--price` with `--type market --slippage-bps <bps>`
+(integer, 0–9999). Obtain explicit slippage approval; the gateway bounds a fresh
+quote. Unfilled quantity is canceled.
+
+- For buys: SL trigger < entry < TP trigger; exit limits ≤ triggers. Reverse
+  for sells. Market quote and bound must both fit between triggers. Never invent buffers.
+- Explicit expiry applies to both exits and any GTT entry, regardless of fill
+  time. Stop-limit exits can trigger without filling.
+- Submit once; never substitute standalone orders or an unprotected entry.
+  If unsupported, stop.
+- Keep request/transaction IDs. Verify fills, linked protection, parameters, and
+  expiry; distinguish pending, partial, and filled states. Recheck after position
+  changes and reconcile uncertain submissions before retrying.
 
 ## Cancel and modify
 
