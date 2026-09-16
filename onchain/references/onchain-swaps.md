@@ -145,7 +145,7 @@ The CLI prints one JSON object. Relevant quote fields are:
 
 `--execute` submits the swap, then checks its receipt for up to 60 seconds;
 allow command time for both. The compact result contains `status`, `chainId`,
-`hash`, `explorerUrl`, actual `input` / `output`, and `gas`.
+`hash`, `explorerUrl`, and, when available, actual `input` / `output` and `gas`.
 Include the hash and explorer link in the reply, then use this table:
 
 | `status` | Report / action |
@@ -156,9 +156,9 @@ Include the hash and explorer link in the reply, then use this table:
 | No `status` (older CLI) | Hash proves submission only; use read-only checks before claiming success. |
 
 Use `input` / `output` (`tokenAddress`, `amount`) for actual quantities. Amounts
-are already formatted decimal strings; null amounts remain
-unavailable; follow `warnings` / `reason`. Robinhood native ETH amounts may be
-unavailable even on success. Arc native USDC is already de-duplicated and labeled
+are already formatted decimal strings. Report only quantities present in the result;
+unavailable quantities are omitted. Follow `warnings` / `reason` when present.
+Arc native USDC is already de-duplicated and labeled
 `native` with symbol `USDC`; other tokens retain their CA. `gas` (`amount`,
 `symbol`) is the separate execution fee, excluding approval gas and separate
 rollup fees. `recipient` appears when explicitly supplied.
