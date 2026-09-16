@@ -26,13 +26,13 @@ log inspection, sender tracing, and token state checks.
 | Polygon | `https://polygon-bor-rpc.publicnode.com` |
 | X Layer | `https://rpc.xlayer.tech` |
 | Robinhood Chain | `https://rpc.mainnet.chain.robinhood.com` |
-| Arc Mainnet (5042) | `https://rpc.arc.invalid` (placeholder; replace before use) |
+| Arc Mainnet (5042) | `https://rpc.mainnet.arc.io` |
 
-Arc mainnet RPC and explorer URLs are pending. `https://rpc.arc.invalid` and
-`https://explorer.arc.invalid` are nonfunctional placeholders. Use a verified
-RPC before chain reads or execution; the platform configures it through
-`ARC_RPC_URL`. Until a verified explorer is configured, return transaction hashes
-and addresses without explorer links.
+Arc's [official network configuration](https://docs.arc.io/arc/references/connect-to-arc)
+lists explorer `https://explorer.arc.io` (`/tx/<hash>` and `/address/<address>`).
+The platform defaults to the RPC above; `ARC_RPC_URL` overrides it.
+Mainnet access is currently permissioned, and the explorer requires login.
+Report access restrictions if a read fails.
 
 ## Syntax
 
@@ -61,8 +61,8 @@ curl -s https://bsc-rpc.publicnode.com \
   -H 'content-type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"eth_getTransactionReceipt","params":["0x..."]}'
 
-# Arc Mainnet receipt; set ARC_RPC_URL to a verified endpoint first.
-curl -s "${ARC_RPC_URL:?Set ARC_RPC_URL to a verified Arc RPC endpoint}" \
+# Arc Mainnet receipt; ARC_RPC_URL optionally overrides the official endpoint.
+curl -s "${ARC_RPC_URL:-https://rpc.mainnet.arc.io}" \
   -H 'content-type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"eth_getTransactionReceipt","params":["0x..."]}'
 ```

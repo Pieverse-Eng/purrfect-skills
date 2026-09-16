@@ -34,8 +34,8 @@ Follow the shared workflow below and the selected chain's section:
    `--min-amount-out` to preserve the confirmed output floor. Execution requotes;
    if the constraints cannot be met, present a new quote for confirmation.
    An already confirmed matching trade card does not need a second confirmation.
-5. Return the transaction hash. Add an explorer link only when the chain's
-   section provides a verified explorer URL.
+5. Return the transaction hash and an explorer link using the selected chain's
+   explorer configuration.
    A returned hash means submission; check the receipt through
    [read-only chain checks](read-only-chain-checks.md) before reporting success.
    Report updated balances after confirmation onchain. For an uncertain execution
@@ -104,7 +104,7 @@ purr wallet uniswap --from SPCX --to AAPL --amount 0.01 --chain robinhood
   Do not use a native zero-address sentinel.
 - **Gas:** leave USDC available for approval and swap gas.
 - **RPC and explorer:** follow the
-  [Arc endpoint availability instructions](read-only-chain-checks.md#common-rpc-endpoints)
+  [Arc endpoint configuration](read-only-chain-checks.md#common-rpc-endpoints)
   before reads, execution, or linking a transaction.
 - **Execution restriction:** Arc swaps are unavailable on runtime-guarded
   on-demand routes.
