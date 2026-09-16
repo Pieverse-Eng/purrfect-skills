@@ -144,22 +144,24 @@ The CLI prints one JSON object. Relevant quote fields are:
 ## Execution Results
 
 `--execute` submits the swap, then checks its receipt for up to 60 seconds;
-allow command time for both. It returns `receipt` alongside the submission hash.
-Include the hash and `receipt.explorerUrl` in the reply, then use this table:
+allow command time for both. The compact result contains `status`, `chainId`,
+`hash`, `explorerUrl`, actual `input` / `output`, and `gas`.
+Include the hash and explorer link in the reply, then use this table:
 
-| `receipt.status` | Report / action |
+| `status` | Report / action |
 | --- | --- |
 | `success` | Included successfully onchain; report the actual amounts below. Inclusion does not guarantee finality. |
 | `reverted` | Reverted; no fill. |
 | `pending` / `unknown` | Submitted, confirmation pending/unavailable. Preserve the hash and stop. |
-| No `receipt` (older CLI) | Hash proves submission only; use read-only checks before claiming success. |
+| No `status` (older CLI) | Hash proves submission only; use read-only checks before claiming success. |
 
-Use `receipt.actualInput` / `actualOutput` (`tokenAddress`, `amountFormatted`)
-for quantities, not quote estimates. Null amounts or missing decimals remain
+Use `input` / `output` (`tokenAddress`, `amount`) for actual quantities. Amounts
+are already formatted decimal strings; null amounts remain
 unavailable; follow `warnings` / `reason`. Robinhood native ETH amounts may be
 unavailable even on success. Arc native USDC is already de-duplicated and labeled
-`native` with 18 decimals; other tokens retain their CA. `receipt.gas` is the
-separate execution fee, excluding approval gas and separate rollup fees.
+`native` with symbol `USDC`; other tokens retain their CA. `gas` (`amount`,
+`symbol`) is the separate execution fee, excluding approval gas and separate
+rollup fees. `recipient` appears when explicitly supplied.
 
 Do not automatically follow this result with curl, Python decoding, or a balance
 refresh. Use [read-only chain checks](read-only-chain-checks.md) for the older-CLI
