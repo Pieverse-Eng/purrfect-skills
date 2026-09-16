@@ -32,11 +32,10 @@ additional checks are needed.
 | Robinhood Chain | `https://rpc.mainnet.chain.robinhood.com` |
 | Arc Mainnet (5042) | `https://rpc.mainnet.arc.io` |
 
-Arc's [official network configuration](https://docs.arc.io/arc/references/connect-to-arc)
-lists explorer `https://explorer.arc.io` (`/tx/<hash>` and `/address/<address>`).
+For Arc Mainnet, use `https://arc.etherscan.io`
+(`/tx/<hash>` and `/address/<address>`).
 The platform defaults to the RPC above; `ARC_RPC_URL` overrides it.
-Mainnet access is currently permissioned, and the explorer requires login.
-Report access restrictions if a read fails.
+Report RPC access restrictions if a read fails.
 
 ## Syntax
 
