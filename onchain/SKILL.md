@@ -8,7 +8,7 @@ description: Address/balance lookup,.pie,transfers,Telegram,chain reads
 ## Overview
 
 This Skill covers wallet addresses, balances, Pie identity lookup, direct
-transfers, read-only chain checks, and Robinhood Chain swaps for stock/ETF
+transfers, read-only chain checks, and Robinhood Chain or Arc swaps for stock/ETF
 tokens, memecoins, and other ERC-20 tokens.
 
 This Skill is not for OWS wallet issues or workflows.
@@ -16,8 +16,8 @@ This Skill is not for OWS wallet issues or workflows.
 Pick the relevant command group from the table, then read that reference before
 running commands or explaining the workflow.
 
-For EVM chain commands, include `--chain-id`; Robinhood swaps also accept
-`--chain robinhood`. Common chain IDs:
+Select the chain explicitly using the flags documented in the relevant command
+reference. Common chain IDs:
 
 | Chain | Chain ID | Native Token |
 | --- | ---: | --- |
@@ -26,6 +26,7 @@ For EVM chain commands, include `--chain-id`; Robinhood swaps also accept
 | Monad Testnet | 10143 | MON |
 | Ethereum | 1 | ETH |
 | Base | 8453 | ETH |
+| Arc Mainnet | 5042 | USDC (native, 18 decimals) |
 | Robinhood Chain | 4663 | ETH |
 | Arbitrum One | 42161 | ETH |
 | Polygon | 137 | MATIC |
@@ -65,6 +66,16 @@ For EVM chain commands, include `--chain-id`; Robinhood swaps also accept
 | WETH | `WETH` | `0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73` | 18 | [Blockscout](https://robinhoodchain.blockscout.com/token/0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73) |
 | USDG | `USDG` | `0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168` | 6 | [Blockscout](https://robinhoodchain.blockscout.com/token/0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168) |
 
+### Common Token Addresses (Arc Mainnet, chain ID 5042)
+
+| Token | Address | Decimals |
+| --- | --- | ---: |
+| USDC (native / gas) | native | 18 |
+| USDC (ERC-20 interface) | `0x3600000000000000000000000000000000000000` | 6 |
+
+Both rows represent the same balance, which also pays gas; do not add them
+together.
+
 ## Command Groups
 
 | Group | What It Does | Reference |
@@ -74,6 +85,6 @@ For EVM chain commands, include `--chain-id`; Robinhood swaps also accept
 | Pie Identity / PNS Lookups | Resolves `.pie` handles, paired Telegram accounts, account lists, and profiles. | [pie-identity.md](references/pie-identity.md) |
 | Direct `.pie` Transfers | Sends funds to a `.pie` handle or paired Telegram account. | [pie-transfers.md](references/pie-transfers.md) |
 | Raw Address Transfers | Sends funds directly to a raw EVM or Solana wallet address. | [raw-address-transfers.md](references/raw-address-transfers.md) |
-| Robinhood Chain Token Swaps | Quotes and executes swaps for stock/ETF tokens, memecoins, and other tokens using tickers or contract addresses. | [robinhood-swaps.md](references/robinhood-swaps.md) |
+| Onchain Swaps | Quotes and executes Robinhood/Arc swaps using tickers or contract addresses. | [onchain-swaps.md](references/onchain-swaps.md) |
 | Robinhood Stock/ETF Tokens | Looks up canonical Robinhood Chain stock token and tokenized ETF contract addresses. | [robinhood-stock-etf-tokens.md](references/robinhood-stock-etf-tokens.md) |
 | Read-Only Chain Checks | Looks up transactions, receipts, logs, senders, token state, or balances through RPC/explorer workflows. | [read-only-chain-checks.md](references/read-only-chain-checks.md) |

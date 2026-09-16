@@ -1,30 +1,31 @@
 # Balances
 
-Use balances to inspect native coin or token holdings on a specific chain. Add
-`--token` for ERC-20 or SPL token balances.
+Use balances to inspect native coin or token holdings on a specific chain.
+`--token` accepts a ticker or contract/mint address; omit it for the native coin.
 
 ## Workflow
 
 1. Identify the wallet family: EVM or Solana.
-2. Identify the chain.
+2. For EVM, select the chain with `--chain-id <id>` or `--chain <name>`.
 3. Identify whether the user wants the native token or a specific token.
-4. For native EVM balances, include `--chain-type ethereum` with `--chain-id`.
+4. When querying native EVM balances with `--chain-id` and no `--token`, also
+   include `--chain-type ethereum`.
 5. Run the matching balance command.
 6. Return the balance, token symbol, chain, and wallet address if present.
 
 ## Syntax
 
 ```bash
-purr wallet balance [--chain-type <ethereum|solana>] [--chain-id <chain_id>] [--token <ticker_or_address>]
+purr wallet balance [--chain-type <ethereum|solana>] [--chain-id <chain_id> | --chain <name>] [--token <ticker_or_address>]
 ```
 
 ## Parameters
 
 | Parameter | Required? | Description |
 | --- | --- | --- |
-| `--chain-type <ethereum|solana>` | Required for Solana and native EVM balances | Selects the wallet family. Use `ethereum` for native EVM balances when a Solana wallet also exists; use `solana` for Solana balances. |
-| `--chain-id <chain_id>` | Required for EVM | Selects the EVM chain by numeric chain ID, such as `56` for BNB Smart Chain, `10` for OP Mainnet, `130` for Unichain, `143` for Monad, `8453` for Base, or `4663` for Robinhood Chain. |
-| `--token <ticker_or_address>` | Optional | Selects a token balance instead of the native coin. Accepts a known ticker such as `USDT` or `USDC`, or a raw token contract/mint address. |
+| `--chain-type <ethereum|solana>` | Conditional | Use `solana` for Solana balances. For native EVM queries using `--chain-id` without `--token`, set `ethereum`. An EVM `--chain` alias or `--token` infers `ethereum`. |
+| `--chain-id <chain_id>` / `--chain <name>` | Required for EVM (choose one) | Selects the chain by numeric ID or known alias, such as `--chain-id 5042` / `--chain arc` or `--chain-id 4663` / `--chain robinhood`. |
+| `--token <ticker_or_address>` | Optional | Omit for the native coin. Accepts a known ticker such as `USDT` or `USDC`, or a raw token contract/mint address. Native tickers select the native balance. |
 
 ## Commands
 
@@ -35,6 +36,9 @@ purr wallet balance --token USDC --chain-id 143                            # USD
 purr wallet balance --chain-type ethereum --chain-id 10                    # native ETH on OP Mainnet
 purr wallet balance --chain-type ethereum --chain-id 130                   # native ETH on Unichain
 purr wallet balance --chain-type ethereum --chain-id 8453                  # native ETH on Base
+purr wallet balance --chain-type ethereum --chain-id 5042                  # native USDC on Arc (18 decimals)
+purr wallet balance --chain arc --token USDC                              # native USDC; CLI with Arc ticker support
+purr wallet balance --chain-id 5042 --token <CA>                           # ERC-20 on Arc; uses contract decimals
 purr wallet balance --token USDT --chain-id 56                             # USDT on BSC
 purr wallet balance --token USDC --chain-id 8453                           # USDC on Base
 purr wallet balance --chain-type ethereum --chain-id 196                   # native OKB on X Layer

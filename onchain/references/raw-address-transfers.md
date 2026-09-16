@@ -6,14 +6,18 @@ address.
 ## Workflow
 
 1. Identify the raw recipient address.
-2. Identify the chain, amount, and token.
+2. Identify the amount and token. For EVM, select the chain with `--chain-id <id>`
+   or `--chain <name>`.
 3. Run the matching `purr wallet transfer` command.
 4. Return the transaction result.
+
+Arc transfers are unavailable on runtime-guarded on-demand routes; report the
+platform rejection without bypassing the guard.
 
 ## Syntax
 
 ```bash
-purr wallet transfer --to <address> --amount <amount> [--chain-id <chain_id>] [--chain-type <ethereum|solana>] [--token <ticker_or_address>] [--decimals <n>]
+purr wallet transfer --to <address> --amount <amount> [--chain-id <chain_id> | --chain <name>] [--chain-type <ethereum|solana>] [--token <ticker_or_address>] [--decimals <n>]
 ```
 
 ## Parameters
@@ -22,7 +26,7 @@ purr wallet transfer --to <address> --amount <amount> [--chain-id <chain_id>] [-
 | --- | --- | --- |
 | `--to <address>` | Required | Recipient wallet address. Use a `0x...` address for EVM or a base58 address for Solana. |
 | `--amount <amount>` | Required | Human-readable amount to send, such as `0.01`, `10`, or `100`. |
-| `--chain-id <chain_id>` | Required for EVM | Numeric EVM chain ID, such as `56` for BNB Smart Chain, `10` for OP Mainnet, `130` for Unichain, `143` for Monad, `8453` for Base, `196` for X Layer, or `4663` for Robinhood Chain. Not needed for Solana. |
+| `--chain-id <chain_id>` / `--chain <name>` | Required for EVM (choose one) | Numeric chain ID or known alias, such as `--chain-id 5042` / `--chain arc` or `--chain-id 4663` / `--chain robinhood`. Not needed with `--chain-type solana`. |
 | `--chain-type <ethereum|solana>` | Optional | Selects the chain family. Omit for EVM or set `ethereum`; use `solana` for Solana transfers. |
 | `--token <ticker_or_address>` | Optional | Token to send. Omit for the native coin. Accepts a known ticker such as `USDT`, `USDC`, or `USDT0`, or a raw token contract/mint address. |
 | `--decimals <n>` | Optional | Token decimals override when the token needs an explicit decimal value. |
@@ -37,6 +41,9 @@ purr wallet transfer --to 0x... --amount 5 --chain-id 143 --token USDC         #
 purr wallet transfer --to 0x... --amount 0.01 --chain-id 10                    # native ETH on OP Mainnet
 purr wallet transfer --to 0x... --amount 0.01 --chain-id 130                   # native ETH on Unichain
 purr wallet transfer --to 0x... --amount 5 --chain-id 8453 --token USDC        # USDC on Base
+purr wallet transfer --to 0x... --amount 1.25 --chain-id 5042                 # native USDC on Arc (18 decimals)
+purr wallet transfer --to 0x... --amount 1.25 --chain arc --token USDC       # native USDC; CLI with Arc ticker support
+purr wallet transfer --to 0x... --amount 1.25 --chain-id 5042 --token <CA> --decimals <n>  # ERC-20 on Arc; use contract decimals
 purr wallet transfer --to 0x... --amount 0.1 --chain-id 196                    # native OKB on X Layer
 purr wallet transfer --to 0x... --amount 0.1 --chain-id 196 --token USDT0      # USDT0 on X Layer
 purr wallet transfer --to 0x... --amount 0.1 --chain-id 196 --token USDC       # USDC on X Layer

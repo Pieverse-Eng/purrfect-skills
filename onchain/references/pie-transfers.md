@@ -10,6 +10,9 @@ or paired Telegram account.
 3. Run the matching `purr .pie transfer` command.
 4. Return the transaction result.
 
+Arc transfers are unavailable on runtime-guarded on-demand routes; report the
+platform rejection without bypassing the guard.
+
 ## Syntax
 
 ```bash
@@ -39,6 +42,8 @@ purr .pie transfer --pie <handle>.pie --amount 0.01 --chain-id 143              
 purr .pie transfer --pie <handle>.pie --amount 5 --chain-id 143 --token USDC              # USDC on Monad to a Pie handle
 purr .pie transfer --pie <handle>.pie --amount 0.01 --chain-id 10                         # native ETH on OP Mainnet to a Pie handle
 purr .pie transfer --pie <handle>.pie --amount 0.01 --chain-id 130                        # native ETH on Unichain to a Pie handle
+purr .pie transfer --pie <handle>.pie --amount 1.25 --chain-id 5042                      # native USDC on Arc to a Pie handle
+purr .pie transfer --pie <handle>.pie --amount 1.25 --chain-id 5042 --token <CA> --decimals <n>  # ERC-20 on Arc; use contract decimals
 purr .pie transfer --pie <handle>.pie --amount 0.01 --chain-id 4663                       # native ETH on Robinhood Chain to a Pie handle
 purr .pie transfer --pie <handle>.pie --amount 1 --chain-id 4663 --token 0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168 --decimals 6  # USDG on Robinhood Chain to a Pie handle
 purr .pie transfer --channel telegram --account <username> --amount 0.01 --chain-id 56    # native BNB on BSC to a Telegram-paired Pie identity

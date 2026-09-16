@@ -26,6 +26,13 @@ log inspection, sender tracing, and token state checks.
 | Polygon | `https://polygon-bor-rpc.publicnode.com` |
 | X Layer | `https://rpc.xlayer.tech` |
 | Robinhood Chain | `https://rpc.mainnet.chain.robinhood.com` |
+| Arc Mainnet (5042) | `https://rpc.mainnet.arc.io` |
+
+Arc's [official network configuration](https://docs.arc.io/arc/references/connect-to-arc)
+lists explorer `https://explorer.arc.io` (`/tx/<hash>` and `/address/<address>`).
+The platform defaults to the RPC above; `ARC_RPC_URL` overrides it.
+Mainnet access is currently permissioned, and the explorer requires login.
+Report access restrictions if a read fails.
 
 ## Syntax
 
@@ -51,6 +58,11 @@ Look up a transaction receipt:
 
 ```bash
 curl -s https://bsc-rpc.publicnode.com \
+  -H 'content-type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"eth_getTransactionReceipt","params":["0x..."]}'
+
+# Arc Mainnet receipt; ARC_RPC_URL optionally overrides the official endpoint.
+curl -s "${ARC_RPC_URL:-https://rpc.mainnet.arc.io}" \
   -H 'content-type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"eth_getTransactionReceipt","params":["0x..."]}'
 ```
@@ -83,3 +95,5 @@ sender, recipient, logs, token movement, or balance.
 
 HTTP failures such as `400`, `401`, `403`, `404`, `429`, or `5xx` come from the
 RPC provider or explorer and should be reported with the provider message.
+Report RPC errors or explorer access restrictions as unavailable reads;
+`eth_chainId` alone does not prove balances or transactions are readable.
