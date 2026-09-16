@@ -34,12 +34,7 @@ Follow the shared workflow below and the selected chain's section:
    `--min-amount-out` to preserve the confirmed output floor. Execution requotes;
    if the constraints cannot be met, present a new quote for confirmation.
    An already confirmed matching trade card does not need a second confirmation.
-5. Return the transaction hash and an explorer link using the selected chain's
-   explorer configuration.
-   A returned hash means submission; check the receipt through
-   [read-only chain checks](read-only-chain-checks.md) before reporting success.
-   Report updated balances after confirmation onchain. For an uncertain execution
-   result, check transaction status before retrying.
+5. Report the [execution result](#execution-results).
 
 ## Syntax
 
@@ -58,7 +53,7 @@ purr wallet uniswap --from <ticker_or_address> --to <ticker_or_address> --amount
 | `--slippage <percent>` | Optional | Slippage percentage: `0.5` means 0.5%, not 50%. Omit to use the backend default. |
 | `--min-amount-out <raw_amount>` | Optional | Minimum output in raw output-token base units. Pass the confirmed quote's `minimumToAmount` string when executing to preserve its output floor. |
 | `--dedup-key <key>` | Optional | Idempotency key. Normally omit to retain automatic deduplication; do not change it to bypass a duplicate-execution response. |
-| `--execute` | Optional | Submits the swap after user confirmation. Omit for quote-only mode. |
+| `--execute` | Optional | Executes the confirmed swap. Omit for quote-only mode. |
 
 ## Robinhood Chain
 
@@ -134,7 +129,7 @@ purr wallet uniswap --from <TOKEN_CA> --to USDC --amount 100 --chain arc
 | --- | --- |
 | `Arc swaps require the USDC ERC-20 address, not a native token sentinel` | Use `--from USDC` / `--to USDC`, or the USDC ERC-20 address. |
 
-## Shared Response Shape
+## Quote Response
 
 The CLI prints one JSON object. Relevant quote fields are:
 
@@ -146,8 +141,32 @@ The CLI prints one JSON object. Relevant quote fields are:
 | `minimumToAmountFormatted`, `minimumToAmount` | Human-readable and raw minimum output. |
 | `quoteSource` | `official` — Platform uses the Uniswap Trading API. |
 
-Execute results additionally include `mode: "transaction"`, `hash`, and
-`transactionId`. Display amounts actually returned; do not invent missing fields.
+## Execution Results
+
+`--execute` submits the swap, then checks its receipt for up to 60 seconds;
+allow command time for both. The compact result contains `status`, `chainId`,
+`hash`, `explorerUrl`, and, when available, actual `input` / `output` and `gas`.
+Include the hash and explorer link in the reply, then use this table:
+
+| `status` | Report / action |
+| --- | --- |
+| `success` | Included successfully onchain; report the actual amounts below. Inclusion does not guarantee finality. |
+| `reverted` | Reverted; no fill. |
+| `pending` / `unknown` | Submitted, confirmation pending/unavailable. Preserve the hash and stop. |
+| No `status` (older CLI) | Hash proves submission only; use read-only checks before claiming success. |
+
+Use `input` / `output` (`tokenAddress`, `amount`) for actual quantities. Amounts
+are already formatted decimal strings. Report only quantities present in the result;
+unavailable quantities are omitted. Follow `warnings` / `reason` when present.
+Arc native USDC is already de-duplicated and labeled
+`native` with symbol `USDC`; other tokens retain their CA. `gas` (`amount`,
+`symbol`) is the separate execution fee, excluding approval gas and separate
+rollup fees. `recipient` appears when explicitly supplied.
+
+Do not automatically follow this result with curl, Python decoding, or a balance
+refresh. Use [read-only chain checks](read-only-chain-checks.md) for the older-CLI
+case above, uncertain execution errors, or explicit follow-up requests. Never
+repeat `--execute` to query status; resolve an uncertain submission before retrying.
 
 ## Shared Errors
 

@@ -3,6 +3,10 @@
 Use JSON-RPC or an explorer workflow for transaction lookup, receipt decoding,
 log inspection, sender tracing, and token state checks.
 
+For `purr wallet uniswap --execute`, follow
+[Execution Results](onchain-swaps.md#execution-results), which defines when these
+additional checks are needed.
+
 ## Workflow
 
 1. Identify the chain and transaction hash, address, token, or contract.
@@ -28,11 +32,10 @@ log inspection, sender tracing, and token state checks.
 | Robinhood Chain | `https://rpc.mainnet.chain.robinhood.com` |
 | Arc Mainnet (5042) | `https://rpc.mainnet.arc.io` |
 
-Arc's [official network configuration](https://docs.arc.io/arc/references/connect-to-arc)
-lists explorer `https://explorer.arc.io` (`/tx/<hash>` and `/address/<address>`).
+For Arc Mainnet, use `https://arc.etherscan.io`
+(`/tx/<hash>` and `/address/<address>`).
 The platform defaults to the RPC above; `ARC_RPC_URL` overrides it.
-Mainnet access is currently permissioned, and the explorer requires login.
-Report access restrictions if a read fails.
+Report RPC access restrictions if a read fails.
 
 ## Syntax
 
