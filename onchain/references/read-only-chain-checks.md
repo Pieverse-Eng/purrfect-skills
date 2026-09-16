@@ -3,6 +3,13 @@
 Use JSON-RPC or an explorer workflow for transaction lookup, receipt decoding,
 log inspection, sender tracing, and token state checks.
 
+For `purr wallet uniswap --execute`, use its returned `receipt` first; current
+CLI versions automatically check and decode it. Do not repeat RPC reads or
+Python decoding after a successful result. A `pending`/`unknown` result is still
+a submitted transaction, not permission to execute again. Use this reference for
+an explicit follow-up status request, an uncertain execution error, or an older
+CLI without receipt output; see [onchain swaps](onchain-swaps.md).
+
 ## Workflow
 
 1. Identify the chain and transaction hash, address, token, or contract.

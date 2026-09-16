@@ -34,12 +34,22 @@ Follow the shared workflow below and the selected chain's section:
    `--min-amount-out` to preserve the confirmed output floor. Execution requotes;
    if the constraints cannot be met, present a new quote for confirmation.
    An already confirmed matching trade card does not need a second confirmation.
-5. Return the transaction hash and an explorer link using the selected chain's
-   explorer configuration.
-   A returned hash means submission; check the receipt through
-   [read-only chain checks](read-only-chain-checks.md) before reporting success.
-   Report updated balances after confirmation onchain. For an uncertain execution
-   result, check transaction status before retrying.
+5. `--execute` automatically checks the receipt for up to 60 seconds and returns
+   it in `receipt`; no additional wait flag is needed. Set the command runner's
+   timeout long enough for submission plus this check. Return the hash and
+   `receipt.explorerUrl`, and report the returned status:
+   - `success`: the transaction was included successfully. Use `actualInput` and
+     `actualOutput` for amounts, and `gas` for the separate execution fee.
+   - `reverted`: report the revert and hash; do not report a fill.
+   - `pending` or `unknown`: report submitted, confirmation pending/unavailable.
+     Preserve the hash and stop; never repeat `--execute` just to check status.
+   Do not automatically run curl, Python decoding, or a balance refresh after
+   this result. Read `receipt.warnings`; unavailable amounts stay unavailable,
+   and quote estimates are never actual fills. Query balances if the user asks.
+   Older CLI versions without `receipt` return submission evidence only. For
+   those versions, an execution error/uncertain submission, or a user's explicit
+   follow-up status request, use [read-only chain checks](read-only-chain-checks.md).
+   Check an uncertain transaction's status before considering any retry.
 
 ## Syntax
 
@@ -58,7 +68,7 @@ purr wallet uniswap --from <ticker_or_address> --to <ticker_or_address> --amount
 | `--slippage <percent>` | Optional | Slippage percentage: `0.5` means 0.5%, not 50%. Omit to use the backend default. |
 | `--min-amount-out <raw_amount>` | Optional | Minimum output in raw output-token base units. Pass the confirmed quote's `minimumToAmount` string when executing to preserve its output floor. |
 | `--dedup-key <key>` | Optional | Idempotency key. Normally omit to retain automatic deduplication; do not change it to bypass a duplicate-execution response. |
-| `--execute` | Optional | Submits the swap after user confirmation. Omit for quote-only mode. |
+| `--execute` | Optional | Submits the confirmed swap, then automatically checks its receipt. Omit for quote-only mode. |
 
 ## Robinhood Chain
 
@@ -148,6 +158,27 @@ The CLI prints one JSON object. Relevant quote fields are:
 
 Execute results additionally include `mode: "transaction"`, `hash`, and
 `transactionId`. Display amounts actually returned; do not invent missing fields.
+
+CLI versions with automatic receipt confirmation also return `receipt`:
+
+| Field | Meaning |
+| --- | --- |
+| `status`, `hash`, `explorerUrl` | `success`, `reverted`, `pending`, or `unknown`, with transaction identity. Success means inclusion, not guaranteed finality. |
+| `actualInput`, `actualOutput` | Receipt-derived net amounts for sender/recipient: `tokenAddress`, `owner`, `decimals`, `amountBaseUnits`, `amountFormatted`. Null means evidence unavailable. |
+| `gas` | Separate native execution fee, `gasUsed * effectiveGasPrice`; excludes approval gas and any separate rollup fees. |
+| `warnings`, `reason` | Missing transfer evidence/decimals or why confirmation is unavailable. Do not fill these gaps with a quote. |
+
+Arc's matching 6-decimal USDC interface logs and 18-decimal native logs are
+de-duplicated. Actual native USDC amounts use `tokenAddress: "native"` and 18
+decimals. Another token named USDC keeps its own CA and decimals. Native amounts
+require system transfer logs; Robinhood ETH amounts may be unavailable even when
+the receipt confirms success. When decimals cannot be read, only raw amounts
+are returned; do not guess human-readable quantities.
+
+Receipt queries run directly from the CLI using `EVM_RPC_4663` / `EVM_RPC_5042`,
+then `ROBINHOOD_RPC_URL` / `ARC_RPC_URL`, then the chain's mainnet default RPC.
+RPC failures after submission retain the hash. This workflow requires the CLI
+release containing automatic confirmation to be installed in the tenant image.
 
 ## Shared Errors
 
