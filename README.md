@@ -4,6 +4,10 @@ This directory contains the Pieverse built-in skills. Each folder is a skill uni
 
 ## Market research and execution
 
+`financial-research` provides read-only company, asset and market research through
+the platform AgentKey CLI. It can support a discussion or user-directed trading
+task without recommending investments or authorizing execution.
+
 Hosted market discovery, reference candles, and cross-venue cost comparison
 run through fx tools. Platform checks which venues the tenant has configured.
 Venue skills document execution workflows and direct public market commands;
@@ -52,6 +56,7 @@ they do not define a separate hosted Market Search Agent workflow.
 | `blockbeats` | BlockBeats intelligence — 1,500+ sources including AI-driven insights, Hyperliquid on-chain data, and Polymarket analytics. |
 | `bnbchain-mcp` | BNB Chain MCP server — read-only blockchain queries for BNB Chain / opBNB blocks, transactions, contracts, ERC20 / NFTs, balances, and network info. |
 | `ddg-search` | DuckDuckGo web search — zero-config, no API key required. Use as a fallback when `web_search` is unavailable. |
+| `financial-research` | Source-grounded company filings, earnings, project and market research through platform AgentKey; available during discussion or user-directed trading, without investment recommendations or execution. |
 | `kaia-skills` | Kaia knowledge bundle — network basics, gas, fee delegation, governance, SDKs, and transaction types. |
 | `mantle` | Mantle skill bundle — network reference, address lookup, risk evaluation, portfolio analysis, DeFi planning, indexing, debugging, simulation, and smart-contract lifecycle. |
 | `panewslab` | PANewsLab crypto news, Polymarket smart money boards, article publishing, and rendered PANews web pages. |
