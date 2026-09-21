@@ -1,6 +1,6 @@
 ---
 name: financial-research
-description: Research financial facts, company filings and earnings, asset or project fundamentals, and market context using sourced evidence. Use for standalone questions or information needed during a user-directed trading discussion; not for investment recommendations or order execution.
+description: Research external information through platform AgentKey, including financial facts, company filings and earnings, asset or project fundamentals, and market context. Use for standalone research or evidence needed during a trading discussion; not for executable quotes, account state, investment recommendations or order execution.
 ---
 
 # Financial research
@@ -30,10 +30,11 @@ force a full report, market scan or fundamental analysis into a simple lookup
 or an otherwise actionable user trade request. Stop once the question is
 supported, or explain which evidence remains unavailable.
 
-## Default data access: platform AgentKey
+## External data access: platform AgentKey
 
-Honor explicit source or tool requests. Otherwise use `purr agentkey` as the
-default external research entrypoint. It uses existing platform instance
+Use `purr agentkey` as the only external research entrypoint. Honor requested
+sources through AgentKey; a source preference does not authorize another
+retrieval route. It uses existing platform instance
 credentials and shared upstream access; this workflow
 does not require a separate AgentKey login, MCP setup or user-supplied API key.
 Never print credentials or send wallet tokens to data providers.
@@ -70,11 +71,11 @@ indeterminate receipt and report the uncertainty. Repeating execution is a new,
 potentially billable call. Authentication, credit or service failures do not
 justify starting a login flow, topping up funds, or bypassing access controls.
 
-If AgentKey cannot provide the required source or format, disclose the gap and
-use another available, permitted read-only retrieval tool when appropriate.
-Do not silently repeat an uncertain paid request through another provider or
-override a selected provider/venue skill's failure and stop rules. If no suitable
-retrieval is available, answer only from verified evidence and state the limit.
+If AgentKey cannot provide the required source or format, or access fails,
+disclose the gap and answer only from verified evidence already available.
+Do not fall back to another research skill, direct AgentKey MCP, web search/fetch,
+browser retrieval or ad hoc network commands. This restriction concerns external
+retrieval, not analysis of user-provided material or locally available evidence.
 
 ## Evidence and answer
 
