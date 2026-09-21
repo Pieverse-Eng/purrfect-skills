@@ -21,14 +21,17 @@ or tradability.
 
 - For a narrow fact, retrieve and verify the source, then answer directly.
 - For earnings or company analysis, read [company research](references/company-research.md).
-- For chain overviews or token/project research, read [onchain research](references/onchain-research.md).
+- For chain activity overviews or token narratives, read [onchain research](references/onchain-research.md).
 - For macro or market context, collect the requested indicators and underlying
   releases, preserving observation periods, revisions and source coverage.
 
+Read only the references needed; combine them when the question crosses domains.
 Choose the relevant evidence dimensions before selecting data tools. Do not
 force a full report, market scan or fundamental analysis into a simple lookup
-or an otherwise actionable user trade request. Stop once the question is
-supported, or explain which evidence remains unavailable.
+or an otherwise actionable user trade request. Before further retrieval,
+identify the unanswered part of the question or material contradiction it would
+resolve. Once the answer is supported, deliver it instead of expanding coverage;
+disclose remaining limitations. A progress update does not replace the answer.
 
 ## External data access: platform AgentKey
 
@@ -39,15 +42,24 @@ credentials and shared upstream access; this workflow
 does not require a separate AgentKey login, MCP setup or user-supplied API key.
 Never print credentials or send wallet tokens to data providers.
 
-Discover a suitable read-only operation using the full information need,
-including known identifiers, dates and source URLs. Discovery finds tools, not
-research evidence. Describe the chosen operation, then execute it:
+Start with a suitable tool from the relevant reference or an already known
+schema. The references are starting points, not exhaustive catalogs or mandatory
+checklists. Describe the chosen tool to confirm current availability, parameters
+and price; discover alternatives only when needed. Discovery finds tools, not
+research evidence. Use concise capability or provider/operation terms for tool
+discovery; pass the actual research query, identifiers, dates and URLs in the
+chosen operation's execution parameters.
 
 ```bash
-purr agentkey discover "<research question, known identities, dates and URLs>"
+purr agentkey discover "<needed capability or provider/operation>"
 purr agentkey describe <returned-tool-name-or-path>
 purr agentkey execute <execute_as.name> --params '<JSON matching the returned schema>' --max-credits <per-call-ceiling>
 ```
+
+If discovery returns unrelated tools, browse with `purr agentkey discover`, then
+scope discovery with `--prefix <returned-directory-path>`. Copy paths from the
+results, not guessed categories. Do not keep adding topic keywords to an
+unproductive catalog search.
 
 Use the canonical `execute_as.name` and concrete parameter schema returned by
 the platform, not guessed tool names or MCP router wrappers. Reuse known tool
@@ -58,7 +70,17 @@ additional pages only when necessary; pagination is not automatic. Use only
 read operations: tool discovery does not authorize provider-side fund transfers
 or other mutations. Successful data calls consume platform AI Credits.
 
-Inspect the actual result, not just successful discovery or a process exit code.
+Narrow dates, record counts and document sections to the question. For large
+structured responses, capture and filter locally before returning relevant data
+to model context, retaining source identifiers, periods, units, request/billing
+status and errors. If output is truncated, inspect the saved result or narrow
+the query rather than fetching another broad response. Re-extract a document
+only for a relevant section missing from the evidence already retrieved.
+
+Inspect the actual result, not just successful discovery, `completed` status or
+a process exit code. A provider error inside the result is not evidence and may
+still be billed. If a schema-valid call fails, do not guess parameter variants
+or remove required fields; use another suitable source or disclose the gap.
 For a pending request, query its receipt rather than purchasing the data again:
 
 ```bash
