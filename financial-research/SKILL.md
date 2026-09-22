@@ -58,15 +58,14 @@ credentials and shared upstream access; this workflow
 does not require a separate AgentKey login, MCP setup or user-supplied API key.
 Never print credentials or send wallet tokens to data providers.
 
-Start with a suitable tool from the relevant reference or an already known
-schema. For the recommended tools, consult the relevant section of
-[tool parameters](references/tool-parameters.md) for parameter semantics and
-known AgentKey schema gaps. The references are starting points, not exhaustive
-catalogs or mandatory checklists. Describe the chosen tool to confirm current availability, parameters
-and price; discover alternatives only when needed. Discovery finds tools, not
-research evidence. Use concise capability or provider/operation terms for tool
-discovery; pass the actual research query, identifiers, dates and URLs in the
-chosen operation's execution parameters.
+Select a suitable tool from the relevant reference or known schema; discover
+alternatives only when needed. Use the selected tool's
+[parameter notes](references/tool-parameters.md) for field semantics and limits.
+References suggest tools, not mandatory checklists. Describe the selected tool
+to confirm availability, schema, execution name and price; reuse that information
+when still applicable. Discovery finds tools, not evidence: use capability or
+provider/operation terms there, and put research queries, identifiers, dates and
+URLs in execution parameters.
 
 ```bash
 purr agentkey discover "<needed capability or provider/operation>"
@@ -80,8 +79,8 @@ results, not guessed categories. Do not keep adding topic keywords to an
 unproductive catalog search.
 
 Use the canonical `execute_as.name` and concrete parameter schema returned by
-the platform, not guessed tool names or MCP router wrappers. Reuse known tool
-schemas when appropriate. `execute` refreshes the price/version before dispatch;
+the platform, not guessed tool names or MCP router wrappers.
+`execute` refreshes the price/version before dispatch;
 set `--max-credits` from the inspected price within the available task budget.
 The ceiling is per call, not a total research budget. Reuse results and retrieve
 additional pages only when necessary; pagination is not automatic. Use only

@@ -10,10 +10,9 @@ Do not assume a provider can read a PDF or supplies every statement.
 
 ## Choose a tool for the question
 
-Use these AgentKey operations as starting points, confirming the live schema
-and price with `describe`. Select what answers the question, not every row.
-Parameter types, date semantics and extraction limits are in the
-[Tavily and Finnhub parameter guide](tool-parameters.md).
+Select tools that answer the question, not every row. See the
+[parameter guide](tool-parameters.md) for Tavily extraction limits and Finnhub
+field semantics; follow the main skill's access rules.
 
 | Need | Starting tool | Scope and limitations |
 | --- | --- | --- |
