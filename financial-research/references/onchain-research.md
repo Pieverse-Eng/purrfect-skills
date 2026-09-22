@@ -52,6 +52,9 @@ These are alternatives selected by the question, not a sequence of mandatory
 calls. Browse with `purr agentkey discover --prefix <directory>`; if a listed
 directory is unavailable, refresh the root catalog rather than guessing paths.
 Apply the main skill's describe/execute, cost and error rules.
+For the selected operation, consult [tool parameters](tool-parameters.md):
+Tavily covers source retrieval; the social/on-chain section covers concrete
+directory-to-provider mappings, identifiers, timestamp units and schema gaps.
 
 Explain the core narrative and recent developments using project websites,
 social posts and relevant original sources. Attribute narratives to their

@@ -59,8 +59,10 @@ does not require a separate AgentKey login, MCP setup or user-supplied API key.
 Never print credentials or send wallet tokens to data providers.
 
 Start with a suitable tool from the relevant reference or an already known
-schema. The references are starting points, not exhaustive catalogs or mandatory
-checklists. Describe the chosen tool to confirm current availability, parameters
+schema. For the recommended tools, consult the relevant section of
+[tool parameters](references/tool-parameters.md) for parameter semantics and
+known AgentKey schema gaps. The references are starting points, not exhaustive
+catalogs or mandatory checklists. Describe the chosen tool to confirm current availability, parameters
 and price; discover alternatives only when needed. Discovery finds tools, not
 research evidence. Use concise capability or provider/operation terms for tool
 discovery; pass the actual research query, identifiers, dates and URLs in the
