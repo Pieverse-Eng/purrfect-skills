@@ -58,21 +58,28 @@ credentials and shared upstream access; this workflow
 does not require a separate AgentKey login, MCP setup or user-supplied API key.
 Never print credentials or send wallet tokens to data providers.
 
-Select a suitable tool from the relevant reference or known schema; discover
-alternatives only when needed. Use the selected tool's
-[parameter notes](references/tool-parameters.md) for field semantics and limits.
-References suggest tools, not mandatory checklists. Describe the selected tool
-to confirm availability, schema, execution name and price; reuse that information
-when still applicable. Discovery finds tools, not evidence: use capability or
-provider/operation terms there, and put research queries, identifiers, dates and
-URLs in execution parameters.
+Choose a tool using the relevant reference's tool and parameter guidance.
+For a listed or already known tool, go directly to `describe`; do not rediscover
+its name. Confirm availability, schema, execution name and price, reusing that
+information when still applicable. References suggest tools, not checklists.
+Use the live schema for accepted fields and types; provider documentation does
+not imply AgentKey supports additional fields or encodings. Omit optional
+parameters whose encoding is unclear; do not guess required ones.
 
 ```bash
-purr agentkey discover "<needed capability or provider/operation>"
-purr agentkey describe <returned-tool-name-or-path>
+purr agentkey describe <known-tool-name-or-path>
 purr agentkey execute <execute_as.name> --params '<JSON matching the returned schema>' --max-credits <per-call-ceiling>
 ```
 
+Only discover when no known tool fits or the selected tool is unavailable:
+
+```bash
+purr agentkey discover "<needed capability or provider/operation>"
+```
+
+Discovery finds tools, not evidence. Use capability or provider/operation terms
+there; put research queries, identifiers, dates and URLs in execution parameters.
+Provider parameters belong in `--params`, not additional CLI flags.
 If discovery returns unrelated tools, browse with `purr agentkey discover`, then
 scope discovery with `--prefix <returned-directory-path>`. Copy paths from the
 results, not guessed categories. Do not keep adding topic keywords to an
