@@ -28,10 +28,26 @@ or tradability.
 Read only the references needed; combine them when the question crosses domains.
 Choose the relevant evidence dimensions before selecting data tools. Do not
 force a full report, market scan or fundamental analysis into a simple lookup
-or an otherwise actionable user trade request. Before further retrieval,
-identify the unanswered part of the question or material contradiction it would
-resolve. Once the answer is supported, deliver it instead of expanding coverage;
-disclose remaining limitations. A progress update does not replace the answer.
+or an otherwise actionable user trade request.
+
+## Task completion
+
+Before each additional retrieval, identify the unanswered part of the request,
+material contradiction or stale evidence it would resolve. Reuse available
+results and schemas; do not repeat successful work for marginal refinement.
+Preserve required source, identity and cost checks.
+
+Once sufficient evidence supports the requested answer, deliver it and stop
+research. Do not broaden coverage or create extra reports, artifacts or follow-up
+tasks unless the request requires them. If research is a step in an existing
+user-directed task, return the findings to that task instead of expanding the
+research. Keep progress updates brief; do not make a separate tool call or model
+turn solely to create, update or close a progress card.
+
+After unproductive calls, change approach only if a suitable alternative can
+resolve a material gap; otherwise answer from verified evidence and disclose
+the limitation. Preserve required pending-request checks and explicit monitoring
+requests, following the access and retry rules below.
 
 ## External data access: platform AgentKey
 
