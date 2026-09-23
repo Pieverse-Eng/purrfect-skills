@@ -1,6 +1,6 @@
 ---
 name: financial-research
-description: Research company filings, earnings, project narratives and market context through platform AgentKey, including during trading discussions. Not for investment recommendations, executable quotes, account state or order execution.
+description: Research external financial information, including crypto news, company filings, earnings, project narratives and market context, through platform AgentKey. Not for investment recommendations, executable quotes, account state or order execution.
 ---
 
 # Financial research
