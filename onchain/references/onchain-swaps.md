@@ -139,8 +139,10 @@ purr wallet uniswap --from <TOKEN_CA> --to USDC --amount 100 --chain arc
   USDC or other token addresses from a different chain.
 - **Gas:** reserve native ETH for approvals and swaps.
 - **Explorer:** `https://soneium.blockscout.com/tx/<tx_hash>`.
-- **Execution:** hosted sends require provider-native Soneium support. A quote
-  does not prove this is enabled. Report unsupported-send or policy rejections;
+- **Execution:** ordinary sends use TEE signing and Platform RPC broadcasting,
+  as on Arc. Runtime-guarded on-demand sends require provider-native Soneium
+  send/replay support. A quote does not prove that guarded execution is enabled.
+  Report unsupported-send or policy rejections;
   do not bypass them with raw signing, alternative credentials, or RPC sends.
 - **Campaign scope:** Startale vault deposits and JPYSC are separate integrations.
   Do not present a token transfer or swap as completion of a vault deposit task.

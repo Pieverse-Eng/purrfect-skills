@@ -14,8 +14,9 @@ address.
 Arc transfers are unavailable on runtime-guarded on-demand routes; report the
 platform rejection without bypassing the guard.
 
-Soneium hosted transfers require provider-native send support in the deployed
-platform. If rejected as unsupported, report the restriction; do not switch
+Ordinary Soneium transfers use TEE signing and Platform RPC broadcasting, as on
+Arc. Runtime-guarded on-demand transfers require provider-native send/replay
+support. If rejected as unsupported, report the restriction; do not switch
 credentials, use raw signing, or send through RPC to bypass it. Keep ETH for gas
 even when sending ERC-20 tokens.
 
