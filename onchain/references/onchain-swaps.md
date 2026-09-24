@@ -134,9 +134,10 @@ purr wallet uniswap --from <TOKEN_CA> --to USDC --amount 100 --chain arc
 - **Chain:** `--chain soneium` or `--chain-id 1868`. Requires CLI and Platform
   versions with Soneium support.
 - **Tokens:** `ETH` selects native ETH. `WETH` resolves to
-  `0x4200000000000000000000000000000000000006` (18 decimals). For other
-  tokens, resolve and use their exact Soneium contract address. Do not reuse
-  USDC or other token addresses from a different chain.
+  `0x4200000000000000000000000000000000000006` (18 decimals). `USDC.e`
+  resolves to bridged USDC at `0xbA9986D2381edf1DA03B0B9c1f8b00dc4AacC369`
+  (6 decimals). For other tokens, resolve and use their exact Soneium contract
+  address. Do not reuse token addresses from a different chain.
 - **Gas:** reserve native ETH for approvals and swaps.
 - **Explorer:** `https://soneium.blockscout.com/tx/<tx_hash>`.
 - **Execution:** ordinary sends use TEE signing and Platform RPC broadcasting,

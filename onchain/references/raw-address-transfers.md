@@ -48,6 +48,7 @@ purr wallet transfer --to 0x... --amount 0.01 --chain-id 10                    #
 purr wallet transfer --to 0x... --amount 0.01 --chain-id 130                   # native ETH on Unichain
 purr wallet transfer --to 0x... --amount 5 --chain-id 8453 --token USDC        # USDC on Base
 purr wallet transfer --to 0x... --amount 0.001 --chain soneium               # native ETH on Soneium
+purr wallet transfer --to 0x... --amount 1 --chain soneium --token USDC.e     # bridged USDC on Soneium
 purr wallet transfer --to 0x... --amount 1 --chain-id 1868 --token <CA>       # ERC-20; amount in token units
 purr wallet transfer --to 0x... --amount 1.25 --chain-id 5042                 # native USDC on Arc (18 decimals)
 purr wallet transfer --to 0x... --amount 1.25 --chain arc --token USDC       # native USDC; CLI with Arc ticker support

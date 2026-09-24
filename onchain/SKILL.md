@@ -77,6 +77,17 @@ reference. Common chain IDs:
 Both rows represent the same balance, which also pays gas; do not add them
 together.
 
+### Common Token Addresses (Soneium, chain ID 1868)
+
+| Token | Address | Decimals |
+| --- | --- | ---: |
+| ETH (native / gas) | native | 18 |
+| WETH | `0x4200000000000000000000000000000000000006` | 18 |
+| USDC.e (bridged USDC) | `0xbA9986D2381edf1DA03B0B9c1f8b00dc4AacC369` | 6 |
+
+Use `USDC.e` for this bridged token; do not assume `USDC` on another chain has
+the same contract address.
+
 ## Command Groups
 
 | Group | What It Does | Reference |

@@ -38,6 +38,7 @@ purr wallet balance --chain-type ethereum --chain-id 130                   # nat
 purr wallet balance --chain-type ethereum --chain-id 8453                  # native ETH on Base
 purr wallet balance --chain soneium                                      # native ETH on Soneium (1868)
 purr wallet balance --chain soneium --token WETH                         # WETH on Soneium
+purr wallet balance --chain soneium --token USDC.e                       # bridged USDC on Soneium
 purr wallet balance --chain-id 1868 --token <CA>                          # ERC-20 on Soneium; exact contract address
 purr wallet balance --chain-type ethereum --chain-id 5042                  # native USDC on Arc (18 decimals)
 purr wallet balance --chain arc --token USDC                              # native USDC; CLI with Arc ticker support
