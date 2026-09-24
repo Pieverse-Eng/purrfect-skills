@@ -1,12 +1,12 @@
 # Onchain Swaps
 
 Use `purr wallet uniswap` to quote, buy, sell, or swap tokens on Robinhood Chain
-(4663) and Arc Mainnet (5042) through the hosted wallet. This includes stock/ETF
+(4663), Arc Mainnet (5042), and Soneium (1868) through the hosted wallet. This includes stock/ETF
 tokens, memecoins, and other ERC-20 tokens with a supported route. The command
 quotes by default; `--execute` submits a transaction after user confirmation.
 
 Follow the shared workflow below and the selected chain's section:
-[Robinhood Chain](#robinhood-chain) or [Arc Mainnet](#arc-mainnet).
+[Robinhood Chain](#robinhood-chain), [Arc Mainnet](#arc-mainnet), or [Soneium](#soneium).
 
 ## Usage Notes
 
@@ -39,7 +39,7 @@ Follow the shared workflow below and the selected chain's section:
 ## Syntax
 
 ```bash
-purr wallet uniswap --from <ticker_or_address> --to <ticker_or_address> --amount <decimal_amount> --chain <robinhood|arc> [--slippage <percent>] [--min-amount-out <raw_amount>] [--dedup-key <key>] [--execute]
+purr wallet uniswap --from <ticker_or_address> --to <ticker_or_address> --amount <decimal_amount> --chain <robinhood|arc|soneium> [--slippage <percent>] [--min-amount-out <raw_amount>] [--dedup-key <key>] [--execute]
 ```
 
 ## Parameters
@@ -49,7 +49,7 @@ purr wallet uniswap --from <ticker_or_address> --to <ticker_or_address> --amount
 | `--from <ticker_or_address>` | Required | Source asset. Use a registered ticker on the selected chain or its exact token contract address. |
 | `--to <ticker_or_address>` | Required | Destination asset. Accepts the same ticker or contract-address forms as `--from`, including memecoin contracts. |
 | `--amount <decimal_amount>` | Required | Human-readable source-token amount, such as `0.003` ETH or `5` USDG; not wei/base units. |
-| `--chain <name>` / `--chain-id <id>` | Recommended | Robinhood (`4663`, default) or Arc (`5042`). Use either form. |
+| `--chain <name>` / `--chain-id <id>` | Recommended | Robinhood (`4663`, default), Arc (`5042`), or Soneium (`1868`). Use either form. |
 | `--slippage <percent>` | Optional | Slippage percentage: `0.5` means 0.5%, not 50%. Omit to use the backend default. |
 | `--min-amount-out <raw_amount>` | Optional | Minimum output in raw output-token base units. Pass the confirmed quote's `minimumToAmount` string when executing to preserve its output floor. |
 | `--dedup-key <key>` | Optional | Idempotency key. Normally omit to retain automatic deduplication; do not change it to bypass a duplicate-execution response. |
@@ -129,6 +129,36 @@ purr wallet uniswap --from <TOKEN_CA> --to USDC --amount 100 --chain arc
 | --- | --- |
 | `Arc swaps require the USDC ERC-20 address, not a native token sentinel` | Use `--from USDC` / `--to USDC`, or the USDC ERC-20 address. |
 
+## Soneium
+
+- **Chain:** `--chain soneium` or `--chain-id 1868`. Requires CLI and Platform
+  versions with Soneium support.
+- **Tokens:** `ETH` selects native ETH. `WETH` resolves to
+  `0x4200000000000000000000000000000000000006` (18 decimals). For other
+  tokens, resolve and use their exact Soneium contract address. Do not reuse
+  USDC or other token addresses from a different chain.
+- **Gas:** reserve native ETH for approvals and swaps.
+- **Explorer:** `https://soneium.blockscout.com/tx/<tx_hash>`.
+- **Execution:** hosted sends require provider-native Soneium support. A quote
+  does not prove this is enabled. Report unsupported-send or policy rejections;
+  do not bypass them with raw signing, alternative credentials, or RPC sends.
+- **Campaign scope:** Startale vault deposits and JPYSC are separate integrations.
+  Do not present a token transfer or swap as completion of a vault deposit task.
+
+Replace `<TOKEN_CA>` with the selected token's Soneium contract address and
+`<MIN_OUT_RAW>` with the confirmed quote's `minimumToAmount` string.
+
+```bash
+# Quote native ETH -> ERC-20
+purr wallet uniswap --chain soneium --from ETH --to <TOKEN_CA> --amount 0.001 --slippage 0.5
+
+# Execute only after confirmation, preserving the output floor
+purr wallet uniswap --chain soneium --from ETH --to <TOKEN_CA> --amount 0.001 --slippage 0.5 --min-amount-out <MIN_OUT_RAW> --execute
+
+# Quote ERC-20 -> native ETH
+purr wallet uniswap --chain-id 1868 --from <TOKEN_CA> --to ETH --amount 1
+```
+
 ## Quote Response
 
 The CLI prints one JSON object. Relevant quote fields are:
@@ -173,7 +203,7 @@ repeat `--execute` to query status; resolve an uncertain submission before retry
 | Error Message | Meaning / Action |
 | --- | --- |
 | `Unknown token ...` | The ticker is absent from the CLI registry. Resolve and use the exact contract address on the selected chain. |
-| `purr wallet uniswap supports Robinhood Chain (4663) and Arc (5042) only` | Select a supported chain. |
+| `purr wallet uniswap supports ... only` | Select a supported chain; Soneium requires a CLI version with chain 1868 support. |
 | `No quotes available` / `No route found` | Report that the current router found no usable route for this pair and amount; do not claim the token has no market. |
 | `Latest Uniswap quote is below minAmountOut` | Preserve the confirmed floor; obtain a new quote for confirmation rather than silently lowering it. |
 | Insufficient funds or gas | Check source-token and native gas balances before retrying, following the chain's balance and gas rules. |
