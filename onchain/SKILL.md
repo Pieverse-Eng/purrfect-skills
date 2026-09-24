@@ -1,6 +1,6 @@
 ---
 name: onchain
-description: Address/balance lookup,.pie,transfers,Telegram,chain reads
+description: Address/balance lookup,.pie,transfers,Telegram,chain reads,swaps on Robinhood/Arc/Soneium
 ---
 
 # Onchain
@@ -8,7 +8,7 @@ description: Address/balance lookup,.pie,transfers,Telegram,chain reads
 ## Overview
 
 This Skill covers wallet addresses, balances, Pie identity lookup, direct
-transfers, read-only chain checks, and Robinhood Chain or Arc swaps for stock/ETF
+transfers, read-only chain checks, and Robinhood Chain, Arc, or Soneium swaps for stock/ETF
 tokens, memecoins, and other ERC-20 tokens.
 
 This Skill is not for OWS wallet issues or workflows.
@@ -28,6 +28,7 @@ reference. Common chain IDs:
 | Base | 8453 | ETH |
 | Arc Mainnet | 5042 | USDC (native, 18 decimals) |
 | Robinhood Chain | 4663 | ETH |
+| Soneium | 1868 | ETH |
 | Arbitrum One | 42161 | ETH |
 | Polygon | 137 | MATIC |
 | OP Mainnet (Optimism) | 10 | ETH |
@@ -76,6 +77,17 @@ reference. Common chain IDs:
 Both rows represent the same balance, which also pays gas; do not add them
 together.
 
+### Common Token Addresses (Soneium, chain ID 1868)
+
+| Token | Address | Decimals |
+| --- | --- | ---: |
+| ETH (native / gas) | native | 18 |
+| WETH | `0x4200000000000000000000000000000000000006` | 18 |
+| USDC.e (bridged USDC) | `0xbA9986D2381edf1DA03B0B9c1f8b00dc4AacC369` | 6 |
+
+Use `USDC.e` for this bridged token; do not assume `USDC` on another chain has
+the same contract address.
+
 ## Command Groups
 
 | Group | What It Does | Reference |
@@ -85,6 +97,6 @@ together.
 | Pie Identity / PNS Lookups | Resolves `.pie` handles, paired Telegram accounts, account lists, and profiles. | [pie-identity.md](references/pie-identity.md) |
 | Direct `.pie` Transfers | Sends funds to a `.pie` handle or paired Telegram account. | [pie-transfers.md](references/pie-transfers.md) |
 | Raw Address Transfers | Sends funds directly to a raw EVM or Solana wallet address. | [raw-address-transfers.md](references/raw-address-transfers.md) |
-| Onchain Swaps | Quotes and executes Robinhood/Arc swaps using tickers or contract addresses. | [onchain-swaps.md](references/onchain-swaps.md) |
+| Onchain Swaps | Quotes and executes Robinhood/Arc/Soneium swaps using tickers or contract addresses. | [onchain-swaps.md](references/onchain-swaps.md) |
 | Robinhood Stock/ETF Tokens | Looks up canonical Robinhood Chain stock token and tokenized ETF contract addresses. | [robinhood-stock-etf-tokens.md](references/robinhood-stock-etf-tokens.md) |
 | Read-Only Chain Checks | Looks up transactions, receipts, logs, senders, token state, or balances through RPC/explorer workflows. | [read-only-chain-checks.md](references/read-only-chain-checks.md) |
