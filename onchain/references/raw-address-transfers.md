@@ -14,6 +14,12 @@ address.
 Arc transfers are unavailable on runtime-guarded on-demand routes; report the
 platform rejection without bypassing the guard.
 
+Ordinary Soneium transfers use TEE signing and Platform RPC broadcasting, as on
+Arc. Runtime-guarded on-demand transfers require provider-native send/replay
+support. If rejected as unsupported, report the restriction; do not switch
+credentials, use raw signing, or send through RPC to bypass it. Keep ETH for gas
+even when sending ERC-20 tokens.
+
 ## Syntax
 
 ```bash
@@ -41,6 +47,9 @@ purr wallet transfer --to 0x... --amount 5 --chain-id 143 --token USDC         #
 purr wallet transfer --to 0x... --amount 0.01 --chain-id 10                    # native ETH on OP Mainnet
 purr wallet transfer --to 0x... --amount 0.01 --chain-id 130                   # native ETH on Unichain
 purr wallet transfer --to 0x... --amount 5 --chain-id 8453 --token USDC        # USDC on Base
+purr wallet transfer --to 0x... --amount 0.001 --chain soneium               # native ETH on Soneium
+purr wallet transfer --to 0x... --amount 1 --chain soneium --token USDC.e     # bridged USDC on Soneium
+purr wallet transfer --to 0x... --amount 1 --chain-id 1868 --token <CA>       # ERC-20; amount in token units
 purr wallet transfer --to 0x... --amount 1.25 --chain-id 5042                 # native USDC on Arc (18 decimals)
 purr wallet transfer --to 0x... --amount 1.25 --chain arc --token USDC       # native USDC; CLI with Arc ticker support
 purr wallet transfer --to 0x... --amount 1.25 --chain-id 5042 --token <CA> --decimals <n>  # ERC-20 on Arc; use contract decimals

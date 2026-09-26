@@ -30,12 +30,18 @@ additional checks are needed.
 | Polygon | `https://polygon-bor-rpc.publicnode.com` |
 | X Layer | `https://rpc.xlayer.tech` |
 | Robinhood Chain | `https://rpc.mainnet.chain.robinhood.com` |
+| Soneium (1868) | `https://rpc.soneium.org` |
 | Arc Mainnet (5042) | `https://rpc.mainnet.arc.io` |
 
 For Arc Mainnet, use `https://arc.etherscan.io`
 (`/tx/<hash>` and `/address/<address>`).
 The platform defaults to the RPC above; `ARC_RPC_URL` overrides it.
 Report RPC access restrictions if a read fails.
+
+For Soneium, use `https://soneium.blockscout.com/tx/<hash>` or
+`https://soneium.blockscout.com/address/<address>`. `SONEIUM_RPC_URL` can override
+the public endpoint for platform reads and CLI swap receipt reads; CLI receipt
+reads prefer `EVM_RPC_1868` when provided. Public RPC access is rate limited.
 
 ## Syntax
 
