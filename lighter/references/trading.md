@@ -176,7 +176,9 @@ purr lighter update-margin \
 
 - Leverage path is **perp only**. Pass either `--leverage` or
   `--initial-margin-fraction`.
-- Default margin mode is `cross` when omitted.
+- Omitting `--margin-mode` applies `cross`; that is CLI behavior, not the
+  user's choice. When the user has not chosen cross or isolated, ask, and pass
+  the chosen `--margin-mode` explicitly.
 - Margin `amount` is a positive decimal string; direction is `add` or `remove`.
 - Prefer one combined confirmation when a leverage change immediately precedes
   its order (see Confirmation Contract). Execute leverage first.
