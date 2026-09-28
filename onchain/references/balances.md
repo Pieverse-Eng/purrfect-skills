@@ -5,7 +5,8 @@ Use balances to inspect native coin or token holdings on a specific chain.
 
 ## Workflow
 
-1. Identify the wallet family: EVM or Solana.
+1. Identify the wallet family: EVM, Solana, or Sui. For Sui, follow
+   [sui.md](sui.md#address-and-balances).
 2. For EVM, select the chain with `--chain-id <id>` or `--chain <name>`.
 3. Identify whether the user wants the native token or a specific token.
 4. When querying native EVM balances with `--chain-id` and no `--token`, also
@@ -54,6 +55,8 @@ purr wallet balance --chain-id 4663 --token 0x0Bd7D308f8E1639FAb988df18A8011f41E
 purr wallet balance --chain-id 4663 --token 0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168  # USDG on Robinhood Chain
 purr wallet balance --chain-type solana                                    # native SOL
 purr wallet balance --chain-type solana --token USDC                       # USDC on Solana
+purr wallet balance --chain-type sui                                       # native SUI
+purr wallet balance --chain-type sui --token USDC                          # USDC on Sui
 ```
 
 ## Response Shape

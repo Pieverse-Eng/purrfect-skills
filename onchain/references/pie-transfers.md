@@ -1,7 +1,9 @@
 # Direct `.pie` Transfers
 
 Use direct `.pie` transfers when the recipient is identified by a `.pie` handle
-or paired Telegram account.
+or paired Telegram account. Handles resolve to EVM and Solana wallets only; for a
+Sui transfer, ask for the recipient's raw Sui address and follow
+[sui.md](sui.md#transfers).
 
 ## Workflow
 

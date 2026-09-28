@@ -1,6 +1,6 @@
 ---
 name: onchain
-description: Address/balance lookup,.pie,transfers,Telegram,chain reads,swaps on Robinhood/Arc/Soneium
+description: Address/balance lookup,.pie,transfers,Telegram,chain reads,swaps on Robinhood/Arc/Soneium/Sui
 ---
 
 # Onchain
@@ -9,7 +9,8 @@ description: Address/balance lookup,.pie,transfers,Telegram,chain reads,swaps on
 
 This Skill covers wallet addresses, balances, Pie identity lookup, direct
 transfers, read-only chain checks, and Robinhood Chain, Arc, or Soneium swaps for stock/ETF
-tokens, memecoins, and other ERC-20 tokens.
+tokens, memecoins, and other ERC-20 tokens. It also covers the Sui wallet: address,
+balances, transfers, Cetus swaps, message signing, and prepared-transaction execution.
 
 This Skill is not for OWS wallet issues or workflows.
 
@@ -35,6 +36,7 @@ reference. Common chain IDs:
 | Unichain | 130 | ETH |
 | X Layer | 196 | OKB |
 | Solana | use `--chain-type solana` | SOL |
+| Sui (mainnet) | use `--chain-type sui` | SUI |
 
 ### Common Token Addresses (BSC)
 
@@ -100,3 +102,4 @@ the same contract address.
 | Onchain Swaps | Quotes and executes Robinhood/Arc/Soneium swaps using tickers or contract addresses. | [onchain-swaps.md](references/onchain-swaps.md) |
 | Robinhood Stock/ETF Tokens | Looks up canonical Robinhood Chain stock token and tokenized ETF contract addresses. | [robinhood-stock-etf-tokens.md](references/robinhood-stock-etf-tokens.md) |
 | Read-Only Chain Checks | Looks up transactions, receipts, logs, senders, token state, or balances through RPC/explorer workflows. | [read-only-chain-checks.md](references/read-only-chain-checks.md) |
+| Sui | Sui wallet address, balances, transfers, Cetus swaps, message signing, prepared-transaction execution, retries, and approvals. | [sui.md](references/sui.md) |

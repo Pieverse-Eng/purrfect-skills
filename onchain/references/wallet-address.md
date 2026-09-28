@@ -3,6 +3,7 @@
 Use this section when the user needs their wallet address. Choose EVM for
 EVM-compatible chains such as BSC, Monad, Ethereum, Base, Arc Mainnet, Robinhood Chain,
 Soneium, Arbitrum, OP Mainnet, Unichain, and Polygon. Choose Solana for Solana.
+Choose Sui for Sui; it is a separate wallet (see [sui.md](sui.md)).
 
 ## Workflow
 
@@ -13,14 +14,14 @@ Soneium, Arbitrum, OP Mainnet, Unichain, and Polygon. Choose Solana for Solana.
 ## Syntax
 
 ```bash
-purr wallet address [--chain-type <ethereum|solana>] [--chain-id <chain_id>]
+purr wallet address [--chain-type <ethereum|solana|sui>] [--chain-id <chain_id>]
 ```
 
 ## Parameters
 
 | Parameter | Required? | Description |
 | --- | --- | --- |
-| `--chain-type <ethereum|solana>` | Optional, recommended | Selects the wallet family. Use `ethereum` for the EVM address and `solana` for the Solana address. |
+| `--chain-type <ethereum|solana|sui>` | Optional, recommended | Selects the wallet family. Use `ethereum` for the EVM address, `solana` for the Solana address, and `sui` for the Sui address. |
 | `--chain-id <chain_id>` | Optional | Passes a numeric EVM chain ID to the wallet API when needed. For normal address checks, prefer `--chain-type`. |
 
 ## Commands
@@ -28,6 +29,7 @@ purr wallet address [--chain-type <ethereum|solana>] [--chain-id <chain_id>]
 ```bash
 purr wallet address --chain-type ethereum # EVM wallet address
 purr wallet address --chain-type solana   # Solana wallet address
+purr wallet address --chain-type sui      # Sui wallet address (0x + 64 hex)
 ```
 
 ## Response Shape

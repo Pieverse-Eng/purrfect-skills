@@ -5,6 +5,9 @@ Use `purr wallet uniswap` to quote, buy, sell, or swap tokens on Robinhood Chain
 tokens, memecoins, and other ERC-20 tokens with a supported route. The command
 quotes by default; `--execute` submits a transaction after user confirmation.
 
+For Sui swaps (Cetus aggregator), use `purr wallet sui-swap` as described in
+[sui.md](sui.md#swaps-cetus-aggregator); this page covers the EVM chains.
+
 Follow the shared workflow below and the selected chain's section:
 [Robinhood Chain](#robinhood-chain), [Arc Mainnet](#arc-mainnet), or [Soneium](#soneium).
 

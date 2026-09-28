@@ -1,7 +1,8 @@
 # Raw Address Transfers
 
 Use raw address transfers when the user already provides an EVM or Solana wallet
-address.
+address. For Sui, follow [sui.md](sui.md#transfers): it needs the full 32-byte
+Sui address and carries an idempotency key for safe retries.
 
 ## Workflow
 
