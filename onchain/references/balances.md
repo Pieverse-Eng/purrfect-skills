@@ -5,8 +5,10 @@ Use balances to inspect native coin or token holdings on a specific chain.
 
 ## Workflow
 
-1. Identify the wallet family: EVM, Solana, or Sui. For Sui, follow
-   [sui.md](sui.md#address-and-balances).
+1. Identify the wallet family: EVM, Solana, or Sui. For Sui, use
+   `--chain-type sui` with `--token SUI`, `USDC`, or a full coin type
+   (`0x<package>::<module>::<NAME>`); no chain ID. Sui responses also report
+   `spendableBalance` (what transfers and swaps can spend) and `addressBalance`.
 2. For EVM, select the chain with `--chain-id <id>` or `--chain <name>`.
 3. Identify whether the user wants the native token or a specific token.
 4. When querying native EVM balances with `--chain-id` and no `--token`, also
@@ -57,6 +59,7 @@ purr wallet balance --chain-type solana                                    # nat
 purr wallet balance --chain-type solana --token USDC                       # USDC on Solana
 purr wallet balance --chain-type sui                                       # native SUI
 purr wallet balance --chain-type sui --token USDC                          # USDC on Sui
+purr wallet balance --chain-type sui --token 0x...::module::NAME            # any Sui coin, by full coin type
 ```
 
 ## Response Shape

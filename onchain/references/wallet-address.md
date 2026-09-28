@@ -3,7 +3,7 @@
 Use this section when the user needs their wallet address. Choose EVM for
 EVM-compatible chains such as BSC, Monad, Ethereum, Base, Arc Mainnet, Robinhood Chain,
 Soneium, Arbitrum, OP Mainnet, Unichain, and Polygon. Choose Solana for Solana.
-Choose Sui for Sui; it is a separate wallet (see [sui.md](sui.md)).
+Choose Sui for Sui; it is a separate wallet whose address is `0x` + 64 hex.
 
 ## Workflow
 
