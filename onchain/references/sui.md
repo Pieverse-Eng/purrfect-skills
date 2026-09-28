@@ -63,10 +63,10 @@ confirm it.
 ```bash
 # Quote (no transaction)
 purr wallet sui-swap --from SUI --to USDC --amount 0.5
-purr wallet sui-swap --from USDC --to SUI --amount 10 --slippage-bps 100
+purr wallet sui-swap --from USDC --to SUI --amount 10 --slippage 1
 
 # Execute after confirmation, keeping the quoted floor
-purr wallet sui-swap --from SUI --to USDC --amount 0.5 --min-amount-out <minAmountOutBaseUnits> --execute
+purr wallet sui-swap --from SUI --to USDC --amount 0.5 --slippage 0.5 --min-amount-out <MIN_OUT_RAW> --execute
 
 # Any coin by full coin type
 purr wallet sui-swap --from SUI --to 0x...::module::NAME --amount 0.2
@@ -74,10 +74,12 @@ purr wallet sui-swap --from SUI --to 0x...::module::NAME --amount 0.2
 
 - `--from` / `--to` accept `SUI`, `USDC`, or a full coin type. `--amount` is
   in the input coin's units.
-- `--slippage-bps` sets the tolerance (default 50 = 0.5%).
-- `--min-amount-out` is in the output coin's **base units**. Pass the quote's
-  `minAmountOutBaseUnits` so execution never accepts less than the user
-  confirmed. Execution re-quotes and refuses a route below that floor.
+- `--slippage <percent>` sets the tolerance, as in `purr wallet uniswap`
+  (default 0.5, at most 50, up to two decimals).
+- `--min-amount-out <raw_amount>` is the minimum output in the output coin's
+  raw base units. Pass the confirmed quote's `minAmountOutBaseUnits` string
+  verbatim (not `minAmountOut`, which is in whole-coin units). Execution
+  re-quotes and refuses a route below that floor.
 - Tell the user the quote's `estimatedAmountOut`, minimum output, and route.
   The execution result reports the confirmed `amountOut`.
 - Some routes pass through Aftermath pools, which charge a small protocol fee
