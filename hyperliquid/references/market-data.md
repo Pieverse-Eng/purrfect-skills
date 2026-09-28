@@ -32,7 +32,8 @@ purr hyperliquid funding --coin <coin> --start-time <ms> [--end-time <ms>]
 A market returned in this conversation by the platform's `compare_trade_routes`,
 `plan_spot_purchase` or `discover_markets` is already resolved: use its
 `symbol` as `coin`, its `dex`, `assetId` and `szDecimals` (spot: `pairId`,
-`assetId` and `szDecimals`) without `search` or `symbol`.
+`assetId` and `szDecimals`) without `search` or `symbol`. Perpetual results also
+carry `limits`: `maxLeverage`, `onlyIsolated` and `minNotional`.
 
 Otherwise use `search` for targeted ticker discovery. It filters raw catalog
 fields and does not translate company or asset names into tickers. Verify the

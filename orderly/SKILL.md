@@ -14,7 +14,8 @@ endpoints directly, and never create or store an Orderly key.
 These Orderly-specific public commands work before onboarding and do not need
 wallet credentials. Market discovery and cross-venue cost comparison belong to
 the platform's `discover_markets` and `compare_trade_routes`; a `PERP_` symbol
-they return is already verified and needs no search.
+they return is already verified and needs no search, and its `limits` give the
+minimum quantity and notional.
 
 1. Search with `purr orderly markets --query <TICKER>`.
 2. Verify the exact `PERP_<TOKEN>_USDC` symbol using

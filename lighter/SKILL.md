@@ -55,7 +55,8 @@ Pick the matching command group below, then read that reference before acting.
    (side filter). Passing `--type perp` is always wrong.
 6. A market returned by the platform's `compare_trade_routes`,
    `plan_spot_purchase` or `discover_markets` already carries `marketId`,
-   `sizeDecimals` and `priceDecimals`. Otherwise resolve it with
+   `sizeDecimals` and `priceDecimals`; perpetual results also carry `limits`
+   (`maxLeverage`, `minQuantity`, `minNotional`). Otherwise resolve it with
    `purr lighter market --market <SYM> --market-type <perp|spot>` (or
    `--market-id`) and use the returned decimals / market id. Never invent
    market ids or precision.

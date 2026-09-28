@@ -14,8 +14,10 @@ and cancelling use the live position/order checks in their sections below.
 1. Read [preflight.md](preflight.md) and select the relevant checks.
    For allocation or funding decisions, establish available collateral and
    identify any required deposit or transfer.
-2. Reuse the exact market and `szDecimals` from the platform tools when they
-   returned it; otherwise resolve it with [market-data.md](market-data.md).
+2. Reuse the exact market, `szDecimals` and `limits` (maximum leverage,
+   isolated-only, minimum notional) from the platform tools when they returned
+   them; `symbol` returns nothing more. Otherwise resolve the market with
+   [market-data.md](market-data.md).
    Retain `coin`, `assetId`, `szDecimals`, dex, supported margin mode, and
    fresh executable price context.
 3. Read [order-commands.md](order-commands.md) for order parameters,
