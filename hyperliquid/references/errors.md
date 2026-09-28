@@ -81,7 +81,9 @@ established from `orders --kind frontend` or `order-status`, do not guess them.
 
 ## Transaction Fee Authorization Required
 
-The primary flow is `builder-fee-status` before every order-placement command.
+The primary flow checks fee status before every order-placement command: this
+turn's readiness `approve_fee` step, or `builder-fee-status` when that step is
+not complete.
 If placement still returns
 `HYPERLIQUID_BUILDER_FEE_APPROVAL_REQUIRED`:
 

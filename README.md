@@ -4,10 +4,14 @@ This directory contains the Pieverse built-in skills. Each folder is a skill uni
 
 ## Market research and execution
 
-Hosted market discovery, reference candles, and cross-venue cost comparison
-run through fx tools. Platform checks which venues the tenant has configured.
-Venue skills document execution workflows and direct public market commands;
-they do not define a separate hosted Market Search Agent workflow.
+`financial-research` provides read-only company, asset and market research through
+the platform AgentKey CLI. It can support a discussion or user-directed trading
+task without recommending investments or authorizing execution.
+
+Market discovery, cross-venue cost comparison and split spot plans are platform
+tools, and the platform supplies per-turn venue readiness. Venue skills document
+execution workflows and venue-specific market data such as books, candles and
+funding.
 
 # Current Layout
 
@@ -52,13 +56,13 @@ they do not define a separate hosted Market Search Agent workflow.
 | `blockbeats` | BlockBeats intelligence — 1,500+ sources including AI-driven insights, Hyperliquid on-chain data, and Polymarket analytics. |
 | `bnbchain-mcp` | BNB Chain MCP server — read-only blockchain queries for BNB Chain / opBNB blocks, transactions, contracts, ERC20 / NFTs, balances, and network info. |
 | `ddg-search` | DuckDuckGo web search — zero-config, no API key required. Use as a fallback when `web_search` is unavailable. |
+| `financial-research` | Source-grounded company filings, earnings, project and market research through platform AgentKey; available during discussion or user-directed trading, without investment recommendations or execution. |
 | `kaia-skills` | Kaia knowledge bundle — network basics, gas, fee delegation, governance, SDKs, and transaction types. |
 | `mantle` | Mantle skill bundle — network reference, address lookup, risk evaluation, portfolio analysis, DeFi planning, indexing, debugging, simulation, and smart-contract lifecycle. |
 | `panewslab` | PANewsLab crypto news, Polymarket smart money boards, article publishing, and rendered PANews web pages. |
 | `news2trading` | Pawpilot onboarding through a shared read/change/verify Profile CLI; private news assessment and runtime-specific publication. Credentials stay inside scripts. Never executes trades. |
 | `rootdata-crypto` | RootData crypto intelligence — project / investor / people search, funding rounds, trending projects, and personnel job changes. |
 | `surf` | Surf crypto intelligence — live prices, wallets, DeFi, on-chain SQL, social analytics, prediction markets, news, search, and fund data via the Surf CLI. |
-| `stock-spread` | READ-ONLY cross-venue tokenized-stock price & spread intelligence — resolves an equity to per-venue identifiers and reports the normalized CEX-vs-DEX spread across Gate, Bybit, Binance bStocks, Bitget, and Solana/Jupiter, warning when legs span different tokenization wrappers. Quotes & comparison only; never trades. |
 | `binance-tokenized-securities-info` | READ-ONLY Ondo tokenized US-stock data on Binance Web3 (BNB Chain) — token list, RWA metadata + attestations, market/asset trading status (corporate actions), on-chain price/holders/market-cap, US fundamentals, and K-line. Imported from binance-skills-hub. |
 
 ### Wallet & Infrastructure

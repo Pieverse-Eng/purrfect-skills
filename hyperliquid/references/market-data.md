@@ -29,12 +29,17 @@ purr hyperliquid funding --coin <coin> --start-time <ms> [--end-time <ms>]
 
 ## Symbol Resolution (Required Before Orders)
 
-Use `search` for targeted ticker discovery. It filters raw catalog fields and
-does not translate company or asset names into tickers. Verify the intended
-underlying and product from active results, then use `symbol` for the final
-pre-order resolution.
+A market returned in this conversation by the platform's `compare_trade_routes`,
+`plan_spot_purchase` or `discover_markets` is already resolved: use its
+perpetual `symbol` as `coin` with its `dex`, `assetId` and `szDecimals`; for spot,
+pass `pairId` (such as `@702`) as `--coin`, never the display `symbol`, with its
+`assetId` and `szDecimals`. No `search` or `symbol` call is needed. Perpetual results also
+carry `limits`: `maxLeverage`, `onlyIsolated` and `minNotional`.
 
-Always resolve before placing or modifying an order:
+Otherwise use `search` for targeted ticker discovery. It filters raw catalog
+fields and does not translate company or asset names into tickers. Verify the
+intended underlying and product from active results, then use `symbol` for the
+final pre-order resolution:
 
 ```bash
 purr hyperliquid symbol --coin ETH
@@ -119,7 +124,7 @@ purr hyperliquid funding --coin ETH --start-time 1710000000000
 
 ## Research vs Trading
 
-Market-data commands alone never trade. For cross-venue tokenized-stock
-comparison (CEX vs DEX spreads), prefer the research-only `stock-spread` skill.
-Use Hyperliquid market-data commands when the user wants Hyperliquid-specific
-books, funding, or later execution on Hyperliquid.
+Market-data commands alone never trade. Market discovery and cross-venue cost
+comparison belong to the platform's `discover_markets` and
+`compare_trade_routes`; use these commands for Hyperliquid-specific books,
+candles, funding, or execution.

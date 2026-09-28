@@ -12,13 +12,20 @@ endpoints directly, and never create or store an Orderly key.
 ## Public market data
 
 These Orderly-specific public commands work before onboarding and do not need
-wallet credentials. Hosted market discovery, reference candles, and cross-venue
-comparison are provided by fx tools.
+wallet credentials. Market discovery and cross-venue cost comparison belong to
+the platform's `discover_markets` and `compare_trade_routes`; a `PERP_` symbol
+they return is already verified and needs no search, and its `limits` give the
+minimum quantity and notional.
+
+Without a tool-returned symbol:
 
 1. Search with `purr orderly markets --query <TICKER>`.
 2. Verify the exact `PERP_<TOKEN>_USDC` symbol using
    `purr orderly market --symbol <SYMBOL>`; do not treat a substring match as
    a verified listing.
+
+For any market:
+
 3. Use `purr orderly orderbook --symbol <SYMBOL>` and
    `purr orderly candles --symbol <SYMBOL> --interval 1h` for depth and price
    context. Funding is available via `purr orderly funding --symbol <SYMBOL>`.
@@ -40,15 +47,17 @@ account, hold funds, or permit an order. `status` keeps those separate as
 Disabling is refused while positions, orders, balances, or asset operations
 remain. Report the returned `requiredActions` and resolve them before retrying.
 
-After changing the switch, re-read `purr orderly status`. The configured-venue
-list in this turn's context was resolved before the change and does not yet
-reflect it.
+After changing the switch, re-read `purr orderly status`. This turn's venue
+readiness was read before the change and does not yet reflect it.
 
 ## Readiness and onboarding
 
-Run `purr orderly status` before a private read or trade. `publicReady` alone
-permits public data access; only `tradeReady: true` permits account actions,
-and `fundedReady` states separately whether collateral is available.
+This turn's venue readiness summarizes the `enable`, `open_account` and
+`deposit` steps; when all are complete, trade without another `status` call.
+Run `purr orderly status` when a step is not complete, when this turn has no
+readiness block, or after onboarding. `publicReady` alone permits public data access; only
+`tradeReady: true` permits account actions, and `fundedReady` states
+separately whether collateral is available.
 
 If the account is not ready, first show the result of:
 
@@ -110,8 +119,10 @@ a new order or resubmitting a withdrawal/deposit: inspect `orders`, `fills`,
 
 ## Trading flow
 
-Before placing an order, resolve exact market metadata and check account
-collateral with `purr orderly balance`. The CLI validates Orderly tick sizes,
+Before placing an order, use the tool-returned symbol and `limits` (or resolve
+exact market metadata) and check account collateral with `purr orderly balance`;
+if readiness shows the `deposit` step incomplete, report the funding gap before
+offering to trade. The CLI validates Orderly tick sizes,
 minimum quantity, and minimum notional; never round up a user amount silently.
 An option a command does not accept is refused rather than ignored, so a
 preview always matches what execution submits; correct the command instead of

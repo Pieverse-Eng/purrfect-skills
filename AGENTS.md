@@ -2,10 +2,14 @@
 
 ## Research ownership
 
-Hosted market discovery, reference candles, and cross-venue cost comparison
-are implemented by fx tools. Platform owns configured-venue detection.
-Keep venue execution instructions and public market command references in
-the skills; do not duplicate the hosted research workflow or its fee tables.
+Market discovery, cross-venue cost comparison and split spot plans are
+platform tools (`discover_markets`, `compare_trade_routes`,
+`plan_spot_purchase`); they return exact market IDs and order precision. The
+platform also injects per-turn venue readiness (integration, account, funding
+and fee approval). Keep venue execution instructions and venue-specific market
+data (books, candles, funding) in the skills; use tool IDs and readiness
+instead of re-resolving them, and do not duplicate discovery, comparison or
+fee tables.
 
 ## Wrapper and vendor skills
 

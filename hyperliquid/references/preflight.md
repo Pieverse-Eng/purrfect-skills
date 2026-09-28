@@ -36,7 +36,9 @@ Public `search`, `symbol`, `markets`, `l2`, and `candles` remain available witho
 wallet credentials; see [market-data.md](market-data.md). Authorization to
 enable/disable follows [SKILL.md](../SKILL.md#confirmation-contract).
 
-Run this check silently when starting any Hyperliquid workflow:
+This turn's venue readiness reports the integration as its `enable` step. Run
+`purr hyperliquid status` unless that step is `complete` (including when this turn
+has no readiness block), or to verify an `enable` you just ran:
 
 ```bash
 purr hyperliquid status
@@ -99,7 +101,10 @@ requirements when supplied.
 
 All order-placement commands (perp and spot) require the fixed additional
 `0.05%` transaction fee authorization when it is not already approved.
-Non-order actions skip this check.
+Non-order actions skip this check. This turn's venue readiness reports the
+same status as its `approve_fee` step (`complete` is approved, `action_required`
+needs consent); run the command below unless that step is `complete`, or to
+verify an approval you just made.
 
 ```bash
 purr hyperliquid builder-fee-status
