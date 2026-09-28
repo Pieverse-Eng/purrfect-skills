@@ -17,10 +17,15 @@ the platform's `discover_markets` and `compare_trade_routes`; a `PERP_` symbol
 they return is already verified and needs no search, and its `limits` give the
 minimum quantity and notional.
 
+Without a tool-returned symbol:
+
 1. Search with `purr orderly markets --query <TICKER>`.
 2. Verify the exact `PERP_<TOKEN>_USDC` symbol using
    `purr orderly market --symbol <SYMBOL>`; do not treat a substring match as
    a verified listing.
+
+For any market:
+
 3. Use `purr orderly orderbook --symbol <SYMBOL>` and
    `purr orderly candles --symbol <SYMBOL> --interval 1h` for depth and price
    context. Funding is available via `purr orderly funding --symbol <SYMBOL>`.
@@ -114,8 +119,10 @@ a new order or resubmitting a withdrawal/deposit: inspect `orders`, `fills`,
 
 ## Trading flow
 
-Before placing an order, resolve exact market metadata and check account
-collateral with `purr orderly balance`. The CLI validates Orderly tick sizes,
+Before placing an order, use the tool-returned symbol and `limits` (or resolve
+exact market metadata) and check account collateral with `purr orderly balance`;
+if readiness shows the `deposit` step incomplete, report the funding gap before
+offering to trade. The CLI validates Orderly tick sizes,
 minimum quantity, and minimum notional; never round up a user amount silently.
 An option a command does not accept is refused rather than ignored, so a
 preview always matches what execution submits; correct the command instead of

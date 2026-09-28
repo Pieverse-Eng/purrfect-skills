@@ -73,6 +73,9 @@ you tolerate.
 
 ### Size and precision
 
+Use `sizeDecimals`, `priceDecimals` and `limits` from the platform tools when
+they returned the market; otherwise resolve it:
+
 ```bash
 purr lighter market --market <SYM> --market-type <t>
 ```
@@ -182,11 +185,12 @@ purr lighter update-margin \
 
 Silent preparation:
 
-1. `status` → enable if needed (confirmed).
-2. `account` → must reach `ready` (open-account / wait otherwise).
-3. `partner-fee-status` → if needed, user consent for the 0.05% transaction fee,
-   then `approve-partner-fee` (confirmed).
-4. `market` resolve + `order-book-depth` + `positions` / `balances`.
+1. Readiness `enable`, `open_account` and `approve_fee` steps: when complete,
+   skip `status`, `account` and `partner-fee-status`; otherwise run them, enable
+   (confirmed), open or wait, and obtain fee consent then
+   `approve-partner-fee` (confirmed).
+2. Market precision and limits from the platform tools (or `market`), then
+   `order-book-depth` and `positions` / `balances`.
 5. User confirmation with full parameters.
 6. `order` (or leverage then `order`).
 7. Verify with `active-orders` / `trades` / `positions` — never claim fill from

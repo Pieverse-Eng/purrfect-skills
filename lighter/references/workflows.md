@@ -6,7 +6,11 @@ results, and blocking errors only.
 
 ## Shared gates
 
-At the start of any exchange workflow:
+This turn's venue readiness already reports the integration (`enable`),
+account (`open_account`), funding (`deposit`) and fee (`approve_fee`) steps.
+When they are complete, skip the gate commands below in every workflow. Run
+them only for a step that is not complete or unknown, or to verify a change you
+just made:
 
 ```bash
 purr lighter status
@@ -15,11 +19,12 @@ purr lighter account
 ```
 
 If `account.status` is not `ready`, follow first-open or wait paths before
-promising a trade.
-
-For every order path: after the account is ready, run
+promising a trade. When the fee step is not complete, run
 `purr lighter partner-fee-status` and complete 0.05% transaction fee consent
 when required.
+
+A market returned by the platform tools already carries its market id,
+decimals and limits; skip `purr lighter market` in the recipes below for it.
 
 ## A. First open and fund
 
