@@ -1,67 +1,36 @@
 # Company and earnings research
 
-Resolve the issuer and reporting period; identify its listing only when market
-data is needed. Company research does not require selecting a tokenized or
-perpetual instrument.
+Resolve the issuer and reporting period; a listing matters only for market
+data. Start with official filings, earnings releases and investor-relations
+materials; find them with `Tavily/post_search` and `include_domains`, and read
+them with `Tavily/post_extract`. Use structured data only for needed figures.
 
-Start with official filings, earnings releases and investor-relations materials.
-For changes in a financial metric, establish the comparison and management's
-explanation; add structured data only for needed figures or calculations.
-Select tools below for the question, not as a mandatory sequence. Follow the
-main skill's access, result-processing and completion rules.
+Filings for a US issuer (without `symbol`, `cik` or `accessNumber` it returns
+every issuer):
 
-## Locate sources: `Tavily/post_search`
+```bash
+purr agentkey execute Finnhub/filings --params '{"symbol":"<TICKER>","from":"YYYY-MM-DD","to":"YYYY-MM-DD"}' --max-credits 0.1 > /tmp/ak-filings.json
+jq -c '[.result.data[] | {form, filedDate, reportUrl}]' /tmp/ak-filings.json
+```
 
-Search the issuer, period and subject, preferring official domains.
+Reported financials (the response holds every period, often over 800 KB; the
+latest filing may not be included yet, so check `filings`):
 
-| Parameter | Type / meaning |
-| --- | --- |
-| `query` | Required string: research query. |
-| `include_domains`, `exclude_domains` | Arrays of domain strings. |
-| `max_results` | Integer 0–20; default 5. |
-| `topic` | `general` (default), `news` or `finance`. |
-| `search_depth` | `basic`, `advanced`, `fast` or `ultra-fast`. |
-| `start_date`, `end_date` | `YYYY-MM-DD` strings. |
-| `chunks_per_source` | Integer 1–3, default 3; snippets for advanced search. |
+```bash
+purr agentkey execute Finnhub/financialsReported --params '{"symbol":"<TICKER>","freq":"quarterly"}' --max-credits 0.1 > /tmp/ak-fin.json
+jq -c '[.result.data.data[] | {year, quarter, form, endDate}] | sort_by(.endDate) | reverse | .[:6]' /tmp/ak-fin.json
+jq -c '.result.data.data | sort_by(.endDate) | last | [.report.ic[] | select(.concept | test("Revenues|NetIncomeLoss|EarningsPerShareDiluted")) | {label: .label, value: .value, unit: .unit}]' /tmp/ak-fin.json
+```
 
-## Read sources: `Tavily/post_extract`
+In jq 1.6, `label` is a keyword: write `label: .label`, not `{label}`. Statements
+are `ic`, `bs` and `cf`.
 
-| Parameter | Type / meaning |
-| --- | --- |
-| `urls` | Required string: **one complete URL**, never joined URLs or a string-encoded array. Use an array of 1–20 URLs only if the live AgentKey schema supports it. |
-| `query` | Optional string for relevant excerpts. Omit for full-content extraction; save and filter large results locally. |
-| `chunks_per_source` | Integer 1–5, default 3; with `query`, at most 500 characters per excerpt. |
-| `extract_depth` | `basic` (default) or `advanced`; advanced can help with tables but does not remove excerpt limits or guarantee completeness. |
-| `format` | `markdown` (default) or `text`. |
-| `timeout` | Number, 1–60 seconds. |
+`Finnhub/companyEarnings` gives EPS surprises only. `Finnhub/companyNews` covers
+North American issuers, returns more than 100 items a day and mostly unrelated
+market roundups; prefer news search.
 
-Choose passage or full-content extraction according to the evidence needed.
-If excerpts omit a required table/section, change the extraction mode rather
-than repeatedly rewriting the query. Check `results` and `failed_results`;
-a successful request does not prove a complete filing was retrieved.
-
-Sources: [Tavily Search](https://docs.tavily.com/documentation/api-reference/endpoint/search),
-[Extract](https://docs.tavily.com/documentation/api-reference/endpoint/extract).
-
-## Company data: Finnhub
-
-| Need / tool | Parameters | Semantics |
-| --- | --- | --- |
-| Financial figures: `Finnhub/financialsReported` | Optional strings: `symbol`, `cik`, `accessNumber`, `freq`, `from`, `to`. | Supply an issuer or filing identifier. `freq`: `annual` (default) or `quarterly`. Dates filter report **endDate**, not publication date. |
-| Filing links: `Finnhub/filings` | Optional strings: `symbol`, `cik`, `accessNumber`, `form`, `from`, `to`. | Without an issuer/filing identifier, returns filings across issuers. `form` filters filing type. |
-| EPS surprises: `Finnhub/companyEarnings` | Required `symbol: string`; optional `limit: integer`. | `limit` counts periods; omission returns full history. Not revenue attribution. |
-| Company news: `Finnhub/companyNews` | Required strings: `symbol`, `from`, `to`. | Coverage of events, not a substitute for original disclosures. |
-
-Dates use `YYYY-MM-DD`. Request the relevant periods and select needed statement
-fields locally, retaining filing identifiers and units.
-
-Source: [Finnhub parameters](https://github.com/Finnhub-Stock-API/finnhub-go/blob/master/docs/DefaultApi.md).
-
-## Interpret comparisons
-
-Compare consistent fiscal/calendar periods, quarterly/cumulative/annual/TTM
-figures, reported/adjusted metrics, basic/diluted EPS and currencies. Separate
-actual results from guidance and forecasts; an earnings surprise requires a
-comparable expectations baseline. Explain material changes with sourced
-drivers and label calculations. Disclose unavailable filings or tables instead
-of reconstructing them from snippets.
+Compare consistent periods (quarterly, cumulative, annual or TTM), reported vs
+adjusted metrics, basic vs diluted EPS and currencies. Separate results from
+guidance; a surprise needs a comparable expectation. Explain changes with
+sourced drivers, label calculations, and disclose missing filings instead of
+reconstructing them from snippets.
