@@ -210,9 +210,13 @@ purr wallet sui-swap --from SUI --to 0x...::module::NAME --amount 0.2
 **Quote:** show `estimatedAmountOut`, `minAmountOut` and the route. The quote
 also returns `minAmountOutBaseUnits` for `--min-amount-out`.
 
-**Result:** `--execute` returns once the swap is confirmed. Report `hash`, the
-explorer link, and `amountOut` (the actual output received, formatted).
-`amountOut` is null only if the fullnode had not reported the transaction yet.
+**Result:** `--execute` returns once the swap is confirmed, in the same shape
+as `uniswap` results: `hash`, `explorerUrl`, `status`, `input` / `output`
+(`coinType`, `symbol`, `amount`), `gas` (`amount`, `symbol`), plus
+`operationId` and `replayed`. Report the hash, the explorer link, and the
+actual `input.amount` / `output.amount`. If `output.amount` is missing, the
+swap is still confirmed; only the received amount was not reported yet. Share
+the explorer link rather than estimating it.
 For `POLICY_DEFERRED`, `SUI_SUBMISSION_UNKNOWN`, `stale_chain_state` and
 policy denials, follow the [Sui retry and error rules](raw-address-transfers.md#sui).
 Swap-specific errors:
