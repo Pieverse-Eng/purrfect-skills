@@ -5,8 +5,13 @@ Use `purr wallet uniswap` to quote, buy, sell, or swap tokens on Robinhood Chain
 tokens, memecoins, and other ERC-20 tokens with a supported route. The command
 quotes by default; `--execute` submits a transaction after user confirmation.
 
+Sui swaps use a different command, `purr wallet sui-swap` (Cetus aggregator);
+see [Sui](#sui). The shared workflow's quote → confirm → execute steps apply
+to it as well.
+
 Follow the shared workflow below and the selected chain's section:
-[Robinhood Chain](#robinhood-chain), [Arc Mainnet](#arc-mainnet), or [Soneium](#soneium).
+[Robinhood Chain](#robinhood-chain), [Arc Mainnet](#arc-mainnet), [Soneium](#soneium),
+or [Sui](#sui).
 
 ## Usage Notes
 
@@ -162,9 +167,69 @@ purr wallet uniswap --chain soneium --from ETH --to <TOKEN_CA> --amount 0.001 --
 purr wallet uniswap --chain-id 1868 --from <TOKEN_CA> --to ETH --amount 1
 ```
 
+## Sui
+
+- **Command:** `purr wallet sui-swap`, not `uniswap`. Sui mainnet only, through
+  the Cetus aggregator. The platform builds and checks the swap, and the TEE
+  signs and broadcasts it.
+- **Coins:** `SUI`, `USDC`, or a full coin type `0x<package>::<module>::<NAME>`
+  (module and type names are case-sensitive). See the Sui coin table in
+  SKILL.md. Do not guess a coin type from a symbol.
+- **Gas:** keep SUI for gas, including when swapping USDC or another coin.
+- **Explorer:** `https://suiscan.xyz/mainnet/tx/<hash>`.
+- **Fees:** some routes pass through Aftermath pools, which charge a small
+  protocol fee (0.05%). Part of it goes to a third-party address, so it shows
+  up in the transaction's balance changes. This is expected.
+
+```bash
+purr wallet sui-swap --from <SUI|USDC|coin_type> --to <SUI|USDC|coin_type> --amount <decimal_amount> [--slippage <percent>] [--idempotency-key <key>] [--execute]
+```
+
+| Parameter | Required? | Description |
+| --- | --- | --- |
+| `--from` / `--to` | Required | `SUI`, `USDC`, or a full coin type. |
+| `--amount <decimal_amount>` | Required | Human-readable input amount, such as `0.5` SUI; not base units. |
+| `--slippage <percent>` | Optional | Slippage percentage: `0.5` means 0.5% (default 0.5, at most 50, up to two decimals). |
+| `--idempotency-key <key>` | Optional | Resumes an earlier send. Pass only the key a previous result or error reported (`operationId` / `idempotencyKey`). |
+| `--execute` | Optional | Executes the confirmed swap. Omit for quote-only mode. |
+
+Execute with the same coins, amount and `--slippage` as the confirmed quote. Do
+not pass `--min-amount-out` (unlike `uniswap` step 4): execution re-quotes and
+never accepts less than the fresh quote less the slippage.
+
+```bash
+# Quote SUI -> USDC
+purr wallet sui-swap --from SUI --to USDC --amount 0.5 --slippage 0.5
+
+# Execute only after confirmation, with the same parameters
+purr wallet sui-swap --from SUI --to USDC --amount 0.5 --slippage 0.5 --execute
+
+# Any coin by full coin type
+purr wallet sui-swap --from SUI --to 0x...::module::NAME --amount 0.2
+```
+
+**Quote:** show `estimatedAmountOut`, `minAmountOut` and the route.
+
+**Result:** `--execute` returns once the swap is confirmed, in the same shape
+as `uniswap` results: `hash`, `explorerUrl`, `status`, `input` / `output`
+(`coinType`, `symbol`, `amount`), `gas` (`amount`, `symbol`), plus
+`operationId` and `replayed`. Report the hash, the explorer link, and the
+actual `input.amount` / `output.amount`. If `output.amount` is missing, the
+swap is still confirmed; only the received amount was not reported yet. Share
+the explorer link rather than estimating it.
+For `POLICY_DEFERRED`, `SUI_SUBMISSION_UNKNOWN`, `stale_chain_state` and
+policy denials, follow the [Sui retry and error rules](raw-address-transfers.md#sui).
+Swap-specific errors:
+
+| Error | Meaning / Action |
+| --- | --- |
+| `unsupported_coin` / `Unknown Sui coin` | The coin could not be identified; ask for its exact full coin type. |
+| `no_route` / `router_unavailable` | No usable Cetus route right now (`router_unavailable` may succeed on retry). |
+
 ## Quote Response
 
-The CLI prints one JSON object. Relevant quote fields are:
+The CLI prints one JSON object. Relevant `uniswap` quote fields are listed
+below; for Sui, see [Sui](#sui).
 
 | Field | Meaning |
 | --- | --- |

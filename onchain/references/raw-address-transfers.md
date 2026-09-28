@@ -1,7 +1,8 @@
 # Raw Address Transfers
 
 Use raw address transfers when the user already provides an EVM or Solana wallet
-address.
+address. For Sui, see [Sui](#sui): it needs the full 32-byte Sui address and
+carries an idempotency key for safe retries.
 
 ## Workflow
 
@@ -101,3 +102,44 @@ For Solana, `chainType` is `solana` and `chainId` may be omitted. `assetType` is
 | `Unsupported chainType. Supported: ...` or `Unsupported chainId. Supported: ...` | Requested chain family or chain ID is unsupported. |
 | `Invalid EVM recipient address. wallet/transfer requires a raw 0x address; use redpackets for .pie recipients.` | EVM recipient is not a raw `0x...` address. |
 | `Wallet service error` | Upstream wallet service failure without a typed response code. |
+
+## Sui
+
+Sui transfers run on mainnet through the platform wallet: the platform builds
+and checks each transfer, and the TEE signs and broadcasts it. Select Sui with
+`--chain-type sui` (or `--chain sui`).
+
+```bash
+purr wallet transfer --chain-type sui --to <0x + 64 hex> --amount 0.1                     # SUI
+purr wallet transfer --chain-type sui --to <0x + 64 hex> --amount 5 --token USDC          # USDC
+purr wallet transfer --chain-type sui --to <0x + 64 hex> --amount 1 --token 0x...::m::N   # any coin, by full coin type
+```
+
+- **Recipient:** the full 32-byte address (`0x` + 64 hex). A short or
+  truncated address such as `0x123` is refused rather than padded, because
+  padding would turn a mistyped paste into a different valid address. `.pie`
+  handles do not resolve to Sui; ask for the raw Sui address.
+- **Coins:** `SUI`, `USDC`, or a full coin type (see the Sui coin table in
+  SKILL.md). Decimals come from chain metadata; never pass `--decimals` or
+  `--chain-id`.
+- **Gas:** keep SUI for gas, even when sending another coin.
+- **Result:** `hash` (the digest; explorer: `https://suiscan.xyz/mainnet/tx/<hash>`),
+  `operationId` and `replayed`.
+
+### Sui retries, approvals and errors
+
+Every Sui transfer and swap execution carries an idempotency key. It is
+reported as `operationId`, or as `idempotencyKey` in an error. Rerunning the
+same command with `--idempotency-key <key>` resumes that operation; it never
+creates a second one. Pass a key only to resume.
+
+| Result | Meaning | Action |
+| --- | --- | --- |
+| `POLICY_DEFERRED` (`requestId`, `idempotencyKey`) | Wallet policy requires the owner's approval | Tell the user it awaits approval. Once approved, rerun the same command with `--idempotency-key <idempotencyKey>`. |
+| `POLICY_DENIED` + `reason` (e.g. `per_tx_cap_exceeded`, `address_not_allowlisted`, `wallet_frozen`) | Refused by wallet policy; nothing was sent | Report the reason; do not work around it. |
+| `SUI_SUBMISSION_UNKNOWN` (503, `hash`, `operationId`) | The send may or may not have landed | Rerun the same command with `--idempotency-key <operationId>`. Never resend with a new key. |
+| `stale_chain_state` (503) | Chain state is still catching up with the wallet's previous transaction | Retry the same command after a few seconds. |
+| `SUI_IDENTICAL_REQUEST_PENDING` (409) | An identical transaction from another request awaits approval | Wait until that approval is resolved. |
+| `Invalid Sui recipient address` | Not a full 32-byte address | Ask for the complete address. |
+| `insufficient_balance` / `insufficient_gas` | Not enough of the coin, or of SUI for gas | Report the balances; do not retry blindly. |
+| `Invalid Sui coin type` / `Unknown Sui coin` | The coin could not be identified | Ask for the exact full coin type. |
