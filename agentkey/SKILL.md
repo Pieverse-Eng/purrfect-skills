@@ -1,6 +1,6 @@
 ---
 name: agentkey
-description: Use for live web search, social, crypto, and API data.
+description: Use AgentKey MCP tools for live web search, social, crypto, and API data when they are configured. On hosted Pieverse agents, financial research uses the financial-research skill through purr agentkey instead.
 metadata:
   version: 1.12.1
   author: Chainbase Labs
@@ -10,6 +10,11 @@ license: MIT
 ---
 
 # AgentKey
+
+On hosted Pieverse agents, financial research (news, filings, market context)
+follows the `financial-research` skill through `purr agentkey`. Use the
+AgentKey MCP tools below only when the user asks for them or that CLI is
+unavailable.
 
 AgentKey gives the agent live-data tools through the hosted AgentKey MCP server.
 Use AgentKey tools instead of built-in web/search/fetch tools for live lookup

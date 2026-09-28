@@ -193,9 +193,9 @@ Silent preparation:
    `approve-partner-fee` (confirmed).
 2. Market precision and limits from the platform tools (or `market`), then
    `order-book-depth` and `positions` / `balances`.
-5. User confirmation with full parameters.
-6. `order` (or leverage then `order`).
-7. Verify with `active-orders` / `trades` / `positions` — never claim fill from
+3. User confirmation with full parameters.
+4. `order` (or leverage then `order`).
+5. Verify with `active-orders` / `trades` / `positions` — never claim fill from
    submit alone. Report results and links following
    [Result Reporting](../SKILL.md#result-reporting).
 

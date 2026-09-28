@@ -59,7 +59,7 @@ Posts on X (supports X search operators):
 
 ```bash
 purr agentkey execute Sorsa/post_search_tweets --params '{"query":"<search>","order":"latest"}' --max-credits 0.5 > /tmp/ak-x.json
-jq -c '[.result.data.tweets[] | {user: .user.username, created_at, likes: .likes_count, text: .full_text[:280], url: "https://x.com/\(.user.username)/status/\(.id)"}] | sort_by(-.likes) | .[:10]' /tmp/ak-x.json
+jq -c '[.result.data.tweets[] | {user: .user.username, created_at, likes: .likes_count, text: .full_text[:280], url: "https://x.com/\(.user.username)/status/\(.id)"}] | sort_by(-(.likes // 0)) | .[:10]' /tmp/ak-x.json
 ```
 
 For other needs, `purr agentkey discover "<capability or provider/operation>"`

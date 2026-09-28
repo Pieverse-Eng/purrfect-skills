@@ -9,8 +9,8 @@ results, and blocking errors only.
 This turn's venue readiness already reports the integration (`enable`),
 account (`open_account`), funding (`deposit`) and fee (`approve_fee`) steps.
 When they are complete, skip the gate commands below in every workflow. Run
-them only for a step that is not complete or unknown, or to verify a change you
-just made:
+them only for a step that is not complete (or when this turn has no readiness
+block), or to verify a change you just made:
 
 ```bash
 purr lighter status
@@ -74,8 +74,9 @@ purr lighter deposit --amount 50 --source-chain-id 42161
 
 ## C. Crypto perp open (example: long SOL)
 
-1. Gates: `status`, `account` ready, `partner-fee-status`.
-2. Resolve market and book:
+1. Gates from readiness; run `status`, `account` or `partner-fee-status` only
+   for a step that is not complete.
+2. Book and account (skip `market` for a tool-returned market):
 
 ```bash
 purr lighter market --market SOL --market-type perp

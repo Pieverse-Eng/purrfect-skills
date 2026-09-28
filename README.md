@@ -8,10 +8,10 @@ This directory contains the Pieverse built-in skills. Each folder is a skill uni
 the platform AgentKey CLI. It can support a discussion or user-directed trading
 task without recommending investments or authorizing execution.
 
-Hosted market discovery, reference candles, and cross-venue cost comparison
-run through fx tools. Platform checks which venues the tenant has configured.
-Venue skills document execution workflows and direct public market commands;
-they do not define a separate hosted Market Search Agent workflow.
+Market discovery, cross-venue cost comparison and split spot plans are platform
+tools, and the platform supplies per-turn venue readiness. Venue skills document
+execution workflows and venue-specific market data such as books, candles and
+funding.
 
 # Current Layout
 

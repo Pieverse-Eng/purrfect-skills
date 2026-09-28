@@ -19,7 +19,7 @@ latest filing may not be included yet, so check `filings`):
 ```bash
 purr agentkey execute Finnhub/financialsReported --params '{"symbol":"<TICKER>","freq":"quarterly"}' --max-credits 0.1 > /tmp/ak-fin.json
 jq -c '[.result.data.data[] | {year, quarter, form, endDate}] | sort_by(.endDate) | reverse | .[:6]' /tmp/ak-fin.json
-jq -c '.result.data.data | sort_by(.endDate) | last | [.report.ic[] | select(.concept | test("Revenues|NetIncomeLoss|EarningsPerShareDiluted")) | {label: .label, value: .value, unit: .unit}]' /tmp/ak-fin.json
+jq -c '.result.data.data | sort_by(.endDate) | last | [.report.ic[] | select(.concept | test("Revenue|NetIncomeLoss|EarningsPerShareDiluted")) | {label: .label, value: .value, unit: .unit}]' /tmp/ak-fin.json
 ```
 
 In jq 1.6, `label` is a keyword: write `label: .label`, not `{label}`. Statements

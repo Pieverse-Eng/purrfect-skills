@@ -54,8 +54,8 @@ readiness was read before the change and does not yet reflect it.
 
 This turn's venue readiness summarizes the `enable`, `open_account` and
 `deposit` steps; when all are complete, trade without another `status` call.
-Run `purr orderly status` when a step is not complete or unknown, or after
-onboarding. `publicReady` alone permits public data access; only
+Run `purr orderly status` when a step is not complete, when this turn has no
+readiness block, or after onboarding. `publicReady` alone permits public data access; only
 `tradeReady: true` permits account actions, and `fundedReady` states
 separately whether collateral is available.
 
