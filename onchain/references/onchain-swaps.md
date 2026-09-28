@@ -182,7 +182,7 @@ purr wallet uniswap --chain-id 1868 --from <TOKEN_CA> --to ETH --amount 1
   up in the transaction's balance changes. This is expected.
 
 ```bash
-purr wallet sui-swap --from <SUI|USDC|coin_type> --to <SUI|USDC|coin_type> --amount <decimal_amount> [--slippage <percent>] [--min-amount-out <raw_amount>] [--idempotency-key <key>] [--execute]
+purr wallet sui-swap --from <SUI|USDC|coin_type> --to <SUI|USDC|coin_type> --amount <decimal_amount> [--slippage <percent>] [--idempotency-key <key>] [--execute]
 ```
 
 | Parameter | Required? | Description |
@@ -190,25 +190,25 @@ purr wallet sui-swap --from <SUI|USDC|coin_type> --to <SUI|USDC|coin_type> --amo
 | `--from` / `--to` | Required | `SUI`, `USDC`, or a full coin type. |
 | `--amount <decimal_amount>` | Required | Human-readable input amount, such as `0.5` SUI; not base units. |
 | `--slippage <percent>` | Optional | Slippage percentage: `0.5` means 0.5% (default 0.5, at most 50, up to two decimals). |
-| `--min-amount-out <raw_amount>` | Optional | Minimum output in raw output-coin base units. When executing, pass the confirmed quote's `minAmountOutBaseUnits` string to preserve its output floor. Do not pass `minAmountOut`, which is in whole-coin units. |
 | `--idempotency-key <key>` | Optional | Resumes an earlier send. Pass only the key a previous result or error reported (`operationId` / `idempotencyKey`). |
 | `--execute` | Optional | Executes the confirmed swap. Omit for quote-only mode. |
 
-Replace `<MIN_OUT_RAW>` with the confirmed quote's `minAmountOutBaseUnits` string.
+Execute with the same coins, amount and `--slippage` as the confirmed quote. Do
+not pass `--min-amount-out` (unlike `uniswap` step 4): execution re-quotes and
+never accepts less than the fresh quote less the slippage.
 
 ```bash
 # Quote SUI -> USDC
 purr wallet sui-swap --from SUI --to USDC --amount 0.5 --slippage 0.5
 
-# Execute only after confirmation, preserving the output floor
-purr wallet sui-swap --from SUI --to USDC --amount 0.5 --slippage 0.5 --min-amount-out <MIN_OUT_RAW> --execute
+# Execute only after confirmation, with the same parameters
+purr wallet sui-swap --from SUI --to USDC --amount 0.5 --slippage 0.5 --execute
 
 # Any coin by full coin type
 purr wallet sui-swap --from SUI --to 0x...::module::NAME --amount 0.2
 ```
 
-**Quote:** show `estimatedAmountOut`, `minAmountOut` and the route. The quote
-also returns `minAmountOutBaseUnits` for `--min-amount-out`.
+**Quote:** show `estimatedAmountOut`, `minAmountOut` and the route.
 
 **Result:** `--execute` returns once the swap is confirmed, in the same shape
 as `uniswap` results: `hash`, `explorerUrl`, `status`, `input` / `output`
@@ -223,7 +223,6 @@ Swap-specific errors:
 
 | Error | Meaning / Action |
 | --- | --- |
-| `quote_below_minimum` | The fresh route is below the confirmed floor; get a new quote and confirm it again. |
 | `unsupported_coin` / `Unknown Sui coin` | The coin could not be identified; ask for its exact full coin type. |
 | `no_route` / `router_unavailable` | No usable Cetus route right now (`router_unavailable` may succeed on retry). |
 
