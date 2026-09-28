@@ -35,10 +35,11 @@ Pick the matching command group below, then read that reference before acting.
 
 1. Use `purr lighter <command>` for every Lighter action. Do not call Lighter
    APIs or construct signatures yourself.
-2. Before any gateway read or write, ensure trading is enabled. Run
-   `purr lighter status` when unsure. If disabled, explain and obtain
-   confirmation, then `enable` — never enable silently. Only `status`,
-   `enable`, and `disable` work while trading is off.
+2. Before any gateway read or write, ensure trading is enabled. This turn's
+   venue readiness reports it as the `enable` step; run `purr lighter status`
+   only when that step is unknown or to verify an `enable`. If disabled,
+   explain and obtain confirmation, then `enable` — never enable silently.
+   Only `status`, `enable`, and `disable` work while trading is off.
 3. Treat `purr lighter account` as the readiness call. Branch on
    `status` (`account_opening_required` → `initializing` →
    `account_discovered` → `verifying_key` → `ready` / `error`). First use is
@@ -52,7 +53,9 @@ Pick the matching command group below, then read that reference before acting.
 5. **`--type` ≠ `--market-type`.** `--market-type` filters perp vs spot.
    `--type` is only for `order` / `place-orders` / `bracket-order` (order type) and `trades`
    (side filter). Passing `--type perp` is always wrong.
-6. Resolve markets with
+6. A market returned by the platform's `compare_trade_routes`,
+   `plan_spot_purchase` or `discover_markets` already carries `marketId`,
+   `sizeDecimals` and `priceDecimals`. Otherwise resolve it with
    `purr lighter market --market <SYM> --market-type <perp|spot>` (or
    `--market-id`) and use the returned decimals / market id. Never invent
    market ids or precision.
@@ -91,9 +94,11 @@ Pick the matching command group below, then read that reference before acting.
 15. Mainnet only. Pass only documented flags; the platform rejects unknown
     query/body keys.
 16. Before confirming **any** order (or modify that can re-apply fee checks),
-    run `purr lighter partner-fee-status` when the account is ready. If status
-    is `approval_required` or `expired`, follow Transaction Fee Authorization.
-    If `not_configured`, continue without prompting. Never use an order as a
+    check the fee. This turn's venue readiness `approve_fee` step is `complete`
+    when approved or not configured and `action_required` when approval is
+    required or expired; run `purr lighter partner-fee-status` only when that
+    step is unknown or to verify an approval. On `approval_required` or
+    `expired`, follow Transaction Fee Authorization. Never use an order as a
     fee-status probe.
 17. `balances` and `positions` hit the same readiness handler as `account`.
     Before `status: ready`, treat the payload as a readiness object — not an

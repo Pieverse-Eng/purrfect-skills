@@ -32,7 +32,9 @@ purr lighter funding-rates [--market-id <id> | --market <symbol> [--market-type 
 
 ## Symbol resolution
 
-Always resolve before placing or modifying an order:
+A market returned by the platform's market tools already carries `marketId`,
+`sizeDecimals` and `priceDecimals`. Otherwise resolve before placing or
+modifying an order:
 
 ```bash
 purr lighter market --market SOL --market-type perp

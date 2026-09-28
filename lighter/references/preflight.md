@@ -17,7 +17,8 @@ purr lighter disable
 | `enable` | Turn on Lighter Trading so gateway routes work; confirm first |
 | `disable` | Turn off Lighter Trading; blocked until the account is empty |
 
-Run `status` silently at the start of any Lighter workflow.
+This turn's venue readiness reports the integration as its `enable` step. Run
+`status` only when that step is unknown or to verify an `enable` you just ran.
 
 | Result | Action |
 | --- | --- |
@@ -127,7 +128,10 @@ purr lighter approve-partner-fee
 | `expired` | Prior approval past `approvalExpiry` |
 
 When required, check status **before** order confirmation or any
-account-changing preparation for an order. Consent language lives in
+account-changing preparation for an order. This turn's venue readiness
+`approve_fee` step reports it (`complete` when approved or not configured);
+run `partner-fee-status` only when that step is unknown or to verify an
+approval. Consent language lives in
 `SKILL.md` (Transaction Fee Authorization). `approve-partner-fee` is
 account-changing and needs its own yes.
 

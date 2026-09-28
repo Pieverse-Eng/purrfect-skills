@@ -63,7 +63,6 @@ they do not define a separate hosted Market Search Agent workflow.
 | `news2trading` | Pawpilot onboarding through a shared read/change/verify Profile CLI; private news assessment and runtime-specific publication. Credentials stay inside scripts. Never executes trades. |
 | `rootdata-crypto` | RootData crypto intelligence — project / investor / people search, funding rounds, trending projects, and personnel job changes. |
 | `surf` | Surf crypto intelligence — live prices, wallets, DeFi, on-chain SQL, social analytics, prediction markets, news, search, and fund data via the Surf CLI. |
-| `stock-spread` | READ-ONLY cross-venue tokenized-stock price & spread intelligence — resolves an equity to per-venue identifiers and reports the normalized CEX-vs-DEX spread across Gate, Bybit, Binance bStocks, Bitget, and Solana/Jupiter, warning when legs span different tokenization wrappers. Quotes & comparison only; never trades. |
 | `binance-tokenized-securities-info` | READ-ONLY Ondo tokenized US-stock data on Binance Web3 (BNB Chain) — token list, RWA metadata + attestations, market/asset trading status (corporate actions), on-chain price/holders/market-cap, US fundamentals, and K-line. Imported from binance-skills-hub. |
 
 ### Wallet & Infrastructure

@@ -12,8 +12,9 @@ endpoints directly, and never create or store an Orderly key.
 ## Public market data
 
 These Orderly-specific public commands work before onboarding and do not need
-wallet credentials. Hosted market discovery, reference candles, and cross-venue
-comparison are provided by fx tools.
+wallet credentials. Market discovery and cross-venue cost comparison belong to
+the platform's `discover_markets` and `compare_trade_routes`; a `PERP_` symbol
+they return is already verified and needs no search.
 
 1. Search with `purr orderly markets --query <TICKER>`.
 2. Verify the exact `PERP_<TOKEN>_USDC` symbol using
@@ -40,15 +41,17 @@ account, hold funds, or permit an order. `status` keeps those separate as
 Disabling is refused while positions, orders, balances, or asset operations
 remain. Report the returned `requiredActions` and resolve them before retrying.
 
-After changing the switch, re-read `purr orderly status`. The configured-venue
-list in this turn's context was resolved before the change and does not yet
-reflect it.
+After changing the switch, re-read `purr orderly status`. This turn's venue
+readiness was read before the change and does not yet reflect it.
 
 ## Readiness and onboarding
 
-Run `purr orderly status` before a private read or trade. `publicReady` alone
-permits public data access; only `tradeReady: true` permits account actions,
-and `fundedReady` states separately whether collateral is available.
+This turn's venue readiness summarizes the `enable`, `open_account` and
+`deposit` steps; when all are complete, trade without another `status` call.
+Run `purr orderly status` when a step is not complete or unknown, or after
+onboarding. `publicReady` alone permits public data access; only
+`tradeReady: true` permits account actions, and `fundedReady` states
+separately whether collateral is available.
 
 If the account is not ready, first show the result of:
 
