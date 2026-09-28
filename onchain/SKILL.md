@@ -1,6 +1,6 @@
 ---
 name: onchain
-description: Address/balance lookup,.pie,transfers,Telegram,chain reads,swaps on Robinhood/Arc/Soneium
+description: Address/balance lookup,.pie,transfers,Telegram,chain reads,swaps on Robinhood/Arc/Soneium/Sui
 ---
 
 # Onchain
@@ -9,7 +9,8 @@ description: Address/balance lookup,.pie,transfers,Telegram,chain reads,swaps on
 
 This Skill covers wallet addresses, balances, Pie identity lookup, direct
 transfers, read-only chain checks, and Robinhood Chain, Arc, or Soneium swaps for stock/ETF
-tokens, memecoins, and other ERC-20 tokens.
+tokens, memecoins, and other ERC-20 tokens. Sui (mainnet) address, balances,
+transfers, and Cetus swaps are covered in the same references.
 
 This Skill is not for OWS wallet issues or workflows.
 
@@ -35,6 +36,7 @@ reference. Common chain IDs:
 | Unichain | 130 | ETH |
 | X Layer | 196 | OKB |
 | Solana | use `--chain-type solana` | SOL |
+| Sui (mainnet) | use `--chain-type sui` | SUI |
 
 ### Common Token Addresses (BSC)
 
@@ -88,6 +90,17 @@ together.
 Use `USDC.e` for this bridged token; do not assume `USDC` on another chain has
 the same contract address.
 
+### Common Coins (Sui mainnet)
+
+| Coin | Identifier | Decimals |
+| --- | --- | ---: |
+| SUI (native / gas) | `SUI` | 9 |
+| USDC (Circle, native) | `USDC` = `0xdba34672e30cb065b1f93e3ab55318768fd6fef66c15942c9f7cb846e2f900e7::usdc::USDC` | 6 |
+| Other coins | Full coin type `0x<package>::<module>::<NAME>` (case-sensitive names) | Chain metadata |
+
+The Sui wallet is separate from the EVM and Solana wallets; its address is `0x`
+followed by 64 hex characters.
+
 ## Command Groups
 
 | Group | What It Does | Reference |
@@ -96,7 +109,7 @@ the same contract address.
 | Balances | Checks native token, ERC-20, or SPL token balances. | [balances.md](references/balances.md) |
 | Pie Identity / PNS Lookups | Resolves `.pie` handles, paired Telegram accounts, account lists, and profiles. | [pie-identity.md](references/pie-identity.md) |
 | Direct `.pie` Transfers | Sends funds to a `.pie` handle or paired Telegram account. | [pie-transfers.md](references/pie-transfers.md) |
-| Raw Address Transfers | Sends funds directly to a raw EVM or Solana wallet address. | [raw-address-transfers.md](references/raw-address-transfers.md) |
-| Onchain Swaps | Quotes and executes Robinhood/Arc/Soneium swaps using tickers or contract addresses. | [onchain-swaps.md](references/onchain-swaps.md) |
+| Raw Address Transfers | Sends funds directly to a raw EVM, Solana, or Sui wallet address, including Sui retry and approval rules. | [raw-address-transfers.md](references/raw-address-transfers.md) |
+| Onchain Swaps | Quotes and executes Robinhood/Arc/Soneium swaps using tickers or contract addresses, and Sui swaps through Cetus. | [onchain-swaps.md](references/onchain-swaps.md) |
 | Robinhood Stock/ETF Tokens | Looks up canonical Robinhood Chain stock token and tokenized ETF contract addresses. | [robinhood-stock-etf-tokens.md](references/robinhood-stock-etf-tokens.md) |
 | Read-Only Chain Checks | Looks up transactions, receipts, logs, senders, token state, or balances through RPC/explorer workflows. | [read-only-chain-checks.md](references/read-only-chain-checks.md) |
