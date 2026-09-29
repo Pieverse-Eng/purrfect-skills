@@ -1,5 +1,5 @@
 ---
-name: "rootdata-crypto"
+name: "rootdata-crypto-vendor"
 version: "1.0.3"
 description: "Query crypto project details, Web3 investor info, funding rounds, trending projects, and personnel job changes from RootData. Use this skill when the user asks about blockchain projects, crypto investors, Web3 funding history, investment rounds, trending crypto projects, or personnel movements in the crypto industry."
 tags:
