@@ -208,3 +208,18 @@ Only an explicit yes on the immediately preceding turn authorizes
 `approve-partner-fee`. On no, status-check failure, or unknown status, stop. If
 an order returns `LIGHTER_PARTNER_FEE_APPROVAL_REQUIRED`, follow the 428 path in
 [errors.md](references/errors.md); never auto-retry the order.
+
+## Trading disclosure acknowledgement
+
+For Pieverse App accounts, `DISCLOSURE_REQUIRED` means the authenticated user
+has not acknowledged the required disclosure version. Show the user the fixed
+confirmation link: https://pieverse.io/pawpilot-terminal-disclosures. They must
+sign in as the current account owner and acknowledge the disclosures themselves.
+An Agent must not check the box, call the acceptance endpoint, or claim consent
+on the user's behalf. Stop the attempted operation and do not retry or queue
+it automatically. After acknowledgement, ask the user to issue a fresh request;
+never replay the old order. Acknowledgement is separate from trading permission
+and does not authorize any order or broader wallet access. Existing cancellation,
+reduce-only and withdrawal exceptions remain available. For
+`TRADING_ADMISSION_UNAVAILABLE`, report that account status cannot be verified;
+do not switch to direct exchange calls or alternate credentials to bypass it.

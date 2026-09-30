@@ -169,3 +169,18 @@ After submitting, verify the returned entry and child order IDs, their linkage,
 and the fill state through `purr orderly algo list`, `orders`, `fills`, and
 `positions`. Distinguish a pending entry, a partial fill, and active
 protection, and reconcile an uncertain submission before resubmitting.
+
+## Trading disclosure acknowledgement
+
+For Pieverse App accounts, `DISCLOSURE_REQUIRED` means the authenticated user
+has not acknowledged the required disclosure version. Show the user the fixed
+confirmation link: https://pieverse.io/pawpilot-terminal-disclosures. They must
+sign in as the current account owner and acknowledge the disclosures themselves.
+An Agent must not check the box, call the acceptance endpoint, or claim consent
+on the user's behalf. Stop the attempted operation and do not retry or queue
+it automatically. After acknowledgement, ask the user to issue a fresh request;
+never replay the old order. Acknowledgement is separate from trading permission
+and does not authorize any order or broader wallet access. Existing cancellation,
+reduce-only and withdrawal exceptions remain available. For
+`TRADING_ADMISSION_UNAVAILABLE`, report that account status cannot be verified;
+do not switch to direct exchange calls or alternate credentials to bypass it.
