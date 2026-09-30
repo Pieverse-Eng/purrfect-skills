@@ -103,7 +103,7 @@ a revoke command.
 
 For Pieverse App accounts, `DISCLOSURE_REQUIRED` means the authenticated user
 has not acknowledged the required disclosure version. Show the user the fixed
-confirmation link: https://pieverse.io/trading-terminal-disclosures. They must
+confirmation link: https://pieverse.io/pawpilot-terminal-disclosures. They must
 sign in as the current account owner and acknowledge the disclosures themselves.
 An Agent must not check the box, call the acceptance endpoint, or claim consent
 on the user's behalf. Stop the attempted operation and do not retry or queue
