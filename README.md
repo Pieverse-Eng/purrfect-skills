@@ -62,6 +62,7 @@ funding.
 | `panewslab` | PANewsLab crypto news, Polymarket smart money boards, article publishing, and rendered PANews web pages. |
 | `news2trading` | Pawpilot onboarding through a shared read/change/verify Profile CLI; private news assessment and runtime-specific publication. Credentials stay inside scripts. Never executes trades. |
 | `rootdata-crypto` | RootData crypto intelligence — project / investor / people search, funding rounds, trending projects, and personnel job changes. |
+| `skyinsights` | SkyInsights wallet labels, KYA/KYT risk checks, async screening, and wallet monitor operations through `purr skyinsights`. |
 | `surf` | Surf crypto intelligence — live prices, wallets, DeFi, on-chain SQL, social analytics, prediction markets, news, search, and fund data via the Surf CLI. |
 | `binance-tokenized-securities-info` | READ-ONLY Ondo tokenized US-stock data on Binance Web3 (BNB Chain) — token list, RWA metadata + attestations, market/asset trading status (corporate actions), on-chain price/holders/market-cap, US fundamentals, and K-line. Imported from binance-skills-hub. |
 
