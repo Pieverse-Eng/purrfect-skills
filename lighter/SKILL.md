@@ -143,7 +143,10 @@ links, including source-chain transaction links.
 
 Keep returned request IDs and transaction hashes for reconciliation. Verify
 outcomes through orders, trades, positions, or funding status as appropriate;
-a submission alone does not prove a fill or credited funds.
+a submission alone does not prove a fill or credited funds. For `order`,
+`place-orders`, `cancel` and `modify`, report from `executionStatus` and
+`orderStatus`, not `status` (see
+[Read the write result](references/trading.md#read-the-write-result)).
 
 ## Confirmation Contract
 

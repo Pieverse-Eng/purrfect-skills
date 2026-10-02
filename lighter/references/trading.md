@@ -161,6 +161,26 @@ purr lighter modify (--market-id <id> | --market <SYM> --market-type <t>) \
 - Pass large indexes as exact decimal strings.
 - Confirm each cancel/modify (or a clearly enumerated cancel-all).
 
+## Read the write result
+
+`order`, `place-orders`, `cancel` and `modify` answer after Lighter has
+executed the transaction (a wait of up to about 2 s), not on submission.
+`status: succeeded` only means the submission was accepted. Report from
+`executionStatus`, `orderStatus` and `executionError`:
+
+| Response | Meaning | Report |
+| --- | --- | --- |
+| `executionStatus: succeeded`, `orderStatus: open` or `pending` | The order is working (`pending`: a trigger order waiting) | Placed. Keep `orderIndex` (an exact string) for cancel/modify |
+| `executionStatus: succeeded`, `orderStatus: filled` | Filled | Filled; take amounts from `trades` |
+| `executionStatus: succeeded`, `orderStatus: canceled-*` | Part filled, the rest cancelled | Partial fill; take amounts from `trades` |
+| `executionStatus: failed`, `orderStatus: canceled-*` | The matching engine cancelled it unfilled | Not placed, and why: `canceled-post-only` (would have taken), `canceled-not-enough-liquidity` (IOC with nothing to match), `canceled-invalid-balance`, `canceled-margin-not-allowed`, `canceled-too-much-slippage`, ... |
+| `executionStatus: succeeded` on `cancel` / `modify` | Lighter applied it | Cancelled / modified |
+| `executionStatus: pending` or `unknown` | Not executed within the wait | No outcome yet: `purr lighter request-status --request-id <actionRequestId>`, then `active-orders` |
+| Error `LIGHTER_TRANSACTION_FAILED` | Lighter executed the transaction and refused it | Nothing changed; see [errors.md](errors.md) |
+
+`cancel-all`, `bracket-order`, `update-leverage` and `update-margin` still
+answer on submission: verify them with orders and positions.
+
 ## Leverage and margin
 
 ```bash
@@ -195,8 +215,10 @@ Silent preparation:
    `order-book-depth` and `positions` / `balances`.
 3. User confirmation with full parameters.
 4. `order` (or leverage then `order`).
-5. Verify with `active-orders` / `trades` / `positions` — never claim fill from
-   submit alone. Report results and links following
+5. Report from `executionStatus` / `orderStatus` (see
+   [Read the write result](#read-the-write-result)) and verify amounts with
+   `active-orders` / `trades` / `positions` — never claim a fill from `status:
+   succeeded` alone. Report results and links following
    [Result Reporting](../SKILL.md#result-reporting).
 
 ## Idempotency and recovery

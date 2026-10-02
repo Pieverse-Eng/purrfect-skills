@@ -45,6 +45,8 @@ unknown outcome, reconcile state before acting again.
 | Decimal / range validation errors | Bad size/price precision or limits | Re-read `market`; fix inputs; re-confirm |
 | IOC + expiry flags | Invalid combination | Remove expiry for IOC market/limit |
 | `LIGHTER_SEND_TX_REJECTED` | Venue rejected signed tx | Report; fix if user-correctable; re-confirm only if safe |
+| `LIGHTER_TRANSACTION_FAILED` | Lighter accepted the transaction, executed it and refused it (the error is Lighter's, e.g. `invalid order index`) | Nothing changed. Re-read `active-orders` and use the exact `order_index` string; never resubmit unchanged; re-confirm a corrected action |
+| `executionStatus: failed` with `orderStatus: canceled-*` (not an error) | The matching engine cancelled the order unfilled | Report it as not placed, with the reason; see [trading.md](trading.md#read-the-write-result) |
 | `LIGHTER_SUBMIT_UNKNOWN` | Outcome unknown after submit | Reconcile via `requests` / orders; **do not** resubmit |
 | `LIGHTER_PREVIOUS_SUBMISSION_RESOLVED` | Prior op finished differently | Read request status; do not assume success |
 | `LIGHTER_REQUEST_ALREADY_EXISTS` | Active operation with same fingerprint | Inspect existing request; wait |
