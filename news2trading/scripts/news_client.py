@@ -249,12 +249,42 @@ def _set_response_timeout(response, connection, timeout):
 def _validate_receipt(payload, batch_id, expected_runtime):
 	try:
 		data = payload['data']
-		context = data['context']
-		target = data['target']
+		valid = payload.get('ok') is True and data.get('batchId') == batch_id
+		if 'web' in data or 'external' in data:
+			web, external = data['web'], data['external']
+			valid = (
+				valid and web.get('status') == 'published'
+				and isinstance(web.get('sessionId'), str) and bool(web['sessionId'].strip())
+				and external.get('status') in ('disabled', 'published', 'rejected', 'unknown')
+			)
+			if external.get('status') == 'published':
+				receipt = external['receipt']
+				valid = valid and _valid_external_receipt(receipt, batch_id, expected_runtime)
+				# The platform flattens a successful external receipt for legacy clients.
+				valid = valid and all(data.get(key) == value for key, value in receipt.items())
+			else:
+				valid = valid and 'receipt' not in external and 'channelAccepted' not in data
+		else:
+			valid = valid and _valid_external_receipt(data, batch_id, expected_runtime)
+	except (KeyError, TypeError, AttributeError):
+		valid = False
+	if not valid:
+		raise NewsClientError(
+			'malformed_response',
+			'Platform returned a receipt that does not match this runtime.',
+			'unknown',
+			200,
+		)
+	if 'publishedText' in data:
+		canonical_publication_text(data, '')
+	return data
+
+
+def _valid_external_receipt(data, batch_id, expected_runtime):
+	try:
+		context, target = data['context'], data['target']
 		valid = (
-			payload.get('ok') is True
-			and data.get('batchId') == batch_id
-			and data.get('channelAccepted') is True
+			data.get('batchId') == batch_id and data.get('channelAccepted') is True
 			and data.get('runtimeType') == expected_runtime
 			and target.get('channel') in ('telegram', 'line')
 			and isinstance(target.get('chatId'), str)
@@ -275,15 +305,37 @@ def _validate_receipt(payload, batch_id, expected_runtime):
 				and ('userId' not in context or isinstance(context['userId'], str))
 			)
 	except (KeyError, TypeError, AttributeError):
-		valid = False
-	if not valid:
+		return False
+	return valid
+
+
+def external_publication_receipt(receipt):
+	if 'web' in receipt:
+		return receipt['external'].get('receipt')
+	return receipt
+
+
+def canonical_publication_text(receipt, fallback):
+	"""Use the immutable server result; old servers omit this additive field."""
+	if 'publishedText' not in receipt:
+		return fallback
+	text = receipt['publishedText']
+	try:
+		_validate_text(text)
+	except NewsClientError:
 		raise NewsClientError(
-			'malformed_response',
-			'Platform returned a receipt that does not match this runtime.',
-			'unknown',
-			200,
-		)
-	return data
+			'malformed_response', 'Platform returned invalid published analysis text.', 'unknown', 200
+		) from None
+	return text
+
+
+def publication_summary(receipt, runtime):
+	result = {'ok': True, 'batchId': receipt['batchId'], 'runtimeType': runtime}
+	if 'publishedText' in receipt:
+		result['publishedText'] = receipt['publishedText']
+	if 'web' in receipt:
+		result.update(web=receipt['web'], external=receipt['external'])
+	return result
 
 
 def _raise_api_error(payload, status):

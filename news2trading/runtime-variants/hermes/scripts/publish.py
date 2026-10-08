@@ -8,13 +8,17 @@ import sys
 from pathlib import Path
 
 try:
-	from news_client import NewsClientError, publish_batch, read_text_file
+	from news_client import (
+		NewsClientError, canonical_publication_text, external_publication_receipt, publication_summary, publish_batch, read_text_file,
+	)
 except ModuleNotFoundError:
 	# Source-tree tests run before materialization; installed artifacts keep the
 	# common client beside this entry point.
 	_source_scripts = Path(__file__).resolve().parents[3] / 'scripts'
 	sys.path.insert(0, str(_source_scripts))
-	from news_client import NewsClientError, publish_batch, read_text_file
+	from news_client import (
+		NewsClientError, canonical_publication_text, external_publication_receipt, publication_summary, publish_batch, read_text_file,
+	)
 
 
 class ContextMirrorError(Exception):
@@ -22,15 +26,20 @@ class ContextMirrorError(Exception):
 		super().__init__(message)
 		self.code = code
 		self.channel_accepted = channel_accepted
+		self.publication = None
 
 	def diagnostic(self):
-		return {
+		result = {
 			'ok': False,
 			'code': self.code,
 			'error': str(self),
 			'channelAccepted': self.channel_accepted,
 			'contextRecorded': False,
 		}
+		if self.publication and 'web' in self.publication:
+			result.update(batchId=self.publication['batchId'],
+				web=self.publication['web'], external=self.publication['external'])
+		return result
 
 
 def ensure_hermes_python():
@@ -187,23 +196,28 @@ def mirror_receipt(receipt, text, adapter=None):
 
 
 def publish_and_mirror(batch_id, text, publisher=publish_batch, adapter=None):
+	receipt = publisher(batch_id, text, expected_runtime='hermes')
+	published_text = canonical_publication_text(receipt, text)
+	result = publication_summary(receipt, 'hermes')
+	external = external_publication_receipt(receipt)
+	if external is None:
+		return result
 	adapter = adapter or HermesContextAdapter()
 	try:
 		adapter.preflight()
 	except Exception:
-		raise ContextMirrorError(
+		error = ContextMirrorError(
 			'context_runtime_unavailable',
-			'Hermes context APIs are unavailable; no publication was attempted.',
-			channel_accepted=False,
-		) from None
-	receipt = publisher(batch_id, text, expected_runtime='hermes')
-	result = mirror_receipt(receipt, text, adapter=adapter)
-	return {
-		'ok': True,
-		'batchId': receipt['batchId'],
-		'runtimeType': 'hermes',
-		**result,
-	}
+			'Channel accepted the message, but Hermes context APIs are unavailable.',
+		)
+		error.publication = receipt
+		raise error from None
+	try:
+		result.update(mirror_receipt(external, published_text, adapter=adapter))
+	except ContextMirrorError as error:
+		error.publication = receipt
+		raise
+	return result
 
 
 def _route_matches(row, *, session_id, platform, chat_id, thread_id, user_id, session_key):

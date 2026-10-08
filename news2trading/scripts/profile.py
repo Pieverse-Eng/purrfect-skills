@@ -23,6 +23,7 @@ EVENTS = frozenset((
 FIELDS = frozenset((
 	'preferredLanguage', 'sourceAllowlist', 'sourceBlocklist', 'includeTerms', 'excludeTerms',
 	'minScore', 'explorationEnabled', 'deliveryIntervalMinutes', 'interestOriginal', 'interestEn',
+	'delivery',
 ))
 TEXT_FIELDS = frozenset(('interestOriginal', 'interestEn'))
 ROUTING_FIELDS = frozenset(('includeTerms', 'excludeTerms', 'sourceAllowlist', 'sourceBlocklist'))
@@ -65,8 +66,13 @@ def term_key(term):
 
 
 def validate_preferences(body, new_terms=()):
-	if set(body) - FIELDS or not (FIELDS - TEXT_FIELDS) <= body.keys():
+	if set(body) - FIELDS or not (FIELDS - TEXT_FIELDS - {'delivery'}) <= body.keys():
 		fail('invalid_preferences', 'Provide only writable Profile preferences.')
+	if 'delivery' in body:
+		delivery = body['delivery']
+		if (not isinstance(delivery, dict) or set(delivery) != {'web', 'external'}
+			or type(delivery['web']) is not bool or delivery['external'] not in ('none', 'telegram', 'line')):
+			fail('invalid_preferences', 'Delivery requires a web boolean and one external destination: none, telegram or line.')
 	if not text(body['preferredLanguage'], 35, 2):
 		fail('invalid_preferences', 'Reply language must contain 2–35 characters.')
 	for key, lo, hi in (('minScore', 0, 160), ('deliveryIntervalMinutes', 10, 1440)):
@@ -99,6 +105,9 @@ def validate_preferences(body, new_terms=()):
 
 def writable(profile):
 	body = {k: profile[k] for k in FIELDS if k in profile}
+	# Null is the legacy channel-selection mode; PUT preserves it by omission.
+	if body.get('delivery') is None:
+		body.pop('delivery', None)
 	try:
 		for key in ('includeTerms', 'excludeTerms'):
 			for term in profile[key]:
@@ -197,10 +206,18 @@ def run(args):
 	if args.action == 'item':
 		try:
 			_validate_uuid(args.item_id, 'Item ID')
+			if args.version_id:
+				_validate_uuid(args.version_id, 'Version ID')
 		except NewsClientError:
 			fail('invalid_item_id', 'Use the complete item UUID from a platform delivery.')
 		client.path = client.path.removesuffix('/profile') + '/items/' + args.item_id
-		return {'ok': True, 'operation': 'item', 'item': client.request('GET')}
+		if args.version_id:
+			client.path += '?versionId=' + args.version_id
+		item = client.request('GET')
+		if (not isinstance(item, dict) or item.get('itemId') != args.item_id
+			or (args.version_id and item.get('versionId') != args.version_id)):
+			fail('item_version_mismatch', 'The item receipt does not match the requested source version.')
+		return {'ok': True, 'operation': 'item', 'item': item}
 	changes = load_changes(args.changes_file) if getattr(args, 'changes_file', None) else {}
 	current = client.request('GET')
 	if current is not None:
@@ -266,7 +283,9 @@ def main():
 	parser = Parser(description='Manage this Agent\'s platform News Profile; credentials are read internally.')
 	sub = parser.add_subparsers(dest='action', required=True)
 	sub.add_parser('get', help='Read the actual platform Profile without changing it.')
-	sub.add_parser('item', help='Read an item from a platform delivery.').add_argument('--item-id', required=True)
+	item = sub.add_parser('item', help='Read an item from a platform delivery.')
+	item.add_argument('--item-id', required=True)
+	item.add_argument('--version-id', help='Read the exact source revision supplied in a platform batch.')
 	for action in ('create', 'update', 'pause', 'resume'):
 		p = sub.add_parser(action)
 		if action != 'create':

@@ -94,7 +94,93 @@ def _receipt(runtime='openclaw'):
 	}
 
 
+def _web_receipt(runtime='openclaw', external='disabled'):
+	data = {
+		'batchId': BATCH_ID,
+		'web': {'status': 'published', 'sessionId': 'web-session-1'},
+		'external': {'status': external},
+	}
+	if external == 'published':
+		receipt = _receipt(runtime)['data']
+		data.update(receipt)
+		data['external']['receipt'] = receipt
+	return {'ok': True, 'data': data}
+
+
 class NewsClientTest(unittest.TestCase):
+	def test_web_only_cli_confirms_web_without_claiming_external_delivery(self):
+		def respond(handler):
+			_json_response(handler, 200, _web_receipt())
+
+		with _Server(respond) as server, self._env(server.url), tempfile.TemporaryDirectory() as directory:
+			text_file = Path(directory) / 'brief.txt'
+			text_file.write_text('Neutral analysis', encoding='utf-8')
+			result = subprocess.run(
+				[sys.executable, str(SCRIPT_DIR / 'publish.py'), '--batch-id', BATCH_ID, '--text-file', str(text_file)],
+				capture_output=True, text=True, check=False,
+			)
+		self.assertEqual(result.returncode, 0, result.stderr)
+		data = json.loads(result.stdout)
+		self.assertEqual(data['web'], {'status': 'published', 'sessionId': 'web-session-1'})
+		self.assertEqual(data['external'], {'status': 'disabled'})
+		self.assertNotIn('channelAccepted', data)
+		self.assertEqual(len(server.requests), 1)
+
+	def test_web_publication_retains_external_rejected_or_unknown_without_retry(self):
+		for status in ('rejected', 'unknown'):
+			with self.subTest(status=status):
+				def respond(handler):
+					_json_response(handler, 200, _web_receipt(external=status))
+				with _Server(respond) as server, self._env(server.url):
+					data = publish_batch(BATCH_ID, 'Neutral analysis', expected_runtime='openclaw')
+				self.assertEqual(data['web']['status'], 'published')
+				self.assertEqual(data['external']['status'], status)
+				self.assertNotIn('channelAccepted', data)
+				self.assertEqual(len(server.requests), 1)
+
+	def test_web_receipt_requires_durable_session_and_matching_external_runtime(self):
+		cases = [_web_receipt(), _web_receipt('hermes', 'published')]
+		cases[0]['data']['web']['sessionId'] = ''
+		for body in cases:
+			with self.subTest(body=body):
+				def respond(handler):
+					_json_response(handler, 200, body)
+				with _Server(respond) as server, self._env(server.url):
+					with self.assertRaises(NewsClientError) as raised:
+						publish_batch(BATCH_ID, 'Neutral analysis', expected_runtime='openclaw')
+				self.assertEqual(raised.exception.channel_accepted, 'unknown')
+				self.assertEqual(len(server.requests), 1)
+
+	def test_web_and_external_success_retains_runtime_context_and_separate_destinations(self):
+		for runtime in ('openclaw', 'hermes'):
+			with self.subTest(runtime=runtime):
+				def respond(handler):
+					_json_response(handler, 200, _web_receipt(runtime, 'published'))
+				with _Server(respond) as server, self._env(server.url):
+					data = publish_batch(BATCH_ID, 'Neutral analysis', expected_runtime=runtime)
+				self.assertEqual(data['web']['sessionId'], 'web-session-1')
+				self.assertEqual(data['external']['receipt'], _receipt(runtime)['data'])
+				self.assertEqual(data['context']['runtimeType'], runtime)
+				self.assertEqual(len(server.requests), 1)
+
+	def test_canonical_publication_text_is_additive_and_validated(self):
+		for text in ('Canonical analysis A', None, '', '  ', 42, 'x' * 3001):
+			with self.subTest(text_type=type(text).__name__):
+				body = _web_receipt('hermes', 'published')
+				body['data']['publishedText'] = text
+				def respond(handler):
+					_json_response(handler, 200, body)
+				with _Server(respond) as server, self._env(server.url):
+					if text == 'Canonical analysis A':
+						data = publish_batch(BATCH_ID, 'Competing analysis B', expected_runtime='hermes')
+						self.assertEqual(data['publishedText'], text)
+					else:
+						with self.assertRaises(NewsClientError) as raised:
+							publish_batch(BATCH_ID, 'Competing analysis B', expected_runtime='hermes')
+						self.assertEqual(raised.exception.code, 'malformed_response')
+						self.assertEqual(raised.exception.channel_accepted, 'unknown')
+				self.assertEqual(len(server.requests), 1)
+
 	def test_malformed_credentials_fail_safely_without_sending(self):
 		def respond(handler):
 			_json_response(handler, 200, _receipt())

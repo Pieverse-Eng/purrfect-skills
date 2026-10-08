@@ -5,7 +5,9 @@ import argparse
 import json
 import sys
 
-from news_client import NewsClientError, publish_batch, read_text_file
+from news_client import (
+	NewsClientError, external_publication_receipt, publication_summary, publish_batch, read_text_file,
+)
 
 
 def _parser():
@@ -20,13 +22,10 @@ def main(argv=None):
 	try:
 		text = read_text_file(args.text_file)
 		receipt = publish_batch(args.batch_id, text, expected_runtime='openclaw')
-		print(json.dumps({
-			'ok': True,
-			'batchId': receipt['batchId'],
-			'runtimeType': 'openclaw',
-			'channelAccepted': True,
-			'contextRecorded': True,
-		}, separators=(',', ':')))
+		result = publication_summary(receipt, 'openclaw')
+		if external_publication_receipt(receipt):
+			result.update(channelAccepted=True, contextRecorded=True)
+		print(json.dumps(result, separators=(',', ':')))
 		return 0
 	except NewsClientError as error:
 		print(json.dumps(error.diagnostic(), separators=(',', ':')), file=sys.stderr)
