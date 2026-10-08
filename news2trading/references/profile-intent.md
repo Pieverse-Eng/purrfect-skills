@@ -20,8 +20,10 @@ news-analysis request does not subscribe the user or start a trading workflow.
 Read the current Profile before applying agreed changes. “暂停新闻推送” pauses
 only news matching/delivery; it does not disable market research or delete
 history. Resume only on an explicit news-resume request. Subscription consent
-does not authorize trading. The News conversation remains neutral even when
-unrelated trading capabilities are available.
+does not authorize trading. The News conversation may use read-only market data
+and answer explicit requests for deeper market/background analysis. It must not
+proactively offer a trading strategy or invoke trading/account-changing tools,
+even when unrelated trading capabilities are available.
 
 Describe cadence as how often to check a matched batch, not a promise of an
 analysis every interval: irrelevant or unsupported batches may stay silent.

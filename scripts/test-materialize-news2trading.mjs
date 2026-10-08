@@ -37,6 +37,13 @@ for (const runtime of ['openclaw', 'hermes']) {
 		const skill = readFileSync(join(output, 'SKILL.md'), 'utf8')
 		assert.match(skill, /^---\nname: news2trading\n/m)
 		assert.doesNotMatch(skill, /runtime-variants/)
+		assert.match(skill, /Read-only\s+market-data tools are allowed/)
+		assert.match(skill, /Do not invoke trading tools or account-changing operations/)
+		assert.match(skill, /When the user explicitly asks, deepen market, background and scenario analysis/)
+		const analysis = readFileSync(join(output, 'references', 'news-impact-analysis.md'), 'utf8')
+		assert.match(analysis, /Observed market prices and historical levels are evidence/)
+		assert.match(analysis, /observation\s+time and comparison window/)
+		assert.doesNotMatch(`${skill}\n${analysis}`, /without market\/trading tools|invokes market\/trading tools/)
 		if (runtime === 'hermes') {
 			// Hermes skill_utils.extract_skill_description displays at most 60 characters.
 			const description = skill.match(/^description: (.+)$/m)?.[1]
