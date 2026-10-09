@@ -148,8 +148,10 @@ recall; include it in the agreed draft. For an existing Profile, surface the
 incompatibility and ask before changing the score or broadening asset selectors.
 A cadence/language-only edit still preserves the existing score and selectors.
 
-V1 recognizes Bitcoin/BTC, Ethereum/ETH and Solana/SOL. PANews is the current
-centralized source. Do not invent supported sources or event enums.
+V1 recognizes Bitcoin/BTC, Ethereum/ETH and Solana/SOL. Background subscription
+matching remains PANews-only. CoinDesk/Cointelegraph are opt-in public/manual
+sources, not additional subscription destinations or matching sources.
+Do not invent supported sources or event enums.
 At least one include term is required unless exploration is enabled.
 `airdrop` is not a supported event selector: retain that exclusion in the
 interest texts but do not promise an enforced Matcher block. More generally,

@@ -30,11 +30,12 @@ _KNOWN_FALSE_CODES = {
 class NewsClientError(Exception):
 	"""Safe local diagnostic carrying truthful channel-acceptance state."""
 
-	def __init__(self, code, message, channel_accepted, http_status=None):
+	def __init__(self, code, message, channel_accepted, http_status=None, publication=None):
 		super().__init__(message)
 		self.code = code
 		self.channel_accepted = channel_accepted
 		self.http_status = http_status
+		self.publication = publication or {}
 
 	def diagnostic(self):
 		result = {
@@ -46,6 +47,7 @@ class NewsClientError(Exception):
 		}
 		if self.http_status is not None:
 			result['httpStatus'] = self.http_status
+		result.update(self.publication)
 		return result
 
 
@@ -338,6 +340,60 @@ def publication_summary(receipt, runtime):
 	return result
 
 
+def _diagnostic_identifier(value):
+	return (
+		isinstance(value, str) and bool(value.strip()) and len(value) <= 512
+		and not any(ord(char) < 32 or ord(char) == 127 for char in value)
+	)
+
+
+def _diagnostic_target(value):
+	if not isinstance(value, dict) or value.get('channel') not in ('telegram', 'line'):
+		return None
+	if not _diagnostic_identifier(value.get('chatId')):
+		return None
+	target = {'channel': value['channel'], 'chatId': value['chatId']}
+	if 'threadId' in value:
+		if not _diagnostic_identifier(value['threadId']):
+			return None
+		target['threadId'] = value['threadId']
+	return target
+
+
+def _partial_publication_diagnostic(payload):
+	"""Whitelist diagnostic evidence, never a send/mirror authorization.
+
+	Malformed optional evidence is omitted independently: it cannot turn known
+	channel acceptance into uncertainty or discard a valid saved Web receipt.
+	"""
+	details = {}
+	target = _diagnostic_target(payload.get('target'))
+	if target is not None:
+		details['target'] = target
+	web = payload.get('web')
+	if isinstance(web, dict) and web.get('status') == 'published' and _diagnostic_identifier(web.get('sessionId')):
+		details['web'] = {'status': 'published', 'sessionId': web['sessionId']}
+	external = payload.get('external')
+	if (
+		isinstance(external, dict) and external.get('status') == 'accepted'
+		and external.get('channelAccepted') is True
+		and external.get('contextRecorded') is False and 'receipt' not in external
+	):
+		external_target = _diagnostic_target(external.get('target'))
+		if 'target' not in external or (external_target is not None and (target is None or external_target == target)):
+			details['external'] = {'status': 'accepted', 'channelAccepted': True, 'contextRecorded': False}
+			if external_target is not None:
+				details['external']['target'] = external_target
+	if 'publishedText' in payload:
+		try:
+			_validate_text(payload['publishedText'])
+		except NewsClientError:
+			pass
+		else:
+			details['publishedText'] = payload['publishedText']
+	return details
+
+
 def _raise_api_error(payload, status):
 	if not isinstance(payload, dict) or payload.get('ok') is not False:
 		raise NewsClientError(
@@ -349,10 +405,11 @@ def _raise_api_error(payload, status):
 			'malformed_response', 'Platform returned an invalid error response.', 'unknown', status
 		)
 	accepted = payload.get('channelAccepted')
-	if accepted not in (True, False, 'unknown'):
+	if not isinstance(accepted, bool) and accepted != 'unknown':
 		accepted = False if code in _KNOWN_FALSE_CODES or status in (400, 401, 403, 404) else 'unknown'
 	message = {
 		'context_missing': 'Channel accepted the message, but runtime context is incomplete.',
 		'upstream_unknown': 'The publication channel result is unknown.',
 	}.get(code, 'Platform declined the publication request.')
-	raise NewsClientError(code, message, accepted, status)
+	publication = _partial_publication_diagnostic(payload) if code == 'context_missing' and accepted is True else None
+	raise NewsClientError(code, message, accepted, status, publication)

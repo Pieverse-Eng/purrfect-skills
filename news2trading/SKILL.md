@@ -131,5 +131,12 @@ protocol. A connection loss or invalid receipt can mean the external outcome is
 unknown. Never claim it was definitely unsent. Accepted-but-incomplete context
 must never be repaired by publishing again.
 
+A platform `context_missing` error preserves known channel acceptance and any
+validated `target`, saved `web` receipt, `external.status: accepted`, and
+canonical `publishedText` in the diagnostic. These fields are evidence only:
+they are not a successful context receipt or permission to send/mirror again.
+Malformed optional fields are omitted without discarding known acceptance or
+other valid evidence. Keep the diagnostic private to the isolated run.
+
 The always-`NO_REPLY` rule applies after background publication is invoked.
 Explicit user Profile/item-read requests still receive safe error guidance.

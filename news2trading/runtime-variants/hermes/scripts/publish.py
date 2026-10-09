@@ -36,9 +36,11 @@ class ContextMirrorError(Exception):
 			'channelAccepted': self.channel_accepted,
 			'contextRecorded': False,
 		}
-		if self.publication and 'web' in self.publication:
-			result.update(batchId=self.publication['batchId'],
-				web=self.publication['web'], external=self.publication['external'])
+		if self.publication:
+			result['batchId'] = self.publication['batchId']
+			for field in ('target', 'web', 'external', 'publishedText'):
+				if field in self.publication:
+					result[field] = self.publication[field]
 		return result
 
 
