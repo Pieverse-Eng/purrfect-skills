@@ -149,8 +149,8 @@ incompatibility and ask before changing the score or broadening asset selectors.
 A cadence/language-only edit still preserves the existing score and selectors.
 
 V1 recognizes Bitcoin/BTC, Ethereum/ETH and Solana/SOL. Background subscription
-matching remains PANews-only. CoinDesk/Cointelegraph are opt-in public/manual
-sources, not additional subscription destinations or matching sources.
+matching and public/manual holdings-news evidence remain PANews-only.
+No additional media source is enabled.
 Do not invent supported sources or event enums.
 At least one include term is required unless exploration is enabled.
 `airdrop` is not a supported event selector: retain that exclusion in the

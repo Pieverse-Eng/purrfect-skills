@@ -26,7 +26,7 @@ working-tree fixes are not shipped by the existing submodule pin.
 - Hermes local mirror failures also retain the target, canonical text and any
   Web/external receipts. Repairs must not resend external messages.
 - Explicit active holdings-news analysis is an ordinary chat report using the
-  supplied account/holdings and last-24-hour PANews/CoinDesk/Cointelegraph evidence.
+  supplied account/holdings and last-24-hour PANews evidence only.
   Cover every supplied asset and disclose missing/omitted/stale source evidence.
   No-data requests still receive a readable answer, not only `NO_REPLY`. This mode
   does not invoke Profile/publication scripts, subscribe, search additional sources,
@@ -69,8 +69,11 @@ does not validate real SessionDB routing or readback.
    source coverage, and single-asset requests; page refresh is not analysis consent.
    Active analysis extends the original handoff; product-scope acceptance and
    frontend integration remain separate gates. Frontend #933 does not implement
-   that action. RSS remains default-off pending permission and stability review;
-   background subscription matching remains PANews-only.
+   that action. Optional RSS sources and their opt-in flag have been removed
+   from the companion backend pending publisher-permission review. Public/manual
+   evidence and background subscription matching remain PANews-only. Retaining
+   PANews does not establish commercial collection/storage/display/model rights;
+   verify the applicable publisher agreement separately.
 
 Local tests and a merged Skills PR alone do not establish deployed image contents,
 live source availability, production migration success, or external delivery.
