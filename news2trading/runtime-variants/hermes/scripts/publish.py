@@ -37,10 +37,8 @@ class ContextMirrorError(Exception):
 			'contextRecorded': False,
 		}
 		if self.publication:
-			result['batchId'] = self.publication['batchId']
-			for field in ('target', 'web', 'external', 'publishedText'):
-				if field in self.publication:
-					result[field] = self.publication[field]
+			result.update({key: self.publication[key]
+				for key in ('batchId', 'target', 'web', 'external', 'publishedText') if key in self.publication})
 		return result
 
 

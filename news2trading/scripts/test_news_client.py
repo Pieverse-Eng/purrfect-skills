@@ -1,3 +1,5 @@
+import importlib.util
+import io
 import json
 import os
 import socket
@@ -6,6 +8,7 @@ import sys
 import tempfile
 import threading
 import unittest
+from contextlib import redirect_stderr, redirect_stdout
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from unittest.mock import patch
@@ -121,7 +124,264 @@ def _web_receipt(runtime='openclaw', external='disabled'):
 	return {'ok': True, 'data': data}
 
 
+def _context_missing_response(channel='telegram'):
+	return {
+		'ok': False, 'code': 'context_missing', 'channelAccepted': True,
+		'target': {'channel': channel, 'chatId': '42', 'threadId': '100'},
+		'web': {'status': 'published', 'sessionId': 'web-session-1'},
+		'external': {
+			'status': 'accepted', 'channelAccepted': True, 'contextRecorded': False,
+			'target': {'channel': channel, 'chatId': '42', 'threadId': '100'},
+		},
+		'publishedText': 'Canonical analysis A',
+	}
+
+
 class NewsClientTest(unittest.TestCase):
+	def test_context_missing_preserves_partial_publication_for_both_runtimes_and_channels(self):
+		for runtime in ('openclaw', 'hermes'):
+			for channel in ('telegram', 'line'):
+				with self.subTest(runtime=runtime, channel=channel):
+					body = _context_missing_response(channel)
+					if runtime == 'hermes':
+						body['batchId'] = BATCH_ID
+					def respond(handler):
+						_json_response(handler, 502, body)
+					with _Server(respond) as server, self._env(server.url):
+						with self.assertRaises(NewsClientError) as raised:
+							publish_batch(BATCH_ID, 'Competing analysis B', expected_runtime=runtime)
+					diagnostic = raised.exception.diagnostic()
+					self.assertEqual(diagnostic['code'], 'context_missing')
+					self.assertEqual(diagnostic['httpStatus'], 502)
+					self.assertEqual(diagnostic['batchId'], BATCH_ID)
+					for key in ('target', 'web', 'external', 'publishedText'):
+						self.assertEqual(diagnostic[key], body[key])
+					self.assertIs(diagnostic['ok'], False)
+					self.assertIs(diagnostic['channelAccepted'], True)
+					self.assertIs(diagnostic['contextRecorded'], False)
+					self.assertEqual(len(server.requests), 1)
+
+	def test_runtime_clis_preserve_api_partial_failure_without_retry_or_mirror(self):
+		for runtime in ('openclaw', 'hermes'):
+			with self.subTest(runtime=runtime):
+				body = _context_missing_response()
+				def respond(handler):
+					_json_response(handler, 502, body)
+				with _Server(respond) as server, self._env(server.url), tempfile.TemporaryDirectory() as directory:
+					text_file = Path(directory) / 'brief.txt'
+					text_file.write_text('Competing analysis B', encoding='utf-8')
+					args = ['--batch-id', BATCH_ID, '--text-file', str(text_file)]
+					if runtime == 'openclaw':
+						result = subprocess.run([sys.executable, str(SCRIPT_DIR / 'publish.py'), *args],
+							capture_output=True, text=True, check=False)
+						code, stdout, stderr = result.returncode, result.stdout, result.stderr
+					else:
+						path = SCRIPT_DIR.parent / 'runtime-variants' / 'hermes' / 'scripts' / 'publish.py'
+						spec = importlib.util.spec_from_file_location('hermes_api_error_test', path)
+						module = importlib.util.module_from_spec(spec)
+						spec.loader.exec_module(module)
+						out, err = io.StringIO(), io.StringIO()
+						with patch.object(module, 'ensure_hermes_python'), \
+							patch.object(module, 'HermesContextAdapter') as adapter, \
+							redirect_stdout(out), redirect_stderr(err):
+							code = module.main(args)
+						adapter.assert_not_called()
+						stdout, stderr = out.getvalue(), err.getvalue()
+				self.assertEqual(code, 1)
+				self.assertEqual(stdout, '')
+				self.assertNotIn(TOKEN, stderr)
+				diagnostic = json.loads(stderr)
+				self.assertIs(diagnostic['ok'], False)
+				self.assertIs(diagnostic['channelAccepted'], True)
+				self.assertIs(diagnostic['contextRecorded'], False)
+				self.assertEqual(diagnostic['batchId'], BATCH_ID)
+				for key in ('target', 'web', 'external', 'publishedText'):
+					self.assertEqual(diagnostic[key], body[key])
+				self.assertEqual(len(server.requests), 1)
+
+	def test_external_only_context_missing_preserves_top_level_target(self):
+		for runtime in ('openclaw', 'hermes'):
+			for channel in ('telegram', 'line'):
+				with self.subTest(runtime=runtime, channel=channel):
+					target = _context_missing_response(channel)['target']
+					body = {'ok': False, 'code': 'context_missing', 'channelAccepted': True,
+						'target': target}
+					def respond(handler):
+						_json_response(handler, 502, body)
+					with _Server(respond) as server, self._env(server.url):
+						with self.assertRaises(NewsClientError) as raised:
+							publish_batch(BATCH_ID, 'Final brief', expected_runtime=runtime)
+					diagnostic = raised.exception.diagnostic()
+					self.assertEqual(diagnostic['target'], target)
+					self.assertEqual(diagnostic['batchId'], BATCH_ID)
+					self.assertIs(diagnostic['ok'], False)
+					self.assertIs(diagnostic['channelAccepted'], True)
+					self.assertIs(diagnostic['contextRecorded'], False)
+					for key in ('web', 'external', 'publishedText'):
+						self.assertNotIn(key, diagnostic)
+					self.assertEqual(len(server.requests), 1)
+
+	def test_partial_error_details_omit_invalid_fields_without_losing_valid_destinations(self):
+		cases = [
+			('target', None), ('target', {'channel': 'email', 'chatId': '42'}),
+			('target', {'channel': 'telegram', 'chatId': '42', 'threadId': 100}),
+			('web', None), ('web', {'status': 'published', 'sessionId': ' '}),
+			('web', {'status': 'disabled', 'sessionId': 'web-session-1'}),
+			('external', None), ('external', {'status': 'published'}),
+			('external', {'status': 'accepted', 'channelAccepted': True, 'contextRecorded': True}),
+			('external', {'status': 'accepted', 'channelAccepted': 1, 'contextRecorded': False}),
+			('external', {'status': 'accepted', 'channelAccepted': True, 'contextRecorded': False,
+				'receipt': _receipt('hermes')['data']}),
+			('external', {'status': 'accepted', 'channelAccepted': True, 'contextRecorded': False,
+				'target': {'channel': 'email', 'chatId': '42'}}),
+			('external', {'status': 'accepted', 'channelAccepted': True, 'contextRecorded': False,
+				'target': {'channel': 'line', 'chatId': ' '}}),
+			('external', {'status': 'accepted', 'channelAccepted': True, 'contextRecorded': False,
+				'target': {'channel': 'line', 'chatId': '42', 'threadId': 1}}),
+			('publishedText', None), ('publishedText', ''), ('publishedText', 42),
+			('publishedText', 'x' * 3001), ('publishedText', '\ud800'),
+		]
+		for key, value in cases:
+			with self.subTest(key=key, value=value):
+				body = _context_missing_response()
+				body[key] = value
+				with self.assertRaises(NewsClientError) as raised:
+					news_client._raise_api_error(body, 502, BATCH_ID)
+				diagnostic = raised.exception.diagnostic()
+				self.assertNotIn(key, diagnostic)
+				for valid_key in {'target', 'web', 'external', 'publishedText'} - {key}:
+					self.assertEqual(diagnostic[valid_key], body[valid_key])
+				self.assertIs(diagnostic['channelAccepted'], True)
+				self.assertIs(diagnostic['contextRecorded'], False)
+
+	def test_partial_diagnostic_identifiers_are_bounded_and_control_free(self):
+		invalid = ('', ' ', 42, 'x' * 513, '42\nunsafe', '42\runsafe', '42\x00', '42\x7f')
+		for value in invalid:
+			for field in ('chatId', 'threadId'):
+				for location in ('target', 'external'):
+					with self.subTest(value=value, field=field, location=location):
+						body = _context_missing_response()
+						target = body['target'] if location == 'target' else body['external']['target']
+						target[field] = value
+						with self.assertRaises(NewsClientError) as raised:
+							news_client._raise_api_error(body, 502, BATCH_ID)
+						diagnostic = raised.exception.diagnostic()
+						self.assertNotIn(location, diagnostic)
+						for key in {'target', 'web', 'external', 'publishedText'} - {location}:
+							self.assertEqual(diagnostic[key], body[key])
+						self.assertIs(diagnostic['channelAccepted'], True)
+			with self.subTest(value=value, field='sessionId'):
+				body = _context_missing_response()
+				body['web']['sessionId'] = value
+				with self.assertRaises(NewsClientError) as raised:
+					news_client._raise_api_error(body, 502, BATCH_ID)
+				diagnostic = raised.exception.diagnostic()
+				self.assertNotIn('web', diagnostic)
+				for key in ('target', 'external', 'publishedText'):
+					self.assertEqual(diagnostic[key], body[key])
+				self.assertIs(diagnostic['channelAccepted'], True)
+
+	def test_partial_diagnostics_accept_identifier_limit_and_optional_thread(self):
+		for with_thread in (True, False):
+			with self.subTest(with_thread=with_thread):
+				body = _context_missing_response('line')
+				target = {'channel': 'line', 'chatId': 'x' * 512}
+				if with_thread:
+					target['threadId'] = 'x' * 512
+				body['target'] = dict(target)
+				body['external']['target'] = dict(target)
+				body['web']['sessionId'] = 'x' * 512
+				with self.assertRaises(NewsClientError) as raised:
+					news_client._raise_api_error(body, 502, BATCH_ID)
+				diagnostic = raised.exception.diagnostic()
+				for key in ('target', 'web', 'external', 'publishedText'):
+					self.assertEqual(diagnostic[key], body[key])
+
+	def test_partial_diagnostics_filter_conflicting_targets_without_losing_other_evidence(self):
+		cases = (
+			{'channel': 'line', 'chatId': 'U_other'},
+			{'channel': 'telegram', 'chatId': '84', 'threadId': '100'},
+			{'channel': 'telegram', 'chatId': '42', 'threadId': '101'},
+			{'channel': 'telegram', 'chatId': '42'},
+		)
+		for target in cases:
+			with self.subTest(target=target):
+				body = _context_missing_response()
+				body['external']['target'] = target
+				with self.assertRaises(NewsClientError) as raised:
+					news_client._raise_api_error(body, 502, BATCH_ID)
+				diagnostic = raised.exception.diagnostic()
+				self.assertNotIn('external', diagnostic)
+				for key in ('target', 'web', 'publishedText'):
+					self.assertEqual(diagnostic[key], body[key])
+				self.assertIs(diagnostic['channelAccepted'], True)
+				self.assertIs(diagnostic['contextRecorded'], False)
+
+	def test_partial_context_acceptance_does_not_require_top_level_target(self):
+		body = _context_missing_response()
+		body.pop('target')
+		with self.assertRaises(NewsClientError) as raised:
+			news_client._raise_api_error(body, 502, BATCH_ID)
+		diagnostic = raised.exception.diagnostic()
+		self.assertNotIn('target', diagnostic)
+		self.assertEqual(diagnostic['external'], body['external'])
+		self.assertIs(diagnostic['channelAccepted'], True)
+
+	def test_partial_context_acceptance_does_not_require_a_target_or_canonical_text(self):
+		body = _context_missing_response()
+		body.pop('target')
+		body['external'].pop('target')
+		body.pop('publishedText')
+		with self.assertRaises(NewsClientError) as raised:
+			news_client._raise_api_error(body, 502, BATCH_ID)
+		diagnostic = raised.exception.diagnostic()
+		self.assertEqual(diagnostic['web'], body['web'])
+		self.assertEqual(diagnostic['external'], body['external'])
+		self.assertNotIn('target', diagnostic)
+		self.assertNotIn('publishedText', diagnostic)
+		self.assertIs(diagnostic['ok'], False)
+		self.assertIs(diagnostic['contextRecorded'], False)
+
+	def test_partial_error_details_are_allowlisted_and_bound_to_this_batch(self):
+		body = _context_missing_response()
+		body.update(error=TOKEN, token=TOKEN, contextRecorded=True)
+		body['target']['token'] = TOKEN
+		body['web']['token'] = TOKEN
+		body['external']['token'] = TOKEN
+		body['external']['target']['token'] = TOKEN
+		with self.assertRaises(NewsClientError) as raised:
+			news_client._raise_api_error(body, 502, BATCH_ID)
+		diagnostic = raised.exception.diagnostic()
+		self.assertNotIn(TOKEN, json.dumps(diagnostic))
+		self.assertEqual(diagnostic['target'], _context_missing_response()['target'])
+		self.assertEqual(diagnostic['web'], _context_missing_response()['web'])
+		self.assertEqual(diagnostic['external'], _context_missing_response()['external'])
+		self.assertIs(diagnostic['contextRecorded'], False)
+		body['batchId'] = INSTANCE_ID
+		with self.assertRaises(NewsClientError) as raised:
+			news_client._raise_api_error(body, 502, BATCH_ID)
+		self.assertEqual(raised.exception.code, 'malformed_response')
+		self.assertEqual(raised.exception.channel_accepted, 'unknown')
+		for key in ('batchId', 'target', 'web', 'external', 'publishedText'):
+			self.assertNotIn(key, raised.exception.diagnostic())
+
+	def test_partial_receipts_are_not_successes_or_details_of_unrelated_errors(self):
+		body = _context_missing_response()
+		for code, status, accepted in (('profile_paused', 409, False),
+			('context_missing', 502, 'unknown'), ('context_missing', 502, 1),
+			('context_missing', 400, True)):
+			with self.subTest(code=code, status=status, accepted=accepted):
+				body.update(code=code, channelAccepted=accepted)
+				with self.assertRaises(NewsClientError) as raised:
+					news_client._raise_api_error(body, status, BATCH_ID)
+				for key in ('target', 'web', 'external', 'publishedText'):
+					self.assertNotIn(key, raised.exception.diagnostic())
+		body = _web_receipt()
+		body['data']['external'] = _context_missing_response()['external']
+		with self.assertRaises(NewsClientError) as raised:
+			news_client._validate_receipt(body, BATCH_ID, 'openclaw')
+		self.assertEqual(raised.exception.code, 'malformed_response')
+
 	def test_web_only_cli_confirms_web_without_claiming_external_delivery(self):
 		def respond(handler):
 			_json_response(handler, 200, _web_receipt())
@@ -292,6 +552,8 @@ class NewsClientTest(unittest.TestCase):
 						publish_batch(BATCH_ID, 'Idea', expected_runtime='openclaw')
 				self.assertEqual(raised.exception.code, code)
 				self.assertEqual(raised.exception.channel_accepted, expected)
+				for key in ('batchId', 'web', 'external', 'publishedText'):
+					self.assertNotIn(key, raised.exception.diagnostic())
 				self.assertEqual(len(server.requests), 1)
 
 	def test_context_missing_preserves_partial_publication_for_both_runtimes(self):
@@ -351,7 +613,7 @@ class NewsClientTest(unittest.TestCase):
 				body[field] = invalid
 				body['credential'] = TOKEN
 				with self.assertRaises(NewsClientError) as raised:
-					news_client._raise_api_error(body, 502)
+					news_client._raise_api_error(body, 502, BATCH_ID)
 				diagnostic = raised.exception.diagnostic()
 				self.assertNotIn(field, diagnostic)
 				self.assertIs(diagnostic['channelAccepted'], True)
@@ -364,7 +626,7 @@ class NewsClientTest(unittest.TestCase):
 			body[field] = {**body[field], 'credential': TOKEN}
 		body['external']['target'] = {'channel': 'line', 'chatId': 'U_other'}
 		with self.assertRaises(NewsClientError) as raised:
-			news_client._raise_api_error(body, 502)
+			news_client._raise_api_error(body, 502, BATCH_ID)
 		diagnostic = raised.exception.diagnostic()
 		self.assertNotIn('external', diagnostic)
 		self.assertEqual(diagnostic['target'], _context_missing()['target'])

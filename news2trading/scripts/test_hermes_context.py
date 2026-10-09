@@ -83,12 +83,15 @@ class HermesContextUnitTest(unittest.TestCase):
 		cls.publish = _load_publish_module()
 
 	def test_missing_runtime_modules_report_accepted_external_with_incomplete_context(self):
-		publisher = Mock(return_value=_receipt())
+		publisher = Mock(return_value=_receipt(publishedText='Canonical analysis A'))
 		with patch.dict(sys.modules, {'gateway.mirror': None, 'hermes_state': None}):
 			with self.assertRaises(self.publish.ContextMirrorError) as raised:
 				self.publish.publish_and_mirror(BATCH_ID, 'Final brief', publisher=publisher)
 		self.assertTrue(raised.exception.diagnostic()['channelAccepted'])
 		self.assertFalse(raised.exception.diagnostic()['contextRecorded'])
+		self.assertEqual(raised.exception.diagnostic()['batchId'], BATCH_ID)
+		self.assertEqual(raised.exception.diagnostic()['target'], _receipt()['target'])
+		self.assertEqual(raised.exception.diagnostic()['publishedText'], 'Canonical analysis A')
 		publisher.assert_called_once()
 
 	def test_web_only_and_external_failure_skip_local_context_apis(self):
@@ -139,21 +142,60 @@ class HermesContextUnitTest(unittest.TestCase):
 		self.assertFalse(raised.exception.diagnostic()['contextRecorded'])
 		self.assertEqual(adapter.mirror_calls, [])
 
-	def test_failed_external_mirror_preserves_saved_web_and_canonical_receipts(self):
-		receipt = {**_receipt(), 'web': {'status': 'published', 'sessionId': 'web-session-1'},
-			'external': {'status': 'published', 'receipt': _receipt()},
-			'publishedText': 'Canonical analysis A'}
-		publisher = Mock(return_value=receipt)
-		with self.assertRaises(self.publish.ContextMirrorError) as raised:
-			self.publish.publish_and_mirror(BATCH_ID, 'Competing analysis B', publisher=publisher,
-				adapter=FakeAdapter(mirror_results=(False, False)))
-		diagnostic = raised.exception.diagnostic()
-		for field in ('target', 'web', 'external', 'publishedText'):
-			self.assertEqual(diagnostic[field], receipt[field])
-		self.assertFalse(diagnostic['ok'])
+	def test_failed_external_mirror_preserves_target_and_canonical_receipts(self):
+		for web_enabled in (True, False):
+			with self.subTest(web_enabled=web_enabled):
+				receipt = {**_receipt(), 'publishedText': 'Canonical analysis A'}
+				if web_enabled:
+					receipt.update(web={'status': 'published', 'sessionId': 'web-session-1'},
+						external={'status': 'published', 'receipt': _receipt()})
+				publisher = Mock(return_value=receipt)
+				adapter = FakeAdapter(mirror_results=(False, False))
+				with self.assertRaises(self.publish.ContextMirrorError) as raised:
+					self.publish.publish_and_mirror(BATCH_ID, 'Competing analysis B',
+						publisher=publisher, adapter=adapter)
+				diagnostic = raised.exception.diagnostic()
+				for key in ('batchId', 'target', 'publishedText'):
+					self.assertEqual(diagnostic[key], receipt[key])
+				for key in ('web', 'external'):
+					if web_enabled:
+						self.assertEqual(diagnostic[key], receipt[key])
+					else:
+						self.assertNotIn(key, diagnostic)
+				self.assertFalse(diagnostic['ok'])
+				self.assertTrue(diagnostic['channelAccepted'])
+				self.assertFalse(diagnostic['contextRecorded'])
+				self.assertEqual(len(adapter.mirror_calls), 2)
+				for call in adapter.mirror_calls:
+					self.assertEqual(call['text'], f'[Purr-Fect News batch {BATCH_ID}]\nCanonical analysis A')
+				publisher.assert_called_once()
+
+	def test_platform_context_missing_never_attempts_local_mirror(self):
+		import news_client
+
+		target = _receipt()['target']
+		body = {
+			'ok': False, 'code': 'context_missing', 'channelAccepted': True,
+			'target': target, 'publishedText': 'Canonical analysis A',
+			'web': {'status': 'published', 'sessionId': 'web-session-1'},
+			'external': {'status': 'accepted', 'channelAccepted': True,
+				'contextRecorded': False, 'target': target},
+		}
+		with self.assertRaises(self.publish.NewsClientError) as raised:
+			news_client._raise_api_error(body, 502, BATCH_ID)
+		publisher = Mock(side_effect=raised.exception)
+		adapter = Mock()
+		with self.assertRaises(self.publish.NewsClientError) as propagated:
+			self.publish.publish_and_mirror(BATCH_ID, 'Competing analysis B',
+				publisher=publisher, adapter=adapter)
+		self.assertIs(propagated.exception, raised.exception)
+		publisher.assert_called_once()
+		self.assertEqual(adapter.mock_calls, [])
+		diagnostic = propagated.exception.diagnostic()
+		for key in ('target', 'web', 'external', 'publishedText'):
+			self.assertEqual(diagnostic[key], body[key])
 		self.assertTrue(diagnostic['channelAccepted'])
 		self.assertFalse(diagnostic['contextRecorded'])
-		publisher.assert_called_once()
 
 	def test_platform_context_missing_stays_diagnostic_and_never_attempts_local_mirror(self):
 		import news_client
@@ -166,7 +208,7 @@ class HermesContextUnitTest(unittest.TestCase):
 				'contextRecorded': False, 'target': target},
 		}
 		with self.assertRaises(self.publish.NewsClientError) as raised:
-			news_client._raise_api_error(body, 502)
+			news_client._raise_api_error(body, 502, BATCH_ID)
 		publisher = Mock(side_effect=raised.exception)
 		adapter = Mock()
 		with self.assertRaises(self.publish.NewsClientError):

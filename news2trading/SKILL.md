@@ -126,17 +126,20 @@ conversation. `external.status` separately reports `disabled`, `published`,
 Web-only results need no external recipient, Topic, runtime mirror, or trading
 handoff. The platform owns session identity; never guess or create another one.
 
+An API `context_missing` error may also include `web.status: published` and
+`external.status: accepted`: the external channel accepted the message, but
+runtime context is unverified. The script retains validated top-level `target`,
+Web/external details and canonical `publishedText` in its private failure
+diagnostic. Diagnostic IDs are bounded and control-free; conflicting external
+targets and malformed additive fields are omitted without discarding known
+acceptance or other valid outcomes. This is not full success, does not authorize
+a mirror without a valid session receipt, and must never trigger another
+publication attempt.
+
 Legacy external-only receipts retain their runtime-specific acceptance/context
 protocol. A connection loss or invalid receipt can mean the external outcome is
 unknown. Never claim it was definitely unsent. Accepted-but-incomplete context
 must never be repaired by publishing again.
-
-A platform `context_missing` error preserves known channel acceptance and any
-validated `target`, saved `web` receipt, `external.status: accepted`, and
-canonical `publishedText` in the diagnostic. These fields are evidence only:
-they are not a successful context receipt or permission to send/mirror again.
-Malformed optional fields are omitted without discarding known acceptance or
-other valid evidence. Keep the diagnostic private to the isolated run.
 
 The always-`NO_REPLY` rule applies after background publication is invoked.
 Explicit user Profile/item-read requests still receive safe error guidance.
