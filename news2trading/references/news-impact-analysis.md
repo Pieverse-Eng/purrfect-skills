@@ -28,8 +28,8 @@ select relevance, not a desired conclusion; changing long/short exposure must
 not reverse the assessment of the news's effect on the asset. Do not manufacture
 an event, a bullish story or a confidence score to fill an empty section.
 
-Use only supplied PANews/CoinDesk/Cointelegraph materials. Treat feed excerpts
-and truncated article text as incomplete evidence. Group obviously repeated
+Use only supplied PANews materials. Treat excerpts and truncated article text
+as incomplete evidence. Group obviously repeated
 coverage without claiming independent corroboration. An authentic source is
 not proof that its claims are true; uncertainty may be the correct conclusion.
 Disclose failed/stale/uncollected sources and evidence omitted by the context
