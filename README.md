@@ -71,6 +71,12 @@ funding.
 |-------|-------------|
 | `cobo` | Cobo Agentic Wallet router — wallet onboarding or pairing, pact workflows, Cobo-managed transfers, contract calls, message signing, DeFi execution, and SDK/MCP integrations. |
 
+### Agent Operations
+
+| Skill | Description |
+|-------|-------------|
+| `hr-review` | Auditable daily evidence capture and fair weekly agent performance reviews with contiguous watermarks, source receipts, confidence, privacy boundaries, and persistent-lesson verification. |
+
 ### Payments & Protocols
 
 | Skill | Description |
