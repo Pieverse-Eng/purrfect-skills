@@ -1,4 +1,5 @@
 import importlib.util
+import io
 import json
 import os
 import sys
@@ -6,6 +7,7 @@ import tempfile
 import unittest
 from unittest.mock import Mock, patch
 from pathlib import Path
+from contextlib import redirect_stderr
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -80,13 +82,153 @@ class HermesContextUnitTest(unittest.TestCase):
 	def setUpClass(cls):
 		cls.publish = _load_publish_module()
 
-	def test_missing_runtime_modules_prevent_channel_publication(self):
-		publisher = Mock(return_value=_receipt())
+	def test_missing_runtime_modules_report_accepted_external_with_incomplete_context(self):
+		publisher = Mock(return_value=_receipt(publishedText='Canonical analysis A'))
 		with patch.dict(sys.modules, {'gateway.mirror': None, 'hermes_state': None}):
 			with self.assertRaises(self.publish.ContextMirrorError) as raised:
 				self.publish.publish_and_mirror(BATCH_ID, 'Final brief', publisher=publisher)
-		self.assertFalse(raised.exception.diagnostic()['channelAccepted'])
-		publisher.assert_not_called()
+		self.assertTrue(raised.exception.diagnostic()['channelAccepted'])
+		self.assertFalse(raised.exception.diagnostic()['contextRecorded'])
+		self.assertEqual(raised.exception.diagnostic()['batchId'], BATCH_ID)
+		self.assertEqual(raised.exception.diagnostic()['target'], _receipt()['target'])
+		self.assertEqual(raised.exception.diagnostic()['publishedText'], 'Canonical analysis A')
+		publisher.assert_called_once()
+
+	def test_web_only_and_external_failure_skip_local_context_apis(self):
+		for status in ('disabled', 'rejected', 'unknown'):
+			with self.subTest(status=status):
+				receipt = {
+					'batchId': BATCH_ID,
+					'web': {'status': 'published', 'sessionId': 'web-session-1'},
+					'external': {'status': status},
+				}
+				publisher = Mock(return_value=receipt)
+				with patch.dict(sys.modules, {'gateway.mirror': None, 'hermes_state': None}):
+					result = self.publish.publish_and_mirror(BATCH_ID, 'Final brief', publisher=publisher)
+				self.assertEqual(result['web'], receipt['web'])
+				self.assertEqual(result['external'], receipt['external'])
+				self.assertNotIn('channelAccepted', result)
+				publisher.assert_called_once()
+
+	def test_web_and_external_success_mirrors_only_external_receipt(self):
+		adapter = FakeAdapter()
+		receipt = {**_receipt(), 'web': {'status': 'published', 'sessionId': 'web-session-1'},
+			'external': {'status': 'published', 'receipt': _receipt()}}
+		result = self.publish.publish_and_mirror(BATCH_ID, 'Final brief', publisher=Mock(return_value=receipt), adapter=adapter)
+		self.assertEqual(result['web']['sessionId'], 'web-session-1')
+		self.assertTrue(result['contextRecorded'])
+		self.assertEqual(len(adapter.mirror_calls), 1)
+
+	def test_changed_retry_mirrors_the_canonical_published_text_for_mixed_and_legacy_receipts(self):
+		for web_enabled in (True, False):
+			with self.subTest(web_enabled=web_enabled):
+				adapter = FakeAdapter()
+				receipt = {**_receipt(), 'publishedText': 'Canonical analysis A'}
+				if web_enabled:
+					receipt.update(web={'status': 'published', 'sessionId': 'web-session-1'},
+						external={'status': 'published', 'receipt': _receipt()})
+				publisher = Mock(return_value=receipt)
+				result = self.publish.publish_and_mirror(BATCH_ID, 'Competing analysis B', publisher=publisher, adapter=adapter)
+				self.assertEqual(adapter.mirror_calls[0]['text'], f'[Purr-Fect News batch {BATCH_ID}]\nCanonical analysis A')
+				self.assertEqual(result['publishedText'], 'Canonical analysis A')
+				self.assertTrue(result['contextRecorded'])
+				publisher.assert_called_once_with(BATCH_ID, 'Competing analysis B', expected_runtime='hermes')
+
+	def test_invalid_canonical_text_never_reaches_the_local_mirror(self):
+		adapter = FakeAdapter()
+		with self.assertRaises(self.publish.NewsClientError) as raised:
+			self.publish.publish_and_mirror(BATCH_ID, 'Input B', publisher=Mock(return_value=_receipt(publishedText=42)), adapter=adapter)
+		self.assertEqual(raised.exception.code, 'malformed_response')
+		self.assertFalse(raised.exception.diagnostic()['contextRecorded'])
+		self.assertEqual(adapter.mirror_calls, [])
+
+	def test_failed_external_mirror_preserves_target_and_canonical_receipts(self):
+		for web_enabled in (True, False):
+			with self.subTest(web_enabled=web_enabled):
+				receipt = {**_receipt(), 'publishedText': 'Canonical analysis A'}
+				if web_enabled:
+					receipt.update(web={'status': 'published', 'sessionId': 'web-session-1'},
+						external={'status': 'published', 'receipt': _receipt()})
+				publisher = Mock(return_value=receipt)
+				adapter = FakeAdapter(mirror_results=(False, False))
+				with self.assertRaises(self.publish.ContextMirrorError) as raised:
+					self.publish.publish_and_mirror(BATCH_ID, 'Competing analysis B',
+						publisher=publisher, adapter=adapter)
+				diagnostic = raised.exception.diagnostic()
+				for key in ('batchId', 'target', 'publishedText'):
+					self.assertEqual(diagnostic[key], receipt[key])
+				for key in ('web', 'external'):
+					if web_enabled:
+						self.assertEqual(diagnostic[key], receipt[key])
+					else:
+						self.assertNotIn(key, diagnostic)
+				self.assertFalse(diagnostic['ok'])
+				self.assertTrue(diagnostic['channelAccepted'])
+				self.assertFalse(diagnostic['contextRecorded'])
+				self.assertEqual(len(adapter.mirror_calls), 2)
+				for call in adapter.mirror_calls:
+					self.assertEqual(call['text'], f'[Purr-Fect News batch {BATCH_ID}]\nCanonical analysis A')
+				publisher.assert_called_once()
+
+	def test_platform_context_missing_never_attempts_local_mirror(self):
+		import news_client
+
+		target = _receipt()['target']
+		body = {
+			'ok': False, 'code': 'context_missing', 'channelAccepted': True,
+			'target': target, 'publishedText': 'Canonical analysis A',
+			'web': {'status': 'published', 'sessionId': 'web-session-1'},
+			'external': {'status': 'accepted', 'channelAccepted': True,
+				'contextRecorded': False, 'target': target},
+		}
+		with self.assertRaises(self.publish.NewsClientError) as raised:
+			news_client._raise_api_error(body, 502, BATCH_ID)
+		publisher = Mock(side_effect=raised.exception)
+		adapter = Mock()
+		with self.assertRaises(self.publish.NewsClientError) as propagated:
+			self.publish.publish_and_mirror(BATCH_ID, 'Competing analysis B',
+				publisher=publisher, adapter=adapter)
+		self.assertIs(propagated.exception, raised.exception)
+		publisher.assert_called_once()
+		self.assertEqual(adapter.mock_calls, [])
+		diagnostic = propagated.exception.diagnostic()
+		for key in ('target', 'web', 'external', 'publishedText'):
+			self.assertEqual(diagnostic[key], body[key])
+		self.assertTrue(diagnostic['channelAccepted'])
+		self.assertFalse(diagnostic['contextRecorded'])
+
+	def test_platform_context_missing_stays_diagnostic_and_never_attempts_local_mirror(self):
+		import news_client
+		target = {'channel': 'telegram', 'chatId': '42', 'threadId': '100'}
+		body = {
+			'ok': False, 'code': 'context_missing', 'channelAccepted': True,
+			'target': target, 'publishedText': 'Canonical analysis A',
+			'web': {'status': 'published', 'sessionId': 'web-session-1'},
+			'external': {'status': 'accepted', 'channelAccepted': True,
+				'contextRecorded': False, 'target': target},
+		}
+		with self.assertRaises(self.publish.NewsClientError) as raised:
+			news_client._raise_api_error(body, 502, BATCH_ID)
+		publisher = Mock(side_effect=raised.exception)
+		adapter = Mock()
+		with self.assertRaises(self.publish.NewsClientError):
+			self.publish.publish_and_mirror(BATCH_ID, 'Competing analysis B', publisher=publisher, adapter=adapter)
+		publisher.assert_called_once()
+		adapter.preflight.assert_not_called()
+		adapter.mirror.assert_not_called()
+		stderr = io.StringIO()
+		with patch.object(self.publish, 'ensure_hermes_python'), \
+			patch.object(self.publish, 'read_text_file', return_value='Competing analysis B'), \
+			patch.object(self.publish, 'publish_and_mirror', side_effect=raised.exception) as publish, \
+			redirect_stderr(stderr):
+			status = self.publish.main(['--batch-id', BATCH_ID, '--text-file', 'brief.txt'])
+		self.assertEqual(status, 1)
+		publish.assert_called_once()
+		diagnostic = json.loads(stderr.getvalue())
+		for field in ('target', 'web', 'external', 'publishedText'):
+			self.assertEqual(diagnostic[field], body[field])
+		self.assertTrue(diagnostic['channelAccepted'])
+		self.assertFalse(diagnostic['contextRecorded'])
 
 	def test_cli_selects_existing_hermes_interpreter_before_publishing(self):
 		args = ['publish.py', '--batch-id', BATCH_ID, '--text-file', '/tmp/brief with spaces.txt']

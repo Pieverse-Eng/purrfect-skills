@@ -34,6 +34,7 @@ def fixture():
 class ProfileTests(unittest.TestCase):
 	def setUp(self):
 		self.profile = fixture()
+		self.item = None
 		self.requests = []
 		self.failure = None
 		self.receipt_change = None
@@ -61,6 +62,8 @@ class ProfileTests(unittest.TestCase):
 					return self.reply(403, {'ok': False, 'error': 'Token not authorized for this instance'})
 				if case.failure:
 					return self.reply(case.failure, {'ok': False, 'error': TOKEN})
+				if case.item is not None and self.path.startswith(BASE.removesuffix('/profile') + '/items/'):
+					return self.reply(200, {'ok': True, 'data': case.item})
 				if self.path not in (BASE, BASE + '/pause'):
 					return self.reply(404, {'ok': False})
 				if self.command == 'GET':
@@ -133,6 +136,28 @@ class ProfileTests(unittest.TestCase):
 		self.assertEqual(code, 0)
 		self.assertEqual(result['profile'], self.profile)
 		self.assertEqual(len(self.requests), 1)
+
+	def test_delivery_update_is_verified_and_survives_cadence_change(self):
+		for external in ('none', 'telegram', 'line'):
+			with self.subTest(external=external):
+				code, result = self.run_cli('update', {'delivery': {'web': True, 'external': external}}, version=self.profile['version'])
+				self.assertEqual(code, 0, result)
+				self.assertEqual(result['profile']['delivery'], {'web': True, 'external': external})
+		code, result = self.run_cli('update', {'deliveryIntervalMinutes': 20}, version=self.profile['version'])
+		self.assertEqual(code, 0, result)
+		self.assertEqual(self.profile['delivery'], {'web': True, 'external': 'line'})
+
+	def test_legacy_null_delivery_is_preserved_by_omission(self):
+		self.profile['delivery'] = None
+		code, result = self.run_cli('update', {'deliveryIntervalMinutes': 20})
+		self.assertEqual(code, 0, result)
+		self.assertNotIn('delivery', self.requests[-1][2])
+
+	def test_invalid_delivery_never_writes(self):
+		for delivery in ({'web': 'true', 'external': 'none'}, {'web': True, 'external': ['telegram', 'line']}, None):
+			code, result = self.run_cli('update', {'delivery': delivery})
+			self.assertNotEqual(code, 0, result)
+		self.assertFalse(any(method != 'GET' for method, _, _ in self.requests))
 
 	def test_paused_update_never_silently_resumes(self):
 		self.profile['status'] = 'paused'
@@ -283,6 +308,18 @@ class ProfileTests(unittest.TestCase):
 		})
 		self.assertEqual(code, 0, result)
 		self.assertTrue(result['verified'])
+
+	def test_item_read_pins_and_verifies_the_queued_source_revision(self):
+		version = '22222222-2222-4222-8222-222222222222'
+		self.item = {'itemId': INSTANCE, 'versionId': version, 'content': 'Queued revision'}
+		code, result = self.run_cli('item', extra=('--item-id', INSTANCE, '--version-id', version))
+		self.assertEqual(code, 0, result)
+		self.assertEqual(result['item']['content'], 'Queued revision')
+		self.assertEqual(self.requests[-1][1], BASE.removesuffix('/profile') + '/items/' + INSTANCE + '?versionId=' + version)
+		self.item['versionId'] = INSTANCE
+		code, result = self.run_cli('item', extra=('--item-id', INSTANCE, '--version-id', version))
+		self.assertNotEqual(code, 0)
+		self.assertEqual(result['code'], 'item_version_mismatch')
 
 	def test_runtime_package_cli_can_read_only_an_explicit_item_uuid(self):
 		code, result = self.run_cli('item', extra=('--item-id', INSTANCE))

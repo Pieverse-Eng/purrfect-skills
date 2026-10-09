@@ -30,11 +30,12 @@ _KNOWN_FALSE_CODES = {
 class NewsClientError(Exception):
 	"""Safe local diagnostic carrying truthful channel-acceptance state."""
 
-	def __init__(self, code, message, channel_accepted, http_status=None):
+	def __init__(self, code, message, channel_accepted, http_status=None, *, publication=None):
 		super().__init__(message)
 		self.code = code
 		self.channel_accepted = channel_accepted
 		self.http_status = http_status
+		self.publication = publication
 
 	def diagnostic(self):
 		result = {
@@ -46,6 +47,8 @@ class NewsClientError(Exception):
 		}
 		if self.http_status is not None:
 			result['httpStatus'] = self.http_status
+		if self.publication:
+			result.update(self.publication)
 		return result
 
 
@@ -142,7 +145,7 @@ def publish_batch(batch_id, text, expected_runtime):
 			'unknown',
 			response.status,
 		)
-	_raise_api_error(payload, response.status)
+	_raise_api_error(payload, response.status, batch_id)
 
 
 def _required_env(name):
@@ -249,12 +252,42 @@ def _set_response_timeout(response, connection, timeout):
 def _validate_receipt(payload, batch_id, expected_runtime):
 	try:
 		data = payload['data']
-		context = data['context']
-		target = data['target']
+		valid = payload.get('ok') is True and data.get('batchId') == batch_id
+		if 'web' in data or 'external' in data:
+			web, external = data['web'], data['external']
+			valid = (
+				valid and web.get('status') == 'published'
+				and isinstance(web.get('sessionId'), str) and bool(web['sessionId'].strip())
+				and external.get('status') in ('disabled', 'published', 'rejected', 'unknown')
+			)
+			if external.get('status') == 'published':
+				receipt = external['receipt']
+				valid = valid and _valid_external_receipt(receipt, batch_id, expected_runtime)
+				# The platform flattens a successful external receipt for legacy clients.
+				valid = valid and all(data.get(key) == value for key, value in receipt.items())
+			else:
+				valid = valid and 'receipt' not in external and 'channelAccepted' not in data
+		else:
+			valid = valid and _valid_external_receipt(data, batch_id, expected_runtime)
+	except (KeyError, TypeError, AttributeError):
+		valid = False
+	if not valid:
+		raise NewsClientError(
+			'malformed_response',
+			'Platform returned a receipt that does not match this runtime.',
+			'unknown',
+			200,
+		)
+	if 'publishedText' in data:
+		canonical_publication_text(data, '')
+	return data
+
+
+def _valid_external_receipt(data, batch_id, expected_runtime):
+	try:
+		context, target = data['context'], data['target']
 		valid = (
-			payload.get('ok') is True
-			and data.get('batchId') == batch_id
-			and data.get('channelAccepted') is True
+			data.get('batchId') == batch_id and data.get('channelAccepted') is True
 			and data.get('runtimeType') == expected_runtime
 			and target.get('channel') in ('telegram', 'line')
 			and isinstance(target.get('chatId'), str)
@@ -275,18 +308,99 @@ def _validate_receipt(payload, batch_id, expected_runtime):
 				and ('userId' not in context or isinstance(context['userId'], str))
 			)
 	except (KeyError, TypeError, AttributeError):
-		valid = False
-	if not valid:
+		return False
+	return valid
+
+
+def external_publication_receipt(receipt):
+	if 'web' in receipt:
+		return receipt['external'].get('receipt')
+	return receipt
+
+
+def canonical_publication_text(receipt, fallback):
+	"""Use the immutable server result; old servers omit this additive field."""
+	if 'publishedText' not in receipt:
+		return fallback
+	text = receipt['publishedText']
+	try:
+		_validate_text(text)
+	except NewsClientError:
 		raise NewsClientError(
-			'malformed_response',
-			'Platform returned a receipt that does not match this runtime.',
-			'unknown',
-			200,
+			'malformed_response', 'Platform returned invalid published analysis text.', 'unknown', 200
+		) from None
+	return text
+
+
+def publication_summary(receipt, runtime):
+	result = {'ok': True, 'batchId': receipt['batchId'], 'runtimeType': runtime}
+	if 'publishedText' in receipt:
+		result['publishedText'] = receipt['publishedText']
+	if 'web' in receipt:
+		result.update(web=receipt['web'], external=receipt['external'])
+	return result
+
+
+def _diagnostic_identifier(value):
+	return (
+		isinstance(value, str) and bool(value.strip()) and len(value) <= 512
+		and not any(ord(char) < 32 or ord(char) == 127 for char in value)
+	)
+
+
+def _diagnostic_target(value):
+	if not isinstance(value, dict) or value.get('channel') not in ('telegram', 'line'):
+		return None
+	if not _diagnostic_identifier(value.get('chatId')):
+		return None
+	target = {'channel': value['channel'], 'chatId': value['chatId']}
+	if 'threadId' in value:
+		if not _diagnostic_identifier(value['threadId']):
+			return None
+		target['threadId'] = value['threadId']
+	return target
+
+
+def _partial_context_publication(payload, batch_id):
+	"""Whitelist evidence, never send/mirror authorization; preserve known outcomes."""
+	if 'batchId' in payload and payload['batchId'] != batch_id:
+		raise NewsClientError(
+			'malformed_response', 'Platform returned an error for a different batch.', 'unknown', 502
 		)
-	return data
+	result = {}
+	target = _diagnostic_target(payload.get('target'))
+	if target is not None:
+		result['target'] = target
+	web = payload.get('web')
+	if (isinstance(web, dict) and web.get('status') == 'published'
+		and _diagnostic_identifier(web.get('sessionId'))):
+		result['web'] = {'status': 'published', 'sessionId': web['sessionId']}
+	external = payload.get('external')
+	if (isinstance(external, dict) and external.get('status') == 'accepted'
+		and external.get('channelAccepted') is True and external.get('contextRecorded') is False
+		and 'receipt' not in external):
+		# This is acceptance without verified context, not a successful runtime receipt.
+		external_target = _diagnostic_target(external.get('target'))
+		if ('target' not in external or (external_target is not None
+			and (target is None or external_target == target))):
+			detail = {'status': 'accepted', 'channelAccepted': True, 'contextRecorded': False}
+			if external_target is not None:
+				detail['target'] = external_target
+			result['external'] = detail
+	if 'publishedText' in payload:
+		try:
+			_validate_text(payload['publishedText'])
+		except NewsClientError:
+			pass
+		else:
+			result['publishedText'] = payload['publishedText']
+	if result:
+		# Current error envelopes omit the batch ID; bind diagnostics to our fixed request.
+		result['batchId'] = batch_id
+	return result
 
 
-def _raise_api_error(payload, status):
+def _raise_api_error(payload, status, batch_id):
 	if not isinstance(payload, dict) or payload.get('ok') is not False:
 		raise NewsClientError(
 			'malformed_response', 'Platform returned an invalid error response.', 'unknown', status
@@ -297,10 +411,13 @@ def _raise_api_error(payload, status):
 			'malformed_response', 'Platform returned an invalid error response.', 'unknown', status
 		)
 	accepted = payload.get('channelAccepted')
-	if accepted not in (True, False, 'unknown'):
+	if accepted is not True and accepted is not False and accepted != 'unknown':
 		accepted = False if code in _KNOWN_FALSE_CODES or status in (400, 401, 403, 404) else 'unknown'
+	publication = None
+	if code == 'context_missing' and status == 502 and accepted is True:
+		publication = _partial_context_publication(payload, batch_id)
 	message = {
 		'context_missing': 'Channel accepted the message, but runtime context is incomplete.',
 		'upstream_unknown': 'The publication channel result is unknown.',
 	}.get(code, 'Platform declined the publication request.')
-	raise NewsClientError(code, message, accepted, status)
+	raise NewsClientError(code, message, accepted, status, publication=publication)
