@@ -23,12 +23,12 @@ Present the hot keywords for the user to choose from.
 ### 2. Execute the search
 
 ```bash
-node cli.mjs search-articles "<keyword>" [--mode SMART|EXACT] [--take 10] --lang <lang>
+node cli.mjs search-articles "<keyword>" [--mode hit|time] [--take 10] --lang <lang>
 ```
 
 **Search modes**:
-- `SMART` (default) — semantic search, good for natural language descriptions
-- `EXACT` — exact match, good for proper nouns and project names
+- `hit` (default) — sort matching articles by relevance
+- `time` — sort matching articles by publish time, newest first
 
 ### 3. Deep dive into an article
 
