@@ -22,4 +22,8 @@ All operations go through `paper_prepare_card` and the same manual web review.
 An old card cannot be treated as consent to a newer version. Failed amendment
 does not establish that the original order changed or its reservation released.
 A batch cancellation acceptance is not completion: read its original action
-receipt until the reported job is final, and retain skipped/failed counts.
+receipt until the separate current job is final, and retain skipped/failed
+counts. For individual orders, the command receipt is a persisted response,
+not a current fill/cancel status. Never infer final outcome from a completed
+command or disappearance from active orders; show the evidence limit when
+the host does not expose that final state.

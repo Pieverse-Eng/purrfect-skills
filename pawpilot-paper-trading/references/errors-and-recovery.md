@@ -3,7 +3,7 @@
 Use the tool's reason, target, checkedAt and coverage. Do not label an entire
 venue down because one account or market is blocked.
 
-| Result | Response |
+| Reason category (not a literal status) | Response |
 | --- | --- |
 | needs_clarification | Ask the missing intent question; do not prepare a guessed order |
 | blocked | Explain the actual book/mark/funding/balance/limit reason and allowed recovery |
@@ -16,7 +16,19 @@ Native funding confirmation and an account's pending settlement are separate.
 Neither can be waived by Coach. Missing historical reference prices are not
 current prices or zero funding.
 
-After a human confirmation, read the original action receipt. Accepted, resting,
-partially filled, filled, cancelled, rejected and unknown are different outcomes.
-Retrying receipt reads is safe; retrying a financial operation with a new key
-is not recovery. If the page changed, the old card keeps its original scope.
+Host blocks have `status="blocked"` and a specific `reason`; use that reason,
+not an invented status from the table. Native bridge timeout has
+`status="error"`, `error.code="HOST_CALL_UNKNOWN"` and the original `callId`.
+Recover the original action using `paper_read(operation="receipt", callId=...)`.
+
+After human confirmation, the action receipt returns a persisted command
+response. For an order that may be the original accepted snapshot, even when
+the action/command is completed. Re-reading it does not update the order to
+filled. Active-order reads show current active orders only; disappearance is
+not final evidence. If the receipt proves acceptance but no authoritative
+final state is exposed, report "accepted; final execution not verified".
+Otherwise retain the recorded rejection, pending or unknown outcome. Direct
+the user to the terminal order/receipt view for unavailable final evidence.
+Batch cancellation also returns a current job; use its
+status/counts. Retrying read-only receipt queries is safe; a new financial key
+is not recovery. Changing the page keeps the old card's original scope.

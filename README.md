@@ -39,6 +39,8 @@ funding.
 | `hyperliquid` | Hyperliquid market data, perpetual and spot trading, leverage, collateral moves, Arbitrum USDC deposits and withdrawals, and HIP-3 workflows. |
 | `kraken` | Kraken exchange — spot / xStocks / forex trading, earn, staking, funding, and paper trading. |
 | `lighter` | Lighter (lighter.xyz) market data, perp/spot trading, leverage and margin, multi-chain USDC open-account/deposit, secure and fast withdrawals via `purr lighter`. |
+| `pawpilot-paper-trading` | Paper intent clarification, host-calculated previews and registered cards; execution requires separate terminal human confirmation. |
+| `pawpilot-trading-coach` | Paper trade checks, position/funding explanations, evidence-bounded reviews and user-confirmed Lessons through the existing Agent. |
 | `lista-vaults` | Lista DAO lending vaults on BSC — deposit, redeem, and withdraw from ERC-4626 yield vaults. |
 | `morph` | Morph L2 domain router — wallet, explorer, DEX swap, cross-chain bridge, EIP-7702 delegation, EIP-8004 agent identity & reputation, and x402 USDC payments. |
 | `okx` | OKX domain router — token research, market data, WebSocket streams, portfolio analysis, smart-money signals, meme scanning, security checks, DEX swaps, cross-chain bridging, DeFi invest (APY/TVL discovery + deposit/redeem/stake/lend), DeFi portfolio view, wallet ops, and x402 payments. |
@@ -85,3 +87,20 @@ funding.
 | Skill | Description |
 |-------|-------------|
 | `minimax-h3-max` | MiniMax H3 Max 5-second text-to-video through the Pieverse platform proxy. Returns a `fal.media` watch link; never calls fal or attaches a file. |
+
+### PawPilot Hermes validation
+
+The PawPilot Skills use Hermes frontmatter, conditional host-tool dependencies,
+native `skills_list` / `skill_view` and on-demand Markdown references. Run their
+offline native-loader contract from a Hermes checkout with:
+
+```sh
+scripts/run_tests.sh /path/to/purrfect-skills/tests/skills/test_pawpilot_skills.py -j 1 --file-retries 0 -q
+```
+
+This uses an isolated home and the actual Hermes loader. It verifies catalogue
+limits, complete content/references, dependency eligibility and disabled loads.
+The authored-content probe does not contact the security provider; Hermes's
+restricted-load/security regressions, installed image capability and hosted
+Agent/manual acceptance are separate gates. An accepted command receipt is
+not proof of an eventual order fill.

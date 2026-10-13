@@ -18,6 +18,10 @@ never both. Unknown targets must remain blocked, not replaced by another trade.
 `receipt`
 accepts the original actionId; after an unknown preparation use the original
 callId to recover that call's action, without preparing again.
+Its `response` is the persisted command result, not a continuously refreshed
+order. `action.status=completed` may accompany an accepted order snapshot.
+Do not treat it or absence from active `orders` as a confirmed fill/cancel.
+Batch cancellation has a separate current `job` status and outcome counts.
 
 An explicitly chosen notional limit order has this shape:
 
