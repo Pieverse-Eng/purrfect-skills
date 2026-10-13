@@ -1,7 +1,10 @@
 # Completed-trade review and Lessons
 
 Read the requested owned closed-position cycle or spot fill via `paper_read`.
-Use returned execution/fee evidence and versions. Ask which trade when
+When no exact target has already been verified, discover with `operation=review`.
+Then read the selected exact
+`cycleId` or `fillId`. Follow returned continuation using explicit product and
+cursor when needed. Use returned execution/fee evidence and versions. Ask which trade when
 ambiguous; a bounded history page is not all history.
 
 Read the relevant user's plan and enabled confirmed Lessons. Compare an observed
