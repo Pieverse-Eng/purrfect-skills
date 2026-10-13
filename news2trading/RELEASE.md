@@ -1,7 +1,10 @@
 # PawPilot News release handoff
 
-Skills PR: [purrfect-skills #149](https://github.com/Pieverse-Eng/purrfect-skills/pull/149).
-Companion backend: [purrfect-claw-platform #2968](https://github.com/Pieverse-Eng/purrfect-claw-platform/pull/2968).
+Original publication handoff (historical):
+[purrfect-skills #149](https://github.com/Pieverse-Eng/purrfect-skills/pull/149) and
+[purrfect-claw-platform #2968](https://github.com/Pieverse-Eng/purrfect-claw-platform/pull/2968).
+The multi-source active-analysis follow-up is linked in its PR descriptions;
+those historical PR numbers are not the release identity for this change.
 
 Use the final reviewed Skills commit, not the older `1116466` handoff snapshot.
 The backend must pin that exact commit before rebuilding Tenant images. Local
@@ -26,7 +29,9 @@ working-tree fixes are not shipped by the existing submodule pin.
 - Hermes local mirror failures also retain the target, canonical text and any
   Web/external receipts. Repairs must not resend external messages.
 - Explicit active holdings-news analysis is an ordinary chat report using the
-  supplied account/holdings and last-24-hour PANews evidence only.
+  supplied account/holdings and last-24-hour platform news evidence (PANews plus
+  the optional XSearch channel). Search excerpts remain generated, partial evidence;
+  the Skill does not call xAI or gain any additional tools.
   Cover every supplied asset and disclose missing/omitted/stale source evidence.
   No-data requests still receive a readable answer, not only `NO_REPLY`. This mode
   does not invoke Profile/publication scripts, subscribe, search additional sources,
@@ -58,10 +63,10 @@ does not validate real SessionDB routing or readback.
 
 1. Pin the final Skills commit in the matching backend; rebuild and deploy both
    runtime images, and verify the installed skill files rather than only the pin.
-2. Apply the migrations from the final backend diff. At this review, #2968 adds
-   `174_news_web_feed.sql` and `175_news_pointer_snapshots.sql`; the earlier
-   migration-169 handoff is outdated. Check the actual release revision before
-   execution and follow the backend's migration procedure.
+2. Follow the final backend's migration procedure and ledger. The current News
+   prerequisites are `185_news_web_feed.sql` and `186_news_pointer_snapshots.sql`;
+   the historical 169/174/175 handoff numbers are outdated. This XSearch/Skills
+   follow-up adds no migration; do not reapply already-ledgered prerequisites.
 3. Verify Web-only publication without a paired external recipient, mixed
    publication, and accepted-but-context-incomplete diagnostics without resending.
 4. Verify real Telegram/LINE delivery and Hermes session routing/readback.
@@ -71,9 +76,13 @@ does not validate real SessionDB routing or readback.
    frontend integration remain separate gates. Frontend #933 does not implement
    that action. Optional RSS sources and their opt-in flag have been removed
    from the companion backend pending publisher-permission review. Public/manual
-   evidence and background subscription matching remain PANews-only. Retaining
-   PANews does not establish commercial collection/storage/display/model rights;
-   verify the applicable publisher agreement separately.
+   feed/item reads and background subscription matching remain PANews-only.
+   The optional backend XSearch collector feeds only active holdings analysis;
+   enable it only after real xAI response/cost/permission validation and pinning
+   this Skills release in the backend's tenant images. This Skills change adds
+   no schema migration or publication protocol. Retaining PANews or using xAI
+   does not establish collection/storage/display/model rights; verify the
+   applicable provider and source agreements separately.
 
 Local tests and a merged Skills PR alone do not establish deployed image contents,
 live source availability, production migration success, or external delivery.
