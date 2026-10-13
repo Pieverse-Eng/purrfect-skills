@@ -33,7 +33,12 @@ working-tree fixes are not shipped by the existing submodule pin.
   the optional original X-post channel). X materials are source-provided post text,
   not Grok-generated summaries; context slices and search coverage remain partial.
   The Skill gains no search tools; the platform collector uses no model.
-  Cover every supplied asset and disclose missing/omitted/stale source evidence.
+  X queries use the explicit request's actual holding tickers, not a fixed crypto
+  allowlist; only asset identifiers/optional aliases are sent, not wallet addresses,
+  quantities or direction. Cover stocks, stock-related derivatives and unfamiliar
+  tokens too; preserve market identities and disclose unresolved identities,
+  missing/omitted/stale evidence and query coverage. Ticker relevance does not
+  establish issuer identity or ownership of shares.
   No-data requests still receive a readable answer, not only `NO_REPLY`. This mode
   does not invoke Profile/publication scripts, subscribe, search additional sources,
   send Telegram/LINE, or prepare/execute trades.
@@ -78,7 +83,8 @@ does not validate real SessionDB routing or readback.
    that action. Optional RSS sources and their opt-in flag have been removed
    from the companion backend pending publisher-permission review. Public/manual
    feed/item reads and background subscription matching remain PANews-only.
-   The optional backend XSearch collector feeds only active holdings analysis;
+   The optional backend XSearch read runs only for an explicit holdings analysis,
+   using that request's current assets; it is not a global scheduled collector;
    enable it only after real X API access/response/cost/permission validation and
    pinning this Skills release in the backend's tenant images. This Skills change
    adds no schema migration or publication protocol. Retaining PANews or using X API
