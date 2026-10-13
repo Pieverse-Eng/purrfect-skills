@@ -22,4 +22,3 @@ tool permissions or human confirmation.
 
 On the next explicit request, read current enabled confirmed Lessons again;
 disabled/unconfirmed rules are not active guidance.
-

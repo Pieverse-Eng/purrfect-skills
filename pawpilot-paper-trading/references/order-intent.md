@@ -38,4 +38,3 @@ reduce-only proposal with the desired native quantity. Identify full vs partial
 close. Do not reuse a historical filled entry as an open order.
 If the host reports a changed target, stop and refresh; do not silently enlarge
 or retarget the action.
-

@@ -49,4 +49,3 @@ activate a strategy. Knowledge is an on-demand reference, not a required course.
 Do not invent R, liquidation, fees, PnL, execution quality or recurring habits.
 Missing initial risk/cost basis remains unavailable. Do not promise quantitative
 +1R alerts, proactive observation, graduation or a Live handoff in this version.
-

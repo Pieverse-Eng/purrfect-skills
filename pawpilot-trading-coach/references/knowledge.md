@@ -12,4 +12,3 @@ data. If a reference/source is unavailable, say so; do not invent a citation.
 Knowledge is not consent to trade, subscribe, schedule monitoring or activate
 an autonomous strategy. For a requested action, load the trading skill and
 prepare a host-validated card for the user's manual review.
-

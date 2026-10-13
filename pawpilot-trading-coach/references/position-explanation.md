@@ -16,4 +16,3 @@ Missing event/reference evidence cannot be replaced by a current mark or waived.
 Do not invent daily funding expense, +1R progress, automatic nudges or estimated
 liquidation when the host does not return sufficient evidence. If a model
 analysis is requested, label it interpretation and keep it separate from facts.
-

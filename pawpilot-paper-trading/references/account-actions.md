@@ -16,4 +16,3 @@ wallet signing.
 Publish the registered card and wait for the user's independent web review.
 Use the original receipt to confirm both sides of a completed transfer. Pending
 or unknown is not completed. There is no real withdrawal action in this skill.
-

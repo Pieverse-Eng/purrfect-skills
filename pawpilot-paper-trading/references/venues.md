@@ -17,4 +17,3 @@ For ambiguous symbols, show trusted candidates and ask the user to select in
 the terminal. Do not substitute another venue on a catalog/feed failure.
 A listed market, Ready account or current mark does not by itself prove that a
 fresh executable book and confirmed funding are available.
-

@@ -54,4 +54,3 @@ Use `paper_read` receipt results for the original registered action; report
 partial, pending, failed and unknown separately. Do not retry an unknown
 command as a new order. Missing book, mark, funding, risk or historical evidence
 is a reason to stop and explain, never a license to invent a value.
-

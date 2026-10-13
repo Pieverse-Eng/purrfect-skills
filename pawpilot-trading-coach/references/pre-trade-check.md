@@ -16,4 +16,3 @@ Prepare the explicit draft to obtain the actual preview. Explain:
 A suggested stop is not a submitted protection order. Unsupported or unavailable
 risk values must stay unavailable. If the user changes size/price/market,
 prepare a new review rather than reusing earlier consent.
-

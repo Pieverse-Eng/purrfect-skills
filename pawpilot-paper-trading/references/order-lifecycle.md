@@ -21,4 +21,3 @@ An old card cannot be treated as consent to a newer version. Failed amendment
 does not establish that the original order changed or its reservation released.
 A batch cancellation acceptance is not completion: read its original action
 receipt until the reported job is final, and retain skipped/failed counts.
-

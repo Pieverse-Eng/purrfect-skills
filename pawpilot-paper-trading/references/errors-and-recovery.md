@@ -20,4 +20,3 @@ After a human confirmation, read the original action receipt. Accepted, resting,
 partially filled, filled, cancelled, rejected and unknown are different outcomes.
 Retrying receipt reads is safe; retrying a financial operation with a new key
 is not recovery. If the page changed, the old card keeps its original scope.
-
