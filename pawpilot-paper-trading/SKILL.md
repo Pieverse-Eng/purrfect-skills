@@ -27,6 +27,7 @@ Read the reference for the requested operation before preparation.
 | Amend, cancel, batch cancel or protect an existing target | [Order lifecycle](references/order-lifecycle.md) |
 | Simulated deposit or transfer | [Account actions](references/account-actions.md) |
 | Rejection, stale evidence, partial or unknown execution | [Recovery](references/errors-and-recovery.md) |
+| Tool argument and publication shapes | [Tool contracts](references/tool-contracts.md) |
 | Venue/product identity or unsupported capability | [Venues](references/venues.md) |
 
 1. Read the bound account and the relevant market/target using `paper_read`.
@@ -37,7 +38,9 @@ Read the reference for the requested operation before preparation.
 3. Call `paper_prepare_card` with the explicit intent. The host calculates,
    previews and registers the proposal. Treat a non-ready result as a blocker.
 4. Publish the returned text and inline keyboard through `send_message`,
-   preserving its registered callback references. Do not hand-build financial
+   copying `data.message.text`, `data.message.reply_markup` and `data.metadata`
+   from the tool result. Preserve the registered callback references and
+   preparedActions metadata together. Do not hand-build financial
    `metadata.actions`, invent a reference or bypass preparation.
 5. Tell the user to review the native card. A natural-language “yes”, including
    “帮我下单”, is not a host financial confirmation.

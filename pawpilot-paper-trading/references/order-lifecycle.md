@@ -13,7 +13,9 @@ IDs, marketKeys and versions. Paginated results are not the complete account.
 
 Explain the concrete target when multiple candidates exist and ask the user to
 choose; a substring/ticker match is insufficient. Ask whether unspecified
-protection legs are to be preserved or removed. Use supported trigger source
+protection legs are to be preserved or removed. The request replaces both
+legs: takeProfit and stopLoss must each be a supported leg or explicit null.
+Copy verified parameters to preserve a leg; do not omit or silently clear it. Use supported trigger source
 and market/limit execution from the returned venue capabilities.
 
 All operations go through `paper_prepare_card` and the same manual web review.
