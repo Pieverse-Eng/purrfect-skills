@@ -30,8 +30,9 @@ working-tree fixes are not shipped by the existing submodule pin.
   Web/external receipts. Repairs must not resend external messages.
 - Explicit active holdings-news analysis is an ordinary chat report using the
   supplied account/holdings and last-24-hour platform news evidence (PANews plus
-  the optional XSearch channel). Search excerpts remain generated, partial evidence;
-  the Skill does not call xAI or gain any additional tools.
+  the optional original X-post channel). X materials are source-provided post text,
+  not Grok-generated summaries; context slices and search coverage remain partial.
+  The Skill gains no search tools; the platform collector uses no model.
   Cover every supplied asset and disclose missing/omitted/stale source evidence.
   No-data requests still receive a readable answer, not only `NO_REPLY`. This mode
   does not invoke Profile/publication scripts, subscribe, search additional sources,
@@ -78,9 +79,9 @@ does not validate real SessionDB routing or readback.
    from the companion backend pending publisher-permission review. Public/manual
    feed/item reads and background subscription matching remain PANews-only.
    The optional backend XSearch collector feeds only active holdings analysis;
-   enable it only after real xAI response/cost/permission validation and pinning
-   this Skills release in the backend's tenant images. This Skills change adds
-   no schema migration or publication protocol. Retaining PANews or using xAI
+   enable it only after real X API access/response/cost/permission validation and
+   pinning this Skills release in the backend's tenant images. This Skills change
+   adds no schema migration or publication protocol. Retaining PANews or using X API
    does not establish collection/storage/display/model rights; verify the
    applicable provider and source agreements separately.
 

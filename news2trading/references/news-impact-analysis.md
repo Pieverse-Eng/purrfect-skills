@@ -30,8 +30,10 @@ an event, a bullish story or a confidence score to fill an empty section.
 
 Use only supplied platform news materials, attributing each claim to its supplied
 source, link and publication time. Treat excerpts and truncated article text as
-incomplete evidence. Materials from `xsearch` are xAI-generated search excerpts,
-not original post text or verified facts. Separate reported facts, quotations,
+incomplete evidence. Materials from `xsearch` are original X API post text,
+not Grok-generated summaries or verified facts. Display titles/excerpts are
+local deterministic slices of the original text, not author-written article
+titles or proof that the complete post was supplied. Separate reported facts, quotations,
 opinions and inference; search coverage is a bounded sample, not a full timeline.
 Group obviously repeated coverage without claiming independent corroboration.
 An authentic source is not proof that its claims are true; uncertainty may be
