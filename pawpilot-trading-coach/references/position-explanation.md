@@ -1,11 +1,20 @@
+For Live read terminal_read account/positions/orders/settings and native history as needed. Preserve component freshness and unknown protection. Do not use Paper-only market/notes/review operations in Live. Current settledFundingSinceOpen is not a forecast of daily cost.
+
 # Position and funding explanation
 
-Read current positions, balances and market inputs from `paper_read`.
+Read current positions, balances and market inputs from `terminal_read`.
 Separate observed position PnL, reported fees, available collateral and account
 equity. Preserve native quantity and asset units.
 
+For a Paper holding card, request operation=query with a timeline query targeting
+the owned position id. For Live, operation=positions returns citeable snapshot
+facts. Publish holding only with the exact position id in those facts.
+
 A missing stop-loss is a factual check on a nonzero current position. Explain
-the risk and offer to prepare protection after the user chooses parameters.
+the risk and discuss protection. Paper can prepare a supported protection draft
+after the user chooses parameters. Live currently prepares new place_order
+intents only; use the existing manual position controls for protection changes
+instead of calling an unsupported Live prepare kind.
 Do not assume a closed position still needs a stop or that changing a historical
 entry protects a current position.
 
