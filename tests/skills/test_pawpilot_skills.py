@@ -31,7 +31,7 @@ def native_loader(tmp_path, monkeypatch):
     monkeypatch.setattr("agent.skill_utils.get_external_skills_dirs", lambda: [])
     monkeypatch.setattr(skill_tools, "_get_disabled_skill_names", lambda: set())
     monkeypatch.setattr(skill_tools, "_is_skill_disabled", lambda name: name in skill_tools._get_disabled_skill_names())
-    for name in ("paper_read", "paper_prepare_card"):
+    for name in ("paper_read", "paper_prepare_card", "terminal_read", "terminal_prepare_card", "send_message"):
         monkeypatch.setitem(registry._tools, name, SimpleNamespace(toolset="api_host_tools"))
     # This probe exercises authored content/loading; native restricted-mode
     # policy and malicious fixtures are tested separately in Hermes itself.
@@ -39,7 +39,7 @@ def native_loader(tmp_path, monkeypatch):
     skill_tools._SKILLS_CACHE.clear()
     for name in NAMES:
         shutil.copytree(SOURCE / name, skill_tools.SKILLS_DIR / name)
-    with proposal_only_scope(True, host_tools={"paper_read", "paper_prepare_card"}):
+    with proposal_only_scope(True, host_tools={"paper_read", "paper_prepare_card", "terminal_read", "terminal_prepare_card"}):
         yield skill_tools
     skill_tools._SKILLS_CACHE.clear()
 
@@ -60,7 +60,7 @@ def test_native_authoring_catalogue_and_complete_references(name, native_loader,
     assert body.splitlines()[0].endswith(" Skill")
     assert re.findall(r"^## (.+)$", body, re.MULTILINE) == list(SECTIONS)
     required = extract_skill_conditions(metadata)
-    assert _skill_should_show(required, {"paper_read", "paper_prepare_card"}, set())
+    assert _skill_should_show(required, {"paper_read", "paper_prepare_card", "terminal_read", "terminal_prepare_card", "send_message"}, set())
     assert not _skill_should_show(required, set(), set())
     if name == "pawpilot-paper-trading":
         assert not _skill_should_show(required, {"paper_read"}, set())

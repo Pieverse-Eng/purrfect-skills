@@ -2,9 +2,11 @@
 
 Use the current selected market and account. Ask for missing side, product,
 amount meaning, order type or intended protection. Load
-`pawpilot-paper-trading` before preparing an action.
+`pawpilot-paper-trading` for Paper; use the Live proposal reference for Live.
 
-Read the host's current market/account facts and relevant confirmed plan/Lessons.
+Read current market/account facts. Paper supports confirmed plan/Lessons reads;
+Live supports the confirmed owner Playbook and existing native observations, not
+Paper notes/review operations.
 Prepare the explicit draft to obtain the actual preview. Explain:
 - native market, quantity, price/execution bound, product and settlement scope;
 - supported leverage/margin mode and fees/reservation;
@@ -15,4 +17,5 @@ Prepare the explicit draft to obtain the actual preview. Explain:
 
 A suggested stop is not a submitted protection order. Unsupported or unavailable
 risk values must stay unavailable. If the user changes size/price/market,
-prepare a new review rather than reusing earlier consent.
+edit the registered draft and obtain a fresh review rather than reusing earlier
+consent. Do not prepare another action merely to reopen a card or recover a receipt.
