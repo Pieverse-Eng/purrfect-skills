@@ -1,7 +1,7 @@
 ---
 name: pawpilot-trading-coach
 description: Use when discussing trading style or coaching trades.
-version: 1.2.0
+version: 1.3.0
 author: David Zhou (@David-0x221Eight), with Hermes Agent
 metadata:
   hermes:
@@ -46,6 +46,8 @@ confirm a Playbook, Lesson or order.
 | Learn/practise without placing an order | [Practice invitation](references/practice-invitation.md) |
 | Discuss/confirm/revise trading style | [Playbook conversation](references/playbook-conversation.md) |
 | Check an order draft | [Pre-trade check](references/pre-trade-check.md) |
+| Confirm/revise a Paper plan | [Confirmed Plan](references/confirmed-plan.md) |
+| Start or recover scoped research | [Position research](references/position-research.md) |
 | Discuss a holding or funding | [Position explanation](references/position-explanation.md) |
 | Review a completed trade or propose a Lesson | [Review and Lessons](references/review-and-lessons.md) |
 | Summarise all trades or consider Live | [Evidence and summaries](references/evidence-and-summaries.md) |

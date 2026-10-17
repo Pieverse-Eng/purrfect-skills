@@ -18,7 +18,11 @@ states publication window, returned sources, collection times, failures and
 article/version references. No matches mean no matches in that selection.
 Publication time is not necessarily event time; eventAt=null means unknown.
 
-If additional search is needed and `financial-research` is available, load it and
+For a host-prepared scoped research Run, analyze the supplied facts and search
+receipts; never issue another search or claim its unknown receipt succeeded.
+The host/UI owns the daily allowance and same-task recovery. Ordinary discussion
+of an existing report is not a new research task. Outside such a Run, if the user
+explicitly requests additional search and `financial-research` is available, load it and
 follow its access/credit/source boundaries. Search public asset/event terms,
 never send private balances, account IDs, wallet addresses or Playbook details
 as query text. Do not duplicate a search whose fresh relevant result is already
