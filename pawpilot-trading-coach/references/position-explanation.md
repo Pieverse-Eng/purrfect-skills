@@ -25,3 +25,13 @@ Missing event/reference evidence cannot be replaced by a current mark or waived.
 Do not invent daily funding expense, +1R progress, automatic nudges or estimated
 liquidation when the host does not return sufficient evidence. If a model
 analysis is requested, label it interpretation and keep it separate from facts.
+
+For a question about news or the wider environment, load
+`pawpilot-financial-analysis` and its market-context reference. Read holding_news
+for the owned position through the bound host, or reuse sufficient supplied
+evidence. Explain relevant developments, why they may affect the user's thesis,
+contradicting information and unknowns. Exact numbers are optional. Clearly name
+stored-news coverage and time; do not claim a fresh search unless the separately
+available financial-research capability actually ran. Include known costs when
+material, even when final net/R is unknown. Offer a useful next evidence check or
+user-chosen scenario instead of only “decide for yourself”.

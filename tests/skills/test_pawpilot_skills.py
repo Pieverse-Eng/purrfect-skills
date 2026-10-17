@@ -13,7 +13,7 @@ from types import SimpleNamespace
 import pytest
 
 SOURCE = Path(__file__).resolve().parents[2]
-NAMES = ("pawpilot-paper-trading", "pawpilot-trading-coach")
+NAMES = ("pawpilot-paper-trading", "pawpilot-trading-coach", "pawpilot-financial-analysis")
 SECTIONS = (
     "When to Use", "Prerequisites", "How to Run", "Quick Reference",
     "Procedure", "Pitfalls", "Verification",
@@ -61,7 +61,10 @@ def test_native_authoring_catalogue_and_complete_references(name, native_loader,
     assert re.findall(r"^## (.+)$", body, re.MULTILINE) == list(SECTIONS)
     required = extract_skill_conditions(metadata)
     assert _skill_should_show(required, {"paper_read", "paper_prepare_card", "terminal_read", "terminal_prepare_card", "send_message"}, set())
-    assert not _skill_should_show(required, set(), set())
+    if name == "pawpilot-financial-analysis":
+        assert _skill_should_show(required, set(), set()), "Supplied-evidence analysis needs no account tools"
+    else:
+        assert not _skill_should_show(required, set(), set())
     if name == "pawpilot-paper-trading":
         assert not _skill_should_show(required, {"paper_read"}, set())
 
