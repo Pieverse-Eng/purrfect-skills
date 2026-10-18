@@ -6,10 +6,29 @@ page is not all history.
 
 ## Paper
 
-Use `terminal_read` operation=review to discover an owned cycle or spot fill if
-needed. Follow its product/cursor. For a perpetual cycle, obtain citeable facts
+A human-selected reviewTarget in this Run identifies the exact cycle/fill and
+account. Use operation=review with no competing target; the host revalidates that
+selection. This read-only context persists for follow-up discussion. It grants
+no order preparation or note write permission. Ending review returns to the
+ordinary chart/account conversation.
+
+Without a selected target, operation=review is only the current account's page.
+When the user says “my latest/just-closed trade” across accounts, query
+{operation:"query",query:{operation:"trades",accountScope:"portfolio",limit:50}}
+and follow nextCursor/coverage until the relevant trade is located. Match venue,
+market and closing time before review; ask if multiple trades fit. Five old
+Orderly records cannot prove that a Lighter close is missing. Do not use query.kind,
+sort or unsupported statistics measures; correct failure.fields, not user intent.
+An exact portfolio cycle query also needs accountScope=portfolio when the chart
+account differs. Follow the actual product/cursor for spot fills. For a perpetual cycle, obtain citeable facts
 with operation=query and query.operation=trades (exact cycleId), timeline or
-prices. A review response alone is not a fact-query reference for a card. Spot
+prices. A review response alone is not a fact-query reference for a card. Portfolio
+trades queries can find another account’s cycle, but timeline/prices are bound
+to the current account unless a human-selected reviewTarget rebinds that read
+scope. Do not invent an accountScope field on timeline/prices or claim that
+unread plans do not exist. Explain the available portfolio evidence now; for
+other-account detail the user can choose that trade in Reviews and Discuss it,
+which supplies the exact readonly target without changing the chart. Spot
 fill proceeds are not realized profit without trustworthy cost basis.
 
 Read the relevant plan and enabled confirmed Lessons through Paper notes. Compare
@@ -35,7 +54,7 @@ all trades or query an exchange directly to fill a gap.
 
 A proposed Live Lesson is discussion only. If the user wants it as a continuing
 principle, discuss it and publish a Playbook revision with the current expected
-version for explicit editable confirmation. Do not pretend that a Paper note was
+version for explicit conversational confirmation and its saved-version receipt. Do not pretend that a Paper note was
 saved for a Live account.
 
 ## Interpretation

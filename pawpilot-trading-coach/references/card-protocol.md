@@ -13,7 +13,7 @@ All cards have version=1, kind, title (<=200 characters).
 | --- | --- |
 | paper_practice_invite | optional known canonical marketKey |
 | web_actions | actions array (one to four), see below |
-| playbook_proposal | expectedVersion, editable profile; see Playbook reference |
+| playbook_proposal | expectedVersion, proposed profile; see trading preferences reference |
 | before_trade | actionId, explanation, facts (may be empty) |
 | holding | positionId, explanation, facts; optional registered actionId |
 | trade_review | cycleId, explanation, facts; optional lesson (string, proposed and unconfirmed) |
@@ -64,3 +64,19 @@ No arbitrary URL, script, trading parameter or submission is allowed. A focus or
 navigation button never trades. Review/Edit requires a new manual preview and
 confirmation. If the web operation is unavailable or another task is busy, keep
 the original scope and explain the actual state; do not invent successful action.
+
+## Correct a rejected request
+
+Pass metadata as an actual JSON object. The minimal navigation publication is:
+
+```json
+{"target":"current","message":"You can practise with simulated funds.","metadata":{"coachCard":{"version":1,"kind":"paper_practice_invite","title":"Try Paper Trading"}}}
+```
+
+It needs neither a marketKey nor a financial read. When the full protocol is not
+yet loaded, read it before constructing a card. A failure's allowedValues shows
+valid enum choices, not every required field. Use failure.fields.path and
+unknownKeys to fix arguments, then validate against this reference/tool schema.
+An encoded or malformed metadata string is not a card. A plain-text message
+claiming an “entry” is not a clickable navigation card. After rejection do not
+claim the card exists or direct the user to a nonexistent preferences page.
