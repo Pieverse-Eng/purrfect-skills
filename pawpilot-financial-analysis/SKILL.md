@@ -40,6 +40,11 @@ and its access policy. Never claim that a search ran when it did not.
 5. Explain the result, counterevidence, missing information and what would change
    the interpretation. Preserve source references for the Coach card or reply.
 
+Reference paths are relative to this selected Skill. For example:
+`skill_view(name="pawpilot-financial-analysis", file_path="references/trade-review.md")`.
+Do not prepend `pawpilot-financial-analysis/` to `file_path`. If a read is rejected, correct the
+path from `linked_files` before retrying; do not repeat the rejected request.
+
 ## Quick Reference
 
 | Question | Reference |
