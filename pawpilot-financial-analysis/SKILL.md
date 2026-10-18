@@ -21,8 +21,11 @@ analysis methods. It changes neither model weights nor tool permissions.
 
 ## Prerequisites
 
-Use Hermes native `skills_list` and `skill_view`, respecting disabled Skills,
-required tools and current Run scope. Read the complete relevant reference.
+Respect disabled Skills, required tools and current Run scope. On Hermes, use
+native `skills_list` and `skill_view`, with `file_path` for references. On
+OpenClaw, follow its available-Skills catalogue and current runtime's native
+Skill/file-reading instructions. Resolve references relative to the Skill
+directory and read the complete relevant reference.
 Use supplied evidence when sufficient. Account facts require bound host reads;
 external research requires the separately available `financial-research` Skill
 and its access policy. Never claim that a search ran when it did not.
