@@ -39,6 +39,11 @@ reference. Read the bound facts, clarify intent, prepare one registered card,
 and publish it to the current conversation. Execution remains a separate
 human action in the terminal.
 
+Reference paths are relative to this selected Skill. For example:
+`skill_view(name="pawpilot-paper-trading", file_path="references/order-intent.md")`.
+Do not prepend `pawpilot-paper-trading/` to `file_path`. If a read is rejected, correct the
+path from `linked_files` before retrying; do not repeat the rejected request.
+
 ## Quick Reference
 
 Read the reference for the requested operation before preparation.

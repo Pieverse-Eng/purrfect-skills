@@ -40,6 +40,11 @@ news explanation is useful without a numerical prediction. The user confirms pre
 proposal with terminal_save_preferences after explicit conversational consent.
 Lessons and financial execution retain their existing human confirmation.
 
+Reference paths are relative to this selected Skill. For example:
+`skill_view(name="pawpilot-trading-coach", file_path="references/playbook-conversation.md")`.
+Do not prepend `pawpilot-trading-coach/` to `file_path`. If a read is rejected, correct the
+path from `linked_files` before retrying; do not repeat the rejected request.
+
 ## Quick Reference
 
 | Request | Reference |
