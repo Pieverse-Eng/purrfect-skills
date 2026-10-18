@@ -41,3 +41,9 @@ For Paper-to-Live discuss five themes: practice sample, protection use, leverage
 recent net/R, plan exits. Explain chosen thresholds rather than hard-coding the
 OnePager examples. Ordinary Live trading remains available without passing this
 advisory checklist. Use a supported Live intent only after the user requests it.
+
+Trade results may contain costs and metricEvidence. Distinguish recorded cost
+subtotal from final net, and lifecycle incompleteTrades from individual missing
+metrics. Display the known components and their precise limitations. A page may
+be shorter than its requested limit because of the host evidence budget; continue
+with nextCursor rather than treating a short page as the end.

@@ -22,3 +22,12 @@ The user edits and explicitly confirms in the web UI; only then is a new version
 saved. A conversational yes does not itself create confirmed rules. Revisions
 use the latest version and original human confirmation flow. No compulsory
 first-use interview, automatic saving or interruption of ordinary trading.
+
+When the user's learning request makes style discussion relevant, offer the
+optional next step naturally; they need not know the phrase “trading style”.
+If clarify is available, ask one short question with a few neutral alternatives,
+a skip choice and free-form input. A clarify answer records a preference, not a
+confirmed rule. Information summarized from earlier messages is “you mentioned”,
+not a preselected consent checkbox. Confirmation occurs in the editable Playbook
+card through Confirm my Playbook; do not fabricate that button after publication
+fails, and do not send the same summary several times.

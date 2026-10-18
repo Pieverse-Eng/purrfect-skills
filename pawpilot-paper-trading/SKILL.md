@@ -1,7 +1,7 @@
 ---
 name: pawpilot-paper-trading
 description: Use when placing or managing Paper orders.
-version: 1.0.1
+version: 1.0.2
 author: David Zhou (@David-0x221Eight), with Hermes Agent
 metadata:
   hermes:
