@@ -132,63 +132,8 @@
 			"id": "binance",
 			"repo": "https://github.com/binance/binance-skills-hub.git",
 			"commit": "97d3a746dbe934c0d337fb27855b4f7dc7e01485",
-			"notes": "Imported verbatim under binance-agentic-wallet as official reference material. Runtime uses the @binance/agentic-wallet npm package and baw CLI; state-changing wallet actions still require user confirmation and Binance App policy controls.",
+			"notes": "Binance CEX and tokenized securities skills imported as official reference material.",
 			"skills": [
-				{
-					"name": "binance-agentic-wallet",
-					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/SKILL.md",
-					"targetPath": "binance-agentic-wallet/SKILL.md"
-				},
-				{
-					"name": "binance-agentic-wallet-authentication",
-					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/authentication.md",
-					"targetPath": "binance-agentic-wallet/references/authentication.md"
-				},
-				{
-					"name": "binance-agentic-wallet-limit-order",
-					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/limit-order.md",
-					"targetPath": "binance-agentic-wallet/references/limit-order.md"
-				},
-				{
-					"name": "binance-agentic-wallet-market-order",
-					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/market-order.md",
-					"targetPath": "binance-agentic-wallet/references/market-order.md"
-				},
-				{
-					"name": "binance-agentic-wallet-prediction",
-					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/prediction.md",
-					"targetPath": "binance-agentic-wallet/references/prediction.md"
-				},
-				{
-					"name": "binance-agentic-wallet-preflight",
-					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/preflight.md",
-					"targetPath": "binance-agentic-wallet/references/preflight.md"
-				},
-				{
-					"name": "binance-agentic-wallet-security",
-					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/security.md",
-					"targetPath": "binance-agentic-wallet/references/security.md"
-				},
-				{
-					"name": "binance-agentic-wallet-send",
-					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/send.md",
-					"targetPath": "binance-agentic-wallet/references/send.md"
-				},
-				{
-					"name": "binance-agentic-wallet-wallet-setting",
-					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/wallet-setting.md",
-					"targetPath": "binance-agentic-wallet/references/wallet-setting.md"
-				},
-				{
-					"name": "binance-agentic-wallet-wallet-view",
-					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/wallet-view.md",
-					"targetPath": "binance-agentic-wallet/references/wallet-view.md"
-				},
-				{
-					"name": "binance-agentic-wallet-x402-payment",
-					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/x402-payment.md",
-					"targetPath": "binance-agentic-wallet/references/x402-payment.md"
-				},
 				{
 					"name": "binance-tokenized-securities-info",
 					"upstreamPath": "skills/binance-web3/binance-tokenized-securities-info/SKILL.md",
@@ -368,6 +313,104 @@
 					"name": "binance-wallet",
 					"upstreamPath": "skills/binance/binance/references/wallet.md",
 					"targetPath": "binance/references/wallet.md"
+				}
+			]
+		},
+		{
+			"id": "binance-agentic-wallet",
+			"repo": "https://github.com/binance/binance-skills-hub.git",
+			"commit": "b402990be1748d02b7b79ab958f278b1709e5de7",
+			"notes": "Imported verbatim under binance-agentic-wallet as official reference material. Runtime uses the @binance/agentic-wallet npm package and baw CLI; state-changing wallet actions still require user confirmation and Binance App policy controls.",
+			"skills": [
+				{
+					"name": "binance-agentic-wallet",
+					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/SKILL.md",
+					"targetPath": "binance-agentic-wallet/SKILL.md"
+				},
+				{
+					"name": "binance-agentic-wallet-approvals",
+					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/approvals.md",
+					"targetPath": "binance-agentic-wallet/references/approvals.md"
+				},
+				{
+					"name": "binance-agentic-wallet-authentication",
+					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/authentication.md",
+					"targetPath": "binance-agentic-wallet/references/authentication.md"
+				},
+				{
+					"name": "binance-agentic-wallet-campaign",
+					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/campaign.md",
+					"targetPath": "binance-agentic-wallet/references/campaign.md"
+				},
+				{
+					"name": "binance-agentic-wallet-defi",
+					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/defi.md",
+					"targetPath": "binance-agentic-wallet/references/defi.md"
+				},
+				{
+					"name": "binance-agentic-wallet-domain-resolve",
+					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/domain-resolve.md",
+					"targetPath": "binance-agentic-wallet/references/domain-resolve.md"
+				},
+				{
+					"name": "binance-agentic-wallet-external-sign",
+					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/external-sign.md",
+					"targetPath": "binance-agentic-wallet/references/external-sign.md"
+				},
+				{
+					"name": "binance-agentic-wallet-gas",
+					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/gas.md",
+					"targetPath": "binance-agentic-wallet/references/gas.md"
+				},
+				{
+					"name": "binance-agentic-wallet-limit-order",
+					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/limit-order.md",
+					"targetPath": "binance-agentic-wallet/references/limit-order.md"
+				},
+				{
+					"name": "binance-agentic-wallet-market-order",
+					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/market-order.md",
+					"targetPath": "binance-agentic-wallet/references/market-order.md"
+				},
+				{
+					"name": "binance-agentic-wallet-prediction",
+					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/prediction.md",
+					"targetPath": "binance-agentic-wallet/references/prediction.md"
+				},
+				{
+					"name": "binance-agentic-wallet-preflight",
+					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/preflight.md",
+					"targetPath": "binance-agentic-wallet/references/preflight.md"
+				},
+				{
+					"name": "binance-agentic-wallet-security",
+					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/security.md",
+					"targetPath": "binance-agentic-wallet/references/security.md"
+				},
+				{
+					"name": "binance-agentic-wallet-send",
+					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/send.md",
+					"targetPath": "binance-agentic-wallet/references/send.md"
+				},
+				{
+					"name": "binance-agentic-wallet-speedup-cancel",
+					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/speedup-cancel.md",
+					"targetPath": "binance-agentic-wallet/references/speedup-cancel.md"
+				},
+				{
+					"name": "binance-agentic-wallet-wallet-setting",
+					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/wallet-setting.md",
+					"targetPath": "binance-agentic-wallet/references/wallet-setting.md"
+				},
+				{
+					"name": "binance-agentic-wallet-wallet-view",
+					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/wallet-view.md",
+					"targetPath": "binance-agentic-wallet/references/wallet-view.md"
+				},
+				{
+					"name": "binance-agentic-wallet-x402-payment",
+					"upstreamPath": "skills/binance-web3/binance-agentic-wallet/references/x402-payment.md",
+					"targetPath": "binance-agentic-wallet/references/x402-payment.md"
 				}
 			]
 		},
@@ -1010,7 +1053,7 @@
 			"id": "morph",
 			"repo": "https://github.com/morph-l2/morph-skill.git",
 			"commit": "e203bc4b981f13a3c358cff68831f8ca68e16648",
-			"notes": "Morph L2 skill \u2014 wallet, explorer, DEX, bridge, altfee, EIP-7702, EIP-8004 identity, x402 payment. Reads via vendor morph_api.py; writes via purr CLI or helper scripts under morph/scripts/.",
+			"notes": "Morph L2 skill — wallet, explorer, DEX, bridge, altfee, EIP-7702, EIP-8004 identity, x402 payment. Reads via vendor morph_api.py; writes via purr CLI or helper scripts under morph/scripts/.",
 			"skills": [
 				{
 					"name": "morph-wallet",

@@ -29,7 +29,7 @@ funding.
 | `aster` | Aster DEX v3 skills — futures/spot API docs, market data, signed futures v3 calls, websocket v3 references, and on-chain deposit step building. |
 | `balancer` | Balancer reviewed pool discovery, exact-input/exact-output swaps, and V2/V3 standard, boosted, and nested liquidity operations through `purr balancer`. |
 | `binance` | Binance CEX via `binance-cli` — Spot, USD-S Futures, and Convert trading + market data (incl. bStocks spot pairs). Requires Binance API keys (auth). |
-| `binance-agentic-wallet` | Binance Web3 Agentic Wallet via `baw` CLI — sign-in, balances, transfers, DEX swaps, limit orders, prediction markets, and x402 payments. |
+| `binance-agentic-wallet` | Binance Web3 Agentic Wallet via `baw` CLI — sign-in, balances, transfers (incl. .ai/.bnb/.eth names), DEX swaps, limit orders, prediction markets, x402 payments, approvals, DeFi, and Developer Mode contract calls/signing. |
 | `binance-onchain-pay` | Binance Onchain Pay on-ramp via `purr` — payment methods, quotes, hosted checkout, order status, and reference docs. |
 | `bitget` | Bitget Exchange UTA v3 via `bgc` — spot, margin, futures, account, transfers. Requires Bitget API keys for private ops. |
 | `bitget-wallet` | Bitget Wallet integration for multi-chain swaps, RWA stock trading, and market data. |

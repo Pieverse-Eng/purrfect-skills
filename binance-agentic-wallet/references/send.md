@@ -7,18 +7,19 @@ Transfer tokens to a recipient address.
 ### Syntax
 
 ```bash
-baw wallet send --amount <amount> --recipient <recipient> --binanceChainId <binanceChainId> --tokenAddress <tokenAddress> [--gasLevel <gasLevel>] --json
+baw wallet send [--amount <amount>] [--max] --recipient <recipient> --binanceChainId <binanceChainId> --tokenAddress <tokenAddress> [--gasLevel <gasLevel>] --json
 ```
 
 ### Parameters
 
-| Parameter          | Required | Default | Description                                                                                   |
-|--------------------|----------|---------|-----------------------------------------------------------------------------------------------|
-| `--amount`         | Yes      | —       | Amount in human-readable units (e.g., `1.5`)                                                  |
-| `--recipient`      | Yes      | —       | Recipient wallet address (must be in the [address book](#address-book)), ENS is not supported |
-| `--binanceChainId` | Yes      | —       | Binance chain ID: `56` (BSC), `CT_501` (Solana). For a full list, see `wallet chains`         |
-| `--tokenAddress`   | Yes      | —       | Token contract address                                                                        |
-| `--gasLevel`       | No       | `HIGH`  | Gas level: "LOW", "MEDIUM", or "HIGH"                                                         |
+| Parameter          | Required    | Default | Description                                                                                                                                         |
+|--------------------|-------------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| `--amount`         | No          | —       | Amount in human-readable units (e.g., `1.5`). Can be omitted when `--max` is set |
+| `--max`            | No          | `false` | Send the maximum available balance. Native tokens use `balance - gasFeeBuffer` as amount; non-native tokens use `balance` as amount |
+| `--recipient`      | Yes         | —       | Recipient wallet address (must be in the [address book](#address-book)). Domain names cannot be passed directly — resolve them first via [domain-resolve.md](domain-resolve.md) |
+| `--binanceChainId` | Yes         | —       | Binance chain ID: `56` (BSC), `CT_501` (Solana). For a full list, see `wallet chains`                                                               |
+| `--tokenAddress`   | Yes         | —       | Token contract address                                                                                                                              |
+| `--gasLevel`       | No          | `MEDIUM`  | Gas level: "LOW", "MEDIUM", or "HIGH"                                                                                                               |
 
 ### Example
 
@@ -28,6 +29,9 @@ baw wallet send --amount 0.02 --recipient 0x1234...5678 --binanceChainId 56 --to
 
 # Send 10 USDT to an address
 baw wallet send --amount 10 --recipient 0x1234...5678 --binanceChainId 56 --tokenAddress 0x55d398326f99059fF775485246999027B3197955 --json
+
+# Send ALL available BNB (native token). --amount is omitted
+baw wallet send --max --recipient 0x1234...5678 --binanceChainId 56 --tokenAddress 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE --json
 ```
 
 ### Response
