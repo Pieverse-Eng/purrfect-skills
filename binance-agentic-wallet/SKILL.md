@@ -1,6 +1,6 @@
 ---
 name: binance-agentic-wallet
-description: Binance Agentic Wallet,auth,wallet,send,.ai/domain,swap,predict,x402,approvals,DeFi,contract-call,gas
+description: Binance Agentic Wallet,auth,send,.ai,swap,predict,x402,DeFi
 metadata:
   author: binance-web3-team
   version: '1.13.0'
