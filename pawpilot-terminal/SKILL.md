@@ -2,7 +2,7 @@
 name: pawpilot-terminal
 description: Use when users request Paper trading, coaching, plans, preferences, trade reviews or exchange operations through PawPilot.
 metadata:
-  version: 3.1.0
+  version: 3.1.1
   hermes:
     tags: [pawpilot, terminal, runtime-v3]
     requires_tools: [pawpilot_task_status]
@@ -15,6 +15,16 @@ Route the user's request directly to the smallest relevant operation. A greeting
 style discussion or concept question needs no financial preflight or Skill chain.
 The structured button action is a task hint; the actual user message determines intent.
 A Live BTC page does not prevent Paper ETH preparation, a plan save or an ETH review.
+
+## Execution economy
+
+Use workflow and reference text already supplied in the message directly. Read only
+missing instructions. Batch independent method reads with evidence retrieval; keep
+dependent business steps in their required order. The compact tool directory preserves
+the Agent's authorized capabilities: use tool_search, tool_describe and tool_call when
+a needed tool is listed on demand. Its original permissions and confirmations apply.
+For an automatically published trading or practice card, finish with a short receipt
+and its review/navigation action. If the user requested analysis, provide that analysis.
 
 ## Task routes
 
@@ -108,4 +118,4 @@ metadata or internal IDs into a new send_message call. Check the publication rec
 unconfirmed delivery means recover the original card. Always finish with visible,
 concise user-facing text, even when tool work completed.
 
-For analysis, navigation or Playbook panels, read `skill_view(name="pawpilot-terminal",file_path="references/cards-and-memory.md")` before publishing. It defines every supported card, evidence identity and memory confirmation flow.
+For analysis, navigation or Playbook panels, use the supplied cards-and-memory reference, or read `skill_view(name="pawpilot-terminal",file_path="references/cards-and-memory.md")` if absent, before publishing. It defines every supported card, evidence identity and memory confirmation flow.

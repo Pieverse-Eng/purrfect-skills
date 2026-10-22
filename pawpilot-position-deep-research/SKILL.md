@@ -2,7 +2,7 @@
 name: pawpilot-position-deep-research
 description: Use to research a position or all Paper/Live holdings.
 metadata:
-  version: 3.1.0
+  version: 3.1.1
   hermes:
     tags: [pawpilot, terminal, runtime-v3]
     requires_tools: [pawpilot_position_research]
@@ -30,7 +30,14 @@ metadata:
    to X cannot establish that Twitter search ran. Cite original links and publication
    times; distinguish retrieved discussion from verified facts. An unavailable source
    is a material gap, not an empty or neutral result. Do not retry a billable unknown task.
-5. A ready deep result means retrieval has FINISHED. Read all material pages if returned, then apply financial methods to these same facts. Use `skill_view(name="pawpilot-financial-analysis",file_path="references/methods/position-risk.md")` for exposure and `references/methods/market-context.md` for catalyst interpretation. For fees/funding also read `references/methods/funding-and-costs.md`. These are method reads, not searches. Do not start financial-research, repeat ingestion or search again just because X is unavailable. Interpret available evidence and record the gap. Do not end with a promise to analyze later.
+5. Apply the financial methods supplied in this message: position-risk for exposure,
+   market-context for catalysts, and funding-and-costs for economics. Already supplied
+   method text is fully loaded; use it directly. If a method is missing, read it with
+   `skill_view(name="pawpilot-financial-analysis",file_path="references/methods/<method>.md")`.
+   These independent method reads can run in the same batch as the first research call.
+   A ready deep result means retrieval has FINISHED. Read every returned material page
+   and interpret those same facts. Do not start financial-research, repeat ingestion
+   or search again because X is unavailable. Explain that gap in the completed analysis.
 6. Deliver a concise conditional long/short/neutral bias, analysis horizon, supporting
    evidence, contrary evidence, what would change the view, implications for this
    position's actual exposure, and missing sources. No guarantees, certain target-price

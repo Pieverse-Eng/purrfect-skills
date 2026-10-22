@@ -2,7 +2,7 @@
 name: pawpilot-paper-trade-prepare
 description: Use to prepare a Paper order card.
 metadata:
-  version: 3.1.0
+  version: 3.1.1
   hermes:
     tags: [pawpilot, terminal, runtime-v3]
     requires_tools: [pawpilot_paper_trade_prepare]
@@ -26,8 +26,12 @@ metadata:
    explain the existing position and requested condition. Do not omit risk, switch to
    isolated, change amount semantics, change a call ID, close a position or transfer
    money to make the operation succeed. A changed user decision becomes a new intent.
+   A blocked result with retrySameInput:false is settled: explain its reason and finish.
+   A facts call or status lookup cannot turn that failed preparation into a card.
 5. The returned complete card contains requested/effective settings and a Review action.
-   Check its automatic publication receipt, explain the important estimate and stop.
+   Check its automatic publication receipt. For a preparation-only request, finish with
+   one or two sentences naming the market, the draft status and its Review action;
+   the card already contains the estimates. If the user requested analysis, provide it.
    The independent human review refreshes the preview and submits; never claim an order
    is placed because a card is ready. Recover taskRef after uncertainty.
 
