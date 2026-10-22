@@ -1,8 +1,8 @@
 ---
 name: pawpilot-paper-trade-review
 description: Use to review an ended Paper trade with actual costs.
-version: 3.0.0
 metadata:
+  version: 3.1.0
   hermes:
     tags: [pawpilot, terminal, runtime-v3]
     requires_tools: [pawpilot_paper_trade_review]
@@ -25,10 +25,7 @@ a subsequent plan; completed trades remain historical facts.
 
 ## Invocation and delivery
 
-Use the named native proxy when it is present. Never switch to a CLI or general execution tool after a business validation result. Correct the supplied field from the returned contract; a CLI cannot bypass that contract. The independent developer CLI uses the same
-operation contract: `node /usr/local/lib/pawpilot/pawpilot.mjs <command> --input request.json`.
-Use `--help` for syntax. CLI access requires a current authorized Run broker; an
-unavailable proxy is not permission to invent an HTTP endpoint or query a database.
+Use the named native proxy when it is present. Never switch to a CLI or general execution tool after a business validation result. Correct the supplied field from the returned contract; a CLI cannot bypass that contract. Production Hermes uses authenticated Run-bound native proxies. They invoke the Platform TS service remotely; no local Node path, script installation, database access or general shell permission is required. If the native proxy is absent, report the missing capability; do not improvise a CLI/HTTP fallback.
 Never ask the user to open a chart to make a target available. Resolve the requested
 venue, product and symbol through the operation, and describe them in familiar terms,
 for example "Hyperliquid ETH/USDC". Keep opaque references in tool arguments only.
@@ -43,3 +40,9 @@ The service publishes complete cards automatically. Do not copy `publish`, callb
 metadata or internal IDs into a new send_message call. Check the publication receipt;
 unconfirmed delivery means recover the original card. Always finish with visible,
 concise user-facing text, even when tool work completed.
+
+## Review and learning method
+
+Read `skill_view(name="pawpilot-financial-analysis",file_path="references/methods/trade-review.md")` and funding-and-costs for actual economics. For multiple trades also use cross-trade-statistics. Compare actual fills/costs with the plan applicable at the time and the user's confirmed guidance. Distinguish decision quality from outcome. If costs or initial risk are missing, return the known subtotal/gap and do not invent net or R. A trade_review card may propose a Lesson for the existing human edit/confirmation flow. Users can later edit/disable/delete it; discussion does not automatically enable it or update Playbook.
+
+For analysis, navigation or Playbook panels, read `skill_view(name="pawpilot-terminal",file_path="references/cards-and-memory.md")` before publishing. It defines every supported card, evidence identity and memory confirmation flow.

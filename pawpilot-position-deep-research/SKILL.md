@@ -1,8 +1,8 @@
 ---
 name: pawpilot-position-deep-research
 description: Use to research a position or all Paper/Live holdings.
-version: 3.0.0
 metadata:
+  version: 3.1.0
   hermes:
     tags: [pawpilot, terminal, runtime-v3]
     requires_tools: [pawpilot_position_research]
@@ -30,29 +30,26 @@ metadata:
    to X cannot establish that Twitter search ran. Cite original links and publication
    times; distinguish retrieved discussion from verified facts. An unavailable source
    is a material gap, not an empty or neutral result. Do not retry a billable unknown task.
-5. A ready deep result means retrieval has FINISHED. Its `sources.news` includes
-   the retrieved news; `sources.x_events` and `sources.x_discussion` say whether X
-   actually worked. Use this result immediately. Do not load pawpilot-financial-analysis,
-   financial-research or another research workflow, guess reference files, repeat
-   ingestion, or search again merely because a requested source is unavailable.
-   If the result has material pages, read all pages; otherwise write the final report now.
-   Do not finish with "I need to search" or "I will analyze". Those are progress notes,
-   not the requested analysis.
+5. A ready deep result means retrieval has FINISHED. Read all material pages if returned, then apply financial methods to these same facts. Use `skill_view(name="pawpilot-financial-analysis",file_path="references/methods/position-risk.md")` for exposure and `references/methods/market-context.md` for catalyst interpretation. For fees/funding also read `references/methods/funding-and-costs.md`. These are method reads, not searches. Do not start financial-research, repeat ingestion or search again just because X is unavailable. Interpret available evidence and record the gap. Do not end with a promise to analyze later.
 6. Deliver a concise conditional long/short/neutral bias, analysis horizon, supporting
    evidence, contrary evidence, what would change the view, implications for this
    position's actual exposure, and missing sources. No guarantees, certain target-price
    predictions or pressure to trade. Be useful: explain the balance of evidence rather
    than merely telling the user to decide alone. Never turn research into an order.
+   Financial facts must come from returned evidence: a missing native liquidation estimate is 'unavailable', and leverage alone cannot reconstruct liquidation or actual ROE. Entry-versus-mark is a PnL observation, not proof of trend. Prefer an explicit gap to an attractive invented estimate.
 
-CLI: `position research`. Related Skills: pawpilot-paper-trade-check for an entered draft; pawpilot-paper-trade-review for
+## Final delivery shape
+
+Use six compact points in the user's language: (1) conditional view and analysis horizon, (2) supporting and opposing dated evidence, (3) implications for the actual side, (4) known economics and unknown costs, (5) view-change conditions, (6) coverage gaps. Skip a preamble about files you read. Place source/observation times beside their claims. If the time horizon is unknown, distinguish the news observation window from the unconfirmed holding horizon.
+
+For a profitable short facing bullish ETF-inflow news but no time series, useful interpretation is 'the available demand-side headline is adverse to the short; trend and independent directional corroboration are unverified.' Profit since entry does not support a bearish market forecast. Explain the imbalance without turning it into an instruction to hold/add/close or choosing a new price level. Missing collateral, liquidation and ROE remain explicit unknowns, not leverage-derived approximations.
+
+Related Skills: pawpilot-paper-trade-check for an entered draft; pawpilot-paper-trade-review for
 closed trades. Reuse existing source services rather than rebuilding ingestion in Skills.
 
 ## Invocation and delivery
 
-Use the named native proxy when it is present. Never switch to a CLI or general execution tool after a business validation result. Correct the supplied field from the returned contract; a CLI cannot bypass that contract. The independent developer CLI uses the same
-operation contract: `node /usr/local/lib/pawpilot/pawpilot.mjs <command> --input request.json`.
-Use `--help` for syntax. CLI access requires a current authorized Run broker; an
-unavailable proxy is not permission to invent an HTTP endpoint or query a database.
+Use the named native proxy when it is present. Never switch to a CLI or general execution tool after a business validation result. Correct the supplied field from the returned contract; a CLI cannot bypass that contract. Production Hermes uses authenticated Run-bound native proxies. They invoke the Platform TS service remotely; no local Node path, script installation, database access or general shell permission is required. If the native proxy is absent, report the missing capability; do not improvise a CLI/HTTP fallback.
 Never ask the user to open a chart to make a target available. Resolve the requested
 venue, product and symbol through the operation, and describe them in familiar terms,
 for example "Hyperliquid ETH/USDC". Keep opaque references in tool arguments only.
@@ -69,3 +66,13 @@ unconfirmed delivery means recover the original card. Always finish with visible
 concise user-facing text, even when tool work completed.
 
 Large evidence returns a materialRef and page count. Use pawpilot_task_status with {materialRef,page} for every zero-based page, concatenate its JSON fragments and parse the full material. Do not claim full holdings coverage until all pages have been read.
+
+## Facts, assumptions and confirmed context
+
+The same proxy supports profile facts with a typed query for Paper scenario, timeline, prices, statistics, trades or holding_news. A user-defined scenario uses the service calculator and `references/methods/scenario-comparison.md`; do not compute guessed contract economics. Statistics use `references/methods/cross-trade-statistics.md`, preserve the denominator and continue cursors before claiming all trades.
+
+Relevant confirmed plans, owner Playbook and enabled Lessons are included as user-note evidence by default; includeContext can select plans/playbook/lessons explicitly (an empty array requests none). They guide interpretation, not execution. Read full referenced plan text before comparing adherence. State absent original thesis/initial risk instead of inventing them.
+
+Example: an ETH short with bullish ETF news and unavailable X is not automatically a sell recommendation. Explain the bullish evidence as adverse to the short thesis, contrary evidence, horizon, known costs and view-change conditions; cite the actual news time and the X gap. Never call the unavailable X result neutral sentiment.
+
+For analysis, navigation or Playbook panels, read `skill_view(name="pawpilot-terminal",file_path="references/cards-and-memory.md")` before publishing. It defines every supported card, evidence identity and memory confirmation flow.

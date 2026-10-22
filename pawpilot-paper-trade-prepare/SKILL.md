@@ -1,8 +1,8 @@
 ---
 name: pawpilot-paper-trade-prepare
 description: Use to prepare a Paper order card.
-version: 3.0.0
 metadata:
+  version: 3.1.0
   hermes:
     tags: [pawpilot, terminal, runtime-v3]
     requires_tools: [pawpilot_paper_trade_prepare]
@@ -36,10 +36,7 @@ additional evidence; paper-trade check for inspecting an existing draft without 
 
 ## Invocation and delivery
 
-Use the named native proxy when it is present. Never switch to a CLI or general execution tool after a business validation result. Correct the supplied field from the returned contract; a CLI cannot bypass that contract. The independent developer CLI uses the same
-operation contract: `node /usr/local/lib/pawpilot/pawpilot.mjs <command> --input request.json`.
-Use `--help` for syntax. CLI access requires a current authorized Run broker; an
-unavailable proxy is not permission to invent an HTTP endpoint or query a database.
+Use the named native proxy when it is present. Never switch to a CLI or general execution tool after a business validation result. Correct the supplied field from the returned contract; a CLI cannot bypass that contract. Production Hermes uses authenticated Run-bound native proxies. They invoke the Platform TS service remotely; no local Node path, script installation, database access or general shell permission is required. If the native proxy is absent, report the missing capability; do not improvise a CLI/HTTP fallback.
 Never ask the user to open a chart to make a target available. Resolve the requested
 venue, product and symbol through the operation, and describe them in familiar terms,
 for example "Hyperliquid ETH/USDC". Keep opaque references in tool arguments only.
@@ -54,3 +51,9 @@ The service publishes complete cards automatically. Do not copy `publish`, callb
 metadata or internal IDs into a new send_message call. Check the publication receipt;
 unconfirmed delivery means recover the original card. Always finish with visible,
 concise user-facing text, even when tool work completed.
+
+## Other Paper lifecycle drafts
+
+This same native proxy accepts exactly one of intent (new place_order/reduceOnly) or action. For an existing order use target.resource {kind:"order",ref:<owned order reference>}; the host resolves its original account and market. Do not ask the user to switch charts. Supported typed actions are amend_order, cancel_order, cancel_all, position_protection, transfer, claim and legacy explain. Read native schemas and original order/position versions; preserve all financial fields. Use action.request.expectedVersion where required. cancel_all's accountIds must be the intended owned set. Transfer/claim do not need a market or side. All financial actions still produce a draft for independent manual review, including claiming simulated funds. explain is nonexecution compatibility.
+
+Example cancellation: `pawpilot_paper_trade_prepare({target:{mode:"paper",resource:{kind:"order",ref:orderId}},action:{kind:"cancel_order",orderId,request:{expectedVersion:version}}})`. The result is a cancellation proposal, not a cancelled order. For a margin conflict, describe the requested and existing configuration and ask for the user's choice. Only a real changed user decision starts a new intent; never omit risk fields, change call IDs or close/transfer to defeat the conflict.

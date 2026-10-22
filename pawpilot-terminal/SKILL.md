@@ -1,12 +1,12 @@
 ---
 name: pawpilot-terminal
-description: Use for PawPilot Terminal tasks and exchange routing.
-version: 3.0.0
+description: Use when users request Paper trading, coaching, plans, preferences, trade reviews or exchange operations through PawPilot.
 metadata:
+  version: 3.1.0
   hermes:
     tags: [pawpilot, terminal, runtime-v3]
     requires_tools: [pawpilot_task_status]
-    related_skills: [pawpilot-paper-trade-prepare, pawpilot-paper-trade-check, pawpilot-paper-trade-plan, pawpilot-paper-trade-review, pawpilot-paper-trade-practice, pawpilot-position-deep-research, hyperliquid, lighter, orderly, binance, okx, bitget, gate, kraken, binance-agentic-wallet, news2trading, financial-research]
+    related_skills: [pawpilot-paper-trade-prepare, pawpilot-paper-trade-check, pawpilot-paper-trade-plan, pawpilot-paper-trade-review, pawpilot-paper-trade-practice, pawpilot-position-deep-research, hyperliquid, lighter, orderly, binance, okx-cex, okx, bitget, gate, kraken, binance-agentic-wallet, news2trading, financial-research, pawpilot-financial-analysis]
 ---
 
 # PawPilot Terminal
@@ -33,7 +33,7 @@ A Live BTC page does not prevent Paper ETH preparation, a plan save or an ETH re
 For a live exchange operation, read that exchange Skill and follow its original
 account selection, preparation, user confirmation, submission and status procedure.
 Use `hyperliquid` for Hyperliquid, `lighter` for Lighter, `orderly` for Orderly,
-`binance` for Binance, `okx` for OKX, `bitget` for Bitget, `gate` for Gate, and
+`binance` for Binance exchange, `okx-cex` for OKX CEX, `okx` for OKX onchain, `bitget` for Bitget, `gate` for Gate, and
 `kraken` for Kraken. These names exist in the pinned Skill catalog.
 Prefer a user-specified applicable Skill or method, including `binance-agentic-wallet`
 or an applicable nested OKX wallet Skill. Otherwise use the action's venue default.
@@ -46,6 +46,41 @@ There is no PawPilot live-trade CLI or intermediate live Skill. Paper proxies ne
 submit a live order. Report execution only with the original venue's order receipt;
 a preparation or unconfirmed submission is not a fill.
 
+## Live products and methods
+
+Read the named wrapper first; it owns nested command documentation and authorization.
+
+| Venue / requested method | Installed entry | Product / next instruction |
+| --- | --- | --- |
+| Hyperliquid | `hyperliquid` | Perpetuals, spot and HIP-3; follow its native market/account/order flow |
+| Lighter | `lighter` | Spot/perpetuals and original account/funding flow |
+| Orderly | `orderly` | Perpetuals and venue-native protection/status |
+| Binance exchange | `binance` | Spot, futures and convert through its CLI |
+| Binance Agentic Wallet (explicit) | `binance-agentic-wallet` | Wallet operation reference and original confirmation |
+| OKX exchange / ordinary perpetual | `okx-cex` | Its vendor routing table selects spot/swap/futures/options; not OnchainOS |
+| OKX onchain / wallet | `okx` | OnchainOS wrapper selects the applicable wallet/DEX capability |
+| Bitget | `bitget` | Spot, margin, futures and existing account method |
+| Gate | `gate` | Choose its CEX/DEX product and original authentication |
+| Kraken | `kraken` | Spot/futures and original account confirmation |
+
+This table is a default route, not an allowlist. Discover other installed authorized capabilities with skills_list. Keep their original confirmations and status queries. A saved API key does not override an explicitly requested applicable Agentic Wallet method. Do not invent a separate PawPilot Live execution API.
+
+## Playbook and learning memory
+
+A Playbook records the user's confirmed trading style and principles across authorized Agents and Paper/Live. It needs no selected trading account. Discuss directly; if existing preferences are relevant, call `pawpilot_position_research({target:{subjectType:"playbook"},profile:"facts"})`. Unknown preference fields remain null; observed behavior is not a permanent personality diagnosis.
+
+For 'remember/save these preferences', publish `playbook_proposal` with the complete agreed profile (summary, holdingStyle, decisionStyle, riskComfort, principles) and current expectedVersion through send_message. Then use `terminal_save_preferences({confirmed:true,cardId,expectedVersion})` with cardId from `send_message`'s `registered.coachCard.id` (never message_id), in the SAME Run. No magic phrase or second turn is needed for a natural save request. Re-read and discuss differences on a version conflict; do not overwrite concurrent preferences. Discussion alone does not save. A versioned receipt proves the save. It never grants trading authority.
+
+Market plans use pawpilot-paper-trade-plan. Proposed Lessons use the review card's human edit/confirm flow; only enabled confirmed Lessons guide later analysis. A Lesson does not silently become Playbook. Read existing records before changing just the user's requested parts. Legacy named Skills remain available, but their page-bound operation instructions do not replace v3 target-based native calls.
+
+## Deterministic facts and cards
+
+Use `pawpilot_position_research` with profile facts for account/market evidence, owner Playbook or typed `query`. Paper queries support `holding_news`, `scenario`, `timeline`, `prices`, `statistics` and `trades`; inspect the native argument schema rather than guessing parameter names. A scenario uses the user's assumptions and the existing calculator. Histories/statistics retain scope, denominator, costs, cursors and coverage. Unsupported Live queries return an explicit gap; never call a Paper query against Live.
+
+Read only relevant financial methods through `skill_view(name="pawpilot-financial-analysis",file_path="references/methods/<named-method>.md")`. Methods interpret evidence; they do not start ingestion, search or another financial-research session. Use position-risk for exposure, market-context for news, funding-and-costs for economics, scenario-comparison for supplied assumptions, trade-review for completed trades and cross-trade-statistics for patterns.
+
+The host automatically publishes prepared trading and practice cards. Do not copy their callbacks or metadata into a second publication. For an analysis/Playbook/navigation card, use the existing canonical coachCard contract in send_message: `before_trade`, `holding`, `trade_review`, `trade_patterns`, `live_readiness`, `playbook_proposal`, `web_actions` or `paper_practice_invite`. Numeric analysis cites original successful host facts by callId/queryId; prose is interpretation. Keep original action/record references and scope. A failed registration is not proof a panel exists. Always deliver a visible final explanation.
+
 ## Existing News behavior
 
 Keep automatic subscribed news analysis and the existing News conversation unchanged.
@@ -57,10 +92,7 @@ is implied by its presence.
 
 ## Invocation and delivery
 
-Use the named native proxy when it is present. Never switch to a CLI or general execution tool after a business validation result. Correct the supplied field from the returned contract; a CLI cannot bypass that contract. The independent developer CLI uses the same
-operation contract: `node /usr/local/lib/pawpilot/pawpilot.mjs <command> --input request.json`.
-Use `--help` for syntax. CLI access requires a current authorized Run broker; an
-unavailable proxy is not permission to invent an HTTP endpoint or query a database.
+Use the named native proxy when it is present. Never switch to a CLI or general execution tool after a business validation result. Correct the supplied field from the returned contract; a CLI cannot bypass that contract. Production Hermes uses authenticated Run-bound native proxies. They invoke the Platform TS service remotely; no local Node path, script installation, database access or general shell permission is required. If the native proxy is absent, report the missing capability; do not improvise a CLI/HTTP fallback.
 Never ask the user to open a chart to make a target available. Resolve the requested
 venue, product and symbol through the operation, and describe them in familiar terms,
 for example "Hyperliquid ETH/USDC". Keep opaque references in tool arguments only.
@@ -75,3 +107,5 @@ The service publishes complete cards automatically. Do not copy `publish`, callb
 metadata or internal IDs into a new send_message call. Check the publication receipt;
 unconfirmed delivery means recover the original card. Always finish with visible,
 concise user-facing text, even when tool work completed.
+
+For analysis, navigation or Playbook panels, read `skill_view(name="pawpilot-terminal",file_path="references/cards-and-memory.md")` before publishing. It defines every supported card, evidence identity and memory confirmation flow.
