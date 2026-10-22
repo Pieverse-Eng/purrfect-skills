@@ -49,3 +49,5 @@ unconfirmed delivery means recover the original card. Always finish with visible
 concise user-facing text, even when tool work completed.
 
 Content references: use contentRef="message:<native message ID>" for complete saved text in this same conversation, or "current-user-message" for the current complete user text. Never use a UI excerpt as the complete plan. The current 8000-character content limit fails explicitly; it never truncates.
+
+Native tool and local CLI broker arguments share an 8192-byte JSON budget. Use an owned contentRef for larger complete text; do not shorten or split the plan to fit tool arguments.

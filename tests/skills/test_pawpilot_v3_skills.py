@@ -29,6 +29,13 @@ def loader(tmp_path, monkeypatch):
     monkeypatch.setattr("agent.skill_utils.get_external_skills_dirs", lambda: [])
     monkeypatch.setattr(tools, "_get_disabled_skill_names", lambda: set())
     monkeypatch.setattr(tools, "_is_skill_disabled", lambda name: name in tools._get_disabled_skill_names())
+    from tools.registry import ToolRegistry, registry
+    proxies = ToolRegistry()
+    for tool in OPERATIONS.values():
+        proxies.register(name=tool, toolset="api_host_tools",
+                         schema={"name": tool, "parameters": {"type": "object", "properties": {}}},
+                         handler=lambda *args, **kwargs: pytest.fail("Viewing a Skill must not execute it"))
+        monkeypatch.setitem(registry._tools, tool, proxies._tools[tool])
     tools._SKILLS_CACHE.clear()
     for name in OPERATIONS:
         shutil.copytree(SOURCE / name, tools.SKILLS_DIR / name)
@@ -37,13 +44,14 @@ def loader(tmp_path, monkeypatch):
 
 @pytest.mark.parametrize("name,required_tool", OPERATIONS.items())
 def test_v3_routing_requires_the_actual_bound_operation(name, required_tool, loader):
-    from agent.skill_utils import extract_skill_conditions
-    from agent.prompt_builder import _skill_should_show
-    metadata, _ = loader._parse_frontmatter((SOURCE / name / "SKILL.md").read_text())
-    conditions = extract_skill_conditions(metadata)
-    assert not _skill_should_show(conditions, {"terminal_read", "paper_prepare_card"}, {"api_host_tools"})
-    assert _skill_should_show(conditions, {required_tool}, {"api_host_tools"})
-    loaded = json.loads(loader.skill_view(name))
-    assert loaded["success"], loaded
-    assert loaded["content"] == (SOURCE / name / "SKILL.md").read_text()
-    loader._SKILLS_CACHE.clear()
+    from gateway.interactive_messages import current_message_scope
+    assert not json.loads(loader.skill_view(name))["success"]
+    with current_message_scope(lambda *args: None, {
+        "version": 2, "execution_policy": "pawpilot", "host_tools": [required_tool],
+    }):
+        listing = json.loads(loader.skills_list())
+        assert [item["name"] for item in listing["skills"]] == [name]
+        loaded = json.loads(loader.skill_view(name))
+        assert loaded["success"], loaded
+        assert loaded["content"] == (SOURCE / name / "SKILL.md").read_text()
+    assert not json.loads(loader.skill_view(name))["success"]
