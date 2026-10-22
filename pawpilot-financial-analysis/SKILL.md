@@ -76,3 +76,18 @@ Check identity, units, data time, coverage, known costs and missing evidence.
 Mention a current uncertainty that could reverse the interpretation. Never save
 an observation as a user rule or claim an order/card succeeded without its actual
 receipt. Human review remains separate from analysis.
+
+## Pure methods for PawPilot v3
+
+When the caller already has evidence, read only the selected method below through native skill_view. These files perform no retrieval and grant no permission. Legacy reference paths above remain unchanged for existing News/Coach workflows.
+
+| Task | Pure method file |
+| --- | --- |
+| Position exposure, thesis and constraints | references/methods/position-risk.md |
+| News and X interpretation | references/methods/market-context.md |
+| Recorded costs and funding estimates | references/methods/funding-and-costs.md |
+| User-defined numerical comparisons | references/methods/scenario-comparison.md |
+| Completed trade and proposed Lesson | references/methods/trade-review.md |
+| Multiple-trade patterns and denominator | references/methods/cross-trade-statistics.md |
+
+Use the caller's existing completed/pending research receipts. A method read does not restart financial-research, account retrieval or ingestion. Missing sources remain gaps while the available evidence can still support conditional analysis.
