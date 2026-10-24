@@ -47,7 +47,7 @@ unknown outcome, reconcile state before acting again.
 | `LIGHTER_SEND_TX_REJECTED` | Venue rejected signed tx | Report; fix if user-correctable; re-confirm only if safe |
 | `LIGHTER_TRANSACTION_FAILED` | Lighter accepted the transaction, executed it and refused it (the error is Lighter's, e.g. `invalid order index`) | Nothing changed. Re-read `active-orders` and use the exact `order_index` string; never resubmit unchanged; re-confirm a corrected action |
 | `executionStatus: failed` with `orderStatus: canceled-*` (not an error) | The matching engine cancelled the order unfilled | Report it as not placed, with the reason; see [trading.md](trading.md#read-the-write-result) |
-| `LIGHTER_SUBMIT_UNKNOWN` | Outcome unknown after submit | Reconcile via `requests` / orders; **do not** resubmit |
+| `LIGHTER_SUBMIT_UNKNOWN` | Outcome unknown after submit (`retryable: false`) | Reconcile via `requests` / orders; **do not** resubmit |
 | `LIGHTER_PREVIOUS_SUBMISSION_RESOLVED` | Prior op finished differently | Read request status; do not assume success |
 | `LIGHTER_REQUEST_ALREADY_EXISTS` | Active operation with same fingerprint | Inspect existing request; wait |
 
@@ -72,6 +72,7 @@ unknown outcome, reconcile state before acting again.
 | `LIGHTER_REQUEST_TIMEOUT` on read/preview | 20s client timeout | Safe to retry read/preview |
 | Write hang / unknown | May have submitted | Use `requests` / `deposit-status`; never blind retry |
 | `LIGHTER_TRANSPORT_ERROR` / `LIGHTER_HTTP_ERROR` | Network or upstream | If pre-submit likely, may retry after confirm; if post-submit possible, reconcile only |
+| `LIGHTER_UPSTREAM_UNAVAILABLE` / `LIGHTER_UPSTREAM_TIMEOUT` / `LIGHTER_UPSTREAM_RATE_LIMITED` | Lighter API or chain RPC could not answer; nothing was signed or sent (`retryable: true`) | Honor `Retry-After`; retry the read or preview. A failed write needs a new idempotency key after the user re-confirms |
 
 ## Market ambiguity handling
 
