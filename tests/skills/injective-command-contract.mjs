@@ -44,7 +44,7 @@ try {
 				assert.ok(line.startsWith('purr injective '), `Unsupported example: ${line}`)
 				const tokens = line.match(/"[^"]*"|'[^']*'|\S+/g).slice(1).map((token) => token.replace(/^(["'])(.*)\1$/, '$2').replaceAll('$MARKET_HASH', hash).replaceAll('$NEXT_CURSOR', 'fixture-cursor'))
 				const result = await new Promise((done, reject) => {
-					const child = spawn(bun, [resolve(entry), ...tokens], { cwd: dirname(resolve(entry)), env, stdio: ['ignore', 'pipe', 'pipe'] })
+					const child = spawn(bun, [resolve(entry), ...tokens], { cwd: dirname(resolve(entry)), env, stdio: ['ignore', 'pipe', 'pipe'], timeout: 10_000 })
 					let stderr = ''
 					child.stderr.on('data', (chunk) => { stderr += chunk })
 					child.stdout.resume()
