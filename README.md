@@ -106,12 +106,21 @@ restricted-load/security regressions, installed image capability and hosted
 Agent/manual acceptance are separate gates. An accepted command receipt is
 not proof of an eventual order fill.
 
-The Injective examples can be executed through a checked-out CLI candidate
-against a local fixture backend (no chain calls or signing):
+The Injective examples execute through an actual CLI candidate against a strict
+local fixture backend. The check verifies every authored shell example's route,
+query, authentication and JSON output, plus rate-limit and execution boundaries.
+It preserves exact amounts, unknown values, freshness, coverage and cursors.
+No chain calls or signing occur. Run either a compiled candidate or source:
 
 ```sh
+PURR_TEST_BINARY=/path/to/purr node tests/skills/injective-command-contract.mjs
 node tests/skills/injective-command-contract.mjs /path/to/purr-cli/packages/cli/src/linux-macos.ts /path/to/bun
 ```
+
+The `injective-command-contract` CI job builds the public CLI commit pinned in
+`.github/workflows/validate-skills.yml` with locked dependencies and runs this
+check against the compiled binary. The pin identifies a reviewed candidate,
+not a release or a minimum supported version. It needs no private platform clone.
 
 The skill requires both an Injective-capable CLI release and the corresponding
 backend routes. Keep its runtime image pin pending until that CLI is released;
