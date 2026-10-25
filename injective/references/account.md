@@ -19,9 +19,10 @@ readiness check. The Phase 2 backend reports `mode: read_only` and
 `executionEnabled: false`. Preserve returned capability fields if a later backend
 changes them; this CLI and skill still expose only reads. Reads work with zero
 INJ; never propose enable/open-account/deposit as a read prerequisite.
-`account` shares a collection with balances and unfiltered positions. Choose the
-smallest query answering the request. Positions are perpetual only; orders,
-history and fills require explicit `spot` or `perp`.
+`account` and `balances` share the financial snapshot; `positions` uses independent
+admitted native paging. Choose the smallest query answering the request.
+Positions are perpetual only; orders, history and fills require explicit `spot`
+or `perp`.
 
 History defaults to the backend's fixed last seven days. For another period,
 provide both RFC3339 bounds, at most 31 days apart. Preserve those exact bounds
