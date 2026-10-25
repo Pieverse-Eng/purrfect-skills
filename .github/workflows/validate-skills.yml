@@ -1,6 +1,7 @@
 name: Validate skills
 
 on:
+  workflow_dispatch:
   pull_request:
   push:
     branches:
@@ -10,12 +11,14 @@ permissions:
   contents: read
 
 jobs:
+  # Explicit candidate qualification; ordinary skill PRs keep the checks below.
   injective-command-contract:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
       # Reviewed candidate source; this is not a released minimum CLI version.
-      PURR_CLI_SHA: a49e1e79e018e44aac69526f5e8be7c085a67a50
+      PURR_CLI_SHA: 894692b18b4ed15057fd561021ae34c88037d85c
     steps:
       - uses: actions/checkout@v4
       - name: Check out the public CLI candidate

@@ -15,8 +15,10 @@ purr injective fills --market-type perp --limit 50
 ```
 
 `status` is a cheap capability/identity check, not a fresh portfolio or trading
-readiness check. Expect `mode: read_only`, `executionEnabled: false`. Reads work
-with zero INJ; never propose enable/open-account/deposit as a read prerequisite.
+readiness check. The Phase 2 backend reports `mode: read_only` and
+`executionEnabled: false`. Preserve returned capability fields if a later backend
+changes them; this CLI and skill still expose only reads. Reads work with zero
+INJ; never propose enable/open-account/deposit as a read prerequisite.
 `account` shares a collection with balances and unfiltered positions. Choose the
 smallest query answering the request. Positions are perpetual only; orders,
 history and fills require explicit `spot` or `perp`.
