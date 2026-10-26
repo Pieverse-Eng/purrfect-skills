@@ -1,6 +1,7 @@
 name: Validate skills
 
 on:
+  workflow_dispatch:
   pull_request:
   push:
     branches:
@@ -10,6 +11,52 @@ permissions:
   contents: read
 
 jobs:
+  # Explicit candidate qualification; ordinary skill PRs keep the checks below.
+  injective-command-contract:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # Reviewed candidate source; this is not a released minimum CLI version.
+      PURR_CLI_SHA: 0a4cae7eac1c984c9c140e0cc083261240d762bb
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check out the public CLI candidate
+        uses: actions/checkout@v4
+        with:
+          repository: Pieverse-Eng/purr-cli
+          ref: ${{ env.PURR_CLI_SHA }}
+          path: cli-candidate
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.13
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install locked CLI dependencies
+        working-directory: cli-candidate
+        run: bun install --frozen-lockfile
+      - name: Compile the actual CLI candidate
+        working-directory: cli-candidate
+        run: >-
+          bun build packages/cli/src/linux-macos.ts --compile --target=bun-linux-x64
+          --outfile "$RUNNER_TEMP/purr" --define "PURR_VERSION='candidate-${PURR_CLI_SHA}'"
+      - name: Execute every authored Injective command and error boundary
+        env:
+          PURR_TEST_BINARY: ${{ runner.temp }}/purr
+        run: node tests/skills/injective-command-contract.mjs
+      - name: Record candidate provenance
+        run: |
+          sha256sum "$RUNNER_TEMP/purr" > "$RUNNER_TEMP/purr.sha256"
+          node -e 'require("fs").writeFileSync(process.env.RUNNER_TEMP + "/purr-provenance.json", JSON.stringify({cliSource:process.env.PURR_CLI_SHA,skillsCheckout:process.env.GITHUB_SHA,runId:process.env.GITHUB_RUN_ID},null,2))'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: injective-cli-contract-${{ env.PURR_CLI_SHA }}
+          path: |
+            ${{ runner.temp }}/purr.sha256
+            ${{ runner.temp }}/purr-provenance.json
+          retention-days: 14
   skill-shadowing:
     runs-on: ubuntu-latest
     steps:
