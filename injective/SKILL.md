@@ -16,8 +16,8 @@ Check installed capability once before the first query:
 purr injective --help
 ```
 
-If the group is unknown, report that the installed CLI needs an Injective-capable
-release. No released minimum version is declared yet. Backend capability errors
+Requires purr CLI v0.2.70 or a later release with the Injective group. If the
+group is unknown, report that the installed CLI needs an upgrade. Backend capability errors
 are separate; see [errors](references/errors.md).
 
 | Request | Read first |
