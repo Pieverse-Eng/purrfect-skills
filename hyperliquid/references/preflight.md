@@ -60,6 +60,21 @@ before declaring public market data unavailable.
 Preserve the denial; never switch credentials or make direct private calls to
 bypass it. Keep account capacity unknown while reporting verifiable public minima.
 
+When the existing authenticated native `pawpilot_position_research` proxy is
+available, a market-only facts read can supply shared observed rules without
+an account lookup; for a requested ETH perpetual market, use:
+
+```json
+{"profile":"facts","target":{"subjectType":"market","mode":"live","venue":"hyperliquid","product":"perp","symbol":"ETH"},"includeContext":[]}
+```
+
+Use returned `data.market.precision.minNotional`, `minSize`, `sizeStep` and
+`priceTick`, plus `data.book`/`mark`/`feeds`, as shared observed market facts only;
+they do not establish Live balances, account fees, affordability or execution
+authority. Without that proxy, public `symbol`/`l2` can still supply precision
+and price, but missing minimum notional/quantity stays unknown; never invent
+a default minimum to run the sizing helper.
+
 ```bash
 purr hyperliquid enable
 purr hyperliquid disable
