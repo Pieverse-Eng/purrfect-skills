@@ -22,7 +22,9 @@ Run it is deliberately unavailable: discuss first and confirm in a normal
 Paper conversation.
 
 Only status=ready with data.record containing the saved id/version proves
-persistence. A timeout or stopped call cannot be described as saved. Reopen/read
+persistence. After a ready receipt, the brief final reply names the familiar
+venue/symbol and saved version; record, account, market and task IDs stay in tool
+arguments/results. A timeout or stopped call cannot be described as saved. Reopen/read
 that original record where available; do not blindly save again. A version
 conflict requires reading the current plan and confirming the intended change.
 Saving a note does not place a stop or enforce a maximum dollar loss.

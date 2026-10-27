@@ -11,7 +11,7 @@ Every proposal has `version:1`, `kind` and a nonempty `title` (at most 200 chara
 | kind | Additional fields / source |
 | --- | --- |
 | `paper_practice_invite` | optional marketKey; normally use the dedicated invite proxy |
-| `playbook_proposal` | expectedVersion and complete profile; see below |
+| `playbook_proposal` | expectedVersion, complete profile and requested update patch; the host resolves the authoritative profile and diff |
 | `web_actions` | actions (1–4 typed controls); see below |
 | `before_trade` | actionId from the original prepared draft; facts may be empty if no facts query was needed |
 | `holding` | positionId from actual position evidence; optional actionId only for a separately prepared original draft |
@@ -21,12 +21,31 @@ Every proposal has `version:1`, `kind` and a nonempty `title` (at most 200 chara
 
 Do not label a spot fill as a completed perpetual cycle. Missing lifecycle evidence means explain the limitation in text rather than fake a numeric review card. A readiness assessment is advisory and never unlocks Live trading.
 
-Example: after a successful `pawpilot_position_research` statistics call with native call ID `read-history`, use:
+For `pawpilot_paper_trade_review` with an exact perpetual cycle or nonempty
+perpetual candidate list, copy the native invocation ID and the ready response's
+`data.facts.queryId` into the citation. The same field contains a trades
+FactQueryResponse for the bounded candidate list, or timeline facts for an exact
+cycle. Empty lists and spot fills supply no fabricated perpetual facts.
+Use the selected actual cycle ID from `data.review.id`
+or the matching `data.reviews`/`data.facts.trades` record. A candidate page only
+identifies the requested trade; review that trade, not every returned record.
+"Latest/just closed" uses actual closedAt within the requested scope and coverage;
+other unresolved ambiguity needs one clarification. Cross-trade methods require
+the user's request for a comparison or pattern.
 
-```json
-{"version":1,"kind":"trade_patterns","title":"Your Paper trade patterns","explanation":"Interpret the actual returned population and coverage here.","facts":[{"callId":"read-history","queryId":"<exact returned queryId>"}],"questions":["Which pattern would you like to practise?"]}
+Mapping only, using the actual invocation and response, never literal example IDs:
+
+```javascript
+const factReference = {
+  callId: nativeInvocationId,
+  queryId: reviewResponse.data.facts.queryId,
+}
 ```
 
+Use `facts:[factReference]` in the canonical trade_review proposal and publish it
+through send_message. Analysis is not automatically published by a successful
+evidence read. Missing data.facts is a blocker for a numeric review card; retain
+the useful known explanation and gap rather than sending facts:[] or fake IDs.
 `callId` is the native invocation ID, not the operation name or taskRef. Keep all opaque identities in arguments. Show the user the familiar venue and symbol. If registration reports invalid/mismatched evidence, inspect that original receipt and correct the field once. Do not make another financial draft to repair a presentation failure.
 
 ## Navigation and original drafts
@@ -42,11 +61,42 @@ Never invent callback_data or encode new financial permissions in a button. Nati
 ## Owner Playbook
 
 1. Discuss the user's style/principles without account preflight. Read `pawpilot_position_research({target:{subjectType:"playbook"},profile:"facts"})` when existing preferences matter. Successful null means expectedVersion 0; failed read does not.
-2. Preserve existing answers and only change what the user requests. Do not infer personality from a winning/losing trade. Unknown holdingStyle, decisionStyle or riskComfort is null; principles can be an empty array.
-3. Publish the full agreed immutable proposal:
+2. Preserve existing answers and only change what the user requests. Qualitative principles can remain qualitative; numerical limits need clarification when preparing a concrete trade. A request to discuss without saving remains discussion. Keep model suggestions distinct from confirmed user principles. Do not infer personality from a winning/losing trade. Unknown holdingStyle, decisionStyle or riskComfort is null; principles can be an empty array.
+3. Publish the literal `profile` field with summary, holdingStyle, decisionStyle,
+   riskComfort and principles. For existing preferences, preserve the complete read
+   profile plus the agreed changes and include only those changes in `update`.
+   Omit `set` fields the user did not change; the host inherits the summary and every
+   unrelated field. Use `appendPrinciples` for additions. Example only: version 1
+   already contains the summary and first rule below, with null style/comfort answers;
+   the user explicitly asks to append these four Paper practice rules and retain the old rule:
 
 ```json
-{"version":1,"kind":"playbook_proposal","title":"Trading preferences and principles","expectedVersion":0,"profile":{"summary":"The user's agreed summary","holdingStyle":null,"decisionStyle":null,"riskComfort":null,"principles":[]}}
+{"version":1,"kind":"playbook_proposal","title":"Paper practice rules","expectedVersion":1,"profile":{"summary":"The user's confirmed trading preferences","holdingStyle":null,"decisionStyle":null,"riskComfort":null,"principles":["Review the agreed thesis before each decision","This Paper practice uses small positions","This Paper practice uses at most 3x leverage","This Paper practice does not add after a loss","This Paper practice defines exits before entry"]},"update":{"kind":"patch","appendPrinciples":["This Paper practice uses small positions","This Paper practice uses at most 3x leverage","This Paper practice does not add after a loss","This Paper practice defines exits before entry"]}}
+```
+
+   These example rules are user choices, not account facts or default trading limits.
+   Use the actual read profile, expectedVersion and requested rules. The host
+   materializes the complete immutable profile and `principleChanges` from
+   the exact confirmed version. Existing principles remain in order; exact duplicate
+   additions do not add another copy. A 12-principle or 7500-byte overflow is an explicit
+   blocker: never drop or weaken existing rules to fit. Do not infer account facts just
+   to discuss preferences.
+
+   Deletion must be explicitly requested: use `update.removePrinciples` with the exact
+   old principle strings and explain the server-computed removed diff. Never use a
+   replacement to hide an omission or say unchanged if any rule is removed. If the user
+   specifically requests a complete replacement, send the full profile with
+   `update:{kind:"replace",removePrinciples:[<exact requested old rules removed>]}`.
+   Legacy full-profile inputs without update have replacement semantics and remain
+   valid when all prior rules are preserved; undeclared removals are rejected.
+   The field `proposed` is unsupported. Keep `kind:"playbook_proposal"` when
+   correcting a rejected profile; use the returned nested failure.fields paths.
+
+   For the first profile (successful null / expectedVersion 0), publish an explicit
+   complete replacement because there is no base to patch:
+
+```json
+{"version":1,"kind":"playbook_proposal","title":"Trading preferences and principles","expectedVersion":0,"update":{"kind":"replace"},"profile":{"summary":"The user's agreed summary","holdingStyle":null,"decisionStyle":null,"riskComfort":null,"principles":[]}}
 ```
 
 4. If the user naturally asked to save/remember this bounded content, call `terminal_save_preferences({confirmed:true,cardId:<registered.coachCard.id>,expectedVersion:<version read>})` in this same Run. No second turn or fixed confirmation phrase is required. A discussion alone does not authorize saving. Do not pass a replacement profile or quote/truncate the authorizing message.

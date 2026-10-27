@@ -49,6 +49,55 @@ available target collateral. Do not spend occupied margin or native gas.
 Example: $8 margin at 3x is $24 notional. At $100 per asset and two size
 decimals, `--size` is 0.24.
 
+### Read-only size arithmetic
+
+For a minimum-size or affordability question, use the bundled
+`scripts/order-size.mjs` through Node before quoting a number. Resolve its path
+from this Skill's returned `skill_dir` plus that relative path. Pass
+`--input-json '<nonsecret JSON>'` directly, or provide one JSON object on stdin;
+the helper returns JSON. Direct input needs no shell pipe or CEX session. It has
+no network, credential or execution capability.
+Do not replace this calculation with mental arithmetic.
+
+Supply decimal strings from current original venue/discovery receipts:
+`price`, `quantityStep`, `minimumNotional`, `minimumQuantity`, and optional
+`maximumQuantity`. Quantity step alone is not the minimum order. The helper
+rounds the minimum upward to a complete native lot and verifies its notional.
+Assumed example only, not current market facts: at 2315.1 with a 0.0001 lot and 10 quote minimum, 0.0043 is below
+the minimum; the legal arithmetic minimum is 0.0044 (10.18644 quote).
+From this Skill's returned `skill_dir`, the complete nonsecret CLI example is:
+
+```bash
+node ./scripts/order-size.mjs --input-json '{"price":"2315.1","quantityStep":"0.0001","minimumNotional":"10","minimumQuantity":"0"}'
+```
+
+For the user's actual question, use the resolved script path and original verified
+receipts, not these assumed values. All four required values are decimal strings.
+
+Pass `quantity` to check a proposed native size without silently rounding the
+user's instruction. For a fee-inclusive budget estimate, also supply the
+user-confirmed `leverage`, the original account's `tradingFeeRate`, the returned
+additional `routingFeeRate`, an explicit `slippageBps` envelope, and
+`availableMargin` from the authoritative target collateral/risk read. Unknown
+fees or slippage leave capacity unavailable. Missing available margin returns
+only the minimum, never an invented account maximum. Do not derive available
+margin by subtracting maintenance margin from withdrawable or multiplying
+wallet balances by leverage.
+`minimum` is the legal market-size floor, independently of account affordability.
+When `maximum` is null, `missing` is nonempty, or authoritative availableMargin is
+absent, affordability is unknown. Do not conclude that any quoted USDC balance is
+enough, or recommend leverage to make it fit. A leverage-dependent budget requires
+the user's confirmed leverage plus all fee, slippage and account-margin inputs.
+
+The output is explicitly arithmetic-only. Its upper reservation price includes
+the supplied slippage envelope and all supplied fee rates, but it does not
+prove current depth, native leverage tiers, maintenance risk or order admission.
+Preserve those gaps; never present `maximum` as a venue-approved maximum. A
+read-only question does not authorize changing leverage, moving funds, preparing
+or submitting an order. Paper still uses its original host calculator/preview.
+These are opening-order checks. Reduce-only/dust exceptions, funding payments
+and existing-position risk remain governed by the original venue facilities.
+
 Use the confirmed entry price for a resting order. For `FrontendMarket`,
 use a fresh executable quote; its worst-price boundary is a separate control,
 not the sizing price. Check supported margin mode, size/price precision,

@@ -28,7 +28,7 @@ funding.
 |-------|-------------|
 | `aster` | Aster DEX v3 skills — futures/spot API docs, market data, signed futures v3 calls, websocket v3 references, and on-chain deposit step building. |
 | `balancer` | Balancer reviewed pool discovery, exact-input/exact-output swaps, and V2/V3 standard, boosted, and nested liquidity operations through `purr balancer`. |
-| `binance` | Binance CEX via `binance-cli` — Spot, USD-S Futures, and Convert trading + market data (incl. bStocks spot pairs). Requires Binance API keys (auth). |
+| `binance` | Binance CEX via `binance-cli` — Spot, USD-S Futures, and Convert trading + market data (incl. bStocks spot pairs). Private operations use managed credentials or the user's existing auth method; public reads need no keys. |
 | `binance-agentic-wallet` | Binance Web3 Agentic Wallet via `baw` CLI — sign-in, balances, transfers (incl. .ai/.bnb/.eth names), DEX swaps, limit orders, prediction markets, x402 payments, approvals, DeFi, and Developer Mode contract calls/signing. |
 | `binance-onchain-pay` | Binance Onchain Pay on-ramp via `purr` — payment methods, quotes, hosted checkout, order status, and reference docs. |
 | `bitget` | Bitget Exchange UTA v3 via `bgc` — spot, margin, futures, account, transfers. Requires Bitget API keys for private ops. |
@@ -105,6 +105,19 @@ The authored-content probe does not contact the security provider; Hermes's
 restricted-load/security regressions, installed image capability and hosted
 Agent/manual acceptance are separate gates. An accepted command receipt is
 not proof of an eventual order fill.
+
+### Hyperliquid arithmetic validation
+
+Run the 9 read-only behavioral checks, including actual Node CLI execution through
+a symlink and importing the helper without running its CLI:
+
+```sh
+node --test tests/skills/hyperliquid-order-size.test.mjs
+```
+
+These checks use assumed decimal inputs without network or credentials. A legal
+market minimum does not establish affordability without confirmed leverage, fees,
+slippage and authoritative account margin.
 
 The Injective examples execute through an actual CLI candidate against a strict
 local fixture backend. The check verifies every authored shell example's route,

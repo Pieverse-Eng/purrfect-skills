@@ -22,16 +22,32 @@ metadata:
    amount: decimal string, asset}, risk {marginMode: cross|isolated, leverage: decimal string},
    price, reduceOnly, postOnly, timeInForce and protection. Do not convert collateral to
    quantity yourself; the service sizes and previews with the real Paper engine.
+   When the user edits an existing draft, pass
+   `replaces:{actionId,version}` from that original successful receipt's `data.action`.
+   Keep every unchanged field from the original intent and apply only the user's
+   changes. Never select the draft by ticker/market or infer its version from a
+   card label. Recover the original task/receipt if the exact action reference is
+   missing. Say that the previous draft expired or was superseded only when the
+   replacement receipt confirms that transition; preparing an unrelated new card
+   does not revoke the old one.
 4. On needs_input, ask only the missing material fields. On margin-mode conflict,
-   explain the existing position and requested condition. Do not omit risk, switch to
+   explain the existing position and requested condition using returned current fields.
+   Do not attribute it to a past draft/trade without a stored fill/position link;
+   history is not proof of its opening time or original margin budget. Do not omit risk, switch to
    isolated, change amount semantics, change a call ID, close a position or transfer
    money to make the operation succeed. A changed user decision becomes a new intent.
    A blocked result with retrySameInput:false is settled: explain its reason and finish.
    A facts call or status lookup cannot turn that failed preparation into a card.
+   `PENDING_SETTLEMENT` or another funding code alone does not identify the cause,
+   an old position or a previous close. State only the returned blocker and retry
+   policy unless the original receipt supplies evidence of that specific cause.
 5. The returned complete card contains requested/effective settings and a Review action.
    Check its automatic publication receipt. For a preparation-only request, finish with
    one or two sentences naming the market, the draft status and its Review action;
    the card already contains the estimates. If the user requested analysis, provide it.
+   Explain cross-margin exposure using returned collateral and liquidation facts;
+   do not infer liquidation or account fund exhaustion from `1 / leverage`.
+   A price-PnL comparison with initial margin is not an account solvency threshold.
    The independent human review refreshes the preview and submits; never claim an order
    is placed because a card is ready. Recover taskRef after uncertainty.
 

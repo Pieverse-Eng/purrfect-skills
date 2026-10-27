@@ -11,6 +11,13 @@ metadata:
 
 # Discuss or save a Paper plan
 
+Qualitative practice rules are a complete discussion deliverable, not a pending
+order: organize them now without requiring a market, numerical size, exit price
+or horizon, and keep an explicit "do not save" request unsaved. Use Clarify for a
+material unknown in a concrete trade or requested market-specific plan save;
+general habits and rules belong to the owner Playbook conversation when the user
+asks to remember them.
+
 Discuss the user's objective, thesis, time horizon, invalidation/protection, constraints
 and review conditions using facts only when needed. Reuse confirmed conversation details.
 Discussion alone does not request a write. Do not choose risk budgets, size, leverage
@@ -23,7 +30,10 @@ or `contentRef` for an owned full-content reference. Never silently shorten it t
 characters or replace it with a summary. For a revision include edit {id,version} from
 the existing record receipt. Read complete content when the source is a reference;
 an excerpt cannot authorize replacing the original full plan.
-Confirm saving only after the versioned ready receipt. A saved note does not change an
+After the versioned ready receipt, keep the final reply brief: name the familiar
+venue/symbol and saved version, for example "Saved your Hyperliquid ETH/USDC plan,
+version 2." Keep record, account, market and task IDs in tool arguments/results.
+A saved note does not change an
 order, its initial risk, a Lesson, Playbook or any live trading permission.
 Use position research profile=facts for necessary evidence.
 
@@ -40,8 +50,11 @@ only for a material unknown or conflict. Make ONE clarify call containing all cu
 A failed tool result is not success. Correct a malformed field once from returned
 facts; do not cycle through guessed names, prices or account IDs. Recover an existing
 task with `pawpilot_task_status({taskRef})`. Do not replace work after a timeout.
-The service publishes complete cards automatically. Do not copy `publish`, callbacks,
-metadata or internal IDs into a new send_message call. Check the publication receipt;
+Preparation and practice-invite proxies publish their own draft/invite cards;
+keep those original callbacks and metadata. Plan-save returns a versioned record.
+Any separate analysis panel uses send_message with canonical fact references;
+the saved record alone does not establish analysis-card publication.
+Check any publication receipt;
 unconfirmed delivery means recover the original card. Always finish with visible,
 concise user-facing text, even when tool work completed.
 

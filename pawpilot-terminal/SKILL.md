@@ -15,6 +15,11 @@ Route the user's request directly to the smallest relevant operation. A greeting
 style discussion or concept question needs no financial preflight or Skill chain.
 The structured button action is a task hint; the actual user message determines intent.
 A Live BTC page does not prevent Paper ETH preparation, a plan save or an ETH review.
+Organize qualitative practice rules directly without requiring an account, market,
+numerical size, exit price or horizon; "do not save" remains unsaved discussion
+and needs no Clarify to deliver. Route a later request to remember habits or
+general rules to the owner Playbook conversation; resolve a market and material
+missing choices for a market-specific plan save or concrete trade.
 
 ## Execution economy
 
@@ -79,7 +84,7 @@ This table is a default route, not an allowlist. Discover other installed author
 
 A Playbook records the user's confirmed trading style and principles across authorized Agents and Paper/Live. It needs no selected trading account. Discuss directly; if existing preferences are relevant, call `pawpilot_position_research({target:{subjectType:"playbook"},profile:"facts"})`. Unknown preference fields remain null; observed behavior is not a permanent personality diagnosis.
 
-For 'remember/save these preferences', publish `playbook_proposal` with the complete agreed profile (summary, holdingStyle, decisionStyle, riskComfort, principles) and current expectedVersion through send_message. Then use `terminal_save_preferences({confirmed:true,cardId,expectedVersion})` with cardId from `send_message`'s `registered.coachCard.id` (never message_id), in the SAME Run. No magic phrase or second turn is needed for a natural save request. Re-read and discuss differences on a version conflict; do not overwrite concurrent preferences. Discussion alone does not save. A versioned receipt proves the save. It never grants trading authority.
+For 'remember/save these preferences', publish `playbook_proposal` with the literal `profile` field containing the complete agreed profile (summary, holdingStyle, decisionStyle, riskComfort, principles) and current expectedVersion through send_message. Existing preferences use `update:{kind:"patch",set?,appendPrinciples?,removePrinciples?}` for the requested changes; preserve unrelated fields and existing rules. Read references/cards-and-memory.md for the canonical JSON example. Then use `terminal_save_preferences({confirmed:true,cardId,expectedVersion})` with cardId from `send_message`'s `registered.coachCard.id` (never message_id), in the SAME Run. No magic phrase or second turn is needed for a natural save request. Re-read and discuss differences on a version conflict; do not overwrite concurrent preferences. Discussion alone does not save. A versioned receipt proves the save. It never grants trading authority.
 
 Market plans use pawpilot-paper-trade-plan. Proposed Lessons use the review card's human edit/confirm flow; only enabled confirmed Lessons guide later analysis. A Lesson does not silently become Playbook. Read existing records before changing just the user's requested parts. Legacy named Skills remain available, but their page-bound operation instructions do not replace v3 target-based native calls.
 
@@ -113,8 +118,15 @@ only for a material unknown or conflict. Make ONE clarify call containing all cu
 A failed tool result is not success. Correct a malformed field once from returned
 facts; do not cycle through guessed names, prices or account IDs. Recover an existing
 task with `pawpilot_task_status({taskRef})`. Do not replace work after a timeout.
-The service publishes complete cards automatically. Do not copy `publish`, callbacks,
-metadata or internal IDs into a new send_message call. Check the publication receipt;
+For an explicit edit to an existing Paper draft, use the prepare Skill's
+`replaces:{actionId,version}` from the original tool receipt. Preserve unchanged
+intent fields, recover a missing exact reference, and describe supersession only
+after the replacement receipt confirms it. Matching markets do not identify a draft.
+Preparation and practice-invite proxies publish their own draft/invite cards;
+keep those original callbacks and metadata. Check, review and research return
+evidence; analysis/Playbook/navigation panels use send_message with the canonical
+card contract and actual same-Run fact references where required.
+Check the publication receipt;
 unconfirmed delivery means recover the original card. Always finish with visible,
 concise user-facing text, even when tool work completed.
 

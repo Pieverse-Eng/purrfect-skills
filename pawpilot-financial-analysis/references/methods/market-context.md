@@ -1,6 +1,12 @@
 # Market evidence method
 
 Use returned source receipts, timestamps and original links. Do not launch a second retrieval workflow to apply this method.
+In the final answer, cite each material external factual claim with the original
+returned URL and its publication/event time; label the current market observation
+time separately. An account fact instead retains its original host call/query
+reference, scope and observation time. Never invent a link or imply verification
+when a receipt lacks one. State that sourcing gap and keep interpretation
+conditional. A source name alone is not a usable citation.
 
 Separate confirmed events, attributed claims, expectations and social discussion. Compare publication time, event time and market observation time; a newly retrieved old article is not breaking news. Distinguish information plausibly priced in from a new catalyst, labeling that assessment as interpretation.
 

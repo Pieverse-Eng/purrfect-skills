@@ -67,8 +67,11 @@ only for a material unknown or conflict. Make ONE clarify call containing all cu
 A failed tool result is not success. Correct a malformed field once from returned
 facts; do not cycle through guessed names, prices or account IDs. Recover an existing
 task with `pawpilot_task_status({taskRef})`. Do not replace work after a timeout.
-The service publishes complete cards automatically. Do not copy `publish`, callbacks,
-metadata or internal IDs into a new send_message call. Check the publication receipt;
+Preparation and practice-invite proxies publish their own draft/invite cards;
+keep those original callbacks and metadata. Research returns evidence for your
+analysis. Publish an analysis panel through send_message only with the canonical
+card's actual same-Run fact references, and finish the requested interpretation.
+Check any publication receipt;
 unconfirmed delivery means recover the original card. Always finish with visible,
 concise user-facing text, even when tool work completed.
 
