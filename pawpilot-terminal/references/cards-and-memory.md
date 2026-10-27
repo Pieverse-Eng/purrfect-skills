@@ -6,7 +6,7 @@ Use only when publishing an analysis, preference or navigation panel. Preparatio
 
 Use native `send_message` to `target:"current"`, with `message:<short visible text>` (not `text`) and `metadata:{coachCard:<proposal>}`. The host validates, registers and persists the proposal and authoritative evidence. Use the native publication acknowledgement's `registered.coachCard.id`; do not invent an ID or copy a profile into a save call. Publication failure means the panel is unavailable even if text arrived.
 
-Every proposal has `version:1`, `kind` and a nonempty `title` (at most 200 characters). Analysis proposals also have `explanation` (at most 2000 characters), `facts:[{callId,queryId}]` and optional `questions` (up to three short follow-up questions). Each queryId must come from the cited successful native response's `data.facts` in this same Run, not from an internal identifier, fabricated quote or prior conversation. The authoritative snapshots are attached by the host and survive native-history retention. Read all material pages before citing or claiming complete coverage. Interpretation belongs in explanation, not a replacement numeric snapshot.
+Every proposal has `version:1`, `kind` and a nonempty `title` (at most 200 characters). Analysis proposals also have `explanation` (at most 2000 characters), `facts:[{callId,queryId}]` and optional `questions` (up to three short follow-up questions). Copy callId from the successful host response's top-level `callId` and queryId from that same response's `data.facts.queryId` in this Run. The assistant's function/tool-call ID is a different identity. The authoritative snapshots are attached by the host and survive native-history retention. Read all material pages before citing or claiming complete coverage. Interpretation belongs in explanation, not a replacement numeric snapshot.
 
 | kind | Additional fields / source |
 | --- | --- |
@@ -22,7 +22,7 @@ Every proposal has `version:1`, `kind` and a nonempty `title` (at most 200 chara
 Do not label a spot fill as a completed perpetual cycle. Missing lifecycle evidence means explain the limitation in text rather than fake a numeric review card. A readiness assessment is advisory and never unlocks Live trading.
 
 For `pawpilot_paper_trade_review` with an exact perpetual cycle or nonempty
-perpetual candidate list, copy the native invocation ID and the ready response's
+perpetual candidate list, copy the ready response's top-level `callId` and
 `data.facts.queryId` into the citation. The same field contains a trades
 FactQueryResponse for the bounded candidate list, or timeline facts for an exact
 cycle. Empty lists and spot fills supply no fabricated perpetual facts.
@@ -33,11 +33,11 @@ identifies the requested trade; review that trade, not every returned record.
 other unresolved ambiguity needs one clarification. Cross-trade methods require
 the user's request for a comparison or pattern.
 
-Mapping only, using the actual invocation and response, never literal example IDs:
+Mapping only, copying both fields from the actual returned review response:
 
 ```javascript
 const factReference = {
-  callId: nativeInvocationId,
+  callId: reviewResponse.callId,
   queryId: reviewResponse.data.facts.queryId,
 }
 ```
@@ -46,7 +46,7 @@ Use `facts:[factReference]` in the canonical trade_review proposal and publish i
 through send_message. Analysis is not automatically published by a successful
 evidence read. Missing data.facts is a blocker for a numeric review card; retain
 the useful known explanation and gap rather than sending facts:[] or fake IDs.
-`callId` is the native invocation ID, not the operation name or taskRef. Keep all opaque identities in arguments. Show the user the familiar venue and symbol. If registration reports invalid/mismatched evidence, inspect that original receipt and correct the field once. Do not make another financial draft to repair a presentation failure.
+`callId` is the host response's returned top-level callId, not the assistant's function/tool-call ID, operation name or taskRef. Keep all opaque identities in arguments. Show the user the familiar venue and symbol. If registration reports invalid/mismatched evidence, inspect that original receipt and correct the field once. Do not make another financial draft to repair a presentation failure.
 
 ## Navigation and original drafts
 

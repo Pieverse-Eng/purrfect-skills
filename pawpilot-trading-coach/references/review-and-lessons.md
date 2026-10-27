@@ -8,8 +8,9 @@ page is not all history.
 
 When the v3 `pawpilot_paper_trade_review` proxy is available, use its target-based
 read. An exact perpetual cycle or nonempty perpetual candidate list supplies a
-FactQueryResponse at `data.facts`; empty lists and spot fills do not. Cite its actual native
-invocation ID plus `data.facts.queryId` when publishing trade_review. A bounded
+FactQueryResponse at `data.facts`; empty lists and spot fills do not. Cite the
+successful response's top-level `callId` plus `data.facts.queryId`, not the
+assistant's function/tool-call ID, when publishing trade_review. A bounded
 list is for finding the requested trade: use actual closedAt and requested scope
 for "latest/just closed", and clarify only if the requested trade remains
 ambiguous. Review that one trade; several returned candidates do not request

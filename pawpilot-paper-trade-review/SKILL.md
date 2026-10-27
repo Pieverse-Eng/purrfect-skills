@@ -23,10 +23,11 @@ when known. Read actual fills, entry/exit, fees, funding, protection and applica
 For an exact perpetual cycle or a nonempty perpetual candidate list, the ready
 response exposes a citeable FactQueryResponse at `data.facts`: a candidate list
 uses a trades query; an exact cycle uses timeline. Publish `trade_review` with
-the selected actual cycle ID and a facts reference whose callId is that native
-invocation ID and whose queryId is `data.facts.queryId`.
-Copy those identities from the same successful call; operation names and taskRef
-are not callId. Reuse sufficient returned evidence rather than reading it again.
+the selected actual cycle ID and a facts reference whose callId is the successful
+review response's top-level `callId` and whose queryId is `data.facts.queryId`.
+Copy both fields from that returned response; the assistant's function/tool-call
+ID, operation name and taskRef are not this callId. Reuse sufficient returned
+evidence rather than reading it again.
 An absent fact reference is a gap, never permission to publish facts:[] or fabricate
 an ID. Spot fills do not become perpetual cycles.
 Explain outcome, execution/cost contribution, plan adherence, one useful lesson and

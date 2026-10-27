@@ -51,8 +51,9 @@ same-Run consent and save receipts.
 
 Analysis cards may include questions (up to three). `facts` is an array of
 {callId,queryId} from completed same-Run native facts results, not copied model
-numbers. A v3 pawpilot_paper_trade_review citation uses that actual invocation ID
-and `data.facts.queryId` (bounded perpetual candidate-list trades or exact-cycle
+numbers. A v3 pawpilot_paper_trade_review citation copies the successful response's
+top-level `callId` and `data.facts.queryId`, not the assistant's function/tool-call
+ID (bounded perpetual candidate-list trades or exact-cycle
 timeline). Legacy paper_read/terminal_read query receipts remain supported.
 Analysis panels require your send_message publication; preparation and practice
 invite proxies publish only their own original draft/invite cards.
