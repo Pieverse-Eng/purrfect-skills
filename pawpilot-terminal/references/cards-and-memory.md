@@ -5,6 +5,9 @@ Use only when publishing an analysis, preference or navigation panel. Preparatio
 ## Publication envelope
 
 Use native `send_message` to `target:"current"`, with `message:<short visible text>` (not `text`) and `metadata:{coachCard:<proposal>}`. The host validates, registers and persists the proposal and authoritative evidence. Use the native publication acknowledgement's `registered.coachCard.id`; do not invent an ID or copy a profile into a save call. Publication failure means the panel is unavailable even if text arrived.
+Visible expiry and clock timestamps keep their timezone/offset, or use an explicit
+conversion to the provided context.timezone with its zone label; preserve original
+timestamp values in tool arguments and metadata.
 
 Every proposal has `version:1`, `kind` and a nonempty `title` (at most 200 characters). Analysis proposals also have `explanation` (at most 2000 characters), `facts:[{callId,queryId}]` and optional `questions` (up to three short follow-up questions). Copy callId from the successful host response's top-level `callId` and queryId from that same response's `data.facts.queryId` in this Run. The assistant's function/tool-call ID is a different identity. The authoritative snapshots are attached by the host and survive native-history retention. Read all material pages before citing or claiming complete coverage. Interpretation belongs in explanation, not a replacement numeric snapshot.
 

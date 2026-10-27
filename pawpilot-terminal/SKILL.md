@@ -20,6 +20,10 @@ numerical size, exit price or horizon; "do not save" remains unsaved discussion
 and needs no Clarify to deliver. Route a later request to remember habits or
 general rules to the owner Playbook conversation; resolve a market and material
 missing choices for a market-specific plan save or concrete trade.
+When restating expiry or clock timestamps, retain the returned timezone/offset or
+explicitly convert with the provided context.timezone and label that zone; keep
+the original zone when context.timezone is absent, and never present a UTC clock
+as local time.
 
 ## Execution economy
 

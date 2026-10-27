@@ -20,6 +20,13 @@ the user's request still leaves multiple candidates ambiguous. Follow a cursor
 only when needed to locate that trade; a bounded page is not all history.
 Call `pawpilot_paper_trade_review({target})`, with resource {kind:cycle|fill,ref,revision?}
 when known. Read actual fills, entry/exit, fees, funding, protection and applicable plan.
+For Playbook compliance at entry, match the requested cycle in `guidance.reviewTemporal.atEntry`.
+Use a historical Playbook only for `confirmed_at_entry`, resolving `playbookVersion`
+to the immutable entry in `guidance.reviewTemporal.playbookVersions`.
+`none_confirmed_at_entry` and `unknown` cannot prove a Playbook breach; distinguish
+no confirmed Playbook from unavailable history. Current `guidance.playbook` and
+current notes are explicitly current retrospective comparisons, never opening
+requirements. Keep separately evidenced opening plans and protection distinct.
 For an exact perpetual cycle or a nonempty perpetual candidate list, the ready
 response exposes a citeable FactQueryResponse at `data.facts`: a candidate list
 uses a trades query; an exact cycle uses timeline. Publish `trade_review` with

@@ -11,6 +11,10 @@ metadata:
 
 # Prepare a Paper order
 
+Report draft expiry with the returned timezone/offset, or explicitly convert using
+the provided context.timezone and label the zone; a UTC clock must not be stated
+as an unlabelled local deadline.
+
 1. Collect the intended Paper target and entered order intent. Target fields identify
    venue/product/symbol or stored market/account references; the current page is a hint.
 2. Reuse known side, type, amount meaning, leverage, margin mode and protection. A bare

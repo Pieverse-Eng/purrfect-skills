@@ -4,4 +4,15 @@ Use actual lifecycle fills, quantities, fees and funding together with the plan 
 
 Assess decision quality against information available when the decision was made. Outcome alone does not prove skill or error. Compare thesis, sizing, execution, protections and plan adherence. If the original thesis/plan is unknown, state it; do not invent an opening rationale.
 
+Compliance uses rules confirmed and effective at entry, supported by their version
+and confirmation/effective time relative to the trade's opening time. A current
+profile or later-confirmed rule supports only an explicitly current retrospective
+comparison; never backdate it into an entry requirement. Missing historical
+guidance leaves compliance unverified, not a proven violation.
+
+A maximum holding horizon or take-profit target does not by itself forbid an
+earlier manual exit. Call a manual exit a plan breach only when an evidenced
+explicit exit rule forbade it; an unreached TP/SL alone does not establish
+noncompliance.
+
 Distinguish gross price PnL, recorded known net subtotal and final net. Missing costs/foreign-asset conversion prevent a final net assertion. R requires evidenced initial risk fixed at entry; current protection or final loss cannot establish it. Give concrete supported lessons and one possible improvement. A proposed Lesson needs explicit human confirmation/editing before becoming enabled guidance; do not silently write personality, Playbook or trading permission.

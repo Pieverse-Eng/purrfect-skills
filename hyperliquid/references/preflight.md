@@ -52,9 +52,11 @@ purr hyperliquid status
 
 Missing configured wallet or platform credentials is a configuration gap. Stop
 that private account-read path; do not probe the same gap again with another
-account/state command. Independently available public native market reads may
-continue. If the purr gateway itself lacks authentication, stop other purr
-commands that need that same authentication, including public-market commands.
+account/state command. Gateway authentication failures apply only to commands
+that need that gateway, such as prices/funding; existing `purr hyperliquid search`,
+`symbol`, `markets`, `l2` and `candles` still use the independent public Info API
+without gateway or wallet credentials. Read [market-data.md](market-data.md)
+before declaring public market data unavailable.
 Preserve the denial; never switch credentials or make direct private calls to
 bypass it. Keep account capacity unknown while reporting verifiable public minima.
 
