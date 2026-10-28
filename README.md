@@ -143,3 +143,13 @@ real chain execution or update a tenant/runtime pin.
 The skill requires both an Injective-capable CLI release and the corresponding
 backend routes. Keep its runtime image pin pending until that CLI is released;
 adding this skill does not update existing Agents.
+
+
+The explicit [Injective command-contract run40670215200](https://github.com/Pieverse-Eng/purrfect-skills/actions/runs/40670215200)
+succeeded for skills source `972abf0db87f593fd3c9a93cd08c9265b455f47a`
+and CLI source `998aeddc1ecbf122831078fed65b7e0bc8b18f3e`. It compiled the
+actual Linux CLI candidate and ran the authored read examples and error
+boundaries against loopback fixtures. This is command compatibility evidence;
+real Hermes dialogue execution, native grants and funded trading remain pending.
+The ordinary CLI check and native Linux x64/macOS ARM64 binary qualification are
+recorded in PURR #103. No runtime content/image pin or tenant was updated.
