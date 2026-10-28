@@ -37,7 +37,7 @@ funding.
 | `fourmeme` | four.meme on BSC — token buy, sell, and creation. |
 | `gate` | Gate.io domain router — covers CEX (spot, futures, earn, staking, dual investment, loans, transfers), DEX (wallet, swaps, market data), intelligence (coin analysis, risk checks, market overview), and news. |
 | `hyperliquid` | Hyperliquid market data, perpetual and spot trading, leverage, collateral moves, Arbitrum USDC deposits and withdrawals, and HIP-3 workflows. |
-| `injective` | Read-only Injective market data, current Agent balances, positions, orders and history through `purr injective`; requires an Injective-capable CLI and backend. |
+| `injective` | Injective reads plus capability-gated USDC perpetual order management and RFQ through `purr injective`; writes require the coordinated CLI/backend candidate and explicit reviewed intent. |
 | `kraken` | Kraken exchange — spot / xStocks / forex trading, earn, staking, funding, and paper trading. |
 | `lighter` | Lighter (lighter.xyz) market data, perp/spot trading, leverage and margin, multi-chain USDC open-account/deposit, secure and fast withdrawals via `purr lighter`. |
 | `pawpilot-paper-trading` | Paper intent clarification, host-calculated previews and registered cards; execution requires separate terminal human confirmation. |

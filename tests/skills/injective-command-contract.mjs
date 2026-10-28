@@ -253,7 +253,7 @@ try {
 			assert.equal(result.stderr, '', `${label}: unexpected stderr`)
 			if (testCase.help) {
 				assert.match(result.stdout, /^Usage: purr injective/)
-				assert.match(result.stdout, /Read-only Injective mainnet/)
+				assert.match(result.stdout, /Injective mainnet/)
 			} else {
 				assert.deepEqual(
 					JSON.parse(result.stdout),
@@ -320,8 +320,8 @@ try {
 		'Rate-limit response stays an error with retry metadata and no retry',
 	)
 	await run(
-		{ args: ['cancel'], requests: [], error: [/error \[INJECTIVE_READ_ONLY\]/] },
-		'Execution stays unavailable without HTTP',
+		{ args: ['cancel'], requests: [], error: [/error \[(?:INJECTIVE_READ_ONLY|INJECTIVE_INVALID_ARGUMENT)\]/] },
+		'An incomplete cancellation never sends HTTP',
 	)
 	console.log(
 		`Validated all ${checked} authored examples plus 2 error boundaries through the actual CLI; ${totalRequests} authenticated loopback GETs, no writes.`,
