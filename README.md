@@ -37,7 +37,7 @@ funding.
 | `fourmeme` | four.meme on BSC — token buy, sell, and creation. |
 | `gate` | Gate.io domain router — covers CEX (spot, futures, earn, staking, dual investment, loans, transfers), DEX (wallet, swaps, market data), intelligence (coin analysis, risk checks, market overview), and news. |
 | `hyperliquid` | Hyperliquid market data, perpetual and spot trading, leverage, collateral moves, Arbitrum USDC deposits and withdrawals, and HIP-3 workflows. |
-| `injective` | Injective reads plus capability-gated USDC perpetual order management and RFQ through `purr injective`; writes require the coordinated CLI/backend candidate and explicit reviewed intent. |
+| `injective` | Injective reads, USDC perpetual management/RFQ and separately gated later Spot orders through `purr injective`; writes require the coordinated candidate and explicit reviewed intent. |
 | `kraken` | Kraken exchange — spot / xStocks / forex trading, earn, staking, funding, and paper trading. |
 | `lighter` | Lighter (lighter.xyz) market data, perp/spot trading, leverage and margin, multi-chain USDC open-account/deposit, secure and fast withdrawals via `purr lighter`. |
 | `pawpilot-paper-trading` | Paper intent clarification, host-calculated previews and registered cards; execution requires separate terminal human confirmation. |
@@ -134,11 +134,15 @@ The `injective-command-contract` CI job builds the public CLI commit pinned in
 `.github/workflows/validate-skills.yml` with locked dependencies and runs this
 check against the compiled binary. The pin identifies a reviewed candidate,
 not a release or a minimum supported version. It needs no private platform clone.
-The Injective write candidate is CLI source `998aeddc1ecbf122831078fed65b7e0bc8b18f3e`
-(PURR #103). This manual job checks the authored read examples and their error
+The current Injective write/Spot candidate is CLI source `edf9124f2259f203c47368b09cbdd42a8f38f712`
+(PURR #103). This manual job checks the authored read/local-draft examples and their error
 boundaries; CLI's own business/binary tests cover local drafts, explicit writes,
 policy holds and original-request recovery. These fixture checks do not prove a
 real chain execution or update a tenant/runtime pin.
+The new Spot reference and command fixtures need their own current-source
+qualification; the historical run below does not qualify these additions.
+Later Hermes acceptance must also exercise a non-USDC Spot quote: confirm fees
+in that actual quote denom, omit margin and stop on missing fee metadata.
 
 The skill requires both an Injective-capable CLI release and the corresponding
 backend routes. Keep its runtime image pin pending until that CLI is released;

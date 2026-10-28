@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 10
     env:
       # Reviewed candidate source; this is not a released minimum CLI version.
-      PURR_CLI_SHA: 998aeddc1ecbf122831078fed65b7e0bc8b18f3e
+      PURR_CLI_SHA: edf9124f2259f203c47368b09cbdd42a8f38f712
     steps:
       - uses: actions/checkout@v4
       - name: Check out the public CLI candidate

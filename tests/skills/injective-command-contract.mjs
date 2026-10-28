@@ -8,7 +8,7 @@ import { createServer } from 'node:http'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { fixtures, hash, nextCursor } from './injective-fixtures.mjs'
+import { fixtures, hash, spotHash, nextCursor } from './injective-fixtures.mjs'
 
 const [entry, bun] = process.argv.slice(2)
 const binary = process.env.PURR_TEST_BINARY
@@ -38,6 +38,36 @@ const historyArgs = [
 const historyQuery = { product: 'perp', limit: '50', from: '1790812800000', to: '1790899200000' }
 const cases = [
 	{ args: ['--help'], help: true, requests: [] },
+	{
+		args: ['spot', 'readiness', '--market-id', spotHash],
+		data: fixtures.spotReadiness,
+		requests: [
+			{ path: `${accountPath}/spot-readiness`, query: { marketId: spotHash }, data: fixtures.spotReadiness },
+		],
+	},
+	{
+		args: [
+			'spot', 'order', '--market-id', spotHash, '--kind', 'limit', '--side', 'buy',
+			'--quantity', '0.1', '--price', '2', '--max-fee-inj', '0.001',
+		],
+		data: {
+			executionEnabled: false,
+			operation: 'spot-order',
+			body: { marketId: spotHash, maxFeeInj: '0.001', kind: 'limit', side: 'buy', quantity: '0.1', price: '2' },
+		},
+		requests: [],
+	},
+	{
+		args: [
+			'spot', 'cancel', '--market-id', spotHash, '--order-hash', hash, '--max-fee-inj', '0.001',
+		],
+		data: {
+			executionEnabled: false,
+			operation: 'spot-cancel',
+			body: { marketId: spotHash, maxFeeInj: '0.001', orderHash: hash },
+		},
+		requests: [],
+	},
 	{
 		args: ['markets', '--market-type', 'all'],
 		data: fixtures.catalog,
@@ -271,6 +301,7 @@ try {
 		'references/market-data.md',
 		'references/account.md',
 		'references/errors.md',
+		'references/spot.md',
 	]) {
 		const content = await readFile(resolve(root, 'injective', file), 'utf8')
 		for (const block of content.matchAll(/```sh\n([\s\S]*?)```/g)) {
@@ -283,6 +314,8 @@ try {
 						token
 							.replace(/^(["'])(.*)\1$/, '$2')
 							.replaceAll('$MARKET_HASH', hash)
+							.replaceAll('$SPOT_MARKET_HASH', spotHash)
+							.replaceAll('$ORDER_HASH', hash)
 							.replaceAll('$NEXT_CURSOR', nextCursor),
 					)
 				const key = JSON.stringify(args)
@@ -323,8 +356,19 @@ try {
 		{ args: ['cancel'], requests: [], error: [/error \[(?:INJECTIVE_READ_ONLY|INJECTIVE_INVALID_ARGUMENT)\]/] },
 		'An incomplete cancellation never sends HTTP',
 	)
+	await run(
+		{
+			args: [
+				'spot', 'order', '--market-id', spotHash, '--kind', 'limit', '--side', 'buy',
+				'--quantity', '0.1', '--price', '2', '--max-fee-inj', '0.001', '--margin', '1',
+			],
+			requests: [],
+			error: [/error \[INJECTIVE_INVALID_ARGUMENT\]/],
+		},
+		'Spot rejects a perpetual margin without sending HTTP',
+	)
 	console.log(
-		`Validated all ${checked} authored examples plus 2 error boundaries through the actual CLI; ${totalRequests} authenticated loopback GETs, no writes.`,
+		`Validated all ${checked} authored examples plus 3 error boundaries through the actual CLI; ${totalRequests} authenticated loopback GETs, no writes.`,
 	)
 } finally {
 	server.closeAllConnections()

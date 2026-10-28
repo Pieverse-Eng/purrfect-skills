@@ -1,6 +1,6 @@
 ---
 name: injective
-description: Use when querying or trading Injective perpetuals, managing native orders or protection, or requesting and accepting Injective RFQ quotes.
+description: Use when querying or trading Injective perpetuals or Spot, managing native orders or protection, or requesting and accepting Injective RFQ quotes.
 version: 1.1.0
 ---
 
@@ -24,6 +24,7 @@ are separate; see [errors](references/errors.md).
 | Markets, exact market, depth, recent trades or candles | [Market data](references/market-data.md) |
 | Balances, positions, open orders, order history or fills | [Account](references/account.md) |
 | Open/close, cancel, replace, margin or TP/SL | [Native trading](references/trading.md) |
+| Spot buy/sell, spendable assets or Spot cancellation | [Spot](references/spot.md) |
 | RFQ comparison, contract authorization, acceptance or revocation | [RFQ](references/rfq.md) |
 | Missing capability, unavailable data, stale data or pagination error | [Errors](references/errors.md) |
 
@@ -40,12 +41,17 @@ Reads ship in CLI v0.2.70. Native writes require the later CLI candidate contain
 Inspect installed help; never invent a released minimum version. If an installed
 command is missing or readiness disables the action, report the blocker and stop.
 Do not bypass it with wallet raw transactions, direct SDK/REST writes or an MCP.
-Spot reads remain supported; this execution candidate is USDC perpetuals only.
+Native perpetual execution is USDC-only. Later Spot writes require the separately
+enabled `spot` group and [Spot readiness](references/spot.md); perpetual readiness
+does not enable Spot. Inspect installed help rather than assuming a released version.
 
 Follow the relevant reference before acting. Produce the local business draft
-first (the default, with no HTTP), and summarize market, side, size, margin,
-worst/limit/trigger prices, explicitly affected order hashes, USDC fee allowance
-and the INJ gas ceiling. Ask for confirmation of that unchanged action before
+first (the default, with no HTTP), and summarize market, side, size,
+worst/limit/trigger prices, explicitly affected order hashes and the INJ gas
+ceiling. For perpetuals include margin and the USDC fee allowance. For Spot
+include exact base/quote denoms and quote-denominated fees; there is no margin.
+Missing fee or precision metadata blocks execution; never invent a USDC amount.
+Ask for confirmation of that unchanged action before
 adding `--execute true`, current `--wallet-generation` and one original
 `--idempotency-key`. Initial intent to trade does not approve a later changed
 quote, price, size, fee, cancellation scope or contract authorization.

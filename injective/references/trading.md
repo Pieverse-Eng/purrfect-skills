@@ -2,7 +2,8 @@
 
 Use only the installed `purr injective` business commands and the current Agent.
 This candidate executes USDC perpetuals on the existing default subaccount. It
-does not expose Spot writes, account opening, bridging or arbitrary messages.
+does not expose account opening, bridging or arbitrary messages. For the separately
+gated Spot commands, use [Spot](spot.md); never reuse perpetual order fields there.
 
 ## Prepare the exact action
 
