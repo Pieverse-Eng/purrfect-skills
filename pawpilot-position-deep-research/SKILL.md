@@ -2,7 +2,7 @@
 name: pawpilot-position-deep-research
 description: Use to research a position or all Paper/Live holdings.
 metadata:
-  version: 3.1.1
+  version: 3.1.2
   hermes:
     tags: [pawpilot, terminal, runtime-v3]
     requires_tools: [pawpilot_position_research]
@@ -25,6 +25,10 @@ metadata:
    returns account/position coverage with observation time. Never launch an Agent per
    holding. If coverage is incomplete, list the omitted/unavailable scope rather than
    claiming complete Pilot Analysis. Do not prune a large portfolio to a top few positions.
+   A retryable `LIVE_READ_NOT_READY` with `delivery.retrieval="not_started"` is a
+   cold read, not failed news/X searches. Retry the same task unchanged after its
+   returned delay; do not change accounts, start another workflow, or use a CLI.
+   A `needs_input` selection can continue in the same task after native Clarify.
 4. Treat news and X as distinct sources. X event search and X opinion/discussion search
    have separate actual statuses. News, PANews, a search-engine snippet or a URL pointing
    to X cannot establish that Twitter search ran. Cite original links and publication
@@ -44,10 +48,23 @@ metadata:
    predictions or pressure to trade. Be useful: explain the balance of evidence rather
    than merely telling the user to decide alone. Never turn research into an order.
    Financial facts must come from returned evidence: a missing native liquidation estimate is 'unavailable', and leverage alone cannot reconstruct liquidation or actual ROE. Entry-versus-mark is a PnL observation, not proof of trend. Prefer an explicit gap to an attractive invented estimate.
+   A distant liquidation estimate does not mean "no liquidation risk", "no survival
+   risk", or a safe holding period. State the current estimate and uncertainty;
+   keep position size separate from an overall risk judgment. Discuss the user's
+   alternatives without choosing new protection prices or telling them to hold,
+   reduce or close. Attribute news and X claims to dated source links; do not
+   present a post's claim as independently verified news.
 
 ## Final delivery shape
 
 Use six compact points in the user's language: (1) conditional view and analysis horizon, (2) supporting and opposing dated evidence, (3) implications for the actual side, (4) known economics and unknown costs, (5) view-change conditions, (6) coverage gaps. Skip a preamble about files you read. Place source/observation times beside their claims. If the time horizon is unknown, distinguish the news observation window from the unconfirmed holding horizon.
+
+For one position, use one or two short sentences per point. Deliver the report
+once as final text; the service saves that report for later viewing. Do not first
+publish a duplicate analysis panel and then repeat its content. A separate panel
+is for an explicit user request. Small absolute notional is not necessarily
+small relative to account equity. Without current order evidence, protection
+coverage is unknown; do not claim that no stop/protection orders exist.
 
 For a profitable short facing bullish ETF-inflow news but no time series, useful interpretation is 'the available demand-side headline is adverse to the short; trend and independent directional corroboration are unverified.' Profit since entry does not support a bearish market forecast. Explain the imbalance without turning it into an instruction to hold/add/close or choosing a new price level. Missing collateral, liquidation and ROE remain explicit unknowns, not leverage-derived approximations.
 
@@ -69,13 +86,17 @@ facts; do not cycle through guessed names, prices or account IDs. Recover an exi
 task with `pawpilot_task_status({taskRef})`. Do not replace work after a timeout.
 Preparation and practice-invite proxies publish their own draft/invite cards;
 keep those original callbacks and metadata. Research returns evidence for your
-analysis. Publish an analysis panel through send_message only with the canonical
-card's actual same-Run fact references, and finish the requested interpretation.
+analysis. Only when the user requests a separate analysis panel, publish it through
+send_message with the canonical card's actual same-Run fact references. Standard
+research finishes with one final report, without a separate publication call.
 Check any publication receipt;
 unconfirmed delivery means recover the original card. Always finish with visible,
 concise user-facing text, even when tool work completed.
 
-Large evidence returns a materialRef and page count. Use pawpilot_task_status with {materialRef,page} for every zero-based page, concatenate its JSON fragments and parse the full material. Do not claim full holdings coverage until all pages have been read.
+Large evidence returns a materialRef and page count. Request all zero-based pages
+with pawpilot_task_status({materialRef,page}) in one parallel tool-call batch: the
+page reads are independent. Then concatenate fragments in page order and parse
+the full material. Do not claim full holdings coverage until all pages are read.
 
 ## Facts, assumptions and confirmed context
 
