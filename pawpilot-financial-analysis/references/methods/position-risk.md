@@ -1,6 +1,9 @@
 # Position risk method
 
 Apply to evidence already retrieved; this file initiates no searches.
+Use the steps relevant to the user's question. A narrow liquidation question needs
+the native result and its assumptions, rather than a full holding report or extra
+numerical examples.
 
 1. Identify actual side, native quantity, contract multiplier, entry, mark and observation time. Explain how the direction of price exposure changes the position's price PnL. Distinguish notional exposure from collateral and account equity.
 2. Explain leverage, isolated/cross collateral, liquidation estimate and protection coverage with their returned scope and time. Cross collateral exposes shared equity; isolated collateral does not cap losses under every venue condition. A stop is an order subject to trigger, fill, gap and liquidity risk, not guaranteed loss insurance.
@@ -8,7 +11,12 @@ Apply to evidence already retrieved; this file initiates no searches.
    An account's abstraction mode, another position's mode, a Playbook or an old
    plan cannot fill these fields. Never describe an isolated position as sharing
    cross collateral, or state that its margin is an unconditional maximum loss.
-   Use this financial-fact form: **Liquidation: [native returned estimate, source and observation time], or 'unavailable from supplied evidence'.** Missing native liquidation stays unavailable; entry and leverage alone do not establish maintenance tiers, actual collateral, funding or venue liquidation rules. Do not substitute an entry × (1 ± 1/leverage) estimate or a guessed price range. Use native ROE when supplied; otherwise actual collateral is needed for current margin return. A leverage-scaled price move alone is not the account's ROE. With unknown quantity, describe per-unit price exposure rather than total position PnL.
+   Choose the liquidation statement from the native result, with its source and observation time:
+   - A returned price is the native estimate under that snapshot's assumptions.
+   - `status: complete`, null price and `liquidationReason: no_positive_liquidation_threshold` mean **the calculation completed and found no positive liquidation threshold under the current account snapshot**. Explain this in two short sentences: the completed calculation's meaning (not missing server data), then the shared-equity assumptions and what could change them. In cross margin, available shared equity relative to the position matters; a small requested margin budget alone does not establish this outcome. Other position marks are held fixed in this estimate; funding, fees, withdrawals and losses elsewhere can change it. Use the returned `liquidationInterpretation` when supplied. Keep monetary notional separate from the asset's unit price; use returned native calculations rather than additional example arithmetic, leverage-based percentages or PnL multipliers. Do not suggest account changes merely to display a price.
+   - `status: complete` with `flat_position` means no projected open position remains; liquidation is not applicable.
+   - Partial, missing or failed native risk evidence stays unavailable, with the actual reason. A null price by itself cannot select one of the above outcomes.
+   Entry and leverage alone do not establish maintenance tiers, actual collateral, funding or venue liquidation rules. Do not substitute an entry × (1 ± 1/leverage) estimate or a guessed price range. Use native ROE when supplied; otherwise actual collateral is needed for current margin return. A leverage-scaled price move alone is not the account's ROE. With unknown quantity, describe per-unit price exposure rather than total position PnL.
    Current distance to a native liquidation estimate is a snapshot, not a forecast.
    It cannot establish that liquidation will not trigger over the next minutes,
    hours or the user's holding period; describe the current distance and uncertainty.
