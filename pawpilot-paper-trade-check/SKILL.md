@@ -2,7 +2,7 @@
 name: pawpilot-paper-trade-check
 description: Use to check a Paper draft against facts and plans.
 metadata:
-  version: 3.1.0
+  version: 3.1.1
   hermes:
     tags: [pawpilot, terminal, runtime-v3]
     requires_tools: [pawpilot_paper_trade_check]
@@ -12,7 +12,13 @@ metadata:
 # Check a Paper draft
 
 Use the entered draft and intended target, independently of the visible chart.
-Call `pawpilot_paper_trade_check({target, intent})`. This uses the same canonical
+When checking an already prepared card, call
+`pawpilot_paper_trade_check({preparedTaskRef})` using its supplied same-session
+draft reference. Send only that reference; the server restores the original
+account, market and sizing intent. Do not add page context as a second target,
+copy effective quantity into the requested budget, or reconstruct the card from prose.
+For a new entered form without a prepared reference, call
+`pawpilot_paper_trade_check({target, intent})`. This uses the same canonical
 sizing and risk preview as preparation, and reads applicable plan evidence.
 Explain requested versus effective sizing, margin mode/leverage, estimated fee,
 reservation, slippage, protection, stale/missing data and differences from the plan.
