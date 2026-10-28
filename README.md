@@ -134,6 +134,11 @@ The `injective-command-contract` CI job builds the public CLI commit pinned in
 `.github/workflows/validate-skills.yml` with locked dependencies and runs this
 check against the compiled binary. The pin identifies a reviewed candidate,
 not a release or a minimum supported version. It needs no private platform clone.
+The Injective write candidate is CLI source `998aeddc1ecbf122831078fed65b7e0bc8b18f3e`
+(PURR #103). This manual job checks the authored read examples and their error
+boundaries; CLI's own business/binary tests cover local drafts, explicit writes,
+policy holds and original-request recovery. These fixture checks do not prove a
+real chain execution or update a tenant/runtime pin.
 
 The skill requires both an Injective-capable CLI release and the corresponding
 backend routes. Keep its runtime image pin pending until that CLI is released;
