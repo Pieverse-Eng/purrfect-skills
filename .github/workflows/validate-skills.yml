@@ -71,3 +71,5 @@ jobs:
           node --test scripts/test-materialize-news2trading.mjs
       - name: Smart Robinhood LP contract regression
         run: python3 -m unittest discover -s smart-robinhood-lp/scripts -p 'test_*.py'
+      - name: Hyperliquid read-only size arithmetic regression
+        run: node --test tests/skills/hyperliquid-order-size.test.mjs

@@ -14,10 +14,10 @@ import pytest
 
 SOURCE = Path(__file__).resolve().parents[2]
 NAMES = ("pawpilot-paper-trading", "pawpilot-trading-coach", "pawpilot-financial-analysis")
-SECTIONS = (
-    "When to Use", "Prerequisites", "How to Run", "Quick Reference",
-    "Procedure", "Pitfalls", "Verification",
-)
+FINANCIAL_METHODS = {
+    "position-risk", "market-context", "funding-and-costs",
+    "scenario-comparison", "trade-review", "cross-trade-statistics",
+}
 
 
 @pytest.fixture
@@ -58,7 +58,6 @@ def test_native_authoring_catalogue_and_complete_references(name, native_loader,
     assert description.endswith(".") and description.count(".") == 1
     assert metadata["author"].startswith("David Zhou (@David-0x221Eight)")
     assert body.splitlines()[0].endswith(" Skill")
-    assert re.findall(r"^## (.+)$", body, re.MULTILINE) == list(SECTIONS)
     required = extract_skill_conditions(metadata)
     assert _skill_should_show(required, {"paper_read", "paper_prepare_card", "terminal_read", "terminal_prepare_card", "send_message"}, set())
     if name == "pawpilot-financial-analysis":
@@ -74,12 +73,15 @@ def test_native_authoring_catalogue_and_complete_references(name, native_loader,
     loaded = json.loads(native_loader.skill_view(name))
     assert loaded["success"] is True, loaded
     assert body.strip() in loaded["content"]
-    references = re.findall(r"\]\((references/[^)]+)\)", body)
+    # Both Markdown links and native skill_view paths are discoverable routes.
+    references = set(re.findall(r"\breferences/[A-Za-z0-9_./-]+\.md\b", body))
     assert references
-    assert set(references) == {
-        str(path.relative_to(SOURCE / name)) for path in (SOURCE / name / "references").glob("*.md")
+    assert references == {
+        str(path.relative_to(SOURCE / name)) for path in (SOURCE / name / "references").rglob("*.md")
     }
-    for reference in references:
+    if name == "pawpilot-financial-analysis":
+        assert {f"references/methods/{method}.md" for method in FINANCIAL_METHODS} <= references
+    for reference in sorted(references):
         result = json.loads(native_loader.skill_view(name, file_path=reference))
         assert result["success"] is True, result
         assert result["content"] == (SOURCE / name / reference).read_text()

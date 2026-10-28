@@ -6,6 +6,16 @@ page is not all history.
 
 ## Paper
 
+When the v3 `pawpilot_paper_trade_review` proxy is available, use its target-based
+read. An exact perpetual cycle or nonempty perpetual candidate list supplies a
+FactQueryResponse at `data.facts`; empty lists and spot fills do not. Cite the
+successful response's top-level `callId` plus `data.facts.queryId`, not the
+assistant's function/tool-call ID, when publishing trade_review. A bounded
+list is for finding the requested trade: use actual closedAt and requested scope
+for "latest/just closed", and clarify only if the requested trade remains
+ambiguous. Review that one trade; several returned candidates do not request
+cross-trade statistics. The operation=review rules below describe legacy reads.
+
 A human-selected reviewTarget in this Run identifies the exact cycle/fill and
 account. Use operation=review with no competing target; the host revalidates that
 selection. This read-only context persists for follow-up discussion. It grants
@@ -22,7 +32,8 @@ sort or unsupported statistics measures; correct failure.fields, not user intent
 An exact portfolio cycle query also needs accountScope=portfolio when the chart
 account differs. Follow the actual product/cursor for spot fills. For a perpetual cycle, obtain citeable facts
 with operation=query and query.operation=trades (exact cycleId), timeline or
-prices. A review response alone is not a fact-query reference for a card. Portfolio
+prices. A legacy review response without data.facts is not a fact-query reference
+for a card; the v3 proxy's returned data.facts is citeable. Portfolio
 trades queries can find another account’s cycle, but timeline/prices are bound
 to the current account unless a human-selected reviewTarget rebinds that read
 scope. Do not invent an accountScope field on timeline/prices or claim that

@@ -17,7 +17,7 @@ sizing and risk preview as preparation, and reads applicable plan evidence.
 Explain requested versus effective sizing, margin mode/leverage, estimated fee,
 reservation, slippage, protection, stale/missing data and differences from the plan.
 Estimates do not lock a price or prove future execution. Missing initial risk is
-unknown. Do not prepare another card or silently save a revised plan.
+unknown. Do not prepare another draft or silently save a revised plan.
 If the draft is incomplete, identify the few inputs needed for a meaningful check;
 do not turn a check into an interview about unrelated style/preferences.
 CLI: `paper-trade check`. Related Skills: pawpilot-paper-trade-prepare only when the
@@ -36,11 +36,14 @@ only for a material unknown or conflict. Make ONE clarify call containing all cu
 A failed tool result is not success. Correct a malformed field once from returned
 facts; do not cycle through guessed names, prices or account IDs. Recover an existing
 task with `pawpilot_task_status({taskRef})`. Do not replace work after a timeout.
-The service publishes complete cards automatically. Do not copy `publish`, callbacks,
-metadata or internal IDs into a new send_message call. Check the publication receipt;
+Preparation and practice-invite proxies publish their own draft/invite cards;
+keep those original callbacks and metadata. This check returns advisory evidence
+with cardCreated=false. Explain it directly; an optional analysis panel requires
+send_message and the canonical card's actual action/fact references.
+Check any publication receipt;
 unconfirmed delivery means recover the original card. Always finish with visible,
 concise user-facing text, even when tool work completed.
 
 ## Analysis method
 
-Use `skill_view(name="pawpilot-financial-analysis",file_path="references/methods/position-risk.md")` and `references/methods/funding-and-costs.md` to interpret the returned draft/quote and relevant confirmed guidance. Read `references/methods/scenario-comparison.md` only for the user's explicit assumptions. Existing plans/Playbook/Lessons are context, not trading authorization. Explain requested versus effective amounts and costs without making another card. Example: when a draft differs from the recorded margin budget, explain the difference and available evidence; do not silently resize it.
+Use `skill_view(name="pawpilot-financial-analysis",file_path="references/methods/position-risk.md")` and `references/methods/funding-and-costs.md` to interpret the returned draft/quote and relevant confirmed guidance. Read `references/methods/scenario-comparison.md` only for the user's explicit assumptions. Existing plans/Playbook/Lessons are context, not trading authorization. Explain requested versus effective amounts and costs without preparing another draft. Example: when a draft differs from the recorded margin budget, explain the difference and available evidence; do not silently resize it.

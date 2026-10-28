@@ -50,6 +50,31 @@ purr hyperliquid status
 | `enabled: false` | Explain that Hyperliquid Trading is off. Confirm → `enable`. Do not enable silently |
 | Error | Report and stop; do not assume enabled |
 
+Missing configured wallet or platform credentials is a configuration gap. Stop
+that private account-read path; do not probe the same gap again with another
+account/state command. Gateway authentication failures apply only to commands
+that need that gateway, such as prices/funding; existing `purr hyperliquid search`,
+`symbol`, `markets`, `l2` and `candles` still use the independent public Info API
+without gateway or wallet credentials. Read [market-data.md](market-data.md)
+before declaring public market data unavailable.
+Preserve the denial; never switch credentials or make direct private calls to
+bypass it. Keep account capacity unknown while reporting verifiable public minima.
+
+When the existing authenticated native `pawpilot_position_research` proxy is
+available, a market-only facts read can supply shared observed rules without
+an account lookup; for a requested ETH perpetual market, use:
+
+```json
+{"profile":"facts","target":{"subjectType":"market","mode":"live","venue":"hyperliquid","product":"perp","symbol":"ETH"},"includeContext":[]}
+```
+
+Use returned `data.market.precision.minNotional`, `minSize`, `sizeStep` and
+`priceTick`, plus `data.book`/`mark`/`feeds`, as shared observed market facts only;
+they do not establish Live balances, account fees, affordability or execution
+authority. Without that proxy, public `symbol`/`l2` can still supply precision
+and price, but missing minimum notional/quantity stays unknown; never invent
+a default minimum to run the sizing helper.
+
 ```bash
 purr hyperliquid enable
 purr hyperliquid disable
@@ -63,6 +88,12 @@ purr hyperliquid disable
   from balances.
 - Prefer `snapshot` for a quick portfolio overview once trading is enabled; use
   `state` for exact collateral and position details needed to trade.
+- For a targeted minimum-size/account-capacity question, reuse this turn's
+  complete integration/readiness evidence and read the target ledger once.
+  Fetch only missing market, executable price and native user-fee facts; do not
+  scan unrelated DEXs unless the user's funding question needs them. Use the
+  deterministic arithmetic helper in `order-commands.md`, and preserve unknown
+  margin capacity instead of deriving it from withdrawable or maintenance margin.
 
 ## Select Checks by Operation
 
@@ -130,6 +161,13 @@ fee.” Command and response names may retain `builder-fee` internally.
 - Deposits from Arbitrum credit the **perp** side first (see
   [deposit-withdraw.md](deposit-withdraw.md)).
 - Open positions, free collateral, and margin usage come from perp state.
+- Position leverage and `cross`/`isolated` mode belong to that exact position;
+  do not copy the existing BTC setting into a prospective ETH trade or confuse
+  account abstraction with a position's margin mode. If the user has not chosen
+  leverage/mode, keep any comparison explicitly hypothetical. Cross liquidation
+  depends on shared account risk; isolated margin is not a guaranteed loss cap.
+  Report only a returned native liquidation estimate, never price divided by
+  leverage as a liquidation threshold.
 - Spot balances matter for spot orders and for `usd-class-transfer` planning.
 - `--kind` defaults to `both` when omitted.
 - `--all-dexs` supports `perp` or `both` and cannot be combined with `--dex`.

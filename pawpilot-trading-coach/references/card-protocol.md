@@ -13,16 +13,51 @@ All cards have version=1, kind, title (<=200 characters).
 | --- | --- |
 | paper_practice_invite | optional known canonical marketKey |
 | web_actions | actions array (one to four), see below |
-| playbook_proposal | expectedVersion, proposed profile; see trading preferences reference |
+| playbook_proposal | expectedVersion, complete profile; use update.kind=patch for revisions |
 | before_trade | actionId, explanation, facts (may be empty) |
 | holding | positionId, explanation, facts; optional registered actionId |
 | trade_review | cycleId, explanation, facts; optional lesson (string, proposed and unconfirmed) |
 | trade_patterns | explanation, facts |
 | live_readiness | explanation, facts, five topics |
 
+## Playbook proposal shape
+
+Use the literal field `profile`, containing summary, holdingStyle, decisionStyle,
+riskComfort and principles. Unknown style/comfort values are null. For an existing
+profile, read its current expectedVersion and preserve every unrelated field and
+principle. Describe the requested change in `update:{kind:"patch",set?,appendPrinciples?,removePrinciples?}`;
+the host applies it to that immutable version and computes the complete saved profile
+and added/removed diff. Omit unchanged `set` fields. Exact duplicate additions are
+deduplicated; overflow is a blocker rather than permission to discard old rules.
+
+Example only: the read returned version 1, the summary and one existing principle
+below, and null style/comfort answers. The user explicitly asks to append the four
+Paper practice rules while retaining the old principle:
+
+```json
+{"version":1,"kind":"playbook_proposal","title":"Paper practice rules","expectedVersion":1,"profile":{"summary":"The user's confirmed trading preferences","holdingStyle":null,"decisionStyle":null,"riskComfort":null,"principles":["Review the agreed thesis before each decision","This Paper practice uses small positions","This Paper practice uses at most 3x leverage","This Paper practice does not add after a loss","This Paper practice defines exits before entry"]},"update":{"kind":"patch","appendPrinciples":["This Paper practice uses small positions","This Paper practice uses at most 3x leverage","This Paper practice does not add after a loss","This Paper practice defines exits before entry"]}}
+```
+
+These are user-requested example rules, not account facts or default trading limits.
+Adapt the profile and expectedVersion from the successful read and the user's request.
+The first profile uses expectedVersion 0, all five profile fields and
+`update:{kind:"replace"}`. A legacy complete `profile` without update is accepted as
+a replacement, but omitting old principles requires explicitly requested removals
+in `update.removePrinciples`. The field `proposed` is unsupported. Never remove
+`kind` to repair a rejected proposal. Read the trading preferences reference for
+same-Run consent and save receipts.
+
+## Analysis cards
+
 Analysis cards may include questions (up to three). `facts` is an array of
-{callId,queryId} from completed same-Run paper_read/terminal_read query results,
-not copied model numbers. holding requires the cited owned position; trade_review
+{callId,queryId} from completed same-Run native facts results, not copied model
+numbers. A v3 pawpilot_paper_trade_review citation copies the successful response's
+top-level `callId` and `data.facts.queryId`, not the assistant's function/tool-call
+ID (bounded perpetual candidate-list trades or exact-cycle
+timeline). Legacy paper_read/terminal_read query receipts remain supported.
+Analysis panels require your send_message publication; preparation and practice
+invite proxies publish only their own original draft/invite cards.
+holding requires the cited owned position; trade_review
 requires the cited cycle/history record. Read facts first; other than an order
 card, numeric cards cannot cite an empty array. Keep explanations <=2000 chars.
 
