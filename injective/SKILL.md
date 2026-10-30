@@ -36,13 +36,14 @@ collection establishes no rows within that query's coverage.
 
 ## Execution capability and confirmation
 
-Reads ship in CLI v0.2.70. Native writes require the later CLI candidate containing
-`readiness`, `management`, `protection` and `rfq` plus enabled backend routes.
-Inspect installed help; never invent a released minimum version. If an installed
+Reads ship in CLI v0.2.70. Native writes require released CLI v0.2.71 or later,
+including `readiness`, `management`, `protection` and `rfq`, plus the corresponding
+backend routes. Inspect installed help. If an installed
 command is missing or readiness disables the action, report the blocker and stop.
 Do not bypass it with wallet raw transactions, direct SDK/REST writes or an MCP.
 Native perpetual execution is USDC-only. Later Spot writes require the separately
-enabled `spot` group and [Spot readiness](references/spot.md); perpetual readiness
+enabled `spot` group and [Spot readiness](references/spot.md); Spot trading is not
+released by the perpetual/RFQ delivery. Perpetual readiness
 does not enable Spot. Inspect installed help rather than assuming a released version.
 
 Follow the relevant reference before acting. Produce the local business draft
