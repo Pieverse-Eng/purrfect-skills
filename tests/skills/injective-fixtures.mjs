@@ -1,7 +1,7 @@
 // Synthetic golden wire values, independently constructed from the read contract.
 // No real wallet, credentials, private package imports or live network are needed.
 export const hash = `0x${'1'.repeat(64)}`
-const spotHash = `0x${'2'.repeat(64)}`
+export const spotHash = `0x${'2'.repeat(64)}`
 export const nextCursor = 'opaque+/=fixture?&page=2'
 const from = 1790812800000
 const to = 1790899200000
@@ -238,6 +238,18 @@ export const fixtures = {
 		asOf: to,
 	},
 	status: { identity, mode: 'read_only', executionEnabled: false, readStatus: 'available' },
+	spotReadiness: {
+		identity: null,
+		executionEnabled: false,
+		mode: 'disabled',
+		observedAt: null,
+		blockHeight: null,
+		capabilities: { buy: false, sell: false, cancel: false, requestStatus: true },
+		reasons: ['wallet_unavailable'],
+		market: null,
+		balances: null,
+		gas: null,
+	},
 	account: { identity, balances, positions, mode: 'read_only', executionEnabled: false },
 	balances: { identity, balances },
 	positions: { identity, component: positions, nextCursor: null, coverage: 'partial' },

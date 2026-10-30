@@ -17,7 +17,8 @@ purr injective fills --market-type perp --limit 50
 `status` is a cheap capability/identity check, not a fresh portfolio or trading
 readiness check. The Phase 2 backend reports `mode: read_only` and
 `executionEnabled: false`. Preserve returned capability fields if a later backend
-changes them; this CLI and skill still expose only reads. Reads work with zero
+changes them; execution capability must be checked separately with `readiness`
+for the exact market. A status reply is not execution permission. Reads work with zero
 INJ; never propose enable/open-account/deposit as a read prerequisite.
 `account` and `balances` share the financial snapshot; `positions` uses independent
 admitted native paging. Choose the smallest query answering the request.
@@ -53,3 +54,18 @@ or spendable=90. Use returned `spendable`/`total`; null means unknown. An
 trading capacity. Missing decimals/metadata prevent an amount interpretation;
 do not guess six decimals for every stablecoin. Unknown PnL, funding and
 liquidation values remain unknown. Include component freshness and source time.
+
+## Accounting and funding candidate
+
+If installed help exposes it, `--view accounting-v1` on `positions`, `orders`,
+`order-history` and `fills` requests the richer producer observation. `funding`
+accepts an optional exact `--market-id`, paired `--start-at` / `--end-at` and the
+returned opaque `--cursor`. Reuse the same bounds and limit. Choose the smallest
+query needed; do not scan all markets before one trade.
+
+Funding payments and rates are different quantities. Preserve producer side,
+amount, denom, source time, completeness and reason. Null funding/PnL is unknown,
+not zero. Native fills/history are authoritative for order execution; a tx hash
+or successful receipt alone does not establish a fill, realized PnL, protection
+activation or continuity across a close/reopen. Book and RFQ share the same
+native subaccount and positions; do not count them as separate portfolios.
