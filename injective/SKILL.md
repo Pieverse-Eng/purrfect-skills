@@ -1,7 +1,7 @@
 ---
 name: injective
 description: Use when querying or trading Injective perpetuals or Spot, managing native orders or protection, or requesting and accepting Injective RFQ quotes.
-version: 1.1.0
+version: 1.1.1
 ---
 
 # Injective
@@ -41,10 +41,12 @@ including `readiness`, `management`, `protection` and `rfq`, plus the correspond
 backend routes. Inspect installed help. If an installed
 command is missing or readiness disables the action, report the blocker and stop.
 Do not bypass it with wallet raw transactions, direct SDK/REST writes or an MCP.
-Native perpetual execution is USDC-only. Later Spot writes require the separately
-enabled `spot` group and [Spot readiness](references/spot.md); Spot trading is not
-released by the perpetual/RFQ delivery. Perpetual readiness
-does not enable Spot. Inspect installed help rather than assuming a released version.
+Native perpetual execution is USDC-only. Native Spot uses the released CLI's
+`spot` group and the deployed backend's exact [Spot readiness](references/spot.md).
+Perpetual readiness does not qualify Spot. Market buys and limit buy/sell are
+supported when native readiness allows them. Market-sell price protection is not
+qualified: use a reviewed limit sell, never silently replace the user's order.
+Inspect installed help and current backend capabilities before drafting.
 
 Follow the relevant reference before acting. Produce the local business draft
 first (the default, with no HTTP), and summarize market, side, size,

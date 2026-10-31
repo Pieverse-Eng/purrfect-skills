@@ -1,8 +1,8 @@
 # Native Spot
 
 Use the current Agent wallet and the platform's exact Spot market hash. Check
-installed help for `spot readiness`, `spot order` and `spot cancel`; these are
-later candidate commands, with no assumed released minimum version. Perpetual
+installed help for `spot readiness`, `spot order` and `spot cancel`; they ship in
+CLI v0.2.71 and require the corresponding deployed backend. Perpetual
 readiness does not qualify Spot. Read current capability and native spendable
 assets for the selected market; reuse current per-turn facts:
 
@@ -14,9 +14,11 @@ If the action is disabled, balances/metadata are unavailable or INJ cannot cover
 the reviewed gas maximum, report that blocker. Do not switch to raw signing,
 another account or sponsored gas. Readiness is an observation, not approval.
 
-Spot orders use base quantity and quote price. A limit price is explicit; a
-market buy needs a maximum price and a market sell a minimum price. Use the
-actual ticks and denoms; same token symbols do not prove identical assets.
+Spot orders use base quantity and quote price. A limit price is explicit and a
+market buy needs a maximum price. Native market-sell price protection has not been
+qualified; that business action is refused. Offer a limit sell and obtain approval
+of its exact limit rather than claiming an unproven minimum market fill or silently
+changing order kind. Use actual ticks and denoms; symbols do not prove identity.
 These examples only produce local drafts, without HTTP or execution:
 
 ```sh
@@ -32,7 +34,7 @@ current `--wallet-generation`, original `--idempotency-key` and `--execute true`
 Cancel only an exact owned order observed on that Spot market. Policy holds and
 unknown results follow [original-request recovery](errors.md).
 
-Spot has no margin, leverage, TP/SL or reduce-only in this candidate. A sell spends
+Spot has no margin, leverage, TP/SL or reduce-only in this integration. A sell spends
 owned base assets; it does not close a perpetual position or bypass opening-trade
 policy/region controls. Use native spendable balances rather than adding Bank and
 Exchange deposits. Fees and gas also reserve funds, including when INJ is the
