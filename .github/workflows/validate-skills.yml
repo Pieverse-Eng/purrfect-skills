@@ -17,8 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      # Reviewed candidate source; this is not a released minimum CLI version.
-      PURR_CLI_SHA: 0a4cae7eac1c984c9c140e0cc083261240d762bb
+      # Exact published v0.2.71 source; never a floating branch or future release.
+      PURR_CLI_SHA: cc7e43a526d37f8658bb69e44e0d59e79b9ba4b2
     steps:
       - uses: actions/checkout@v4
       - name: Check out the public CLI candidate
