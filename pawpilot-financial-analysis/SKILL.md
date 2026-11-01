@@ -1,7 +1,7 @@
 ---
 name: pawpilot-financial-analysis
 description: Use when analysing financial evidence or holdings.
-version: 1.1.1
+version: 1.1.2
 author: David Zhou (@David-0x221Eight), with Hermes Agent
 metadata:
   hermes:

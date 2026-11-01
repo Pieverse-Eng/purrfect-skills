@@ -16,6 +16,19 @@ numerical examples.
    - `status: complete`, null price and `liquidationReason: no_positive_liquidation_threshold` mean **the calculation completed and found no positive liquidation threshold under the current account snapshot**. Explain this in two short sentences: the completed calculation's meaning (not missing server data), then the shared-equity assumptions and what could change them. In cross margin, available shared equity relative to the position matters; a small requested margin budget alone does not establish this outcome. Other position marks are held fixed in this estimate; funding, fees, withdrawals and losses elsewhere can change it. Use the returned `liquidationInterpretation` when supplied. Keep monetary notional separate from the asset's unit price; use returned native calculations rather than additional example arithmetic, leverage-based percentages or PnL multipliers. Do not suggest account changes merely to display a price.
    - `status: complete` with `flat_position` means no projected open position remains; liquidation is not applicable.
    - Partial, missing or failed native risk evidence stays unavailable, with the actual reason. A null price by itself cannot select one of the above outcomes.
+   Classify each revised draft from its own current receipt. A statement about
+   another margin mode also needs that mode's native estimate; without one, its
+   liquidation result remains unknown, including whether it would display a price.
+   For partial results, explain the returned limitation without importing an earlier
+   draft's conclusion. For blocked or failed checks, keep the answer to three parts:
+   the returned status/reason, the risk outcome that remains unknown, and the allowed
+   next step. Do not add a predicted result, even labelled as a guess or comparison
+   with an earlier draft. Do not call this draft valid or invalid, or explain the
+   underlying cause of unavailable data, unless the current receipt establishes it.
+   When `retrySameInput: false`, stop this operation. Do not route around it through
+   another tool, a new call ID or arbitrary input/time changes. A genuinely new user
+   request or evidence that the reported gap is resolved can start a new task through
+   the normal workflow; do not promise when a data gap will resolve.
    Entry and leverage alone do not establish maintenance tiers, actual collateral, funding or venue liquidation rules. Do not substitute an entry × (1 ± 1/leverage) estimate or a guessed price range. Use native ROE when supplied; otherwise actual collateral is needed for current margin return. A leverage-scaled price move alone is not the account's ROE. With unknown quantity, describe per-unit price exposure rather than total position PnL.
    Current distance to a native liquidation estimate is a snapshot, not a forecast.
    It cannot establish that liquidation will not trigger over the next minutes,
