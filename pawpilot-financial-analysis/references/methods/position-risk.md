@@ -25,6 +25,10 @@ numerical examples.
    next step. Do not add a predicted result, even labelled as a guess or comparison
    with an earlier draft. Do not call this draft valid or invalid, or explain the
    underlying cause of unavailable data, unless the current receipt establishes it.
+   A data/depth blocker does not rule out parameter errors, venue-rule violations
+   or risk/admission rejection. Say: "Validation could not be completed; whether
+   other violations exist remains unknown." Avoid "no violations", "not a parameter
+   error" or "nothing is wrong with the draft", even if an earlier draft passed.
    When `retrySameInput: false`, stop this operation. Do not route around it through
    another tool, a new call ID or arbitrary input/time changes. A genuinely new user
    request or evidence that the reported gap is resolved can start a new task through
