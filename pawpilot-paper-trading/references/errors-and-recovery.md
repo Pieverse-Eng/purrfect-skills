@@ -44,3 +44,17 @@ the user to the terminal order/receipt view for unavailable final evidence.
 Batch cancellation also returns a current job; use its
 status/counts. Retrying read-only receipt queries is safe; a new financial key
 is not recovery. Changing the page keeps the old card's original scope.
+
+## Account reset and Native execution
+
+`PAPER_EPOCH_MISMATCH` rejects a missing or non-current account epoch. A draft
+from before a confirmed reset remains invalid; never replace the epoch or replay the
+old confirmation into the new account. Read current facts only. A new explicit
+request can prepare a new card and requires separate human review.
+
+For Native accounts a persisted 202 is intake, not a fill. A later
+`stale_market_data` execution refusal leaves that original receipt intact and
+creates no fill for the refused request. Explain the refusal from the current
+owned receipt; do not resubmit with a new client order ID or idempotency key.
+A timeout remains unknown until the original receipt/current committed facts
+resolve it. Do not infer either refusal or success merely from a source timeout.
