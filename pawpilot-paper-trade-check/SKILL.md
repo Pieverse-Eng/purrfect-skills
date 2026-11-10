@@ -2,7 +2,7 @@
 name: pawpilot-paper-trade-check
 description: Use to check a Paper draft against facts and plans.
 metadata:
-  version: 3.1.1
+  version: 3.1.2
   hermes:
     tags: [pawpilot, terminal, runtime-v3]
     requires_tools: [pawpilot_paper_trade_check]
@@ -28,6 +28,21 @@ If the draft is incomplete, identify the few inputs needed for a meaningful chec
 do not turn a check into an interview about unrelated style/preferences.
 CLI: `paper-trade check`. Related Skills: pawpilot-paper-trade-prepare only when the
 user asks to prepare a new review card; pawpilot-paper-trade-plan for plan discussion.
+
+## Native Paper evidence
+
+Use returned capabilities and the Nautilus-backed preview for Native accounts.
+Explain exact returned amounts, fees and the simulation/precision version; do
+not recompute them. `paper-sim-v2` uses Paper simulation rules: its costs and
+margin model are not evidence of live venue fees or complete live risk rules.
+A catalog listing or real feed does not prove every product/action is enabled.
+
+A prepared reference keeps its original account epoch. On
+`PAPER_EPOCH_MISMATCH`, report that the old draft does not match the current account; do not replace
+its epoch, prepare a new card or replay confirmation while checking it. 202 /
+`accepted` proves intake only; use committed order/fill/fee facts for execution.
+Unknown results recover the original task receipt. A final execution refusal is
+not a fill and does not authorize a replacement order.
 
 ## Invocation and delivery
 

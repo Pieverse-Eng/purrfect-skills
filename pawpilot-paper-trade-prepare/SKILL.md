@@ -2,7 +2,7 @@
 name: pawpilot-paper-trade-prepare
 description: Use to prepare a Paper order card.
 metadata:
-  version: 3.1.1
+  version: 3.1.2
   hermes:
     tags: [pawpilot, terminal, runtime-v3]
     requires_tools: [pawpilot_paper_trade_prepare]
@@ -57,6 +57,31 @@ as an unlabelled local deadline.
 
 CLI: `paper-trade prepare`. Related capabilities: position research profile=facts for
 additional evidence; paper-trade check for inspecting an existing draft without a card.
+
+## Native Paper accounts
+
+Use the returned account, market capabilities, simulation rules and precision
+version. Venue/catalog coverage does not mean every order type is enabled. On
+`UNSUPPORTED_CAPABILITY`, preserve the requested risk/protection and explain the
+returned limit; do not silently remove it or substitute a Live order.
+
+For `paper-sim-v2`, sizing, fees, margin and execution previews come from the
+Nautilus-backed service. Report its exact decimal results; do not reconstruct
+quantity or financial formulas. These are Paper simulation rules, not the
+venue's real fees or complete live risk model. Real market data does not make a
+Paper fill a real exchange trade or lock the preview price.
+
+A prepared action belongs to the account's epoch when it was created. On
+`PAPER_EPOCH_MISMATCH`, explain that the draft does not match the current account
+epoch; describe a reset only when returned facts confirm it. Do not replace its epoch, auto-create a new card or replay the old
+confirmation. A new user request can prepare a new card for fresh human review.
+
+After human confirmation, HTTP 202 / `accepted` means queued, not filled. Read
+the original task/action receipt and committed order/fill/fee evidence before
+claiming execution. After a timeout, recover the same `taskRef`; never change
+call IDs, request keys or account epoch to submit again. A final rejection such
+as `stale_market_data` is a refusal, not a fill; explain it and preserve the
+original receipt. Do not reprepare automatically from a rejected confirmation.
 
 ## Invocation and delivery
 
