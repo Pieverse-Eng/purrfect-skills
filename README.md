@@ -36,6 +36,7 @@ funding.
 | `dflow` | DFlow Agent CLI — Solana spot swaps, prediction markets, transfers, funding, guardrails, and local vault management. |
 | `fourmeme` | four.meme on BSC — token buy, sell, and creation. |
 | `gate` | Gate.io domain router — covers CEX (spot, futures, earn, staking, dual investment, loans, transfers), DEX (wallet, swaps, market data), intelligence (coin analysis, risk checks, market overview), and news. |
+| `ginza` | Read-only Ethereum mainnet Uniswap V3 ETH/WETH → USDC execution analysis through the platform proxy; requires the corresponding backend deployment. Never signs or submits trades. |
 | `hyperliquid` | Hyperliquid market data, perpetual and spot trading, leverage, collateral moves, Arbitrum USDC deposits and withdrawals, and HIP-3 workflows. |
 | `injective` | Injective reads, USDC perpetual management/RFQ and separately gated later Spot orders through `purr injective`; writes require the coordinated candidate and explicit reviewed intent. |
 | `kraken` | Kraken exchange — spot / xStocks / forex trading, earn, staking, funding, and paper trading. |
@@ -88,6 +89,18 @@ funding.
 | Skill | Description |
 |-------|-------------|
 | `minimax-h3-max` | MiniMax H3 Max 5-second text-to-video through the Pieverse platform proxy. Returns a `fal.media` watch link; never calls fal or attaches a file. |
+
+### Ginza validation and release dependency
+
+```sh
+python3 -B -m unittest discover -s ginza/scripts -p 'test_*.py'
+```
+
+These offline checks use mock platform responses and no real credentials. The skill
+requires the platform Ginza route plus injected `WALLET_API_URL`, `WALLET_API_TOKEN`
+and `INSTANCE_ID`; the provider key stays on the platform. Source publication does
+not deploy that backend, update tenant images, or publish a Skill Store product.
+Hosted runtime acceptance and broader supported-pair validation remain separate.
 
 ### PawPilot Hermes validation
 
