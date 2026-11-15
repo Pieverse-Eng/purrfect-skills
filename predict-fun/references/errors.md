@@ -46,13 +46,14 @@ Prefer stopping and explaining over inventing retries.
 | `PREDICT_REFERRAL_ALREADY_SET` / `PREDICT_REFERRAL_LOCKED` | Different code set, or settings locked | Report and wait for the user |
 | `PREDICT_INVALID_POSITION_ACTION` | Wrong position flags (for example `--amount` on a standard redeem) | Drop `--amount` unless `market` shows `isNegRisk` |
 | `POLICY_DEFERRED` | Wallet policy parked the write | After approval, same `*-execute --preview-id` (or same `--code` for referral) |
-| `PREDICT_ORDER_OUTCOME_UNKNOWN` / `PREDICT_BROADCAST_OUTCOME_UNKNOWN` | Submit/broadcast unconfirmed | Reconcile; same previewId only |
+| `PREDICT_ORDER_OUTCOME_UNKNOWN` / `PREDICT_BROADCAST_OUTCOME_UNKNOWN` | Submit/broadcast answer lost; Predict or the chain may have acted (`retryable: false`) | Never preview and submit again. Reconcile: same `*-execute --preview-id` only |
 | `PREDICT_*_TRANSACTION_REVERTED` | On-chain revert | Show the returned txs |
 | `PREDICT_STREAM_TOPICS_INVALID` / `PREDICT_STREAM_TOPIC_UNSUPPORTED` | Bad or too many topics | Use the allowlist; ≤ 8 unique |
 | `PREDICT_STREAM_LIMIT_EXCEEDED` / `PREDICT_STREAM_CAPACITY_EXCEEDED` | Instance or process stream cap | Wait; close other streams; retry later |
 | `PREDICT_RATE_LIMITED` / `PREDICT_PLATFORM_RATE_LIMITED` | Upstream or platform quota | Honor `Retry-After`; back off |
 | `PREDICT_AUTH_REJECTED` | Predict rejected the platform JWT | Report the error |
 | `PREDICT_TIMEOUT` / `PREDICT_NETWORK_ERROR` / `PREDICT_UPSTREAM_ERROR` | Transport / Predict down | If pre-execute: may retry the **read or preview**. If execute may have started: reconcile only |
+| `PREDICT_UPSTREAM_UNAVAILABLE` / `PREDICT_UPSTREAM_TIMEOUT` / `PREDICT_UPSTREAM_RATE_LIMITED` | BNB chain RPC could not answer a balance, approval, or contract read (`retryable: true`) | Honor `Retry-After`; retry the **read or preview** later. Nothing was sent |
 | Unsupported / duplicate / positional argument | CLI rejected before HTTP | Fix flags from the skill tables or `purr predict-fun help` |
 | Invalid `--sort` / `--status` / `--market-variant` / `--resolution` | Enum is not on that command | Use the table in [discovery.md](discovery.md) or [preflight.md](preflight.md), or `purr predict-fun help`, then retry once |
 | `PREDICT_REQUEST_REJECTED` range too wide | `timeseries` `--from`/`--to` span is 365 days or more | Retry with a span under 365 days, or use `timeseries-latest` |
