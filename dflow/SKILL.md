@@ -153,32 +153,25 @@ purr dflow order \
 
 Reuse the same `--params-json` from the preview.
 
-The platform rebuilds the order, refuses it if the output falls below the
-previewed `minOutAmount`, signs it with the purr Solana wallet, and broadcasts
-it. With `--poll true`, read the result for:
+With `--poll true`, report from `execution`: `signature`, `confirmation`,
+`requestId`, `idempotencyKey`, `lastValidBlockHeight`, and polled `status`;
+plus the `summary` amounts.
 
-- transaction **signature** and `confirmation` (from `execution`)
-- `requestId` and `idempotencyKey`
-- `lastValidBlockHeight` when present
-- polled order **status** when present
-- `summary` amounts
+If `confirmation.confirmed` is `false`, check it later with
+`purr dflow execution-status --request-id <requestId>`.
 
-If execute fails, stop and report it, including the printed
-`idempotencyKey` and `requestId`. Never run a plain execute again; when the user
-wants to continue:
+Report every execute failure with the printed `idempotencyKey`,
+`minimumToAmount`, and `requestId`. To replay, rerun the same command with
+`--idempotency-key <idempotencyKey> --minimum-to-amount <minimumToAmount>`. To
+continue after a failure:
 
-- On `DFLOW_REQUOTE_REQUIRED`, nothing was signed. Preview a new order, confirm
-  it with the user, and execute that.
-- On a timeout, network error, or `POLICY_DEFERRED` (after the user approves the
-  wallet policy request), rerun the same command with
-  `--idempotency-key <idempotencyKey>`. The platform replays the stored result
-  and never submits twice.
-- On `EXECUTION_INTERRUPTED` or `EXECUTION_ALREADY_ATTEMPTED`, check the result
-  instead:
-
-```bash
-purr dflow execution-status --request-id <requestId>
-```
+| Error | Action |
+| --- | --- |
+| `DFLOW_REQUOTE_REQUIRED` | Preview a new order, confirm it with the user, then execute that order. |
+| `POLICY_DEFERRED` (`policyRequestId`) | Tell the user it awaits wallet policy approval. Once approved, replay. |
+| Timeout or network error | Replay. |
+| `EXECUTION_INTERRUPTED`, `EXECUTION_ALREADY_ATTEMPTED` (`requestId`) | Do not execute again. Run `purr dflow execution-status --request-id <requestId>` and report it. |
+| `DFLOW_TRANSACTION_REVERTED` | Report the signature and error. Do not execute again. |
 
 If execution returns `statusError`, the transaction was already broadcast and
 confirmed but the prediction-order status lookup failed. Report the signature
@@ -186,8 +179,7 @@ and the status error. Retry only `purr dflow prediction-order-status` with that
 signature; never rebuild or execute the order again.
 
 Two-step execute only when you must hold the order JSON (for example
-debugging). Build with `--raw true`, then pass the whole raw output, which
-includes the `request` the platform executes:
+debugging). Build with `--raw true`, then pass the whole raw output:
 
 ```bash
 purr dflow order \
