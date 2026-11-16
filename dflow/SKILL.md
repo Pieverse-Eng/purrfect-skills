@@ -153,21 +153,33 @@ purr dflow order \
 
 Reuse the same `--params-json` from the preview.
 
-With `--poll true`, read the result for:
+With `--poll true`, report from `execution`: `signature`, `confirmation`,
+`requestId`, `idempotencyKey`, `lastValidBlockHeight`, and polled `status`;
+plus the `summary` amounts.
 
-- transaction **signature** (from `execution` / broadcast result)
-- `lastValidBlockHeight` when present
-- polled order **status** when present
-- `summary` amounts
+If `confirmation.confirmed` is `false`, check it later with
+`purr dflow execution-status --request-id <requestId>`.
+
+Report every execute failure with the printed `idempotencyKey`,
+`minimumToAmount`, and `requestId`. To replay, rerun the same command with
+`--idempotency-key <idempotencyKey> --minimum-to-amount <minimumToAmount>`. To
+continue after a failure:
+
+| Error | Action |
+| --- | --- |
+| `DFLOW_REQUOTE_REQUIRED` | Preview a new order, confirm it with the user, then execute that order. |
+| `POLICY_DEFERRED` (`policyRequestId`) | Tell the user it awaits wallet policy approval. Once approved, replay. |
+| Timeout or network error | Replay. |
+| `EXECUTION_INTERRUPTED`, `EXECUTION_ALREADY_ATTEMPTED` (`requestId`) | Do not execute again. Run `purr dflow execution-status --request-id <requestId>` and report it. |
+| `DFLOW_TRANSACTION_REVERTED` | Report the signature and error. Do not execute again. |
 
 If execution returns `statusError`, the transaction was already broadcast and
 confirmed but the prediction-order status lookup failed. Report the signature
 and the status error. Retry only `purr dflow prediction-order-status` with that
 signature; never rebuild or execute the order again.
 
-Two-step execute only when you must hold the order JSON (for example debugging
-or delayed signing). Build with `--raw true`, then pass the raw `.order`
-object:
+Two-step execute only when you must hold the order JSON (for example
+debugging). Build with `--raw true`, then pass the whole raw output:
 
 ```bash
 purr dflow order \
@@ -179,7 +191,7 @@ purr dflow order \
 
 ```bash
 purr dflow execute-order \
-  --order-json '<order-object-from-raw-output.order>' \
+  --order-json '<raw-output-of-purr-dflow-order>' \
   --poll true
 ```
 
