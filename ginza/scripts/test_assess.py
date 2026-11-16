@@ -9,12 +9,29 @@ ENV = {'WALLET_API_URL': 'https://platform.example', 'WALLET_API_TOKEN': 'privat
        'INSTANCE_ID': '00000000-0000-4000-8000-000000000001'}
 RESPONSE = {'pool': {'address': '0xpool'}, 'quote': {'amountOut': '2000'},
             'capturedAt': '2026-11-12T00:00:00Z', 'blockNumber': 1, 'model': 'test-model',
+            'valuation': {'tokenInUsd': 2000, 'tokenOutUsd': 1,
+                          'source': 'test-feed', 'inferredFromPool': False},
             'missingFields': ['pending'], 'predictions': {'sandwiched': {'probs': {'yes': .1, 'no': .9}}}}
 
 
 class AssessTests(unittest.TestCase):
     def test_normalize_eth(self):
         self.assertEqual(order('ETH', 'usdc', '1', 100)['tokenIn'], 'WETH')
+
+    def test_multiple_pairs_and_directions(self):
+        for tin, tout in [('USDC', 'WETH'), ('WETH', 'USDT'), ('WBTC', 'WETH'), ('DAI', 'USDC')]:
+            with self.subTest(pair=(tin, tout)):
+                self.assertEqual(order(tin, tout, '1', 500)['tokenIn'], tin)
+
+    def test_address_tokens(self):
+        address = '0x' + 'Ab' * 20
+        self.assertEqual(order(address, 'USDC', '0.0000000000000000001', 500)['tokenIn'], address.lower())
+        for bad in ['0x' + '0' * 40, '0x1234', '0x' + 'g' * 40]:
+            with self.subTest(address=bad), self.assertRaises(Failure):
+                order(bad, 'USDC', '1', 500)
+        with self.assertRaises(Failure): order(address, address.lower(), '1', 500)
+        with self.assertRaises(Failure): order(address, 'USDC', '0.000', 500)
+        with self.assertRaises(Failure): order(address, 'USDC', str(2**256), 500)
 
     def test_invalid_orders(self):
         for amount in ['0', '-1', '1e3', 'NaN', '01', '1.0000000000000000001', str(2**256)]:
@@ -93,6 +110,26 @@ class AssessTests(unittest.TestCase):
         self.assertEqual(validate_response(data), data)
         for invalid in [{'assumptions': 'guess'}, {'blockHash': 'bad'}]:
             with self.assertRaises(Failure): validate_response({**RESPONSE, **invalid})
+
+    def test_valuation_required_and_valid(self):
+        for value in [None, {}, {**RESPONSE['valuation'], 'tokenInUsd': 0},
+                      {**RESPONSE['valuation'], 'tokenOutUsd': True},
+                      {**RESPONSE['valuation'], 'tokenInUsd': float('inf')},
+                      {**RESPONSE['valuation'], 'tokenInUsd': 10**1000},
+                      {**RESPONSE['valuation'], 'source': ''},
+                      {**RESPONSE['valuation'], 'inferredFromPool': 'yes'}]:
+            with self.subTest(valuation=value), self.assertRaises(Failure):
+                validate_response({**RESPONSE, 'valuation': value})
+        without = {k: v for k, v in RESPONSE.items() if k != 'valuation'}
+        with self.assertRaises(Failure): validate_response(without)
+
+    @patch('assess.urllib.request.build_opener')
+    def test_valuation_error_is_preserved(self, build):
+        build.return_value.open.side_effect = urllib.error.HTTPError(
+            'https://platform.example', 502, 'error', {},
+            io.BytesIO(b'{"code":"valuation_unavailable"}'))
+        with self.assertRaises(Failure) as caught: assess({}, ENV)
+        self.assertEqual(caught.exception.code, 'valuation_unavailable')
 
     def test_non_finite_platform_output(self):
         with self.assertRaises(Failure):

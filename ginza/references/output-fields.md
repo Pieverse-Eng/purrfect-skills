@@ -20,7 +20,8 @@ Display only after product scope and input requirements are confirmed. These des
 
 - `confidence`: the model probability of the `top` category, not model accuracy or a prediction-quality score.
 - `model`: use the actual response value. Do not replace `de1-v0.6` with the documented name `ginza-1.0`.
-- `missingFields`: explain which market context was omitted. Missing context is not zero risk.
+- `valuation`: `tokenInUsd` and `tokenOutUsd` are positive USD unit prices; `source` names the valuation sources and `inferredFromPool` identifies whether either price was derived from the analyzed pool. Report this provenance. Pool-derived prices can reflect distortion in that pool; they are not independent fair value.
+- `missingFields`: explain which richer market context was omitted. These are not necessarily missing required fields. Missing context is not zero risk, and API acceptance is not evidence of input quality.
 - `assumptions`: disclose approximate feature conventions, default priority fees, and USD conversion assumptions actually used by the backend.
 - `capturedAt` / `blockNumber`: identify the snapshot. A timestamp alone does not establish freshness. Do not invent a guaranteed validity period.
 
