@@ -153,21 +153,41 @@ purr dflow order \
 
 Reuse the same `--params-json` from the preview.
 
-With `--poll true`, read the result for:
+The platform rebuilds the order, refuses it if the output falls below the
+previewed `minOutAmount`, signs it with the purr Solana wallet, and broadcasts
+it. With `--poll true`, read the result for:
 
-- transaction **signature** (from `execution` / broadcast result)
+- transaction **signature** and `confirmation` (from `execution`)
+- `requestId` and `idempotencyKey`
 - `lastValidBlockHeight` when present
 - polled order **status** when present
 - `summary` amounts
+
+If execute fails, stop and report it, including the printed
+`idempotencyKey` and `requestId`. Never run a plain execute again; when the user
+wants to continue:
+
+- On `DFLOW_REQUOTE_REQUIRED`, nothing was signed. Preview a new order, confirm
+  it with the user, and execute that.
+- On a timeout, network error, or `POLICY_DEFERRED` (after the user approves the
+  wallet policy request), rerun the same command with
+  `--idempotency-key <idempotencyKey>`. The platform replays the stored result
+  and never submits twice.
+- On `EXECUTION_INTERRUPTED` or `EXECUTION_ALREADY_ATTEMPTED`, check the result
+  instead:
+
+```bash
+purr dflow execution-status --request-id <requestId>
+```
 
 If execution returns `statusError`, the transaction was already broadcast and
 confirmed but the prediction-order status lookup failed. Report the signature
 and the status error. Retry only `purr dflow prediction-order-status` with that
 signature; never rebuild or execute the order again.
 
-Two-step execute only when you must hold the order JSON (for example debugging
-or delayed signing). Build with `--raw true`, then pass the raw `.order`
-object:
+Two-step execute only when you must hold the order JSON (for example
+debugging). Build with `--raw true`, then pass the whole raw output, which
+includes the `request` the platform executes:
 
 ```bash
 purr dflow order \
@@ -179,7 +199,7 @@ purr dflow order \
 
 ```bash
 purr dflow execute-order \
-  --order-json '<order-object-from-raw-output.order>' \
+  --order-json '<raw-output-of-purr-dflow-order>' \
   --poll true
 ```
 
