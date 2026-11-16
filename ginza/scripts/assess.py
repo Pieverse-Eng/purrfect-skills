@@ -13,7 +13,7 @@ import uuid
 
 DECIMALS = {'WETH': 18, 'USDC': 6, 'USDT': 6, 'DAI': 18, 'WBTC': 8}
 CODES = {'quota_exceeded', 'state_unavailable', 'ginza_unavailable',
-         'unsupported_token', 'pool_not_found', 'invalid_request'}
+         'unsupported_token', 'pool_not_found', 'valuation_unavailable', 'invalid_request'}
 
 
 class Failure(Exception):
@@ -27,19 +27,36 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
         return None
 
 
-def order(token_in, token_out, amount, fee, tip=None):
-    tin, tout = token_in.upper(), token_out.upper()
-    tin = 'WETH' if tin == 'ETH' else tin
-    tout = 'WETH' if tout == 'ETH' else tout
-    if tin not in DECIMALS or tout not in DECIMALS:
+def token_identifier(value):
+    if re.fullmatch(r'0x[0-9a-fA-F]{40}', value):
+        if int(value[2:], 16) == 0:
+            raise Failure('unsupported_token')
+        return value.lower()
+    symbol = value.upper()
+    symbol = 'WETH' if symbol == 'ETH' else symbol
+    if symbol not in DECIMALS:
         raise Failure('unsupported_token')
+    return symbol
+
+
+def order(token_in, token_out, amount, fee, tip=None):
+    tin, tout = token_identifier(token_in), token_identifier(token_out)
     if tin == tout or not re.fullmatch(r'(?:0|[1-9][0-9]*)(?:\.[0-9]+)?', amount):
         raise Failure('invalid_request')
-    if len(amount) > 100 or len(amount.partition('.')[2]) > DECIMALS[tin]:
+    if len(amount) > 100:
         raise Failure('invalid_request')
     whole, _, fraction = amount.partition('.')
-    raw = int(whole) * 10**DECIMALS[tin] + int(fraction.ljust(DECIMALS[tin], '0'))
-    if not 0 < raw <= 2**256 - 1 or fee not in (100, 500, 3000, 10000):
+    # Address-based assets get their precision and uint256 check from the backend's
+    # onchain metadata. Never assume that an unknown token has 18 decimals.
+    precision = DECIMALS.get(tin)
+    if precision is not None:
+        if len(fraction) > precision:
+            raise Failure('invalid_request')
+        raw = int(whole) * 10**precision + int(fraction.ljust(precision, '0'))
+        if not 0 < raw <= 2**256 - 1:
+            raise Failure('invalid_request')
+    if (not any(c in '123456789' for c in amount) or int(whole) >= 2**256 or
+            fee not in (100, 500, 3000, 10000)):
         raise Failure('invalid_request')
     result = {'tokenIn': tin, 'tokenOut': tout, 'amountIn': amount, 'feeTier': fee}
     if tip is not None:
@@ -73,10 +90,19 @@ def runtime(env):
     return base.rstrip('/') + '/v1/instances/' + identifier + '/ginza/assess', token
 
 
+def positive_finite(value):
+    if type(value) not in (int, float):
+        return False
+    try:
+        return math.isfinite(value) and value > 0
+    except OverflowError:
+        return False
+
+
 def validate_response(data):
     if not isinstance(data, dict):
         raise Failure('invalid_platform_response')
-    required = {'pool', 'quote', 'capturedAt', 'blockNumber', 'model', 'missingFields', 'predictions'}
+    required = {'pool', 'quote', 'valuation', 'capturedAt', 'blockNumber', 'model', 'missingFields', 'predictions'}
     if not required <= data.keys() or not isinstance(data['model'], str) or not data['model']:
         raise Failure('invalid_platform_response')
     if (not isinstance(data['pool'], dict) or not isinstance(data['quote'], dict) or
@@ -85,6 +111,12 @@ def validate_response(data):
             not isinstance(data['missingFields'], list) or
             not all(isinstance(x, str) for x in data['missingFields']) or
             not isinstance(data['predictions'], dict) or not data['predictions']):
+        raise Failure('invalid_platform_response')
+    valuation = data['valuation']
+    if (not isinstance(valuation, dict) or
+            any(not positive_finite(valuation.get(k)) for k in ('tokenInUsd', 'tokenOutUsd')) or
+            not isinstance(valuation.get('source'), str) or not valuation['source'] or
+            type(valuation.get('inferredFromPool')) is not bool):
         raise Failure('invalid_platform_response')
     try:
         json.dumps(data, allow_nan=False)
