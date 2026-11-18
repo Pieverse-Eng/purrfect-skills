@@ -66,7 +66,8 @@ An expired Pro quote stops instead of automatically paying a replacement. Check 
 
 ### Passport
 
-1. Prepare the original Invoice's public merchant request:
+1. Before requesting a quote, check whether Passport is set up. If Passport is not set up, install and authenticate **inside this tenant** through the official [Passport skills](https://github.com/gokite-ai/passport-skills) and [installation guide](https://docs.gokite.ai/passport/install). Follow their setup steps and `authenticate-user`; do not bind the operator's local account or assume the Agent Wallet is the payer. A hosted-agent setup prompt supported by the guide is `Set up Kite Passport from github.com/gokite-ai/passport-skills.` Authentication and session approval belong to the user.
+2. Once Passport is ready and the user is ready to review the terms, prepare the original Invoice's public merchant request:
 
    ```bash
    purr instance pawpilot-pro --payment-source passport --idempotency-key <purchase-id> --dry-run
@@ -74,7 +75,6 @@ An expired Pro quote stops instead of automatically paying a replacement. Check 
 
    Retain `invoiceId`, `paymentSource`, `paymentRequest.url`, `paymentRequest.method`, `paymentRequest.body`, and any returned price/benefits. Passport returns no Agent Wallet quote and does not need Agent Wallet token balance, native gas, wallet signing, or wallet-effect authorization. `--yes` and `--token` are invalid for this branch.
 
-2. If Passport is not set up, install and authenticate **inside this tenant** through the official [Passport skills](https://github.com/gokite-ai/passport-skills) and [installation guide](https://docs.gokite.ai/passport/install). Follow their setup steps and `authenticate-user`; do not bind the operator's local account or assume the Agent Wallet is the payer. A hosted-agent setup prompt supported by the guide is `Set up Kite Passport from github.com/gokite-ai/passport-skills.` Authentication and session approval belong to the user.
 3. Invoke official `request-session` (and its `form-session-delegation`) to register this Agent, inspect the actual merchant x402 challenge and obtain/reuse an appropriately scoped approved session for the frozen amount. This purchase uses Base USDC. Use the current installed official Skill's delegation schema and commands; do not copy old flattened session flags from examples. Passkey approval of the budget is not proof of payment or fulfillment.
 4. Once the frozen terms have the explicit purchase approval required above and the session is approved, invoke official `x402-execute` with **exactly** the returned merchant URL, `POST` method and JSON body:
 
