@@ -45,6 +45,8 @@ The purchase preserves the Claw, resource plan, hosting expiration, owner, and m
 
 Create one random `<purchase-id>` for a new purchase and retain it with the selected source and returned Invoice ID. Reuse that purchase ID for the preview and payment; do not regenerate it when the user confirms. The CLI sends it as the existing billing idempotency key. Keep concurrent purchases separate.
 
+Before either Pro payment method, present the actual frozen price, membership duration and applicable bonus credits, the target Claw/Invoice, and the selected funding source; include the token/chain for Agent Wallet and explain that hosting is unchanged. Require the user's explicit approval of those exact terms before executing payment. A generic request to buy Pro, a source choice, Passport installation, or a session budget approval alone is not informed purchase approval. If the user already explicitly approved all of those unchanged quoted terms, retain that authorization without asking again. Changed price, benefits, target, source, token or chain needs approval of the new terms.
+
 ### Agent Wallet
 
 1. Prepare a preview using the selected source and optional canonical token:
@@ -53,7 +55,7 @@ Create one random `<purchase-id>` for a new purchase and retain it with the sele
    purr instance pawpilot-pro --payment-source agent-wallet --idempotency-key <purchase-id> --dry-run
    ```
 
-2. Summarize the returned Invoice, frozen price, token/chain and benefits. Confirm that hosting will not be extended. Obtain authorization for that exact payment if it has not already been given; do not repeat an unchanged source choice.
+2. Follow the Pro confirmation rule above using this preview's price, benefits and token/chain; retain an unchanged source choice.
 3. Pin the preview's returned `quote.tokenId` with `--token <token-id>` for payment, including when the preview selected a token automatically. Pay the same purchase after authorization; do not rerun automatic selection after confirming a specific token/chain:
 
    ```bash
@@ -74,7 +76,7 @@ An expired Pro quote stops instead of automatically paying a replacement. Check 
 
 2. If Passport is not set up, install and authenticate **inside this tenant** through the official [Passport skills](https://github.com/gokite-ai/passport-skills) and [installation guide](https://docs.gokite.ai/passport/install). Follow their setup steps and `authenticate-user`; do not bind the operator's local account or assume the Agent Wallet is the payer. A hosted-agent setup prompt supported by the guide is `Set up Kite Passport from github.com/gokite-ai/passport-skills.` Authentication and session approval belong to the user.
 3. Invoke official `request-session` (and its `form-session-delegation`) to register this Agent, inspect the actual merchant x402 challenge and obtain/reuse an appropriately scoped approved session for the frozen amount. This purchase uses Base USDC. Use the current installed official Skill's delegation schema and commands; do not copy old flattened session flags from examples. Passkey approval of the budget is not proof of payment or fulfillment.
-4. After the user has authorized the purchase and the session is approved, invoke official `x402-execute` with **exactly** the returned merchant URL, `POST` method and JSON body:
+4. Once the frozen terms have the explicit purchase approval required above and the session is approved, invoke official `x402-execute` with **exactly** the returned merchant URL, `POST` method and JSON body:
 
    ```bash
    kpass agent:session execute --url <paymentRequest.url> --method POST --headers '{"Content-Type":"application/json"}' --body '<paymentRequest.body as valid JSON>' --output json
@@ -84,6 +86,8 @@ An expired Pro quote stops instead of automatically paying a replacement. Check 
 5. Check the target merchant's `x402.status_code` and parsed response, not just `kpass` exit code. Then check the same Invoice once with `purr instance billing-status --invoice <invoice-id>`. Only `fulfilled` proves membership and all applicable bonus benefits were delivered. `paid`, `paying`, `confirming`, or pending delivery does not.
 
 For a lost reply, timeout, or unknown payment result, query the original Invoice once and use official `activity` when Passport payment evidence is needed. Recover that same order through its free status/recovery flow; never rerun `pawpilot-pro` or `agent:session execute` to discover whether payment succeeded. Do not switch to Agent Wallet or create another purchase while funds are unresolved. If still pending or uncertain, report the original purchase/Invoice IDs and stop. A generic Passport network-retry suggestion does not authorize another payment for this order.
+
+If the Invoice lookup is unavailable or its ID was lost, retain the original merchant order ID/payment request and use that order's documented free authenticated status/recovery flow (including SIWX when required), with official Passport activity as payment evidence. If that recovery capability is unavailable, report the same order ID for private support recovery and stop. Do not call the merchant `/pay` URL again as a status check. Activation and recovery links are private bearer capabilities: give them only to the user in their private session, never in public messages, logs, issues, or shared reports; use the order/Invoice IDs when reporting status.
 
 Official references: [Passport skills](https://docs.gokite.ai/reference/passport-skills), [kpass execution reference](https://docs.gokite.ai/reference/kpass-cli), [merchant x402 flow](https://docs.gokite.ai/passport/seller). Keep this Skill on instance billing; it does not authorize purchases for a separate AI Gateway account.
 
