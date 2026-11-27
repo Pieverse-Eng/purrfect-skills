@@ -1,7 +1,7 @@
 ---
 name: pawpilot-paper-trading
 description: Use when placing or managing Paper orders.
-version: 1.0.1
+version: 1.0.3
 author: David Zhou (@David-0x221Eight), with Hermes Agent
 metadata:
   hermes:
@@ -38,6 +38,11 @@ Use `skills_list` then `skill_view` to read this Skill and the needed Markdown
 reference. Read the bound facts, clarify intent, prepare one registered card,
 and publish it to the current conversation. Execution remains a separate
 human action in the terminal.
+
+Reference paths are relative to this selected Skill. For example:
+`skill_view(name="pawpilot-paper-trading", file_path="references/order-intent.md")`.
+Do not prepend `pawpilot-paper-trading/` to `file_path`. If a read is rejected, correct the
+path from `linked_files` before retrying; do not repeat the rejected request.
 
 ## Quick Reference
 

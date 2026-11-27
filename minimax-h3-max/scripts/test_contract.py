@@ -415,7 +415,8 @@ class GenerateCliTests(unittest.TestCase):
         self.assertNotIn("Traceback", err)
 
     def test_rejects_hardlink_prompt(self):
-        source = tempfile.NamedTemporaryFile("w", delete=False, encoding="utf-8")
+        # Keep the source outside the allowed root, on the same filesystem as the link.
+        source = tempfile.NamedTemporaryFile("w", dir=self.root.parent, delete=False, encoding="utf-8")
         source.write("PRIVATE_TENANT_STATE")
         source.close()
         os.chmod(source.name, 0o600)

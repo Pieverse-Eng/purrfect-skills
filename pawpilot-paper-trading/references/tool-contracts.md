@@ -17,7 +17,7 @@ explicit `product=perp|spot`; read one exact target with `cycleId` or `fillId`,
 never both. Unknown targets must remain blocked, not replaced by another trade.
 `receipt`
 accepts the original actionId; after an unknown preparation use the original
-callId to recover that call's action, without preparing again.
+callId together with originalRunId to recover that call's action, without preparing again.
 Its `response` is the persisted command result, not a continuously refreshed
 order. `action.status=completed` may accompany an accepted order snapshot.
 Do not treat it or absence from active `orders` as a confirmed fill/cancel.
@@ -36,6 +36,9 @@ An explicitly chosen notional limit order has this shape:
 }
 ```
 
+Decimal tool fields are strings, including `risk.leverage`: use
+`"risk":{"leverage":"2","marginMode":"cross"}` for those explicit user choices,
+never numeric `2`. This is a wire example, not a default leverage or margin mode.
 Pass explicit leverage/margin mode in `risk` when requested. Do not add leverage
 to spot, silently convert a notional amount to collateral, or invent an expiry.
 Native quantities use `sizing.kind=base_quantity`; collateral budgets use
@@ -76,3 +79,8 @@ altered callback references or an action from another Run cannot produce a
 valid review button. `preview` is advisory evidence; the web review obtains a
 fresh preview and requires a separate human confirmation. A non-ready result
 must not be rendered as a successful order or an executable invented button.
+
+Preparation is not publication. Check send_message's success and publication
+receipt before saying a usable card is available. A failed/unknown publication
+does not authorize another prepare. Use the Coach card-protocol reference for
+original-message recovery; keep originalRunId/callId/actionId unchanged.

@@ -28,15 +28,17 @@ funding.
 |-------|-------------|
 | `aster` | Aster DEX v3 skills — futures/spot API docs, market data, signed futures v3 calls, websocket v3 references, and on-chain deposit step building. |
 | `balancer` | Balancer reviewed pool discovery, exact-input/exact-output swaps, and V2/V3 standard, boosted, and nested liquidity operations through `purr balancer`. |
-| `binance` | Binance CEX via `binance-cli` — Spot, USD-S Futures, and Convert trading + market data (incl. bStocks spot pairs). Requires Binance API keys (auth). |
-| `binance-agentic-wallet` | Binance Web3 Agentic Wallet via `baw` CLI — sign-in, balances, transfers, DEX swaps, limit orders, prediction markets, and x402 payments. |
+| `binance` | Binance CEX via `binance-cli` — Spot, USD-S Futures, and Convert trading + market data (incl. bStocks spot pairs). Private operations use managed credentials or the user's existing auth method; public reads need no keys. |
+| `binance-agentic-wallet` | Binance Web3 Agentic Wallet via `baw` CLI — sign-in, balances, transfers (incl. .ai/.bnb/.eth names), DEX swaps, limit orders, prediction markets, x402 payments, approvals, DeFi, and Developer Mode contract calls/signing. |
 | `binance-onchain-pay` | Binance Onchain Pay on-ramp via `purr` — payment methods, quotes, hosted checkout, order status, and reference docs. |
 | `bitget` | Bitget Exchange UTA v3 via `bgc` — spot, margin, futures, account, transfers. Requires Bitget API keys for private ops. |
 | `bitget-wallet` | Bitget Wallet integration for multi-chain swaps, RWA stock trading, and market data. |
 | `dflow` | DFlow Agent CLI — Solana spot swaps, prediction markets, transfers, funding, guardrails, and local vault management. |
 | `fourmeme` | four.meme on BSC — token buy, sell, and creation. |
 | `gate` | Gate.io domain router — covers CEX (spot, futures, earn, staking, dual investment, loans, transfers), DEX (wallet, swaps, market data), intelligence (coin analysis, risk checks, market overview), and news. |
+| `ginza` | Read-only Ethereum mainnet Uniswap V3 single-pool exact-input analysis in either direction, using known symbols or token addresses when pool, quote and USD valuation are available; requires the matching backend deployment. Never signs or submits trades. |
 | `hyperliquid` | Hyperliquid market data, perpetual and spot trading, leverage, collateral moves, Arbitrum USDC deposits and withdrawals, and HIP-3 workflows. |
+| `injective` | Injective reads, USDC perpetual management/RFQ and separately gated later Spot orders through `purr injective`; writes require the coordinated candidate and explicit reviewed intent. |
 | `kraken` | Kraken exchange — spot / xStocks / forex trading, earn, staking, funding, and paper trading. |
 | `lighter` | Lighter (lighter.xyz) market data, perp/spot trading, leverage and margin, multi-chain USDC open-account/deposit, secure and fast withdrawals via `purr lighter`. |
 | `pawpilot-paper-trading` | Paper intent clarification, host-calculated previews and registered cards; execution requires separate terminal human confirmation. |
@@ -88,6 +90,18 @@ funding.
 |-------|-------------|
 | `minimax-h3-max` | MiniMax H3 Max 5-second text-to-video through the Pieverse platform proxy. Returns a `fal.media` watch link; never calls fal or attaches a file. |
 
+### Ginza validation and release dependency
+
+```sh
+python3 -B -m unittest discover -s ginza/scripts -p 'test_*.py'
+```
+
+These offline checks use mock platform responses and no real credentials. The skill
+requires the platform Ginza route plus injected `WALLET_API_URL`, `WALLET_API_TOKEN`
+and `INSTANCE_ID`; the provider key stays on the platform. Source publication does
+not deploy that backend, update tenant images, or publish a Skill Store product.
+Hosted runtime acceptance and broader supported-pair validation remain separate.
+
 ### PawPilot Hermes validation
 
 The PawPilot Skills use Hermes frontmatter, conditional host-tool dependencies,
@@ -104,3 +118,59 @@ The authored-content probe does not contact the security provider; Hermes's
 restricted-load/security regressions, installed image capability and hosted
 Agent/manual acceptance are separate gates. An accepted command receipt is
 not proof of an eventual order fill.
+
+### Hyperliquid arithmetic validation
+
+Run the 9 read-only behavioral checks, including actual Node CLI execution through
+a symlink and importing the helper without running its CLI:
+
+```sh
+node --test tests/skills/hyperliquid-order-size.test.mjs
+```
+
+These checks use assumed decimal inputs without network or credentials. A legal
+market minimum does not establish affordability without confirmed leverage, fees,
+slippage and authoritative account margin.
+
+The Injective examples execute through an actual CLI candidate against a strict
+local fixture backend. The check verifies every authored shell example's route,
+query, authentication and JSON output, plus rate-limit and execution boundaries.
+It preserves exact amounts, unknown values, freshness, coverage and cursors.
+No chain calls or signing occur. Run either a compiled candidate or source:
+
+```sh
+PURR_TEST_BINARY=/path/to/purr node tests/skills/injective-command-contract.mjs
+node tests/skills/injective-command-contract.mjs /path/to/purr-cli/packages/cli/src/linux-macos.ts /path/to/bun
+```
+
+The `injective-command-contract` CI job builds the public CLI commit pinned in
+`.github/workflows/validate-skills.yml` with locked dependencies and runs this
+check against the compiled binary. The pin identifies the published `v0.2.71`
+source `cc7e43a526d37f8658bb69e44e0d59e79b9ba4b2`, containing PURR #103 and the
+coordinated version release #104. It needs no private platform clone.
+This manual job checks the authored read/local-draft examples and their error
+boundaries; CLI's own business/binary tests cover local drafts, explicit writes,
+policy holds and original-request recovery. These fixture checks do not prove a
+real chain execution or update a tenant/runtime pin.
+The current authored examples, including the later Spot local drafts, passed
+[command-contract run40733190947](https://github.com/Pieverse-Eng/purrfect-skills/actions/runs/40733190947)
+against the exact pre-release CLI source `edf9124f2259f203c47368b09cbdd42a8f38f712`.
+The released-source pin above receives a separate explicit qualification run.
+Later Hermes acceptance must also exercise a non-USDC Spot quote: confirm fees
+in that actual quote denom, omit margin and stop on missing fee metadata.
+
+The skill requires both an Injective-capable CLI release and the corresponding
+backend routes. Native perpetual/RFQ writes require CLI `v0.2.71`; Spot execution
+remains a separately unreleased backend feature. Adding this skill does not
+update existing Agents: the platform must pin this skill and CLI in an image and
+explicitly promote that image.
+
+
+The explicit [Injective command-contract run40670215200](https://github.com/Pieverse-Eng/purrfect-skills/actions/runs/40670215200)
+succeeded for skills source `972abf0db87f593fd3c9a93cd08c9265b455f47a`
+and CLI source `998aeddc1ecbf122831078fed65b7e0bc8b18f3e`. It compiled the
+actual Linux CLI candidate and ran the authored read examples and error
+boundaries against loopback fixtures. This is command compatibility evidence;
+real Hermes dialogue execution, native grants and funded trading remain pending.
+The ordinary CLI check and native Linux x64/macOS ARM64 binary qualification are
+recorded in PURR #103. No runtime content/image pin or tenant was updated.
