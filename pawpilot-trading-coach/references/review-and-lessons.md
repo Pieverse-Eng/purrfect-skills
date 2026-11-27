@@ -14,7 +14,11 @@ assistant's function/tool-call ID, when publishing trade_review. A bounded
 list is for finding the requested trade: use actual closedAt and requested scope
 for "latest/just closed", and clarify only if the requested trade remains
 ambiguous. Review that one trade; several returned candidates do not request
-cross-trade statistics. The operation=review rules below describe legacy reads.
+cross-trade statistics. Keep an all-account, all-venue or venue-wide request at
+that scope. For spot exits use product=spot and side=sell, then follow the spot
+cursor with the original filters when needed. Keep exact native fee assets and
+leave spot PnL unknown without cost basis. The operation=review rules below
+describe legacy reads.
 
 A human-selected reviewTarget in this Run identifies the exact cycle/fill and
 account. Use operation=review with no competing target; the host revalidates that
@@ -48,6 +52,10 @@ plan does not establish immutable initial risk. Keep R unknown without the actua
 opening baseline. Publish trade_review with the verified cycleId, same-Run query
 references and an optional proposed lesson. The existing Paper UI lets the user
 edit and explicitly confirm that Lesson; never write it through another tool.
+For a reminder from a reopened review, resolve the original owned card with
+`pawpilot_paper_trade_review` and target.resource.kind=coach_card. Cite the
+current Run's re-read facts with the original cycle ID and put the proposed
+reminder in `lesson`. Reviews are stateless reads and have no taskRef.
 
 ## Live
 

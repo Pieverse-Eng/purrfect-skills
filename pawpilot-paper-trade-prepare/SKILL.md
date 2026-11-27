@@ -106,3 +106,10 @@ concise user-facing text, even when tool work completed.
 This same native proxy accepts exactly one of intent (new place_order/reduceOnly) or action. For an existing order use target.resource {kind:"order",ref:<owned order reference>}; the host resolves its original account and market. Do not ask the user to switch charts. Supported typed actions are amend_order, cancel_order, cancel_all, position_protection, transfer, claim and legacy explain. Read native schemas and original order/position versions; preserve all financial fields. Use action.request.expectedVersion where required. cancel_all's accountIds must be the intended owned set. Transfer/claim do not need a market or side. All financial actions still produce a draft for independent manual review, including claiming simulated funds. explain is nonexecution compatibility.
 
 Example cancellation: `pawpilot_paper_trade_prepare({target:{mode:"paper",resource:{kind:"order",ref:orderId}},action:{kind:"cancel_order",orderId,request:{expectedVersion:version}}})`. The result is a cancellation proposal, not a cancelled order. For a margin conflict, describe the requested and existing configuration and ask for the user's choice. Only a real changed user decision starts a new intent; never omit risk fields, change call IDs or close/transfer to defeat the conflict.
+
+For a wallet transfer, the Paper wallet is the portfolio wallet. Pass the literal `"wallet"`
+as `fromAccountId` or `toAccountId` where requested. Resolve the other endpoint to its exact owned
+venue account using account facts and the requested product and settlement asset. Do not infer
+the wallet from the first venue row, a positive cash balance or the active chart. When an endpoint
+is still ambiguous, ask about that endpoint before preparing. State the effective From, To and
+amount from the card receipt and leave both balances untouched until independent human review.

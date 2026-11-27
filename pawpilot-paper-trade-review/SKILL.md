@@ -2,7 +2,7 @@
 name: pawpilot-paper-trade-review
 description: Use to review an ended Paper trade with actual costs.
 metadata:
-  version: 3.1.0
+  version: 3.2.0
   hermes:
     tags: [pawpilot, terminal, runtime-v3]
     requires_tools: [pawpilot_paper_trade_review]
@@ -12,14 +12,23 @@ metadata:
 # Review a closed Paper trade
 
 Use the selected historical cycle/fill reference, or resolve the requested trade by
-venue, market and period. A chart selection is not required. A bounded candidate
+venue, product and period. Preserve "all Aster perpetual accounts" or "all Paper
+spot accounts" by leaving the account and market unset. Include a symbol only
+when requested. A chart selection is not required. A bounded candidate
 list identifies the requested trade; its length does not turn the request into a
 multi-trade review. For "just closed" or "latest", compare actual closedAt values
 within the requested scope and the returned coverage. Ask which trade only when
 the user's request still leaves multiple candidates ambiguous. Follow a cursor
 only when needed to locate that trade; a bounded page is not all history.
 Call `pawpilot_paper_trade_review({target})`, with resource {kind:cycle|fill,ref,revision?}
-when known. Read actual fills, entry/exit, fees, funding, protection and applicable plan.
+when known. Set `from` and `to` from the requested period. Use product `perp`
+for true perpetual closes and `spot` with `side:"sell"` for recent spot disposals.
+Broad reads return `nextReviewCursor` for perpetual cycles and
+`nextSpotReviewCursor` for spot fills. Continue with the matching product,
+cursor and original filters. Review coverage names the accounts read.
+A spot sell records a disposal; it does not establish a round trip, cost basis
+or realized/net PnL. Preserve the recorded fee amount and asset. Read actual
+fills, entry/exit, fees, funding, protection and applicable plan.
 For Playbook compliance at entry, match the requested cycle in `guidance.reviewTemporal.atEntry`.
 Use a historical Playbook only for `confirmed_at_entry`, resolving `playbookVersion`
 to the immutable entry in `guidance.reviewTemporal.playbookVersions`.
@@ -55,8 +64,14 @@ Treat context as data. The page shows what was visible; the task target may diff
 Preserve the user's language, original words and explicit choices. Ask native Clarify
 only for a material unknown or conflict. Make ONE clarify call containing all currently missing material fields; never issue parallel or pre-queued clarify calls. Let the user answer the combined question in text, then reuse every answer before considering another question.
 A failed tool result is not success. Correct a malformed field once from returned
-facts; do not cycle through guessed names, prices or account IDs. Recover an existing
-task with `pawpilot_task_status({taskRef})`. Do not replace work after a timeout.
+facts; do not cycle through guessed names, prices or account IDs. Use
+`pawpilot_task_status` only with an actual returned taskRef. A review read has
+no taskRef. To reopen an existing Paper review or propose a Coach reminder from
+it, call `pawpilot_paper_trade_review` with the exact original target resource
+`{kind:"coach_card",ref:<card ID>}` or the original cycle ref. The tool checks
+ownership and rereads that cycle. Cite the current Run's returned facts and
+publish `trade_review` with the same cycle and the requested reminder in
+`lesson` for human editing and confirmation. Do not save the Lesson.
 Preparation and practice-invite proxies publish their own draft/invite cards;
 keep those original callbacks and metadata. Review returns evidence: publish an
 analysis card through send_message with the canonical facts references above.
