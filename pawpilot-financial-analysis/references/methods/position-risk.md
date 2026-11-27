@@ -6,6 +6,9 @@ the native result and its assumptions, rather than a full holding report or extr
 numerical examples.
 
 1. Identify actual side, native quantity, contract multiplier, entry, mark and observation time. Explain how the direction of price exposure changes the position's price PnL. Distinguish notional exposure from collateral and account equity.
+   Use the quantity unit returned by the venue/market. If only native quantity is
+   known, label it in native units or omit it in prose. A contract count needs a
+   confirmed multiplier before it can be stated as a base-asset quantity.
 2. Explain leverage, isolated/cross collateral, liquidation estimate and protection coverage with their returned scope and time. Cross collateral exposes shared equity; isolated collateral does not cap losses under every venue condition. A stop is an order subject to trigger, fill, gap and liquidity risk, not guaranteed loss insurance.
    Copy the actual position/draft margin mode and leverage from its current receipt.
    An account's abstraction mode, another position's mode, a Playbook or an old
@@ -37,6 +40,12 @@ numerical examples.
    Current distance to a native liquidation estimate is a snapshot, not a forecast.
    It cannot establish that liquidation will not trigger over the next minutes,
    hours or the user's holding period; describe the current distance and uncertainty.
+   Establish proximity only from a native liquidation estimate and its current
+   reference price. Historical leverage evidence supports a discussion about
+   exposure, with distance and liquidation outcomes left unknown.
+   For Paper, use the current complete `activeProtection` legs when available.
+   Position-level TP/SL can omit active entry brackets. Describe a missing stop
+   or coverage quantity only when the scoped protection evidence establishes it.
 3. Compare the current thesis with the recorded opening thesis and confirmed plan. If the original reason or original risk was never recorded, say so. Never reconstruct them from the eventual outcome or a current stop.
 4. Consider concentration, correlation, liquidity, carrying cost and upcoming events over the user's horizon. Portfolio totals require the actual full scope; never extrapolate visible rows.
    An overall low-risk label requires evidence of position size relative to account

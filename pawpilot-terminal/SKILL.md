@@ -94,7 +94,20 @@ Market plans use pawpilot-paper-trade-plan. Proposed Lessons use the review card
 
 ## Deterministic facts and cards
 
-Use `pawpilot_position_research` with profile facts for account/market evidence, owner Playbook or typed `query`. Paper queries support `holding_news`, `scenario`, `timeline`, `prices`, `statistics` and `trades`; inspect the native argument schema rather than guessing parameter names. A scenario uses the user's assumptions and the existing calculator. Histories/statistics retain scope, denominator, costs, cursors and coverage. Unsupported Live queries return an explicit gap; never call a Paper query against Live.
+Separate public markets, account reads and draft preparation. An explicit Paper or Live choice
+binds the requested account mode. For account reads only, use the page mode if no mode was
+requested. An instruction to stay read-only restricts the operation and preserves the user's
+account choice. The words Paper or Live in a page name, a navigation destination or a reference
+to market data do not themselves select a trading account. When a tool returns a bound mode,
+use it without sending another mode question.
+
+For public quotes, mark prices or books, call position research with
+`target:{subjectType:"market",venue,product,symbol}` and `profile:"facts"`. No quote request needs
+a Paper/Live choice or any account reference. For a position question use `subjectType:"position"`
+and its exact target. A shared public quote does not authorize reading a Live position, balance or
+order.
+
+Use `pawpilot_position_research` with profile facts for account/market evidence, owner Playbook or typed `query`. Paper queries support `holding_news`, `scenario`, `timeline`, `prices`, `outcomes`, `statistics` and `trades`; inspect the native argument schema rather than guessing parameter names. A scenario uses the user's assumptions and the existing calculator. Histories/statistics retain scope, denominator, costs, cursors and coverage. Unsupported Live queries return an explicit gap; never call a Paper query against Live.
 
 Read only relevant financial methods through `skill_view(name="pawpilot-financial-analysis",file_path="references/methods/<named-method>.md")`. Methods interpret evidence; they do not start ingestion, search or another financial-research session. Use position-risk for exposure, market-context for news, funding-and-costs for economics, scenario-comparison for supplied assumptions, trade-review for completed trades and cross-trade-statistics for patterns.
 
