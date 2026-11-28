@@ -71,8 +71,8 @@ unknown outcome, reconcile state before acting again.
 | --- | --- | --- |
 | `LIGHTER_REQUEST_TIMEOUT` on read/preview | 20s client timeout | Safe to retry read/preview |
 | Write hang / unknown | May have submitted | Use `requests` / `deposit-status`; never blind retry |
-| `LIGHTER_TRANSPORT_ERROR` / `LIGHTER_HTTP_ERROR` | Network or upstream | If pre-submit likely, may retry after confirm; if post-submit possible, reconcile only |
-| `LIGHTER_UPSTREAM_UNAVAILABLE` / `LIGHTER_UPSTREAM_TIMEOUT` / `LIGHTER_UPSTREAM_RATE_LIMITED` | Lighter API or chain RPC could not answer; nothing was signed or sent (`retryable: true`) | Honor `Retry-After`; retry the read or preview. A failed write needs a new idempotency key after the user re-confirms |
+| `LIGHTER_TRANSPORT_ERROR` / `LIGHTER_HTTP_ERROR` | Network or upstream; a transport error alone does not establish whether a write was sent | Retry only a read or preview. For a write, reconcile the existing request unless it is confirmed not to have been sent or definitively rejected. |
+| `LIGHTER_UPSTREAM_UNAVAILABLE` / `LIGHTER_UPSTREAM_TIMEOUT` / `LIGHTER_UPSTREAM_RATE_LIMITED` | Lighter API or chain RPC could not answer a repeatable step (`retryable: true`); this is not a lost submit response | Retry the read or preview after `Retry-After` when present. For a recorded write, check its request status. Start a new action with a new key only after confirming a terminal rejection or pre-send failure and getting user reconfirmation. |
 
 ## Market ambiguity handling
 

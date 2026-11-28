@@ -34,7 +34,8 @@ fills, or balances when an action may have partially applied.
 | `HYPERLIQUID_API_ERROR` | Venue rejected the action | Report the venue message; fix only with user intent and re-confirm changed parameters |
 | `HYPERLIQUID_REQUEST_INVALID` | Platform rejected the CLI-built request | Report as an implementation/compatibility error; never bypass the CLI with raw JSON |
 | `HYPERLIQUID_TRANSPORT_ERROR` / timeout | Submission outcome may be unknown | Do not retry a possible write; reconcile first |
-| `HYPERLIQUID_UPSTREAM_UNAVAILABLE` / `HYPERLIQUID_UPSTREAM_TIMEOUT` / `HYPERLIQUID_UPSTREAM_RATE_LIMITED` | Hyperliquid API or Arbitrum RPC could not answer a read, or the exchange rate limited before accepting (`retryable: true`) | Honor `Retry-After`; retry the **read**. A rate-limited or pre-send write was recorded `failed`: retry only with a new idempotency key after the user re-confirms |
+| `HYPERLIQUID_UPSTREAM_UNAVAILABLE` / `HYPERLIQUID_UPSTREAM_TIMEOUT` / `HYPERLIQUID_UPSTREAM_RATE_LIMITED` | Hyperliquid API or Arbitrum RPC could not answer a repeatable read, including a preflight read (`retryable: true`) | Retry the read after `Retry-After` when present. This does not authorize replaying a write. A preflight rejection can occur before any action request exists; do not assume it recorded a terminal failure or mint a new key from this code alone. |
+| `HYPERLIQUID_RATE_LIMITED` with action status `failed` | The venue definitively rejected a submitted action; Platform recorded a terminal failure | Honor `Retry-After` when present. Reusing the old key does not restart the action. Create a new action with a new key only after the user reconfirms. |
 | Policy deferred / manual approval | Wallet policy requires another approval path | Explain and wait; do not spam resubmit |
 | Insufficient margin / balance | Target account lacks collateral | Show state and offer smaller size, transfer, or deposit choices |
 | `--network is not supported` | Network override was attempted | Remove `--network`; mainnet only |
@@ -103,7 +104,7 @@ CLI revoke command.
 | --- | --- |
 | Amount under 5 USDC | Request a valid amount |
 | Insufficient Arbitrum USDC or gas | Report the shortage; do not blind-retry a smaller amount |
-| Bridge or broadcast outcome unknown (`HYPERLIQUID_BRIDGE_SUBMIT_UNKNOWN`, `retryable: false`) | Include any tx hash, request ID, or nonce; poll `deposit-status`; do not resubmit |
+| Bridge deposit submission unknown (`HYPERLIQUID_BRIDGE_SUBMIT_UNKNOWN`, `retryable: false`) | Poll `deposit-status` for the existing deposit. Report any returned tx hash, request ID, or nonce; do not submit a second deposit. |
 | Withdraw status `pending` | Report settling; do not withdraw again |
 | Withdraw status `arrived` | Report amount, fee, and tx hash |
 | No captured withdraw nonce | Reconcile state and Arbitrum balance; never invent a nonce |

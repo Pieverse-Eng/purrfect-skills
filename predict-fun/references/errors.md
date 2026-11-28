@@ -53,7 +53,7 @@ Prefer stopping and explaining over inventing retries.
 | `PREDICT_RATE_LIMITED` / `PREDICT_PLATFORM_RATE_LIMITED` | Upstream or platform quota | Honor `Retry-After`; back off |
 | `PREDICT_AUTH_REJECTED` | Predict rejected the platform JWT | Report the error |
 | `PREDICT_TIMEOUT` / `PREDICT_NETWORK_ERROR` / `PREDICT_UPSTREAM_ERROR` | Transport / Predict down | If pre-execute: may retry the **read or preview**. If execute may have started: reconcile only |
-| `PREDICT_UPSTREAM_UNAVAILABLE` / `PREDICT_UPSTREAM_TIMEOUT` / `PREDICT_UPSTREAM_RATE_LIMITED` | BNB chain RPC could not answer a balance, approval, or contract read (`retryable: true`) | Honor `Retry-After`; retry the **read or preview** later. Nothing was sent |
+| `PREDICT_UPSTREAM_UNAVAILABLE` / `PREDICT_UPSTREAM_TIMEOUT` / `PREDICT_UPSTREAM_RATE_LIMITED` | BNB chain RPC could not answer a balance, approval, or contract read (`retryable: true`) | Retry the **read or preview** after `Retry-After` when present. Do not treat a read error as proof that an earlier execute did not submit. |
 | Unsupported / duplicate / positional argument | CLI rejected before HTTP | Fix flags from the skill tables or `purr predict-fun help` |
 | Invalid `--sort` / `--status` / `--market-variant` / `--resolution` | Enum is not on that command | Use the table in [discovery.md](discovery.md) or [preflight.md](preflight.md), or `purr predict-fun help`, then retry once |
 | `PREDICT_REQUEST_REJECTED` range too wide | `timeseries` `--from`/`--to` span is 365 days or more | Retry with a span under 365 days, or use `timeseries-latest` |
